@@ -12,8 +12,8 @@ const navLinks = [
   { name: "Podcasts", path: "/podcast" },
   { name: "Courses", path: "/courses" },
   { name: "Calculators", path: "/calculator" },
-  { name: "Shop", path: "/shop" },
-  { name: "Name Correction", path: "https://www.ankshaastra.empower.com", external: true },
+  { name: "Shop Rudraksha and Crystals", path: "https://ankshaastra.in", external: true },
+  { name: "Name Correction", path: "https://empower.ankshaastra.com", external: true },
   { name: "Consultation", path: "/consultation" },
 ];
 
