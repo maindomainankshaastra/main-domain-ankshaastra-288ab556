@@ -23,6 +23,13 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
+        chart: {
+          "1": "hsl(220, 60%, 50%)",
+          "2": "hsl(160, 60%, 45%)",
+          "3": "hsl(30, 80%, 55%)",
+          "4": "hsl(280, 60%, 55%)",
+          "5": "hsl(340, 70%, 50%)",
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
