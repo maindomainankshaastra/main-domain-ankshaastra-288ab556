@@ -242,6 +242,7 @@ const ServicesSection = () => {
                     <ArrowRight className="w-4 h-4 opacity-0 -ml-2 group-hover/btn:opacity-100 group-hover/btn:ml-0 transition-all duration-300" />
                   </Link>
                 )}
+                </div>
               </div>
             </motion.div>
           ))}
