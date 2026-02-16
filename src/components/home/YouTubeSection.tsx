@@ -3,22 +3,19 @@ import { Play, ExternalLink } from "lucide-react";
 
 const videos = [
   {
-    id: "VIDEO_ID_1",
+    id: "yF9ufbKJYcs",
     title: "Understanding Numerology Basics",
-    thumbnail: "https://img.youtube.com/vi/VIDEO_ID_1/hqdefault.jpg",
-    placeholder: true,
+    thumbnail: "https://img.youtube.com/vi/yF9ufbKJYcs/hqdefault.jpg",
   },
   {
-    id: "VIDEO_ID_2",
+    id: "1ilCeIyAVsI",
     title: "How Name Correction Transforms Lives",
-    thumbnail: "https://img.youtube.com/vi/VIDEO_ID_2/hqdefault.jpg",
-    placeholder: true,
+    thumbnail: "https://img.youtube.com/vi/1ilCeIyAVsI/hqdefault.jpg",
   },
   {
-    id: "VIDEO_ID_3",
+    id: "WB17QfVWPlE",
     title: "Lal Kitab Remedies Explained",
-    thumbnail: "https://img.youtube.com/vi/VIDEO_ID_3/hqdefault.jpg",
-    placeholder: true,
+    thumbnail: "https://img.youtube.com/vi/WB17QfVWPlE/hqdefault.jpg",
   },
 ];
 
@@ -58,8 +55,9 @@ const YouTubeSection = () => {
             >
               <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 {/* Thumbnail */}
-                <div className="relative aspect-video bg-muted overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                <a href={`https://youtu.be/${video.id}`} target="_blank" rel="noopener noreferrer" className="block relative aspect-video bg-muted overflow-hidden">
+                  <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <div className="w-16 h-16 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <Play className="w-7 h-7 text-primary-foreground ml-1" />
                     </div>
@@ -68,7 +66,7 @@ const YouTubeSection = () => {
                   <div className="absolute top-3 left-3 w-8 h-8 rounded-lg bg-foreground/80 backdrop-blur-sm flex items-center justify-center">
                     <span className="text-sm font-bold text-background">{index + 1}</span>
                   </div>
-                </div>
+                </a>
 
                 {/* Content */}
                 <div className="p-4">
