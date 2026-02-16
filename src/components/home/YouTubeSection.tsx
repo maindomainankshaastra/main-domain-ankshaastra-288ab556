@@ -1,25 +1,25 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Play, ExternalLink } from "lucide-react";
+import { Play, ExternalLink, X } from "lucide-react";
 
-const videos = [
+export const videos = [
   {
     id: "yF9ufbKJYcs",
-    title: "Understanding Numerology Basics",
     thumbnail: "https://img.youtube.com/vi/yF9ufbKJYcs/hqdefault.jpg",
   },
   {
     id: "1ilCeIyAVsI",
-    title: "How Name Correction Transforms Lives",
     thumbnail: "https://img.youtube.com/vi/1ilCeIyAVsI/hqdefault.jpg",
   },
   {
     id: "WB17QfVWPlE",
-    title: "Lal Kitab Remedies Explained",
     thumbnail: "https://img.youtube.com/vi/WB17QfVWPlE/hqdefault.jpg",
   },
 ];
 
 const YouTubeSection = () => {
+  const [playingId, setPlayingId] = useState<string | null>(null);
+
   return (
     <section className="section-padding bg-muted/50">
       <div className="section-container">
@@ -54,28 +54,28 @@ const YouTubeSection = () => {
               className="group"
             >
               <div className="bg-card rounded-xl overflow-hidden border border-border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                {/* Thumbnail */}
-                <a href={`https://youtu.be/${video.id}`} target="_blank" rel="noopener noreferrer" className="block relative aspect-video bg-muted overflow-hidden">
-                  <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <Play className="w-7 h-7 text-primary-foreground ml-1" />
-                    </div>
-                  </div>
-                  {/* Overlay number */}
-                  <div className="absolute top-3 left-3 w-8 h-8 rounded-lg bg-foreground/80 backdrop-blur-sm flex items-center justify-center">
-                    <span className="text-sm font-bold text-background">{index + 1}</span>
-                  </div>
-                </a>
-
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-display font-semibold text-foreground text-base line-clamp-2">
-                    {video.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    By Himansshu Agarwal Ji
-                  </p>
+                <div className="relative aspect-video bg-muted overflow-hidden">
+                  {playingId === video.id ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${video.id}?autoplay=1`}
+                      title="YouTube video"
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setPlayingId(video.id)}
+                      className="block w-full h-full relative cursor-pointer"
+                    >
+                      <img src={video.thumbnail} alt="Video thumbnail" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div className="w-16 h-16 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <Play className="w-7 h-7 text-primary-foreground ml-1" />
+                        </div>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
