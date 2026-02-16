@@ -12,6 +12,13 @@ import {
   ArrowRight
 } from "lucide-react";
 
+import serviceNameCorrection from "@/assets/service-name-correction.png";
+import serviceBabyName from "@/assets/service-baby-name.png";
+import serviceBusinessNumerology from "@/assets/service-business-numerology.png";
+import serviceCsectionDates from "@/assets/service-csection-dates.png";
+import serviceOfficeVastu from "@/assets/service-office-vastu.png";
+import serviceMobileNumerology from "@/assets/service-mobile-numerology.png";
+
 const services = [
   {
     icon: Sparkles,
@@ -27,6 +34,7 @@ const services = [
     link: "https://www.ankshaastra.empower.com",
     external: true,
     gradient: "from-violet-500 via-purple-500 to-fuchsia-500",
+    image: serviceNameCorrection,
   },
   {
     icon: Heart,
@@ -34,6 +42,7 @@ const services = [
     description: "Numerology-based baby name suggestions aligned with birth details.",
     link: "/services",
     gradient: "from-pink-500 via-rose-500 to-red-500",
+    image: serviceBabyName,
   },
   {
     icon: Gem,
@@ -41,6 +50,7 @@ const services = [
     description: "Business name alignment, brand logo colors, and strategic guidance.",
     link: "/services",
     gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+    image: serviceBusinessNumerology,
   },
   {
     icon: Star,
@@ -48,6 +58,7 @@ const services = [
     description: "Numerology-based guidance for selecting supportive birth dates.",
     link: "/services",
     gradient: "from-blue-500 via-indigo-500 to-violet-500",
+    image: serviceCsectionDates,
   },
   {
     icon: Crown,
@@ -62,6 +73,7 @@ const services = [
     description: "Numerology-integrated workspace planning for improved productivity and harmony.",
     link: "/services",
     gradient: "from-slate-500 via-gray-500 to-zinc-600",
+    image: serviceOfficeVastu,
   },
   {
     icon: Smartphone,
@@ -69,6 +81,7 @@ const services = [
     description: "Assessment of mobile number vibration and its influence on opportunities.",
     link: "/services",
     gradient: "from-cyan-500 via-blue-500 to-indigo-500",
+    image: serviceMobileNumerology,
   },
 ];
 
