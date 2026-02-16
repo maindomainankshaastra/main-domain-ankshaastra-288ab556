@@ -194,23 +194,27 @@ const ServicesSection = () => {
               transition={{ delay: index * 0.1 }}
               className="flex"
             >
-              <div className="flex flex-col h-full w-full group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-6 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 text-center">
-                {/* Gradient overlay on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${service.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+              <div className="flex flex-col h-full w-full group relative overflow-hidden rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 text-center">
+                {/* Service Image */}
+                {service.image ? (
+                  <div className="relative w-full h-40 overflow-hidden">
+                    <img src={service.image} alt={service.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <div className={`absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent`} />
+                  </div>
+                ) : (
+                  <div className={`relative w-full h-40 bg-gradient-to-br ${service.gradient} flex items-center justify-center`}>
+                    <service.icon className="w-16 h-16 text-white/80" strokeWidth={1} />
+                    <div className={`absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent`} />
+                  </div>
+                )}
                 
-                {/* Icon container */}
-                <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 mx-auto`}>
-                  <service.icon className="w-8 h-8 text-white" strokeWidth={1.5} />
-                  {/* Glow effect */}
-                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${service.gradient} blur-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500`} />
-                </div>
-                
-                <h3 className="relative font-display text-lg font-semibold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
-                  {service.title}
-                </h3>
-                <p className="relative text-muted-foreground mb-6 leading-relaxed text-sm flex-grow">
-                  {service.description}
-                </p>
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="relative font-display text-lg font-semibold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
+                    {service.title}
+                  </h3>
+                  <p className="relative text-muted-foreground mb-6 leading-relaxed text-sm flex-grow">
+                    {service.description}
+                  </p>
                 
                 {/* Order Now Button */}
                 {service.external ? (
