@@ -89,13 +89,15 @@ const HeroSection = () => {
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <Link
-                  to="/calculator"
+                <a
+                  href="https://empower.ankshaastra.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group inline-flex items-center justify-center gap-3 bg-white text-primary font-bold px-8 py-4 rounded-xl shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30 transition-all duration-300"
                 >
-                  <span>Get Free Analysis</span>
+                  <span>Get Name Check @ ₹199</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                </a>
               </motion.div>
               
               <motion.div
@@ -121,7 +123,7 @@ const HeroSection = () => {
             >
               {[
                 { icon: Award, number: "10+", label: "Years Legacy" },
-                { icon: Users, number: "3000+", label: "Corrections" },
+                { icon: Users, number: "5000+", label: "Corrections" },
                 { icon: CheckCircle, number: "99%", label: "Satisfaction" },
               ].map((stat, index) => (
                 <div 
