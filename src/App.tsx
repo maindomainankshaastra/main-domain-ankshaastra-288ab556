@@ -14,6 +14,9 @@ import Shop from "./pages/Shop";
 import NameCorrection from "./pages/NameCorrection";
 import Payment from "./pages/Payment";
 import About from "./pages/About";
+import CSectionDates from "./pages/CSectionDates";
+import BabyName from "./pages/BabyName";
+import VarshphalReport from "./pages/VarshphalReport";
 import Podcast from "./pages/Podcast";
 import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
@@ -30,6 +33,9 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/name-correction" element={<NameCorrection />} />
+          <Route path="/services/csection-dates" element={<CSectionDates />} />
+          <Route path="/services/baby-name" element={<BabyName />} />
+          <Route path="/services/varshphal-report" element={<VarshphalReport />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/calculator" element={<Calculator />} />
           <Route path="/consultation" element={<Consultation />} />
