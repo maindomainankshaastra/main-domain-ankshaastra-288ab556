@@ -60,14 +60,14 @@ const services = [
   {
     icon: Building,
     title: "Office Vastu",
-    link: "/services",
+    link: "/services/office-vastu",
     gradient: "from-slate-500 via-gray-500 to-zinc-600",
     image: serviceOfficeVastu,
   },
   {
     icon: Smartphone,
     title: "Mobile Numerology",
-    link: "/services",
+    link: "/services/mobile-numerology",
     gradient: "from-cyan-500 via-blue-500 to-indigo-500",
     image: serviceMobileNumerology,
   },
