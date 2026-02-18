@@ -17,6 +17,8 @@ import About from "./pages/About";
 import CSectionDates from "./pages/CSectionDates";
 import BabyName from "./pages/BabyName";
 import VarshphalReport from "./pages/VarshphalReport";
+import MobileNumerology from "./pages/MobileNumerology";
+import OfficeVastu from "./pages/OfficeVastu";
 import Podcast from "./pages/Podcast";
 import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
@@ -36,6 +38,8 @@ const App = () => (
           <Route path="/services/csection-dates" element={<CSectionDates />} />
           <Route path="/services/baby-name" element={<BabyName />} />
           <Route path="/services/varshphal-report" element={<VarshphalReport />} />
+          <Route path="/services/mobile-numerology" element={<MobileNumerology />} />
+          <Route path="/services/office-vastu" element={<OfficeVastu />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/calculator" element={<Calculator />} />
           <Route path="/consultation" element={<Consultation />} />
