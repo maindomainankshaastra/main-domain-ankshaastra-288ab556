@@ -1,308 +1,394 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
-import { Phone, Clock, Video, MessageSquare, ArrowRight, Sparkles } from "lucide-react";
+import {
+  Phone, Video, ArrowRight, CheckCircle, Shield, Clock, Award, Users,
+  Heart, Briefcase, TrendingUp, Baby, Brain, Sparkles, ChevronRight,
+  Mail, FileText, AlertCircle
+} from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const whatsappPackages = [
-  { questions: "3 Ques", price: "₹497" },
-  { questions: "6 Ques", price: "₹777" },
-  { questions: "10 Ques", price: "₹1111" },
+const consultationAreas = [
+  {
+    icon: Briefcase,
+    title: "Career & Professional Direction",
+    desc: "Feeling stuck despite effort often signals misalignment, not lack of ability. Numerology analysis helps identify strengths, suitable career paths, and supportive timing, enabling clearer professional decisions and steady, purpose-driven growth.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Business & Growth Alignment",
+    desc: "Inconsistent results despite effort indicate misalignment. Business numerology aligns names, numbers, pricing, and timing, helping entrepreneurs reduce friction, clarify strategy, and support consistent, balanced growth.",
+  },
+  {
+    icon: Heart,
+    title: "Love & Relationships",
+    desc: "Repeated misunderstandings or emotional distance arise from compatibility gaps. Numerology reveals emotional patterns and dynamics, helping individuals improve understanding, communication, and balance, allowing relationships to progress with clarity, awareness, and emotional stability.",
+  },
+  {
+    icon: Users,
+    title: "Marriage & Compatibility",
+    desc: "Marriage delays or uncertainty often stem from timing or compatibility mismatches. Numerology assesses readiness and alignment, enabling informed decisions and helping individuals approach commitment with clarity, confidence, and emotional preparedness.",
+  },
+  {
+    icon: Brain,
+    title: "Health & Mental Well-Being",
+    desc: "Persistent stress or imbalance often reflects deeper energetic patterns. Numerology highlights mental and lifestyle tendencies, helping individuals recognize corrective areas, adopt calmer choices, and support emotional stability and overall well-being.",
+  },
+  {
+    icon: Baby,
+    title: "Child & Future Planning",
+    desc: "Early numerological planning supports a balanced foundation. Name alignment and birth-timing analysis help parents understand tendencies, enabling thoughtful decisions that encourage harmony, stability, and long-term development.",
+  },
 ];
 
-const audioCallPackages = [
-  { duration: "45 min", price: "₹1987" },
-  { duration: "60 min", price: "₹2496" },
-  { duration: "75 min", price: "₹3108" },
+const callSteps = [
+  {
+    num: "1",
+    title: "Understanding the Core Issue",
+    desc: "A detailed conversation to understand your concerns, background, and current challenges. This call focuses on listening, identifying patterns, and gathering all necessary information for accurate analysis.",
+  },
+  {
+    num: "2",
+    title: "Questions & Deep Clarity",
+    desc: "This session is dedicated to your specific questions. You will be asked multiple questions depending on your chart readings and planet placements to understand the core issues basis your lal kitab kundali.",
+  },
+  {
+    num: "3",
+    title: "Remedies & Implementation",
+    desc: "The final call explains recommended remedies and corrective measures in detail. You receive clear instructions on application, timelines, and practical integration, ensuring remedies are understood and applied correctly.",
+  },
 ];
 
-const videoCallPackages = [
-  { duration: "45 min", price: "₹3648" },
-  { duration: "60 min", price: "₹4297" },
-  { duration: "75 min", price: "₹4986" },
+const audioPricing = [
+  { duration: "45 Minutes", price: "₹1,987" },
+  { duration: "60 Minutes", price: "₹2,496" },
+  { duration: "75 Minutes", price: "₹3,108" },
+];
+
+const videoPricing = [
+  { duration: "45 Minutes", price: "₹3,648" },
+  { duration: "60 Minutes", price: "₹4,297" },
+  { duration: "75 Minutes", price: "₹4,986" },
+];
+
+const importantNotes = [
+  "Once your consultation is booked, you will be allotted the next available slot.",
+  "In case of any rescheduling due to Himansshu Agarwal Ji's pre-committed schedule, your appointment will be treated as a priority and reassigned to the earliest possible alternative slot.",
+  "The details shared at the time of booking will be considered final and no change will be entertained later in any circumstances. Please make sure to fill the correct details.",
+  "All consultation calls are scheduled only after successful payment.",
+  "Every Call is Followed by Written Remedies Shared With You Over Email / WhatsApp.",
+  "This is a one-time consultation service with 3 Step Call Consultation Structure.",
+  "Once the consultation is booked and completed, no refunds or cancellations will be applicable under any circumstances.",
+];
+
+const faqs = [
+  {
+    q: "Will Himansshu Agarwal Ji personally listen to my concerns and guide me?",
+    a: "Yes. Every consultation—audio or video—is conducted personally by Himansshu Agarwal Ji. There is no team member or intermediary involved.",
+  },
+  {
+    q: "Can I discuss multiple topics in a single consultation?",
+    a: "Yes. You may discuss multiple related concerns within the booked duration. However, the depth of discussion will depend on the selected time slot.",
+  },
+  {
+    q: "Will remedies be shared during the consultation?",
+    a: "Yes. Remedies and corrective guidance are shared after proper analysis, following the structured consultation process. Remedies are explained clearly, along with their purpose and method of implementation.",
+  },
+  {
+    q: "Will my personal data and discussion remain confidential?",
+    a: "Absolutely. All consultations are strictly confidential. Your personal information, charts, and discussions are never shared or disclosed.",
+  },
+  {
+    q: "What is the 3-Step Consultation Structure?",
+    a: "Every consultation with Himansshu Agarwal Ji follows a structured three-step call process, ensuring clarity, depth, and proper implementation.\n\nCall 1 – Understanding the Core Issue: A detailed conversation to understand your concerns, background, and current challenges.\n\nCall 2 – Questions & Deep Clarity: Dedicated to your specific questions based on chart readings and planet placements.\n\nCall 3 – Remedies & Implementation: Clear instructions on application, timelines, and practical integration.",
+  },
+  {
+    q: "Can I book this for someone else?",
+    a: "Yes, but one chart per session. Please share correct birth details at booking.",
+  },
+];
+
+const trustPoints = [
+  "Highly Confidential",
+  "Practical & Experience-Based Guidance",
+  "No Guesswork • No Fear-Based Advice",
+  "3-Call Consultation Structure",
+  "Low Cost Written Remedies Included",
 ];
 
 const ConsultationPage = () => {
+  const [mode, setMode] = useState<"audio" | "video">("audio");
+
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="pt-12 pb-16 bg-gradient-to-br from-brown-dark via-brown to-brown-dark relative overflow-hidden">
-        {/* Background elements */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <span className="inline-block px-4 py-1 rounded-full bg-white/10 border border-white/20 text-amber-200 text-sm mb-4">
-              Rate Card
-            </span>
-            <h1 className="font-display text-4xl md:text-6xl font-bold text-white mb-6">
-              Book Your <span className="text-gradient-amber">Consultation</span>
-            </h1>
-            <p className="font-body text-xl text-white/80 mb-4">
-              Personalized guidance through Numerology & Lal Kitab Remedies by Himansshu Agarwal Ji
-            </p>
-            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 border border-white/20 text-amber-200">
-              <Clock className="w-5 h-5" />
-              <span className="font-medium">Consultation Scheduled Within 48-72 Hours</span>
-            </div>
-            <p className="mt-4 text-white/70 text-sm">
-              After payment confirmation, our team will contact you within 24 hours to confirm your time slot.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Packages Section */}
-      <section className="py-24 bg-gradient-to-b from-brown-dark via-[hsl(220,13%,12%)] to-[hsl(220,13%,10%)] relative">
-        {/* Decorative elements */}
+      {/* Hero */}
+      <section className="relative min-h-[85vh] flex items-center overflow-hidden">
+        <div className="absolute inset-0 gradient-hero" />
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-0 w-1 h-32 bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
-          <div className="absolute top-1/3 right-0 w-1 h-32 bg-gradient-to-b from-transparent via-accent/30 to-transparent" />
+          <motion.div animate={{ y: [0, -25, 0], opacity: [0.15, 0.3, 0.15] }} transition={{ duration: 8, repeat: Infinity }} className="absolute top-10 right-[10%] w-96 h-96 rounded-full bg-amber-300/10 blur-3xl" />
+          <motion.div animate={{ y: [0, 20, 0], opacity: [0.1, 0.25, 0.1] }} transition={{ duration: 10, repeat: Infinity }} className="absolute bottom-20 left-[5%] w-80 h-80 rounded-full bg-white/5 blur-3xl" />
         </div>
+        <div className="section-container relative z-10 py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+              <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 mb-6">
+                <Phone className="w-4 h-4 text-amber-200" />
+                <span className="text-sm text-white font-medium">1:1 Consultation</span>
+              </span>
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-6">
+                One Honest Conversation{" "}
+                <span className="text-gradient-amber">Can Bring Absolute Clarity.</span>
+              </h1>
+              <p className="text-lg text-white/80 mb-6 leading-relaxed max-w-lg">
+                Speak directly with Himansshu Agarwal Ji for a deeply personalised one-to-one lal kitab consultation.
+              </p>
+              <p className="text-base text-amber-200/90 font-semibold mb-8">
+                Consultation Investment: Starting at ₹1,987/-
+              </p>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            
-            {/* WhatsApp Notes Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0 }}
-              className="relative group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative bg-gradient-to-br from-[hsl(220,13%,16%)] to-[hsl(220,13%,12%)] rounded-3xl p-8 border border-white/10 hover:border-primary/30 transition-all duration-300">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/10 mb-4">
-                    <MessageSquare className="w-8 h-8 text-green-400" />
+              {/* Trust Points */}
+              <div className="space-y-2.5 mb-8">
+                {trustPoints.map((point) => (
+                  <div key={point} className="flex items-center gap-2.5 text-white/85 text-sm">
+                    <CheckCircle className="w-4 h-4 text-amber-300 flex-shrink-0" />
+                    <span>{point}</span>
                   </div>
-                  <h3 className="font-display text-2xl font-bold text-white mb-2">
-                    WhatsApp Notes
-                  </h3>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/50" />
-                    <span className="text-amber-300 text-sm font-medium">Lal Kitab Remedies Included</span>
-                    <div className="h-px w-8 bg-gradient-to-l from-transparent to-primary/50" />
-                  </div>
-                </div>
+                ))}
+              </div>
 
-                <div className="space-y-4">
-                  {whatsappPackages.map((pkg, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
-                      <span className="text-white/80 font-medium">{pkg.questions}</span>
-                      <div className="flex items-center gap-2">
-                        <ArrowRight className="w-4 h-4 text-primary/60" />
-                        <span className="text-xl font-bold text-gradient-amber">{pkg.price}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  to="/payment?type=whatsapp"
-                  className="mt-8 block w-full text-center py-4 rounded-xl font-semibold bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-lg shadow-green-500/20"
-                >
-                  Book WhatsApp Notes
-                </Link>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <a href="#pricing" className="btn-primary inline-flex items-center gap-2 text-lg px-8 py-4">
+                  Book Audio Consultation <ArrowRight className="w-5 h-5" />
+                </a>
+                <a href="#pricing" className="inline-flex items-center gap-2 text-lg px-8 py-4 rounded-xl border-2 border-white/20 text-white hover:bg-white/10 transition-all font-semibold">
+                  Book Video Consultation
+                </a>
               </div>
             </motion.div>
 
-            {/* Audio Call Card - Featured */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="relative group lg:-mt-4 lg:mb-4"
-            >
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary to-accent text-white text-sm font-semibold z-10 shadow-lg shadow-primary/30">
-                <Sparkles className="w-4 h-4 inline mr-1" />
-                Most Popular
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
-              <div className="relative bg-gradient-to-br from-[hsl(220,13%,18%)] to-[hsl(220,13%,14%)] rounded-3xl p-8 border-2 border-primary/40 hover:border-primary/60 transition-all duration-300 shadow-2xl shadow-primary/10">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 mb-4">
-                    <Phone className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="font-display text-2xl font-bold text-white mb-2">
-                    1:1 Audio Call
-                  </h3>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/50" />
-                    <span className="text-amber-300 text-sm font-medium">Lal Kitab Remedies Included</span>
-                    <div className="h-px w-8 bg-gradient-to-l from-transparent to-primary/50" />
-                  </div>
+            {/* Stats Card */}
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.3 }} className="hidden lg:block">
+              <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/15 p-10 space-y-8">
+                <div className="text-center">
+                  <h3 className="font-display text-2xl font-bold text-white mb-2">Why Parents & Professionals Trust Us</h3>
                 </div>
-
-                <div className="space-y-4">
-                  {audioCallPackages.map((pkg, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
-                      <span className="text-white/80 font-medium">{pkg.duration}</span>
-                      <div className="flex items-center gap-2">
-                        <ArrowRight className="w-4 h-4 text-primary/60" />
-                        <span className="text-xl font-bold text-gradient-amber">{pkg.price}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  to="/payment?type=audio"
-                  className="mt-8 block w-full text-center py-4 rounded-xl font-semibold bg-gradient-to-r from-primary to-accent text-white hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"
-                >
-                  Book Audio Call
-                </Link>
-              </div>
-            </motion.div>
-
-            {/* Video Call Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="relative group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/10 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative bg-gradient-to-br from-[hsl(220,13%,16%)] to-[hsl(220,13%,12%)] rounded-3xl p-8 border border-white/10 hover:border-blue-400/30 transition-all duration-300">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/10 mb-4">
-                    <Video className="w-8 h-8 text-blue-400" />
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="text-center p-5 bg-white/5 rounded-2xl border border-white/10">
+                    <Award className="w-8 h-8 text-amber-300 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-white">10+</p>
+                    <p className="text-xs text-white/60">Years of Legacy</p>
                   </div>
-                  <h3 className="font-display text-2xl font-bold text-white mb-2">
-                    1:1 Video Call
-                  </h3>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="h-px w-8 bg-gradient-to-r from-transparent to-blue-400/50" />
-                    <span className="text-amber-300 text-sm font-medium">Lal Kitab Remedies Included</span>
-                    <div className="h-px w-8 bg-gradient-to-l from-transparent to-blue-400/50" />
+                  <div className="text-center p-5 bg-white/5 rounded-2xl border border-white/10">
+                    <Users className="w-8 h-8 text-amber-300 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-white">5000+</p>
+                    <p className="text-xs text-white/60">Consultations Done</p>
+                  </div>
+                  <div className="text-center p-5 bg-white/5 rounded-2xl border border-white/10">
+                    <Sparkles className="w-8 h-8 text-amber-300 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-white">4.9/5</p>
+                    <p className="text-xs text-white/60">Average Rating</p>
+                  </div>
+                  <div className="text-center p-5 bg-white/5 rounded-2xl border border-white/10">
+                    <Shield className="w-8 h-8 text-amber-300 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-white">100%</p>
+                    <p className="text-xs text-white/60">Confidential</p>
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  {videoCallPackages.map((pkg, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
-                      <span className="text-white/80 font-medium">{pkg.duration}</span>
-                      <div className="flex items-center gap-2">
-                        <ArrowRight className="w-4 h-4 text-blue-400/60" />
-                        <span className="text-xl font-bold text-gradient-amber">{pkg.price}</span>
-                      </div>
-                    </div>
-                  ))}
+                <p className="text-center text-white/50 text-sm italic">
+                  The right guidance, at the right moment, can change your direction.
+                </p>
+                <div className="text-center">
+                  <span className="text-amber-200 text-sm">👉 Limited slots available</span>
                 </div>
-
-                <Link
-                  to="/payment?type=video"
-                  className="mt-8 block w-full text-center py-4 rounded-xl font-semibold bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg shadow-blue-500/20"
-                >
-                  Book Video Call
-                </Link>
               </div>
             </motion.div>
           </div>
         </div>
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="hsl(var(--background))"/>
+          </svg>
+        </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-24 bg-[hsl(220,13%,10%)]">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-4">
-              How It <span className="text-gradient-amber">Works</span>
+      {/* Select What Resonates */}
+      <section className="section-padding">
+        <div className="section-container">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">Select What Resonates With You</span>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+              The right guidance, at the right moment, <span className="text-gradient-primary">can change your direction.</span>
             </h2>
-            <p className="font-body text-xl text-white/70">
-              Book your consultation in 3 simple steps
-            </p>
           </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              {
-                step: "01",
-                title: "Choose Your Package",
-                description: "Select a consultation type that fits your needs.",
-              },
-              {
-                step: "02",
-                title: "Make Payment",
-                description: "Complete secure payment to confirm your booking.",
-              },
-              {
-                step: "03",
-                title: "Get Your Consultation",
-                description: "Receive personalized guidance within 48-72 hours.",
-              },
-            ].map((item, index) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center relative"
-              >
-                <div className="relative inline-block mb-6">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center border border-primary/30">
-                    <span className="font-display text-2xl font-bold text-gradient-amber">{item.step}</span>
-                  </div>
-                  {index < 2 && (
-                    <div className="hidden md:block absolute top-1/2 -right-16 w-12 h-0.5 bg-gradient-to-r from-primary/50 to-transparent" />
-                  )}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {consultationAreas.map((area, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                className="bg-card rounded-2xl border border-border p-7 hover:shadow-xl hover:border-primary/30 transition-all duration-300 group">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+                  <area.icon className="w-7 h-7 text-primary" />
                 </div>
-                <h3 className="font-display text-xl font-semibold text-white mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-white/60">{item.description}</p>
+                <h3 className="font-display text-lg font-bold text-foreground mb-3">{area.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{area.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 bg-gradient-to-br from-brown-dark to-[hsl(220,13%,10%)]">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-2xl mx-auto"
-          >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-4">
-              Have Questions?
+      {/* 3-Call Structure */}
+      <section className="section-padding bg-muted/30">
+        <div className="section-container">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              🔄 3-Call Consultation Structure
+            </span>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Structured for <span className="text-gradient-primary">Clarity & Depth</span>
             </h2>
-            <p className="text-white/70 mb-8">
-              Contact us before booking if you need any clarification about our consultation services.
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Every consultation with Himansshu Agarwal Ji follows a structured three-step call process, ensuring clarity, depth, and proper implementation.
+            </p>
+          </motion.div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {callSteps.map((step, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}
+                className="relative">
+                <div className="bg-card rounded-2xl border border-border p-8 text-center hover:shadow-lg hover:border-primary/30 transition-all h-full">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6 border-2 border-primary/20">
+                    <span className="font-display text-2xl font-bold text-primary">{step.num}</span>
+                  </div>
+                  <h3 className="font-display text-lg font-bold text-foreground mb-3">Call {step.num} – {step.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
+                </div>
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-1/2 -right-4 z-10">
+                    <ChevronRight className="w-8 h-8 text-primary/30" />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing with Toggle */}
+      <section id="pricing" className="section-padding">
+        <div className="section-container">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">Choose Your Mode</span>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
+              Book Your <span className="text-gradient-primary">Consultation</span>
+            </h2>
+            {/* Toggle */}
+            <div className="inline-flex items-center bg-muted rounded-xl p-1.5 border border-border">
+              <button onClick={() => setMode("audio")}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all ${mode === "audio" ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`}>
+                <Phone className="w-4 h-4" /> Audio Call
+              </button>
+              <button onClick={() => setMode("video")}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all ${mode === "video" ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`}>
+                <Video className="w-4 h-4" /> Video Call
+              </button>
+            </div>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {(mode === "audio" ? audioPricing : videoPricing).map((tier, i) => (
+              <motion.div key={`${mode}-${i}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                className={`relative bg-card rounded-2xl border p-8 text-center transition-all hover:shadow-xl ${i === 1 ? "border-primary shadow-lg shadow-primary/10 scale-[1.03]" : "border-border"}`}>
+                {i === 1 && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                    POPULAR
+                  </div>
+                )}
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  {mode === "audio" ? <Phone className="w-6 h-6 text-primary" /> : <Video className="w-6 h-6 text-primary" />}
+                </div>
+                <h3 className="font-display text-lg font-bold text-foreground mb-1">{mode === "audio" ? "Audio" : "Video"} Call</h3>
+                <p className="text-sm text-muted-foreground mb-4">{tier.duration}</p>
+                <p className="text-3xl font-bold text-primary mb-6">{tier.price}</p>
+                <ul className="space-y-2.5 text-left mb-6">
+                  <li className="flex items-start gap-2 text-sm"><CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /><span className="text-foreground">Personal session with Himansshu Ji</span></li>
+                  <li className="flex items-start gap-2 text-sm"><CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /><span className="text-foreground">3-Call structured process</span></li>
+                  <li className="flex items-start gap-2 text-sm"><CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /><span className="text-foreground">Written remedies via Email/WhatsApp</span></li>
+                  <li className="flex items-start gap-2 text-sm"><CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /><span className="text-foreground">Lal Kitab remedies included</span></li>
+                </ul>
+                <Link to={`/payment?type=${mode}`} className="btn-primary w-full inline-flex items-center justify-center gap-2 py-3.5">
+                  Book Now <ArrowRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Important Notes */}
+      <section className="section-padding bg-muted/30">
+        <div className="section-container">
+          <div className="max-w-3xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <div className="flex items-center gap-3 mb-6">
+                <AlertCircle className="w-6 h-6 text-primary" />
+                <h2 className="font-display text-2xl font-bold text-foreground">Important Notes</h2>
+              </div>
+              <div className="bg-card rounded-2xl border border-border p-8 space-y-4">
+                {importantNotes.map((note, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                    <p className="text-muted-foreground text-sm leading-relaxed">{note}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQs */}
+      <section className="section-padding">
+        <div className="section-container">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">FAQs</span>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Frequently Asked <span className="text-gradient-primary">Questions</span>
+            </h2>
+          </motion.div>
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-3">
+              {faqs.map((faq, i) => (
+                <AccordionItem key={i} value={`faq-${i}`} className="bg-card rounded-xl border border-border px-6 overflow-hidden">
+                  <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
+                    {faq.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground leading-relaxed pb-5 whitespace-pre-line">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="section-padding bg-muted/30">
+        <div className="section-container text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-2xl mx-auto">
+            <Sparkles className="w-12 h-12 text-primary mx-auto mb-6" />
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
+              Ready for <span className="text-gradient-primary">Absolute Clarity?</span>
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8">
+              Choose your preferred consultation mode and take the first step toward aligned, purpose-driven decisions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="https://wa.me/919667305577"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300"
-              >
-                <MessageSquare className="w-5 h-5" />
-                Chat on WhatsApp
+              <a href="#pricing" className="btn-primary inline-flex items-center gap-2 text-lg px-8 py-4">
+                <Phone className="w-5 h-5" /> Book Audio Call
               </a>
-              <Link 
-                to="/contact" 
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold border-2 border-white/20 text-white hover:bg-white/10 transition-all duration-300"
-              >
-                Contact Us
-              </Link>
+              <a href="#pricing" className="inline-flex items-center gap-2 text-lg px-8 py-4 rounded-xl border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all font-semibold">
+                <Video className="w-5 h-5" /> Book Video Call
+              </a>
             </div>
           </motion.div>
         </div>
