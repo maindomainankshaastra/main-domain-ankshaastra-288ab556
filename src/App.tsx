@@ -9,6 +9,8 @@ import Contact from "./pages/Contact";
 import Calculator from "./pages/Calculator";
 import Consultation from "./pages/Consultation";
 import Reports from "./pages/Reports";
+import NameCorrectionBlueprint from "./pages/NameCorrectionBlueprint";
+import PersonalizedKundali from "./pages/PersonalizedKundali";
 import Courses from "./pages/Courses";
 import Shop from "./pages/Shop";
 import NameCorrection from "./pages/NameCorrection";
@@ -44,6 +46,8 @@ const App = () => (
           <Route path="/calculator" element={<Calculator />} />
           <Route path="/consultation" element={<Consultation />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/reports/name-correction-blueprint" element={<NameCorrectionBlueprint />} />
+          <Route path="/reports/personalized-kundali" element={<PersonalizedKundali />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/payment" element={<Payment />} />
