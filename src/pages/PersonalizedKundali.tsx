@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import {
   Star, ArrowRight, CheckCircle, ScrollText, Moon, Sun, Sparkles,

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 import { 
   Baby, ArrowRight, CheckCircle, Star, Heart, Sparkles, 
   Mail, Clock, FileText, Shield, Users, Award, ChevronRight,

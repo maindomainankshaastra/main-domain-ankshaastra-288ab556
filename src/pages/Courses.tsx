@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 import { BookOpen, Sparkles } from "lucide-react";
 
 const CoursesPage = () => {
