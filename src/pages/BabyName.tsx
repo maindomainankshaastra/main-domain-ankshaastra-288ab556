@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 import { 
   Baby, ArrowRight, CheckCircle, Star, Heart, Sparkles, 
   Mail, Clock, FileText, Shield, Users, Award, ChevronRight,
@@ -119,6 +120,7 @@ const BabyName = () => {
 
   return (
     <Layout>
+      <SEOHead title="Perfect Baby Name Numerology Report" description="Get a personalized baby name report crafted by Himansshu Agarwal Ji using numerology and vedic principles. 3 name options aligned with your child's birth chart." canonical="/services/baby-name" />
       {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />

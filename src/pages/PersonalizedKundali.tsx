@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import {
   Star, ArrowRight, CheckCircle, ScrollText, Moon, Sun, Sparkles,
@@ -44,6 +45,7 @@ const PersonalizedKundali = () => {
 
   return (
     <Layout>
+      <SEOHead title="Personalized Kundali Report" description="Get a hand-crafted birth chart covering career, wealth, relationships, and life path predictions by Himansshu Agarwal Ji." canonical="/reports/personalized-kundali" />
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />

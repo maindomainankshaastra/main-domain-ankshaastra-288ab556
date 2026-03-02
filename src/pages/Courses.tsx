@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 import { BookOpen, Sparkles } from "lucide-react";
 
 const CoursesPage = () => {
   return (
     <Layout>
+      <SEOHead title="Numerology Courses" description="Learn numerology and Lal Kitab remedies through Ved Gurukul courses by Himansshu Agarwal Ji. Master the art of name correction and birth chart analysis." canonical="/courses" />
       <section className="min-h-[80vh] flex items-center justify-center relative overflow-hidden">
         {/* Vibrant Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 import { Calculator, Star, Heart, Sparkles } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -320,6 +321,7 @@ const CalculatorPage = () => {
 
   return (
     <Layout>
+      <SEOHead title="Free Numerology Calculator" description="Use our free numerology calculator to find your life path number, zodiac sign, and name compatibility. Powered by Ankshaastra." canonical="/calculator" />
       {/* Hero Section */}
       <section className="pt-12 pb-16 relative overflow-hidden">
         {renderBackground()}

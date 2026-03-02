@@ -1,8 +1,10 @@
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const About = () => {
   return (
     <Layout>
+      <SEOHead title="About Himansshu Agarwal Ji" description="Learn about Himansshu Agarwal Ji – a renowned name correction expert and Lal Kitab remedy specialist with 10+ years of experience in numerology." canonical="/about" />
       <div className="section-container section-padding">
         <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6">
           About <span className="text-gradient-primary">Ankshaastra</span>

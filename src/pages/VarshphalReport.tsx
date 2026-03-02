@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import { 
   Star, Calendar, ScrollText, ArrowRight, CheckCircle, 
@@ -29,6 +30,7 @@ const features = [
 const VarshphalReport = () => {
   return (
     <Layout>
+      <SEOHead title="Varshphal Report 2026" description="Your complete yearly numerology guide for 2026 – month-by-month career, health, relationship, and financial predictions by Himansshu Agarwal Ji." canonical="/services/varshphal-report" />
       {/* Hero */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />
