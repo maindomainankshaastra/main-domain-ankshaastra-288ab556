@@ -45,6 +45,7 @@ const PersonalizedKundali = () => {
 
   return (
     <Layout>
+      <SEOHead title="Personalized Kundali Report" description="Get a hand-crafted birth chart covering career, wealth, relationships, and life path predictions by Himansshu Agarwal Ji." canonical="/reports/personalized-kundali" />
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />

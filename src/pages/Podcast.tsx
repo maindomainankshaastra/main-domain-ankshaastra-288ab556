@@ -10,6 +10,7 @@ const Podcast = () => {
 
   return (
     <Layout>
+      <SEOHead title="Insightful Podcasts" description="Watch numerology insights, Lal Kitab remedies, and name correction tips by Himansshu Agarwal Ji on the Ankshaastra podcast." canonical="/podcast" />
       <div className="section-container section-padding">
         <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6">
           The <span className="text-gradient-primary">Ankshaastra Podcast</span>

@@ -33,6 +33,7 @@ const NameCorrectionBlueprint = () => {
 
   return (
     <Layout>
+      <SEOHead title="Name Correction Blueprint" description="Align your name's vibration for success. Get a personalized name correction blueprint by Himansshu Agarwal Ji based on numerology analysis." canonical="/reports/name-correction-blueprint" />
       {/* Hero */}
       <section className="relative min-h-[75vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />

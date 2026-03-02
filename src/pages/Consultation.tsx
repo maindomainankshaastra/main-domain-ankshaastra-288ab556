@@ -123,6 +123,7 @@ const ConsultationPage = () => {
 
   return (
     <Layout>
+      <SEOHead title="Call Consultation with Himansshu Agarwal Ji" description="Book a one-on-one audio or video consultation with Himansshu Agarwal Ji for career, business, love, health, and child planning guidance through Lal Kitab numerology." canonical="/consultation" />
       {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />

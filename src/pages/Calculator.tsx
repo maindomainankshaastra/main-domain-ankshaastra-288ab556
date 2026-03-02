@@ -321,6 +321,7 @@ const CalculatorPage = () => {
 
   return (
     <Layout>
+      <SEOHead title="Free Numerology Calculator" description="Use our free numerology calculator to find your life path number, zodiac sign, and name compatibility. Powered by Ankshaastra." canonical="/calculator" />
       {/* Hero Section */}
       <section className="pt-12 pb-16 relative overflow-hidden">
         {renderBackground()}

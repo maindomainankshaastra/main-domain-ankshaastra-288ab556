@@ -287,6 +287,7 @@ const serviceCategories = [
 const ServicesPage = () => {
   return (
     <Layout>
+      <SEOHead title="Numerology Services" description="Explore our numerology services including name correction, baby name selection, C-section date analysis, mobile numerology, and office vastu by Himansshu Agarwal Ji." canonical="/services" />
       {/* Hero Section */}
       <section className="py-16 gradient-hero">
         <div className="section-container">
