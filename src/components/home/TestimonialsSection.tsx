@@ -42,8 +42,14 @@ const testimonials = [
 
 const TestimonialsSection = () => {
   return (
-    <section className="section-padding">
-      <div className="section-container">
+    <section className="section-padding relative overflow-hidden">
+      {/* Rich background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-[#faf6f0] to-background" />
+      
+      {/* Warm ambient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/[0.03] rounded-full blur-[100px]" />
+      
+      <div className="section-container relative z-10">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -51,13 +57,14 @@ const TestimonialsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+          <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-semibold mb-5 tracking-wider uppercase">
+            <Star className="w-3.5 h-3.5 fill-primary" />
             Testimonials
           </span>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-5">
             What Our <span className="text-gradient-primary">Clients Say</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Join thousands of satisfied clients who have transformed their lives
           </p>
         </motion.div>
@@ -70,33 +77,38 @@ const TestimonialsSection = () => {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-card border border-border rounded-xl p-6 relative"
+              transition={{ delay: index * 0.08, duration: 0.5 }}
+              className="group relative"
             >
-              <Quote className="w-10 h-10 text-primary/20 absolute top-4 right-4" />
-              
-              {/* Rating */}
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber text-amber" />
-                ))}
-              </div>
-
-              {/* Text */}
-              <p className="text-foreground mb-6 leading-relaxed">
-                "{testimonial.text}"
-              </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-primary font-semibold">
-                    {testimonial.name.charAt(0)}
-                  </span>
+              <div className="relative bg-card/80 backdrop-blur-sm border border-border/40 rounded-2xl p-7 hover:border-primary/20 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500">
+                {/* Quote icon */}
+                <div className="absolute -top-4 right-6 w-8 h-8 rounded-full bg-gradient-to-br from-amber to-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                  <Quote className="w-3.5 h-3.5 text-white" />
                 </div>
-                <div>
-                  <p className="font-semibold text-foreground">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.location}</p>
+                
+                {/* Rating */}
+                <div className="flex gap-1 mb-5">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber text-amber" />
+                  ))}
+                </div>
+
+                {/* Text */}
+                <p className="text-foreground/80 mb-7 leading-relaxed text-[15px]">
+                  "{testimonial.text}"
+                </p>
+
+                {/* Author */}
+                <div className="flex items-center gap-3 pt-5 border-t border-border/50">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary/15 to-amber/10 flex items-center justify-center border border-primary/10">
+                    <span className="text-primary font-bold text-sm">
+                      {testimonial.name.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">{testimonial.name}</p>
+                    <p className="text-xs text-muted-foreground">{testimonial.location}</p>
+                  </div>
                 </div>
               </div>
             </motion.div>
