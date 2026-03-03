@@ -23,6 +23,7 @@ import MobileNumerology from "./pages/MobileNumerology";
 import OfficeVastu from "./pages/OfficeVastu";
 import Podcast from "./pages/Podcast";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/podcast" element={<Podcast />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
