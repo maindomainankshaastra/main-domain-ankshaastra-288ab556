@@ -23,6 +23,7 @@ import MobileNumerology from "./pages/MobileNumerology";
 import OfficeVastu from "./pages/OfficeVastu";
 import Podcast from "./pages/Podcast";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
