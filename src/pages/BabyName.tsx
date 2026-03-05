@@ -155,7 +155,7 @@ const BabyName = () => {
                 ))}
               </div>
               <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <a href="#form" className="btn-primary inline-flex items-center gap-2 text-lg px-8 py-4">
+                <a href="https://empower.ankshaastra.com" target="_blank" rel="noopener noreferrer" className="btn-primary inline-flex items-center gap-2 text-lg px-8 py-4">
                   Empower My Child Now <ArrowRight className="w-5 h-5" />
                 </a>
               </div>
