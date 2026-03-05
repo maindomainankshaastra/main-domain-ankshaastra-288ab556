@@ -89,7 +89,7 @@ const plans = [
   },
   {
     name: "Perfect Baby Name",
-    price: "₹1,987",
+    price: "₹1,997",
     originalPrice: "₹5,100",
     badge: "ADD-ON",
     features: [
