@@ -4,12 +4,10 @@ import { Link } from "react-router-dom";
 
 const businessServices = [
   { title: "Business Name Correction", price: "₹3,878" },
-  { title: "Brand Logo Color Suggestion", price: "₹1,999" },
-  { title: "Business Phone Number", price: "₹799" },
-  { title: "Brand Tagline Correction", price: "₹1,499" },
-  { title: "Business Partner Compatibility", price: "₹1,999" },
-  { title: "Product Pricing Alignment", price: "₹999" },
-  { title: "Director Name Compatibility", price: "₹1,499" },
+  { title: "Business Phone Number", price: "₹1,499" },
+  { title: "Brand Tagline Correction", price: "₹1,997" },
+  { title: "Business Partner Compatibility", price: "₹1,997" },
+  { title: "Director Name Compatibility", price: "₹1,997" },
 ];
 
 interface Props {

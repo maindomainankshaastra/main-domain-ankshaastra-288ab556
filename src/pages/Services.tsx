@@ -40,18 +40,6 @@ const serviceCategories = [
     color: "from-orange to-amber",
     services: [
       {
-        title: "3 Questions (WhatsApp)",
-        description: "A focused WhatsApp-based consultation where you can ask three specific questions and receive concise, practical numerology guidance.",
-        price: "₹987",
-        link: "/payment"
-      },
-      {
-        title: "6 Questions (WhatsApp)",
-        description: "A deeper WhatsApp consultation allowing six structured questions, ideal for clients seeking clarity across multiple concerns.",
-        price: "₹1,487",
-        link: "/payment"
-      },
-      {
         title: "1:1 Audio Call",
         description: "A private audio call designed for detailed discussion while maintaining flexibility and confidentiality.",
         price: "₹1,987",
@@ -76,37 +64,25 @@ const serviceCategories = [
         title: "Name Correction",
         description: "Analysis and correction of name vibration to support smoother personal and professional progress.",
         price: "₹1,997",
-        link: "https://www.ankshaastra.empower.com",
+        link: "https://empower.ankshaastra.com",
         external: true
       },
       {
-        title: "Lucky Number & Color Analysis",
-        description: "Identification of supportive numbers and colors aligned with birth details for daily harmony.",
-        price: "₹999",
-        link: "/payment"
-      },
-      {
-        title: "Lucky Email ID",
-        description: "Evaluation of email ID vibration for better communication and professional credibility.",
-        price: "₹799",
-        link: "/payment"
-      },
-      {
-        title: "Vehicle Number Check",
+        title: "Lucky Vehicle Number",
         description: "Compatibility analysis of vehicle numbers for comfort, safety, and daily harmony.",
-        price: "₹599",
+        price: "₹998",
         link: "/payment"
       },
       {
-        title: "Mobile Number Check",
+        title: "Lucky Mobile Number",
         description: "Assessment of mobile number vibration and its influence on communication and opportunities.",
-        price: "₹599",
+        price: "₹998",
         link: "/payment"
       },
       {
-        title: "Flat / Plot Number Analysis",
+        title: "Lucky Flat / Plot Number",
         description: "Suitability analysis of residential numbers before purchase or occupancy.",
-        price: "₹899",
+        price: "₹998",
         link: "/payment"
       }
     ]
@@ -121,19 +97,20 @@ const serviceCategories = [
       {
         title: "C-Section Baby Dates",
         description: "Numerology-based guidance for selecting supportive C-section birth dates within medically approved range.",
-        price: "Custom",
-        link: "/payment"
+        price: "₹1,100",
+        link: "/services/csection-dates"
       },
       {
         title: "Perfect Baby Name",
         description: "Carefully aligned baby name suggestions based on numerology principles for foundational harmony.",
-        price: "₹2,497",
-        link: "/payment"
+        price: "₹1,997",
+        link: "https://empower.ankshaastra.com",
+        external: true
       },
       {
-        title: "Relationship Compatibility",
+        title: "Relationship Analysis",
         description: "Analysis of emotional dynamics and compatibility between partners for healthier communication.",
-        price: "₹1,499",
+        price: "₹987",
         link: "/payment"
       }
     ]
@@ -152,39 +129,27 @@ const serviceCategories = [
         link: "/payment"
       },
       {
-        title: "Brand Logo Color Suggestion",
-        description: "Numerology-guided color recommendations ensuring visual identity aligns with brand vibration.",
-        price: "₹1,999",
-        link: "/payment"
-      },
-      {
         title: "Business Phone Number",
         description: "Selection or evaluation of business phone numbers aligned with brand numerology.",
-        price: "₹799",
+        price: "₹1,499",
         link: "/payment"
       },
       {
         title: "Brand Tagline Correction",
         description: "Analysis of brand taglines to ensure wording aligns with business intent and positioning.",
-        price: "₹1,499",
+        price: "₹1,997",
         link: "/payment"
       },
       {
         title: "Business Partner Compatibility",
         description: "Compatibility analysis between business partners' names for smoother collaboration.",
-        price: "₹1,999",
-        link: "/payment"
-      },
-      {
-        title: "Product Pricing Alignment",
-        description: "Numerology-based pricing guidance to align product prices with brand vibration.",
-        price: "₹999",
+        price: "₹1,997",
         link: "/payment"
       },
       {
         title: "Director Name Compatibility",
         description: "Evaluation of director or leadership names to assess alignment with company vibration.",
-        price: "₹1,499",
+        price: "₹1,997",
         link: "/payment"
       }
     ]
@@ -199,19 +164,19 @@ const serviceCategories = [
       {
         title: "Company Registration Date",
         description: "Selection of supportive dates for company registration to encourage smoother beginnings.",
-        price: "₹1,999",
+        price: "₹1,997",
         link: "/payment"
       },
       {
         title: "Bank Account Opening Date",
         description: "Numerology-based date selection for opening business bank accounts, supporting financial flow.",
-        price: "₹999",
+        price: "₹1,997",
         link: "/payment"
       },
       {
         title: "Land Purchase Date",
         description: "Guidance on selecting favourable dates for land or property purchase for stability.",
-        price: "₹1,499",
+        price: "₹1,997",
         link: "/payment"
       }
     ]
@@ -224,33 +189,33 @@ const serviceCategories = [
     color: "from-amber-500 to-yellow-500",
     services: [
       {
-        title: "CEO/MD Cabin Direction",
+        title: "CEO/MD Cabin Sitting",
         description: "Guidance on cabin direction and seating alignment to support leadership clarity and authority.",
         price: "₹2,499",
         link: "/payment"
       },
       {
-        title: "Manager Seating Direction",
+        title: "Management Sitting",
         description: "Numerology-based seating recommendations for key managers to improve efficiency.",
-        price: "₹1,999",
+        price: "₹1,997",
         link: "/payment"
       },
       {
         title: "Cash Counter Direction",
         description: "Alignment of cash counters and billing areas to support smoother financial transactions.",
-        price: "₹1,499",
+        price: "₹1,997",
         link: "/payment"
       },
       {
         title: "Office Interior Colors",
         description: "Color recommendations for office interiors aligned with numerology for focus and balance.",
-        price: "₹2,499",
+        price: "₹1,997",
         link: "/payment"
       },
       {
-        title: "Department Seating Alignment",
+        title: "Departmental Sitting",
         description: "Structured seating alignment for departments to reduce friction and improve workflow.",
-        price: "₹3,999",
+        price: "₹4,998",
         link: "/payment"
       }
     ]

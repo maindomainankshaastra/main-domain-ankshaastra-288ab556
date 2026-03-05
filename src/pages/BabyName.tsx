@@ -13,7 +13,7 @@ import serviceBabyName from "@/assets/service-baby-name.png";
 
 const plan = {
   name: "Perfect Baby Name Report",
-  price: "₹1,987",
+  price: "₹1,997",
   originalPrice: "₹5,100",
   features: [
     "2 Baby Name Options (As per Numerology)",
@@ -185,7 +185,7 @@ const BabyName = () => {
                 </div>
                 <div className="absolute -top-4 -left-4 bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-xl">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">₹1,987</p>
+                    <p className="text-2xl font-bold text-primary">₹1,997</p>
                     <p className="text-xs text-muted-foreground line-through">₹5,100</p>
                   </div>
                 </div>
