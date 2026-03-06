@@ -32,7 +32,8 @@ const services = [
   {
     icon: Heart,
     title: "Perfect Baby Name",
-    link: "/services/baby-name",
+    link: "https://empower.ankshaastra.com",
+    external: true,
     accent: "from-rose-500 to-pink-600",
     image: serviceBabyName,
   },
