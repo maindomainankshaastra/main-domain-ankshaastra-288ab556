@@ -23,9 +23,11 @@ const serviceLinks = [
   { name: "Kundali Analysis", path: "/reports" },
   { name: "Baby Name Selection", path: "https://empower.ankshaastra.com", external: true },
   { name: "Business Numerology", path: "/services" },
-  { name: "C-Section Dates", path: "/services" },
-  { name: "Ved Gurukul Courses", path: "/courses" },
-  { name: "Shop", path: "/shop" },
+  { name: "C-Section Dates", path: "/services/csection-dates" },
+  { name: "Lal Kitab Consultation", path: "/consultation" },
+  { name: "Reports", path: "/reports" },
+  { name: "Courses", path: "/courses" },
+  { name: "Rudraksha & Bracelets", path: "https://ankshaastra.in", external: true },
 ];
 
 const socials = [
@@ -84,7 +86,7 @@ const Footer = () => {
 
             {/* Column 2: Quick Links */}
             <div>
-              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-6">Quick Links</h4>
+              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-8">Quick Links</h4>
               <ul className="space-y-3">
                 {quickLinks.map((link) => (
                   <li key={link.path}>
@@ -102,7 +104,7 @@ const Footer = () => {
 
             {/* Column 3: Services */}
             <div>
-              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-6">Our Services</h4>
+              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-8">Our Services</h4>
               <ul className="space-y-3">
                 {serviceLinks.map((link, index) => (
                   <li key={index}>
@@ -132,7 +134,7 @@ const Footer = () => {
 
             {/* Column 4: Contact */}
             <div>
-              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-6">Contact Us</h4>
+              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-8">Contact Us</h4>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
