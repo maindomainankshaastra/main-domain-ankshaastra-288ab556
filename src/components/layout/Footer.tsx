@@ -53,18 +53,18 @@ const Footer = () => {
           backgroundSize: '32px 32px'
         }} />
 
-        <div className="section-container py-16 lg:py-20 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-10">
+        <div className="section-container py-10 lg:py-14 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-8">
             {/* Column 1: About */}
             <div className="lg:col-span-1">
-              <Link to="/" className="inline-block mb-6">
+              <Link to="/" className="inline-block mb-4">
                 <img 
                   src={logo} 
                   alt="Ankshaastra - Empower Your Name" 
                   className="h-12 w-auto object-contain brightness-0 invert"
                 />
               </Link>
-              <p className="text-background/60 text-sm leading-relaxed mb-8">
+              <p className="text-background/60 text-sm leading-relaxed mb-5">
                 Your trusted guide to numerology and Lal Kitab remedies. Transform your 
                 life with personalized guidance from Himansshu Agarwal Ji.
               </p>
@@ -86,8 +86,8 @@ const Footer = () => {
 
             {/* Column 2: Quick Links */}
             <div>
-              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-8">Quick Links</h4>
-              <ul className="space-y-3">
+              <h4 className="font-display text-xs font-semibold uppercase tracking-widest text-primary/70 mb-5">Quick Links</h4>
+              <ul className="space-y-2.5">
                 {quickLinks.map((link) => (
                   <li key={link.path}>
                     <Link
@@ -104,8 +104,8 @@ const Footer = () => {
 
             {/* Column 3: Services */}
             <div>
-              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-8">Our Services</h4>
-              <ul className="space-y-3">
+              <h4 className="font-display text-xs font-semibold uppercase tracking-widest text-primary/70 mb-5">Our Services</h4>
+              <ul className="space-y-2.5">
                 {serviceLinks.map((link, index) => (
                   <li key={index}>
                     {link.external ? (
@@ -134,8 +134,8 @@ const Footer = () => {
 
             {/* Column 4: Contact */}
             <div>
-              <h4 className="font-display text-sm font-semibold uppercase tracking-wider text-background/40 mb-8">Contact Us</h4>
-              <ul className="space-y-4">
+              <h4 className="font-display text-xs font-semibold uppercase tracking-widest text-primary/70 mb-5">Contact Us</h4>
+              <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <MapPin className="w-4 h-4 text-primary" />
