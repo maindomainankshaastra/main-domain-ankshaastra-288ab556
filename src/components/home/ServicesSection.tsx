@@ -12,6 +12,8 @@ import serviceBusinessNumerology from "@/assets/service-business-numerology.png"
 import serviceCsectionDates from "@/assets/service-csection-dates.png";
 import serviceOfficeVastu from "@/assets/service-office-vastu.png";
 import serviceMobileNumerology from "@/assets/service-mobile-numerology.png";
+import serviceCallConsultation from "@/assets/service-call-consultation.png";
+import serviceVarshphalReport from "@/assets/service-varshphal-report.png";
 import BusinessNumerologyModal from "./BusinessNumerologyModal";
 
 const services = [
@@ -20,6 +22,7 @@ const services = [
     title: "Call Consultation",
     link: "/consultation",
     accent: "from-amber to-primary",
+    image: serviceCallConsultation,
   },
   {
     icon: ScrollText,
@@ -57,6 +60,7 @@ const services = [
     title: "Varshphal Report 2026",
     link: "/services/varshphal-report",
     accent: "from-amber to-orange",
+    image: serviceVarshphalReport,
   },
   {
     icon: Building,
