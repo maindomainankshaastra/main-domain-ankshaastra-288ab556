@@ -22,6 +22,7 @@ const services = [
     title: "Call Consultation",
     link: "/consultation",
     accent: "from-amber to-primary",
+    image: serviceCallConsultation,
   },
   {
     icon: ScrollText,
@@ -59,6 +60,7 @@ const services = [
     title: "Varshphal Report 2026",
     link: "/services/varshphal-report",
     accent: "from-amber to-orange",
+    image: serviceVarshphalReport,
   },
   {
     icon: Building,
