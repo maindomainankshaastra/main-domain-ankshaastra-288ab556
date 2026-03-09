@@ -12,6 +12,8 @@ import serviceBusinessNumerology from "@/assets/service-business-numerology.png"
 import serviceCsectionDates from "@/assets/service-csection-dates.png";
 import serviceOfficeVastu from "@/assets/service-office-vastu.png";
 import serviceMobileNumerology from "@/assets/service-mobile-numerology.png";
+import serviceCallConsultation from "@/assets/service-call-consultation.png";
+import serviceVarshphalReport from "@/assets/service-varshphal-report.png";
 import BusinessNumerologyModal from "./BusinessNumerologyModal";
 
 const services = [
