@@ -12,7 +12,7 @@ const faqs = [
   { q: "What is a Name Correction Blueprint?", a: "A Name Correction Blueprint is a personalised numerology report that analyzes your current name, identifies vibrational misalignments, and suggests corrected spellings or modifications to attract success, prosperity, and positive energy." },
   { q: "How is this different from a general name reading?", a: "Unlike generic readings, this Blueprint is crafted specifically for you based on your date of birth, current name, and life goals. It goes beyond just analysis — it provides actionable spelling corrections with explanations." },
   { q: "Will I need to legally change my name?", a: "Not necessarily. Many corrections are subtle spelling changes (e.g., adding or modifying one letter) that can be applied to your social, professional, or digital presence without any legal formality." },
-  { q: "How long does it take to receive the report?", a: "Your Name Correction Blueprint will be delivered to your email within 3 business days of purchase and receiving your details." },
+  { q: "How long does it take to receive the report?", a: "Your Name Correction Blueprint will be delivered to your email within 24–48 hours of purchase and receiving your details." },
   { q: "What information do I need to provide?", a: "You'll need to provide your full name (as used officially), date of birth, gender, and a brief note about your current life challenges or goals." },
   { q: "Is there a refund policy?", a: "Due to the deeply personalised nature of this report, refunds are not applicable once the report has been delivered to your email or WhatsApp." },
 ];
@@ -25,9 +25,6 @@ const includes = [
   "50+ page detailed report",
   "Call consultation included",
   "Corrected name suggestions with detailed reasoning",
-  "Lucky numbers, colors & directions",
-  "Signature correction guidance",
-  "Lal Kitab remedies for faster alignment",
 ];
 
 const NameCorrectionBlueprint = () => {
@@ -75,7 +72,7 @@ const NameCorrectionBlueprint = () => {
             <div className="flex flex-wrap justify-center gap-6 mb-10 text-white/70 text-sm">
               <span className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-300 fill-amber-300" /> 4.9/5 Rating</span>
               <span className="flex items-center gap-2"><ScrollText className="w-4 h-4 text-amber-300" /> 1000+ Reports Delivered</span>
-              <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-300" /> Delivered in 3 Days</span>
+              <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-300" /> Delivered in 24–48 Hours</span>
               <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-amber-300" /> 100% Confidential</span>
             </div>
 
@@ -198,7 +195,7 @@ const NameCorrectionBlueprint = () => {
                 <span className="text-5xl font-bold text-gradient-gold">₹1,997</span>
                 <span className="text-xl text-muted-foreground line-through">₹3,999</span>
               </div>
-              <p className="text-muted-foreground text-sm mb-8">Delivered within 3 business days</p>
+              <p className="text-muted-foreground text-sm mb-8">Delivered within 24–48 hours</p>
               <div className="flex items-center justify-center gap-1 mb-8">
                 {[1,2,3,4,5].map((s) => <Star key={s} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
                 <span className="text-sm text-muted-foreground ml-2">4.9/5 (1000+ reports)</span>
