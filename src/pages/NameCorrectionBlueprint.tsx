@@ -83,7 +83,7 @@ const NameCorrectionBlueprint = () => {
               to="/payment"
               className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
             >
-              Order Your Blueprint — ₹2,497
+              Order Your Blueprint — ₹1,997
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
