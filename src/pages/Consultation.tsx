@@ -146,7 +146,7 @@ const ConsultationPage = () => {
                 Speak directly with Himansshu Agarwal Ji for a deeply personalised one-to-one lal kitab consultation.
               </p>
               <p className="text-base text-amber-200/90 font-semibold mb-8">
-                Consultation Investment: Starting at ₹1,987/-
+                Consultation Investment: Starting at ₹3,998/-
               </p>
 
               {/* Trust Points */}
