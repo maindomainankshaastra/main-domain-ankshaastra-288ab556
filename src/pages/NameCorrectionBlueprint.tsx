@@ -18,13 +18,15 @@ const faqs = [
 ];
 
 const includes = [
-  "Full numerological analysis of your current name",
-  "Life Path & Destiny Number assessment",
-  "Identification of vibrational conflicts",
+  "First Name numerological analysis",
+  "Full Name numerological analysis",
+  "Compound Number analysis",
+  "First Alphabet analysis",
+  "50+ page detailed report",
+  "Call consultation included",
   "Corrected name suggestions with detailed reasoning",
   "Lucky numbers, colors & directions",
   "Signature correction guidance",
-  "Auspicious date to begin using the new name",
   "Lal Kitab remedies for faster alignment",
 ];
 
