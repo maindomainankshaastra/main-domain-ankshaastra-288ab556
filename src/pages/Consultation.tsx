@@ -62,15 +62,15 @@ const callSteps = [
 ];
 
 const audioPricing = [
-  { duration: "45 Minutes", price: "₹1,987" },
-  { duration: "60 Minutes", price: "₹2,496" },
-  { duration: "75 Minutes", price: "₹3,108" },
+  { duration: "45 Minutes", price: "₹3,998" },
+  { duration: "60 Minutes", price: "₹4,997" },
+  { duration: "75 Minutes", price: "₹5,997" },
 ];
 
 const videoPricing = [
-  { duration: "45 Minutes", price: "₹3,648" },
-  { duration: "60 Minutes", price: "₹4,297" },
-  { duration: "75 Minutes", price: "₹4,986" },
+  { duration: "45 Minutes", price: "₹5,997" },
+  { duration: "60 Minutes", price: "₹7,497" },
+  { duration: "75 Minutes", price: "₹8,997" },
 ];
 
 const importantNotes = [
