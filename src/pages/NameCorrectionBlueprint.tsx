@@ -25,9 +25,6 @@ const includes = [
   "50+ page detailed report",
   "Call consultation included",
   "Corrected name suggestions with detailed reasoning",
-  "Lucky numbers, colors & directions",
-  "Signature correction guidance",
-  "Lal Kitab remedies for faster alignment",
 ];
 
 const NameCorrectionBlueprint = () => {
