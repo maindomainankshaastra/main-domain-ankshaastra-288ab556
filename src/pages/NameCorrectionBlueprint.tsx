@@ -18,13 +18,15 @@ const faqs = [
 ];
 
 const includes = [
-  "Full numerological analysis of your current name",
-  "Life Path & Destiny Number assessment",
-  "Identification of vibrational conflicts",
+  "First Name numerological analysis",
+  "Full Name numerological analysis",
+  "Compound Number analysis",
+  "First Alphabet analysis",
+  "50+ page detailed report",
+  "Call consultation included",
   "Corrected name suggestions with detailed reasoning",
   "Lucky numbers, colors & directions",
   "Signature correction guidance",
-  "Auspicious date to begin using the new name",
   "Lal Kitab remedies for faster alignment",
 ];
 
@@ -81,7 +83,7 @@ const NameCorrectionBlueprint = () => {
               to="/payment"
               className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
             >
-              Order Your Blueprint — ₹2,497
+              Order Your Blueprint — ₹1,997
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
@@ -193,7 +195,7 @@ const NameCorrectionBlueprint = () => {
               <h3 className="font-display text-2xl font-bold text-foreground mb-2">Name Correction Blueprint</h3>
               <p className="text-muted-foreground text-sm mb-6">Personalised by Himansshu Agarwal Ji</p>
               <div className="flex items-baseline justify-center gap-3 mb-2">
-                <span className="text-5xl font-bold text-gradient-gold">₹2,497</span>
+                <span className="text-5xl font-bold text-gradient-gold">₹1,997</span>
                 <span className="text-xl text-muted-foreground line-through">₹3,999</span>
               </div>
               <p className="text-muted-foreground text-sm mb-8">Delivered within 3 business days</p>
@@ -266,7 +268,7 @@ const NameCorrectionBlueprint = () => {
               One small correction. One big shift. Let Himansshu Agarwal Ji show you the path.
             </p>
             <Link to="/payment" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
-              Get My Blueprint — ₹2,497 <ArrowRight className="w-5 h-5" />
+              Get My Blueprint — ₹1,997 <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
         </div>
