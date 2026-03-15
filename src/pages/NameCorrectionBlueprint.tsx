@@ -72,7 +72,7 @@ const NameCorrectionBlueprint = () => {
             <div className="flex flex-wrap justify-center gap-6 mb-10 text-white/70 text-sm">
               <span className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-300 fill-amber-300" /> 4.9/5 Rating</span>
               <span className="flex items-center gap-2"><ScrollText className="w-4 h-4 text-amber-300" /> 1000+ Reports Delivered</span>
-              <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-300" /> Delivered in 3 Days</span>
+              <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-300" /> Delivered in 24–48 Hours</span>
               <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-amber-300" /> 100% Confidential</span>
             </div>
 
