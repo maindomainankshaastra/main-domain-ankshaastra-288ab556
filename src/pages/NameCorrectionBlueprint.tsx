@@ -195,7 +195,7 @@ const NameCorrectionBlueprint = () => {
               <h3 className="font-display text-2xl font-bold text-foreground mb-2">Name Correction Blueprint</h3>
               <p className="text-muted-foreground text-sm mb-6">Personalised by Himansshu Agarwal Ji</p>
               <div className="flex items-baseline justify-center gap-3 mb-2">
-                <span className="text-5xl font-bold text-gradient-gold">₹2,497</span>
+                <span className="text-5xl font-bold text-gradient-gold">₹1,997</span>
                 <span className="text-xl text-muted-foreground line-through">₹3,999</span>
               </div>
               <p className="text-muted-foreground text-sm mb-8">Delivered within 3 business days</p>
