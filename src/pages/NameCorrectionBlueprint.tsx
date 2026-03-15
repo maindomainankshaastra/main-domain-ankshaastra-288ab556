@@ -195,7 +195,7 @@ const NameCorrectionBlueprint = () => {
                 <span className="text-5xl font-bold text-gradient-gold">₹1,997</span>
                 <span className="text-xl text-muted-foreground line-through">₹3,999</span>
               </div>
-              <p className="text-muted-foreground text-sm mb-8">Delivered within 3 business days</p>
+              <p className="text-muted-foreground text-sm mb-8">Delivered within 24–48 hours</p>
               <div className="flex items-center justify-center gap-1 mb-8">
                 {[1,2,3,4,5].map((s) => <Star key={s} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
                 <span className="text-sm text-muted-foreground ml-2">4.9/5 (1000+ reports)</span>
