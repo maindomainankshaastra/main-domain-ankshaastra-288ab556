@@ -268,7 +268,7 @@ const NameCorrectionBlueprint = () => {
               One small correction. One big shift. Let Himansshu Agarwal Ji show you the path.
             </p>
             <Link to="/payment" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
-              Get My Blueprint — ₹2,497 <ArrowRight className="w-5 h-5" />
+              Get My Blueprint — ₹1,997 <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
         </div>
