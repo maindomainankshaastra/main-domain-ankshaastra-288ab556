@@ -12,7 +12,7 @@ const faqs = [
   { q: "What is a Name Correction Blueprint?", a: "A Name Correction Blueprint is a personalised numerology report that analyzes your current name, identifies vibrational misalignments, and suggests corrected spellings or modifications to attract success, prosperity, and positive energy." },
   { q: "How is this different from a general name reading?", a: "Unlike generic readings, this Blueprint is crafted specifically for you based on your date of birth, current name, and life goals. It goes beyond just analysis — it provides actionable spelling corrections with explanations." },
   { q: "Will I need to legally change my name?", a: "Not necessarily. Many corrections are subtle spelling changes (e.g., adding or modifying one letter) that can be applied to your social, professional, or digital presence without any legal formality." },
-  { q: "How long does it take to receive the report?", a: "Your Name Correction Blueprint will be delivered to your email within 3 business days of purchase and receiving your details." },
+  { q: "How long does it take to receive the report?", a: "Your Name Correction Blueprint will be delivered to your email within 24–48 hours of purchase and receiving your details." },
   { q: "What information do I need to provide?", a: "You'll need to provide your full name (as used officially), date of birth, gender, and a brief note about your current life challenges or goals." },
   { q: "Is there a refund policy?", a: "Due to the deeply personalised nature of this report, refunds are not applicable once the report has been delivered to your email or WhatsApp." },
 ];
