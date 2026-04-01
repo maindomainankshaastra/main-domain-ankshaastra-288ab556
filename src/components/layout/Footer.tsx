@@ -20,7 +20,7 @@ const quickLinks = [
 const serviceLinks = [
   { name: "Name Correction", path: "https://empower.ankshaastra.com", external: true },
   { name: "Call Consultation", path: "/consultation" },
-  { name: "Kundali Analysis", path: "/reports" },
+  { name: "Premium Personalised Kundali", path: "/reports/personalized-kundali" },
   { name: "Baby Name Selection", path: "https://empower.ankshaastra.com", external: true },
   { name: "Business Numerology", path: "/services" },
   { name: "C-Section Dates", path: "/services/csection-dates" },
