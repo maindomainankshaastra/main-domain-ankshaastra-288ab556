@@ -76,11 +76,12 @@ const Navbar = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-500 ${
         scrolled
-          ? "bg-card/90 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.08)] border-b border-border/30"
-          : "bg-transparent"
+          ? "bg-card/95 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.08)] border-b border-border/30"
+          : "bg-gradient-to-b from-black/50 to-transparent backdrop-blur-[2px]"
       }`}
+      style={{ isolation: 'isolate' }}
     >
       <nav className="w-full px-4 lg:px-6">
         <div className="flex items-center h-20 max-w-[1920px] mx-auto relative">
