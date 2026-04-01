@@ -117,8 +117,7 @@ const VarshphalReport = () => {
                 <ScrollText className="w-16 h-16 text-primary mx-auto mb-6" />
                 <h3 className="font-display text-2xl font-bold text-foreground mb-2">Complete Yearly Report</h3>
                 <div className="flex items-baseline justify-center gap-2 mb-2">
-                  <span className="text-4xl font-bold text-primary">₹2,499</span>
-                  <span className="text-muted-foreground line-through">₹3,499</span>
+                  <span className="text-4xl font-bold text-primary">₹699</span>
                 </div>
                 <p className="text-muted-foreground text-sm mb-6">40+ page detailed PDF report</p>
                 <div className="flex items-center justify-center gap-1 mb-6">
