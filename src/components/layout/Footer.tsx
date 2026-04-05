@@ -188,7 +188,7 @@ const Footer = () => {
               <p className="text-background/40 text-sm flex items-center gap-1.5">
                 © {currentYear} Ankshaastra. Made with <Heart className="w-3.5 h-3.5 text-primary fill-primary" /> in India
               </p>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6 relative z-[60]">
                 {[
                   { to: "/privacy", label: "Privacy Policy" },
                   { to: "/terms", label: "Terms & Conditions" },
@@ -196,7 +196,7 @@ const Footer = () => {
                 ].map((link, i) => (
                   <span key={link.to} className="flex items-center gap-6">
                     {i > 0 && <span className="text-background/15">·</span>}
-                    <Link to={link.to} className="text-background/40 hover:text-background/70 transition-colors text-sm">
+                    <Link to={link.to} className="text-background/40 hover:text-background/70 transition-colors text-sm cursor-pointer">
                       {link.label}
                     </Link>
                   </span>
