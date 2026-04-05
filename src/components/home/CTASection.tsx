@@ -64,7 +64,7 @@ const CTASection = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-3 bg-white/[0.06] backdrop-blur-md border border-white/15 text-white font-bold px-10 py-4 rounded-xl hover:bg-white/[0.12] hover:border-amber/30 transition-all duration-300"
                 >
-                  Get Your Name Checked at Just ₹199/-
+                  Get Your Name Checked at Just ₹293/-
                 </a>
               </motion.div>
             </div>
