@@ -48,7 +48,7 @@ const Footer = () => {
       {/* Main Footer */}
       <div className="bg-foreground text-background relative">
         {/* Subtle pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
           backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0)`,
           backgroundSize: '32px 32px'
         }} />
