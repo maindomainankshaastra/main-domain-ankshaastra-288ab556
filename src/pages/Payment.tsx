@@ -231,16 +231,13 @@ try {
       console.log("Payment Success:", response);
 
       // OPTIONAL: verify payment
-      fetch(""/api/verify-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(response),
-      });
-
-      alert("Payment Successful ✅");
-    },
+      await fetch("/api/verify-payment", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(response),
+});
 
     prefill: {
       name: formData.firstName,
