@@ -198,15 +198,27 @@ const loadRazorpay = () => {
     return;
   }
 
-  // 🔥 Call your backend
-  const order = await fetch("/api/create-order", {
+  let order;
+
+try {
+  const response = await fetch("/api/create-order", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ amount }),
-  }).then((res) => res.json());
+  });
 
+  if (!response.ok) {
+    throw new Error("Order API failed");
+  }
+
+  order = await response.json();
+} catch (error) {
+  console.error(error);
+  alert("Payment initialization failed ❌");
+  return;
+}
   const options = {
     key: "YOUR_KEY_ID", // replace
     amount: order.amount,
