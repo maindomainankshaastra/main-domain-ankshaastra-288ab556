@@ -219,7 +219,7 @@ const loadRazorpay = () => {
       console.log("Payment Success:", response);
 
       // OPTIONAL: verify payment
-      fetch("http://localhost:5000/verify-payment", {
+      fetch(""/api/verify-payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
