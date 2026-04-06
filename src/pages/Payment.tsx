@@ -199,7 +199,7 @@ const loadRazorpay = () => {
   }
 
   // 🔥 Call your backend
-  const order = await fetch("http://localhost:5000/create-order", {
+  const order = await fetch("/api/create-order", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
