@@ -147,7 +147,69 @@ const PaymentPage = () => {
       problemAreas: "",
     },
   });
-/*
+  const loadRazorpay = () => {
+    return new Promise<boolean>((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayment = async (amount: number, formData: BookingFormData) => {
+    const res = await loadRazorpay();
+    if (!res) {
+      alert("Razorpay SDK failed to load");
+      return;
+    }
+
+    let order;
+    try {
+      const response = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      if (!response.ok) throw new Error("Order API failed");
+      order = await response.json();
+    } catch (error) {
+      console.error(error);
+      alert("Payment initialization failed ❌");
+      return;
+    }
+
+    const options = {
+      key: "YOUR_KEY_ID",
+      amount: order.amount,
+      currency: "INR",
+      name: "Ankshaastra",
+      description: "Consultation Booking",
+      order_id: order.id,
+      handler: async function (response: any) {
+        console.log("Payment Success:", response);
+        try {
+          await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(response),
+          });
+        } catch (e) {
+          console.error("Verification failed", e);
+        }
+      },
+      prefill: {
+        name: formData.firstName,
+        email: formData.email,
+        contact: formData.mobileNumber,
+      },
+      theme: { color: "#6366f1" },
+    };
+
+    const paymentObject = new (window as any).Razorpay(options);
+    paymentObject.open();
+  };
+
   const onSubmit = async (data: BookingFormData) => {
     if (!selectedPackage) {
       toast({
@@ -157,102 +219,14 @@ const PaymentPage = () => {
       });
       return;
     }
-*/
-  const onSubmit = async (data: any) => {
-  console.log(data);
-
-  // Example: get selected package price
-  const selectedPrice = selectedOption?.price || 500;
-
-  await handlePayment(selectedPrice, data);
-};
     setIsProcessing(true);
-
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    toast({
-      title: "Booking Submitted!",
-      description: "Thank you for your booking. We will contact you within 48-72 hours to schedule your consultation.",
-    });
-
-    setIsProcessing(false);
-    form.reset();
+    try {
+      const selectedPrice = selectedOption?.price || 500;
+      await handlePayment(selectedPrice, data);
+    } finally {
+      setIsProcessing(false);
+    }
   };
-
-const loadRazorpay = () => {
-  return new Promise<boolean>((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
-  const handlePayment = async (amount: number, formData: any) => {
-  const res = await loadRazorpay();
-
-  if (!res) {
-    alert("Razorpay SDK failed to load");
-    return;
-  }
-
-  let order;
-
-try {
-  const response = await fetch("/api/create-order", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ amount }),
-  });
-
-  if (!response.ok) {
-    throw new Error("Order API failed");
-  }
-
-  order = await response.json();
-} catch (error) {
-  console.error(error);
-  alert("Payment initialization failed ❌");
-  return;
-}
-  const options = {
-    key: "YOUR_KEY_ID", // replace
-    amount: order.amount,
-    currency: "INR",
-    name: "Ankshaastra",
-    description: "Consultation Booking",
-    order_id: order.id,
-
-    handler: function (response: any) {
-      console.log("Payment Success:", response);
-
-      // OPTIONAL: verify payment
-      await fetch("/api/verify-payment", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(response),
-});
-
-    prefill: {
-      name: formData.firstName,
-      email: formData.email,
-      contact: formData.phone,
-    },
-
-    theme: {
-      color: "#6366f1",
-    },
-  };
-
-  const paymentObject = new (window as any).Razorpay(options);
-  paymentObject.open();
-};
 
 
   
