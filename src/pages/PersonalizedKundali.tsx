@@ -134,7 +134,7 @@ const PersonalizedKundali = () => {
               <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-amber-300" /> Expert-Verified</span>
             </div>
 
-            <Link to="/payment" className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
+            <Link to="/payment?service=Personalized%20Kundali&amount=699" className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
               Get Your Kundli — Starting ₹699
               <ArrowRight className="w-5 h-5" />
             </Link>
@@ -177,7 +177,7 @@ const PersonalizedKundali = () => {
                 <div className="text-4xl font-bold text-gradient-gold mb-2">{plan.price}</div>
                 <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">{plan.tag}</span>
                 <p className="text-muted-foreground text-sm mb-6">{plan.desc}</p>
-                <Link to="/payment" className={`block w-full font-bold py-3 rounded-xl transition-opacity text-base ${plan.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-foreground hover:bg-muted/80"}`}>
+                <Link to={`/payment?service=${encodeURIComponent(plan.count === "1 Kundali" ? "Personalized Kundali" : plan.count === "2 Kundali" ? "Personalized Kundali Match-Making" : "Personalized Kundali Family")}&amount=${plan.count === "1 Kundali" ? 699 : plan.count === "2 Kundali" ? 1199 : 1599}`} className={`block w-full font-bold py-3 rounded-xl transition-opacity text-base ${plan.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-foreground hover:bg-muted/80"}`}>
                   Buy Now
                 </Link>
               </motion.div>
@@ -353,7 +353,7 @@ const PersonalizedKundali = () => {
             <p className="text-muted-foreground text-lg mb-8">
               Expert-verified, delivered in 3 hours. Start your journey to clarity today.
             </p>
-            <Link to="/payment" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
+            <Link to="/payment?service=Personalized%20Kundali&amount=699" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
               Order My Kundli — Starting ₹699 <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>

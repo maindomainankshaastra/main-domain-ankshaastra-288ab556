@@ -155,7 +155,7 @@ const ReportsPage = () => {
                 </ul>
 
                 <Link
-                  to="/payment"
+                  to={`/payment?service=${encodeURIComponent(report.title)}&amount=${report.id === 1 ? 999 : report.id === 2 ? 1499 : report.id === 3 ? 1999 : report.id === 4 ? 2499 : report.id === 5 ? 999 : 4999}`}
                   className="flex items-center justify-center gap-2 w-full btn-cosmic"
                 >
                   Order Now
