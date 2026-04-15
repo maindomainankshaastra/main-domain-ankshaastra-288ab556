@@ -228,6 +228,14 @@ const ServiceCard = ({ service, index }: { service: any; index: number }) => {
     </motion.div>
   );
 
+  const getPaymentLink = () => {
+    if (service.external) return service.link;
+    if (service.link === "/payment") {
+      return `/payment?service=${encodeURIComponent(service.title)}&amount=${service.rawPrice || 0}`;
+    }
+    return service.link;
+  };
+
   if (service.external) {
     return (
       <a href={service.link} target="_blank" rel="noopener noreferrer" className="block h-full">
@@ -236,7 +244,7 @@ const ServiceCard = ({ service, index }: { service: any; index: number }) => {
     );
   }
   return (
-    <Link to={service.link} className="block h-full">
+    <Link to={getPaymentLink()} className="block h-full">
       {content}
     </Link>
   );
