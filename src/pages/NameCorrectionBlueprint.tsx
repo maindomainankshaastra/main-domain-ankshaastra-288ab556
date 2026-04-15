@@ -77,7 +77,7 @@ const NameCorrectionBlueprint = () => {
             </div>
 
             <Link
-              to="/payment"
+              to="/payment?service=Name%20Correction%20Blueprint&amount=1997"
               className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
             >
               Order Your Blueprint — ₹1,997
@@ -200,7 +200,7 @@ const NameCorrectionBlueprint = () => {
                 {[1,2,3,4,5].map((s) => <Star key={s} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
                 <span className="text-sm text-muted-foreground ml-2">4.9/5 (1000+ reports)</span>
               </div>
-              <Link to="/payment" className="block w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
+              <Link to="/payment?service=Name%20Correction%20Blueprint&amount=1997" className="block w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
                 Order Now
               </Link>
               <p className="text-xs text-muted-foreground mt-4">100% Confidential · No Refunds After Delivery</p>
@@ -264,7 +264,7 @@ const NameCorrectionBlueprint = () => {
             <p className="text-muted-foreground text-lg mb-8">
               One small correction. One big shift. Let Himansshu Agarwal Ji show you the path.
             </p>
-            <Link to="/payment" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
+            <Link to="/payment?service=Name%20Correction%20Blueprint&amount=1997" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
               Get My Blueprint — ₹1,997 <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
