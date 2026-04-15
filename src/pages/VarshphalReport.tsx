@@ -54,7 +54,7 @@ const VarshphalReport = () => {
               health, finances, and more — powered by Numerology & Lal Kitab wisdom.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/payment" className="group inline-flex items-center justify-center gap-3 bg-white text-primary font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <Link to="/payment?service=Varshphal%20Report%202026&amount=699" className="group inline-flex items-center justify-center gap-3 bg-white text-primary font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <span><span>Order Report — ₹699</span></span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -126,7 +126,7 @@ const VarshphalReport = () => {
                   ))}
                   <span className="text-sm text-muted-foreground ml-2">4.9/5 rating</span>
                 </div>
-                <Link to="/payment" className="btn-primary w-full inline-flex items-center justify-center gap-2 py-4 text-lg">
+                <Link to="/payment?service=Varshphal%20Report%202026&amount=699" className="btn-primary w-full inline-flex items-center justify-center gap-2 py-4 text-lg">
                   Order Now <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>
@@ -145,7 +145,7 @@ const VarshphalReport = () => {
             <p className="text-muted-foreground text-lg mb-8">
               Know what's coming. Plan smarter. Make empowered decisions with your personalised Varshphal Report.
             </p>
-            <Link to="/payment" className="btn-primary inline-flex items-center gap-2 text-lg px-10 py-4">
+            <Link to="/payment?service=Varshphal%20Report%202026&amount=699" className="btn-primary inline-flex items-center gap-2 text-lg px-10 py-4">
               Get Your Report Now <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
