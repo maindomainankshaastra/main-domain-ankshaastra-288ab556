@@ -50,8 +50,8 @@ const serviceCategories = [
     gradient: "from-primary to-amber",
     borderAccent: "hsl(var(--orange))",
     services: [
-      { title: "1:1 Audio Call", description: "A private audio call designed for detailed discussion while maintaining flexibility and confidentiality.", price: "₹1,987", link: "/consultation", highlight: true },
-      { title: "1:1 Video Call", description: "A face-to-face consultation for deeper engagement, visual explanations, and interactive guidance.", price: "₹3,648", link: "/consultation", highlight: true },
+      { title: "1:1 Audio Call", description: "A private audio call designed for detailed discussion while maintaining flexibility and confidentiality.", price: "₹1,987", rawPrice: 1987, link: "/consultation", highlight: true },
+      { title: "1:1 Video Call", description: "A face-to-face consultation for deeper engagement, visual explanations, and interactive guidance.", price: "₹3,648", rawPrice: 3648, link: "/consultation", highlight: true },
     ]
   },
   {
