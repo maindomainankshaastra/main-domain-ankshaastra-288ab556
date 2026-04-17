@@ -1,6 +1,8 @@
 import Layout from "@/components/layout/Layout";
 import HeroSection from "@/components/home/HeroSection";
+import QuickCategories from "@/components/home/QuickCategories";
 import ServicesSection from "@/components/home/ServicesSection";
+import CalculatorsSection from "@/components/home/CalculatorsSection";
 import YouTubeSection from "@/components/home/YouTubeSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import CTASection from "@/components/home/CTASection";
@@ -27,7 +29,9 @@ const Index = () => {
         }}
       />
       <HeroSection />
+      <QuickCategories />
       <ServicesSection />
+      <CalculatorsSection />
       <YouTubeSection />
       <TestimonialsSection />
       <CTASection />
