@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Poppins', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        display: ['"Cormorant Garamond"', '"Libre Baskerville"', 'serif'],
+        serif: ['"Libre Baskerville"', 'serif'],
+        body: ['"DM Sans"', '"Nunito"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -68,10 +69,12 @@ export default {
         },
         cream: {
           DEFAULT: "hsl(var(--cream))",
+          light: "hsl(var(--cream-light))",
           dark: "hsl(var(--cream-dark))",
         },
-        emerald: {
-          DEFAULT: "hsl(var(--emerald))",
+        tan: {
+          DEFAULT: "hsl(var(--tan))",
+          light: "hsl(var(--tan-light))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
