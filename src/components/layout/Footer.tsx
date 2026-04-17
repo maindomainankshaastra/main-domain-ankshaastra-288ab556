@@ -1,33 +1,58 @@
 import { Link } from "react-router-dom";
-import { 
+import {
   Phone, Mail, MapPin, Clock,
   Facebook, Instagram, Youtube, Linkedin,
-  MessageCircle, ArrowRight, Heart
+  MessageCircle, Heart, Sun,
 } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 
-const quickLinks = [
-  { name: "Home", path: "/" },
-  { name: "Reports", path: "/reports" },
-  { name: "Services", path: "/services" },
-  { name: "About", path: "/about" },
-  { name: "Insightful Podcasts", path: "/podcast" },
-  { name: "Courses", path: "/courses" },
-  { name: "Free Calculators", path: "/calculator" },
-  { name: "Shop", path: "/shop" },
-];
-
-const serviceLinks = [
-  { name: "Name Correction", path: "https://empower.ankshaastra.com", external: true },
-  { name: "Call Consultation", path: "/consultation" },
-  { name: "Premium Personalised Kundali", path: "/reports/personalized-kundali" },
-  { name: "Baby Name Selection", path: "https://empower.ankshaastra.com", external: true },
-  { name: "Business Numerology", path: "/services" },
-  { name: "C-Section Dates", path: "/services/csection-dates" },
-  { name: "Lal Kitab Consultation", path: "/consultation" },
-  { name: "Reports", path: "/reports" },
-  { name: "Courses", path: "/courses" },
-  { name: "Rudraksha & Bracelets", path: "https://ankshaastra.in", external: true },
+const columns = [
+  {
+    title: "Reports",
+    links: [
+      { name: "Name Correction", to: "/reports/name-correction-blueprint" },
+      { name: "Personalized Kundali", to: "/reports/personalized-kundali" },
+      { name: "Varshphal 2026", to: "/services/varshphal-report" },
+      { name: "Baby Name", to: "https://empower.ankshaastra.com", external: true },
+    ],
+  },
+  {
+    title: "Online Puja",
+    links: [
+      { name: "Office Vastu", to: "/services/office-vastu" },
+      { name: "C-Section Dates", to: "/services/csection-dates" },
+      { name: "Mobile Numerology", to: "/services/mobile-numerology" },
+      { name: "All Services", to: "/services" },
+    ],
+  },
+  {
+    title: "Calculators",
+    links: [
+      { name: "Free Calculators", to: "/calculator" },
+      { name: "Numerology", to: "/calculator" },
+      { name: "Compatibility", to: "/calculator" },
+      { name: "Lucky Number", to: "/calculator" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { name: "About", to: "/about" },
+      { name: "Podcasts", to: "/podcast" },
+      { name: "Courses", to: "/courses" },
+      { name: "Blog", to: "/blog" },
+      { name: "Contact", to: "/contact" },
+    ],
+  },
+  {
+    title: "Shop",
+    links: [
+      { name: "Rudraksha", to: "https://ankshaastra.in", external: true },
+      { name: "Bracelets", to: "https://ankshaastra.in", external: true },
+      { name: "Crystals", to: "https://ankshaastra.in", external: true },
+      { name: "Gemstones", to: "https://ankshaastra.in", external: true },
+    ],
+  },
 ];
 
 const socials = [
@@ -38,171 +63,122 @@ const socials = [
 ];
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden">
-      {/* Top gradient line */}
-      <div className="h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+    <footer className="bg-secondary text-cream-light relative overflow-hidden">
+      {/* Subtle pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--cream-light)) 1px, transparent 0)`,
+          backgroundSize: "32px 32px",
+        }}
+      />
 
-      {/* Main Footer */}
-      <div className="bg-foreground text-background relative">
-        {/* Subtle pattern */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0)`,
-          backgroundSize: '32px 32px'
-        }} />
-
-        <div className="section-container py-10 lg:py-14 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-8">
-            {/* Column 1: About */}
-            <div className="lg:col-span-1">
-              <Link to="/" className="inline-block mb-4">
-                <img 
-                  src={logo} 
-                  alt="Ankshaastra - Empower Your Name" 
-                  className="h-12 w-auto object-contain brightness-0 invert"
-                />
-              </Link>
-              <p className="text-background/60 text-sm leading-relaxed mb-5">
-                Your trusted guide to numerology and Lal Kitab remedies. Transform your 
-                life with personalized guidance from Himansshu Agarwal Ji.
-              </p>
-              <div className="flex items-center gap-2">
-                {socials.map((s) => (
-                  <a
-                    key={s.label}
-                    href={s.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={s.label}
-                    className="w-10 h-10 rounded-xl bg-background/[0.06] border border-background/10 flex items-center justify-center hover:bg-primary hover:border-primary transition-all duration-300 group"
-                  >
-                    <s.icon className="w-4 h-4 text-background/60 group-hover:text-background transition-colors" />
-                  </a>
-                ))}
+      <div className="section-container py-14 lg:py-16 relative z-10">
+        {/* Top: brand + columns */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10 mb-12">
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-3 lg:col-span-1">
+            <Link to="/" className="inline-flex items-center gap-3 mb-4">
+              <img src={logo} alt="Ankshaastra" className="h-12 w-auto rounded-md bg-cream-light/95 p-1" />
+              <div className="flex flex-col leading-tight">
+                <span className="font-display text-xl font-bold">Ankshaastra</span>
+                <span className="text-[10px] text-amber-light/90 tracking-[0.2em] uppercase">Vedic Guidance</span>
               </div>
+            </Link>
+            <p className="text-cream-light/70 text-sm leading-relaxed mb-5">
+              Trusted numerology & Lal Kitab guidance by Himansshu Agarwal Ji. Transforming lives across India.
+            </p>
+            <div className="flex items-center gap-2.5">
+              {socials.map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={s.label}
+                  className="w-9 h-9 rounded-full border border-cream-light/30 flex items-center justify-center hover:bg-amber hover:border-amber transition-all"
+                >
+                  <s.icon className="w-4 h-4" />
+                </a>
+              ))}
             </div>
+          </div>
 
-            {/* Column 2: Quick Links */}
-            <div>
-              <h4 className="font-display text-xs font-semibold uppercase tracking-widest text-primary/70 mb-5">Quick Links</h4>
+          {/* Columns */}
+          {columns.map((col) => (
+            <div key={col.title}>
+              <h4 className="font-display text-base font-semibold text-amber-light mb-4">{col.title}</h4>
               <ul className="space-y-2.5">
-                {quickLinks.map((link) => (
-                  <li key={link.path}>
-                    <Link
-                      to={link.path}
-                      className="text-background/60 hover:text-primary transition-colors text-sm inline-flex items-center gap-1.5 group"
-                    >
-                      <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                      <span>{link.name}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Column 3: Services */}
-            <div>
-              <h4 className="font-display text-xs font-semibold uppercase tracking-widest text-primary/70 mb-5">Our Services</h4>
-              <ul className="space-y-2.5">
-                {serviceLinks.map((link, index) => (
-                  <li key={index}>
+                {col.links.map((link: any) => (
+                  <li key={link.name}>
                     {link.external ? (
                       <a
-                        href={link.path}
+                        href={link.to}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-background/60 hover:text-primary transition-colors text-sm inline-flex items-center gap-1.5 group"
+                        className="text-cream-light/75 hover:text-amber-light text-sm transition-colors"
                       >
-                        <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                        <span>{link.name}</span>
+                        {link.name}
                       </a>
                     ) : (
-                      <Link
-                        to={link.path}
-                        className="text-background/60 hover:text-primary transition-colors text-sm inline-flex items-center gap-1.5 group"
-                      >
-                        <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                        <span>{link.name}</span>
+                      <Link to={link.to} className="text-cream-light/75 hover:text-amber-light text-sm transition-colors">
+                        {link.name}
                       </Link>
                     )}
                   </li>
                 ))}
               </ul>
             </div>
+          ))}
+        </div>
 
-            {/* Column 4: Contact */}
-            <div>
-              <h4 className="font-display text-xs font-semibold uppercase tracking-widest text-primary/70 mb-5">Contact Us</h4>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <MapPin className="w-4 h-4 text-primary" />
-                  </div>
-                  <span className="text-background/60 text-sm leading-relaxed">
-                    Unit No. O-622, Block E, Eye of Noida, Sector-140A, Noida-201305
-                  </span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-4 h-4 text-primary" />
-                  </div>
-                  <a href="mailto:social@ankshaastra.com" className="text-background/60 hover:text-primary transition-colors text-sm">
-                    social@ankshaastra.com
-                  </a>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-4 h-4 text-primary" />
-                  </div>
-                  <a href="tel:+919667305577" className="text-background/60 hover:text-primary transition-colors text-sm">
-                    +91 96673 05577
-                  </a>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <MessageCircle className="w-4 h-4 text-primary" />
-                  </div>
-                  <a href="https://wa.me/919667305577" target="_blank" rel="noopener noreferrer" className="text-background/60 hover:text-primary transition-colors text-sm">
-                    WhatsApp Chat
-                  </a>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-4 h-4 text-primary" />
-                  </div>
-                  <span className="text-background/60 text-sm">
-                    Mon–Sun: 8:34 AM – 8:34 PM
-                  </span>
-                </li>
-              </ul>
-            </div>
+        {/* Contact strip */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 py-6 border-y border-cream-light/15">
+          <a href="tel:+919667305577" className="flex items-center gap-3 hover:text-amber-light transition-colors">
+            <Phone className="w-4 h-4 text-amber-light" />
+            <span className="text-sm">+91 96673 05577</span>
+          </a>
+          <a href="mailto:social@ankshaastra.com" className="flex items-center gap-3 hover:text-amber-light transition-colors">
+            <Mail className="w-4 h-4 text-amber-light" />
+            <span className="text-sm">social@ankshaastra.com</span>
+          </a>
+          <a href="https://wa.me/919667305577" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-amber-light transition-colors">
+            <MessageCircle className="w-4 h-4 text-amber-light" />
+            <span className="text-sm">WhatsApp Chat</span>
+          </a>
+          <div className="flex items-center gap-3">
+            <Clock className="w-4 h-4 text-amber-light" />
+            <span className="text-sm text-cream-light/75">Mon–Sun · 8:30 AM – 8:30 PM</span>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-background/[0.08]">
-          <div className="section-container py-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-background/40 text-sm flex items-center gap-1.5">
-                © {currentYear} Ankshaastra. Made with <Heart className="w-3.5 h-3.5 text-primary fill-primary" /> in India
-              </p>
-              <div className="flex items-center gap-6 relative z-[60]">
-                {[
-                  { to: "/privacy", label: "Privacy Policy" },
-                  { to: "/terms", label: "Terms & Conditions" },
-                  { to: "/refund", label: "Refund Policy" },
-                ].map((link, i) => (
-                  <span key={link.to} className="flex items-center gap-6">
-                    {i > 0 && <span className="text-background/15">·</span>}
-                    <Link to={link.to} className="text-background/40 hover:text-background/70 transition-colors text-sm cursor-pointer">
-                      {link.label}
-                    </Link>
-                  </span>
-                ))}
-              </div>
-            </div>
+        {/* Address */}
+        <div className="flex items-start gap-3 mt-6 text-cream-light/70 text-sm max-w-2xl">
+          <MapPin className="w-4 h-4 text-amber-light mt-0.5 flex-shrink-0" />
+          <span>Unit No. O-622, Block E, Eye of Noida, Sector-140A, Noida-201305, India</span>
+        </div>
+
+        {/* Decorative ornament */}
+        <div className="flex items-center justify-center gap-4 my-10">
+          <span className="h-px flex-1 max-w-xs bg-gradient-to-r from-transparent via-amber/40 to-amber/40" />
+          <Sun className="w-7 h-7 text-amber-light" strokeWidth={1.2} />
+          <span className="h-px flex-1 max-w-xs bg-gradient-to-l from-transparent via-amber/40 to-amber/40" />
+        </div>
+
+        {/* Bottom bar */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-cream-light/60">
+          <p className="flex items-center gap-1.5">
+            © {year} Ankshaastra. Made with <Heart className="w-3.5 h-3.5 text-amber-light fill-amber-light" /> in India
+          </p>
+          <div className="flex items-center gap-5">
+            <Link to="/privacy" className="hover:text-amber-light transition-colors">Privacy</Link>
+            <span className="text-cream-light/25">·</span>
+            <Link to="/terms" className="hover:text-amber-light transition-colors">Terms</Link>
+            <span className="text-cream-light/25">·</span>
+            <Link to="/refund" className="hover:text-amber-light transition-colors">Refund</Link>
           </div>
         </div>
       </div>
