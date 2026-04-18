@@ -308,6 +308,25 @@ const Navbar = () => {
                     </Link>
                   );
                 })}
+                {user ? (
+                  <>
+                    <Link to="/dashboard" className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg">
+                      <LayoutDashboard className="w-4 h-4 inline mr-2" />My Dashboard
+                    </Link>
+                    {role === "admin" && (
+                      <Link to="/admin" className="block px-4 py-3 text-sm font-medium text-primary hover:bg-muted rounded-lg">
+                        <ShieldCheck className="w-4 h-4 inline mr-2" />Admin Panel
+                      </Link>
+                    )}
+                    <button onClick={signOut} className="w-full text-left block px-4 py-3 text-sm font-medium text-destructive hover:bg-muted rounded-lg">
+                      <LogOut className="w-4 h-4 inline mr-2" />Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link to="/auth" className="block mx-4 mt-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold text-center">
+                    Sign In / Sign Up
+                  </Link>
+                )}
                 <button
                   type="button"
                   className="w-full flex items-center justify-center gap-2 mx-4 mt-2 px-4 py-2.5 rounded-full border border-border text-foreground text-sm font-medium hover:bg-muted"
