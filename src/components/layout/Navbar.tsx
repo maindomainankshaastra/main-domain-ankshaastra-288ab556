@@ -32,6 +32,7 @@ const Navbar = () => {
   const [mobileReportsOpen, setMobileReportsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const { user, role, signOut } = useAuth();
 
   useEffect(() => {
     setIsOpen(false);
@@ -163,15 +164,48 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* Right: Language selector + mobile toggle */}
-          <div className="flex items-center gap-3">
+          {/* Right: Language + Auth + mobile toggle */}
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cream-light/40 text-cream-light/90 text-sm font-medium hover:bg-cream-light/10 hover:border-cream-light/70 transition-all"
+              className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full border border-cream-light/40 text-cream-light/90 text-sm font-medium hover:bg-cream-light/10 hover:border-cream-light/70 transition-all"
             >
               <Globe className="w-4 h-4" />
               Language
             </button>
+
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber/20 border border-cream-light/40 text-cream-light text-sm font-medium hover:bg-amber/30 transition-all">
+                    <User className="w-4 h-4" />
+                    <span className="max-w-[100px] truncate">{user.email?.split("@")[0]}</span>
+                    {role === "admin" && <ShieldCheck className="w-3.5 h-3.5 text-amber" />}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 z-[100]">
+                  <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="cursor-pointer"><LayoutDashboard className="w-4 h-4 mr-2" />My Dashboard</Link>
+                  </DropdownMenuItem>
+                  {role === "admin" && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="cursor-pointer"><ShieldCheck className="w-4 h-4 mr-2" />Admin Panel</Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild size="sm" className="hidden md:inline-flex bg-amber hover:bg-amber/90 text-secondary font-semibold rounded-full">
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            )}
+
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="xl:hidden p-2 text-cream-light hover:text-amber transition-colors"
