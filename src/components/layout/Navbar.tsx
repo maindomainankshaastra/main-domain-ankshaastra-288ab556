@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, Globe } from "lucide-react";
+import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, Globe, User, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.jpg";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const reportsDropdown = [
   { name: "Name Correction Blueprint", path: "/reports/name-correction-blueprint", icon: ScrollText, description: "Align your name's vibration for success" },
