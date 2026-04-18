@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, Globe } from "lucide-react";
+import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, Globe, User, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.jpg";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const reportsDropdown = [
   { name: "Name Correction Blueprint", path: "/reports/name-correction-blueprint", icon: ScrollText, description: "Align your name's vibration for success" },
@@ -29,6 +32,7 @@ const Navbar = () => {
   const [mobileReportsOpen, setMobileReportsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const { user, role, signOut } = useAuth();
 
   useEffect(() => {
     setIsOpen(false);
@@ -160,15 +164,48 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* Right: Language selector + mobile toggle */}
-          <div className="flex items-center gap-3">
+          {/* Right: Language + Auth + mobile toggle */}
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cream-light/40 text-cream-light/90 text-sm font-medium hover:bg-cream-light/10 hover:border-cream-light/70 transition-all"
+              className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full border border-cream-light/40 text-cream-light/90 text-sm font-medium hover:bg-cream-light/10 hover:border-cream-light/70 transition-all"
             >
               <Globe className="w-4 h-4" />
               Language
             </button>
+
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-amber/20 border border-cream-light/40 text-cream-light text-sm font-medium hover:bg-amber/30 transition-all">
+                    <User className="w-4 h-4" />
+                    <span className="max-w-[100px] truncate">{user.email?.split("@")[0]}</span>
+                    {role === "admin" && <ShieldCheck className="w-3.5 h-3.5 text-amber" />}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 z-[100]">
+                  <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="cursor-pointer"><LayoutDashboard className="w-4 h-4 mr-2" />My Dashboard</Link>
+                  </DropdownMenuItem>
+                  {role === "admin" && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="cursor-pointer"><ShieldCheck className="w-4 h-4 mr-2" />Admin Panel</Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild size="sm" className="hidden md:inline-flex bg-amber hover:bg-amber/90 text-secondary font-semibold rounded-full">
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            )}
+
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="xl:hidden p-2 text-cream-light hover:text-amber transition-colors"
@@ -271,6 +308,25 @@ const Navbar = () => {
                     </Link>
                   );
                 })}
+                {user ? (
+                  <>
+                    <Link to="/dashboard" className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg">
+                      <LayoutDashboard className="w-4 h-4 inline mr-2" />My Dashboard
+                    </Link>
+                    {role === "admin" && (
+                      <Link to="/admin" className="block px-4 py-3 text-sm font-medium text-primary hover:bg-muted rounded-lg">
+                        <ShieldCheck className="w-4 h-4 inline mr-2" />Admin Panel
+                      </Link>
+                    )}
+                    <button onClick={signOut} className="w-full text-left block px-4 py-3 text-sm font-medium text-destructive hover:bg-muted rounded-lg">
+                      <LogOut className="w-4 h-4 inline mr-2" />Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link to="/auth" className="block mx-4 mt-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold text-center">
+                    Sign In / Sign Up
+                  </Link>
+                )}
                 <button
                   type="button"
                   className="w-full flex items-center justify-center gap-2 mx-4 mt-2 px-4 py-2.5 rounded-full border border-border text-foreground text-sm font-medium hover:bg-muted"
