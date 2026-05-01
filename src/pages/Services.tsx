@@ -206,6 +206,15 @@ const ServiceCard = ({ service, index }: { service: any; index: number }) => {
 /* ─────────────── Main Page ─────────────── */
 const ServicesPage = () => {
   const totalServices = serviceCategories.reduce((acc, cat) => acc + cat.services.length, 0);
+  const tabs = [{ id: "all", title: "All" }, ...serviceCategories.map((c) => ({ id: c.id, title: c.title }))];
+  const [activeTab, setActiveTab] = useState<string>("all");
+
+  const visibleServices = useMemo(() => {
+    const all = serviceCategories.flatMap((cat) =>
+      cat.services.map((s) => ({ ...s, _categoryId: cat.id }))
+    );
+    return activeTab === "all" ? all : all.filter((s) => s._categoryId === activeTab);
+  }, [activeTab]);
 
   return (
     <Layout>
@@ -254,45 +263,50 @@ const ServicesPage = () => {
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
       </section>
 
-      {/* ── Quick Nav Pills ── */}
-      <section className="sticky top-16 z-30 bg-background/80 backdrop-blur-xl border-b border-border/40">
-        <div className="section-container">
-          <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
-            {serviceCategories.map((cat) => (
-              <a key={cat.id} href={`#${cat.id}`} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-muted/60 hover:bg-primary/10 border border-transparent hover:border-primary/15 text-muted-foreground hover:text-primary text-xs font-semibold whitespace-nowrap transition-all duration-300 flex-shrink-0">
-                <cat.icon className="w-3.5 h-3.5" />
-                {cat.title}
-              </a>
+      {/* ── Services (filterable grid) ── */}
+      <section className="relative py-16 md:py-20 lg:py-24 bg-cream">
+        <div className="section-container relative z-10">
+          {/* Centered heading */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+              <span className="text-foreground">Our </span>
+              <span className="text-primary italic">Services</span>
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Choose the service that fits your needs and start your journey toward clarity
+            </p>
+          </motion.div>
+
+          {/* Filter tabs with underline */}
+          <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2 mb-12 border-b border-border">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative px-4 md:px-6 py-3 text-sm md:text-base font-semibold transition-colors ${
+                  activeTab === tab.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.title}
+                {activeTab === tab.id && (
+                  <motion.span
+                    layoutId="services-active-tab"
+                    className="absolute -bottom-px left-0 right-0 h-0.5 bg-primary rounded-full"
+                  />
+                )}
+              </button>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── Service Categories ── */}
-      <section className="relative py-16 md:py-20 lg:py-24">
-        {/* Warm gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-[hsl(40,60%,97%)] to-background" />
-        {/* Subtle warm accents */}
-        <div className="absolute top-40 left-0 w-[500px] h-[500px] bg-[radial-gradient(circle,hsl(24_95%_53%/0.03),transparent_70%)] pointer-events-none" />
-        <div className="absolute bottom-40 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle,hsl(43_96%_56%/0.03),transparent_70%)] pointer-events-none" />
-        {/* Subtle texture */}
-        <div className="absolute inset-0 opacity-[0.012]" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)`, backgroundSize: '48px 48px' }} />
-
-        <div className="section-container relative z-10">
-          <div className="space-y-14 md:space-y-20">
-            {serviceCategories.map((category, index) => (
-              <div key={category.id} id={category.id}>
-                {index > 0 && (
-                  <div className="mb-14 md:mb-20 flex items-center gap-4">
-                    <div className="flex-grow h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/10 to-amber/10 border border-primary/15 flex items-center justify-center">
-                      <Gem className="w-3.5 h-3.5 text-primary/50" />
-                    </div>
-                    <div className="flex-grow h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
-                  </div>
-                )}
-                <CategorySection category={category} index={index} />
-              </div>
+          {/* Cards grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {visibleServices.map((service, i) => (
+              <ServiceCard key={`${service._categoryId}-${service.title}`} service={service} index={i} />
             ))}
           </div>
         </div>
