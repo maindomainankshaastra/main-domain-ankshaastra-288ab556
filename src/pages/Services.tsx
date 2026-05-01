@@ -50,8 +50,8 @@ const serviceCategories = [
     gradient: "from-primary to-amber",
     borderAccent: "hsl(var(--orange))",
     services: [
-      { title: "1:1 Audio Call", description: "A private audio call designed for detailed discussion while maintaining flexibility and confidentiality.", price: "₹1,987", rawPrice: 1987, link: "/consultation", highlight: true },
-      { title: "1:1 Video Call", description: "A face-to-face consultation for deeper engagement, visual explanations, and interactive guidance.", price: "₹3,648", rawPrice: 3648, link: "/consultation", highlight: true },
+      { title: "1:1 Audio Call", description: "A private audio call designed for detailed discussion while maintaining flexibility and confidentiality.", price: "₹3,998", rawPrice: 3998, link: "/consultation", highlight: true },
+      { title: "1:1 Video Call", description: "A face-to-face consultation for deeper engagement, visual explanations, and interactive guidance.", price: "₹5,997", rawPrice: 5997, link: "/consultation", highlight: true },
     ]
   },
   {
@@ -63,10 +63,10 @@ const serviceCategories = [
     gradient: "from-blue-500 to-cyan-500",
     borderAccent: "hsl(210, 80%, 55%)",
     services: [
-      { title: "Name Correction", description: "Analysis and correction of name vibration to support smoother personal and professional progress.", price: "₹1,997", rawPrice: 1997, link: "https://empower.ankshaastra.com", external: true, highlight: true },
-      { title: "Lucky Vehicle Number", description: "Compatibility analysis of vehicle numbers for comfort, safety, and daily harmony.", price: "₹998", rawPrice: 998, link: "/payment" },
-      { title: "Lucky Mobile Number", description: "Assessment of mobile number vibration and its influence on communication and opportunities.", price: "₹998", rawPrice: 998, link: "/payment" },
-      { title: "Lucky Flat / Plot Number", description: "Suitability analysis of residential numbers before purchase or occupancy.", price: "₹998", rawPrice: 998, link: "/payment" },
+      { title: "Name Correction", description: "Analysis and correction of name vibration to support smoother personal and professional progress.", price: "₹2,447", rawPrice: 2447, link: "https://empower.ankshaastra.com", external: true, highlight: true },
+      { title: "Lucky Vehicle Number", description: "Compatibility analysis of vehicle numbers for comfort, safety, and daily harmony.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
+      { title: "Lucky Mobile Number", description: "Assessment of mobile number vibration and its influence on communication and opportunities.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
+      { title: "Lucky Flat / Plot Number", description: "Suitability analysis of residential numbers before purchase or occupancy.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
     ]
   },
   {
@@ -79,7 +79,7 @@ const serviceCategories = [
     borderAccent: "hsl(340, 70%, 55%)",
     services: [
       { title: "C-Section Baby Dates", description: "Numerology-based guidance for selecting supportive C-section birth dates within medically approved range.", price: "₹1,100", rawPrice: 1100, link: "/services/csection-dates" },
-      { title: "Perfect Baby Name", description: "Carefully aligned baby name suggestions based on numerology principles for foundational harmony.", price: "₹1,997", rawPrice: 1997, link: "https://empower.ankshaastra.com", external: true, highlight: true },
+      { title: "Perfect Baby Name", description: "Carefully aligned baby name suggestions based on numerology principles for foundational harmony.", price: "₹2,447", rawPrice: 2447, link: "https://empower.ankshaastra.com", external: true, highlight: true },
       { title: "Relationship Analysis", description: "Analysis of emotional dynamics and compatibility between partners for healthier communication.", price: "₹987", rawPrice: 987, link: "/payment" },
     ]
   },
@@ -92,7 +92,7 @@ const serviceCategories = [
     gradient: "from-emerald to-teal-500",
     borderAccent: "hsl(var(--emerald))",
     services: [
-      { title: "Business Name Correction", description: "Strategic analysis to identify misalignment and suggest corrected options for brand resonance.", price: "₹3,878", rawPrice: 3878, link: "/payment", highlight: true },
+      { title: "Business Name Correction", description: "Strategic analysis to identify misalignment and suggest corrected options for brand resonance.", price: "₹4,894", rawPrice: 4894, link: "/payment", highlight: true },
       { title: "Business Phone Number", description: "Selection or evaluation of business phone numbers aligned with brand numerology.", price: "₹1,499", rawPrice: 1499, link: "/payment" },
       { title: "Brand Tagline Correction", description: "Analysis of brand taglines to ensure wording aligns with business intent and positioning.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
       { title: "Business Partner Compatibility", description: "Compatibility analysis between business partners' names for smoother collaboration.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
@@ -278,16 +278,16 @@ const CategorySection = ({ category, index }: { category: typeof serviceCategori
           </div>
 
           <div className="flex-grow min-w-0">
-            <div className="flex items-center gap-2.5 mb-1">
+            <div className="flex flex-wrap items-center gap-3 mb-2">
               {/* Title with gradient underline accent */}
-              <h2 className="font-display text-xl md:text-2xl lg:text-[28px] font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
                 {category.title}
               </h2>
-              <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-primary/8 border border-primary/10 text-primary text-xs font-semibold tracking-wide">
+              <span className="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold tracking-wide">
                 {category.subtitle}
               </span>
             </div>
-            <p className="text-muted-foreground text-sm md:text-[15px] line-clamp-1">
+            <p className="text-muted-foreground text-base md:text-lg line-clamp-2">
               {category.description}
             </p>
             {/* Decorative gradient underline */}
