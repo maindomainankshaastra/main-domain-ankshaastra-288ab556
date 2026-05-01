@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import { 
   Phone, Video, MessageSquare, User, Baby, Building2, Calendar,
-  Armchair, Building, ArrowRight, Sparkles, ChevronDown, ExternalLink,
+  Armchair, Building, ArrowRight, Sparkles, ExternalLink,
   Gem, Zap, Car, Smartphone, Home as HomeIcon, Heart, Tag, Users,
   UserCheck, Landmark, MapPin, Grid3X3, Store, Paintbrush, Crown,
   type LucideIcon
@@ -145,190 +145,62 @@ const serviceCategories = [
   }
 ];
 
-/* ─────────────── Service Card Component ─────────────── */
+/* ─────────────── Service Card (clean reference style) ─────────────── */
 const ServiceCard = ({ service, index }: { service: any; index: number }) => {
   const ServiceIcon = serviceIconMap[service.title] || Sparkles;
 
-  const content = (
+  const inner = (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: index * 0.07, duration: 0.5 }}
-      className={`group relative overflow-hidden rounded-2xl h-full cursor-pointer transition-all duration-500
-        ${service.highlight
-          ? 'hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_hsl(var(--orange)/0.35)]'
-          : 'hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)]'}
-      `}
+      transition={{ delay: (index % 8) * 0.05, duration: 0.4 }}
+      className="group relative h-full flex flex-col bg-card border border-accent/40 rounded-2xl p-6 hover:shadow-lg hover:-translate-y-1 hover:border-primary/40 transition-all duration-300"
     >
-      {/* Card border — double layer for highlighted */}
-      {service.highlight ? (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary via-amber to-primary p-[1.5px]">
-          <div className="w-full h-full rounded-2xl bg-card" />
-        </div>
-      ) : (
-        <div className="absolute inset-0 rounded-2xl border border-border/60 group-hover:border-primary/30 transition-colors duration-500" />
-      )}
+      {/* Badge */}
+      <span className="absolute top-4 right-4 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+        {service.highlight && <Zap className="w-3 h-3" />}
+        {service.badge || (service.highlight ? "Popular" : "Book")}
+      </span>
 
-      {/* Glassmorphism background */}
-      <div className="absolute inset-[1.5px] rounded-2xl bg-card/90 backdrop-blur-xl" />
-
-      {/* Warm ambient glow for highlighted */}
-      {service.highlight && (
-        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-amber/5 pointer-events-none" />
-      )}
-
-      {/* Shimmer sweep on hover */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1200ms] ease-in-out pointer-events-none" />
-
-      {/* Content */}
-      <div className="relative p-7 md:p-8 flex flex-col h-full">
-        {/* Top row: icon + popular badge */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/10 to-amber/10 border border-primary/10 flex items-center justify-center group-hover:scale-110 group-hover:border-primary/25 transition-all duration-500">
-            <ServiceIcon className="w-5 h-5 text-primary" strokeWidth={1.8} />
-          </div>
-          {service.highlight && (
-            <motion.span
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-primary/15 to-amber/15 border border-primary/20 text-primary text-[11px] font-bold uppercase tracking-wider"
-            >
-              <Zap className="w-3 h-3" />
-              Popular
-            </motion.span>
-          )}
-        </div>
-
-        {/* Title */}
-        <h3 className="font-display text-[20px] leading-tight font-bold text-foreground group-hover:text-primary transition-colors duration-300 mb-2.5">
-          {service.title}
-        </h3>
-
-        {/* Description */}
-        <p className="text-muted-foreground text-[15px] leading-relaxed mb-6 flex-grow">
-          {service.description}
-        </p>
-
-        {/* Bottom row: price + CTA */}
-        <div className="flex items-center justify-between mt-auto">
-          <span className="font-display text-xl font-bold text-foreground">
-            {service.price}
-          </span>
-          <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary to-orange-dark text-primary-foreground text-sm font-bold shadow-[0_4px_15px_hsl(var(--orange)/0.2)] group-hover:shadow-[0_6px_20px_hsl(var(--orange)/0.35)] group-hover:gap-3 transition-all duration-300">
-            Book Now
-            {service.external ? (
-              <ExternalLink className="w-3.5 h-3.5" />
-            ) : (
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-300" />
-            )}
-          </span>
-        </div>
+      {/* Circular icon */}
+      <div className="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center mb-5 group-hover:border-primary group-hover:bg-primary/5 transition-all">
+        <ServiceIcon className="w-7 h-7 text-primary" strokeWidth={1.5} />
       </div>
+
+      {/* Title */}
+      <h3 className="font-display text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors leading-tight pr-16">
+        {service.title}
+      </h3>
+
+      {/* Description */}
+      <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-grow">
+        {service.description}
+      </p>
+
+      {/* Price */}
+      <div className="font-display text-lg font-bold text-foreground mb-4">
+        {service.price}
+      </div>
+
+      {/* CTA */}
+      <button className="w-full py-2.5 rounded-lg border-2 border-primary text-primary text-sm font-semibold uppercase tracking-wider group-hover:bg-primary group-hover:text-primary-foreground transition-all inline-flex items-center justify-center gap-2">
+        Book Now
+        {service.external ? <ExternalLink className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+      </button>
     </motion.div>
   );
 
-  const getPaymentLink = () => {
-    if (service.external) return service.link;
-    if (service.link === "/payment") {
-      return `/payment?service=${encodeURIComponent(service.title)}&amount=${service.rawPrice || 0}`;
-    }
-    return service.link;
-  };
+  const paymentLink = service.external
+    ? service.link
+    : service.link === "/payment"
+      ? `/payment?service=${encodeURIComponent(service.title)}&amount=${service.rawPrice || 0}`
+      : service.link;
 
   if (service.external) {
-    return (
-      <a href={service.link} target="_blank" rel="noopener noreferrer" className="block h-full">
-        {content}
-      </a>
-    );
+    return <a href={service.link} target="_blank" rel="noopener noreferrer" className="block h-full">{inner}</a>;
   }
-  return (
-    <Link to={getPaymentLink()} className="block h-full">
-      {content}
-    </Link>
-  );
-};
-
-/* ─────────────── Category Section Component ─────────────── */
-const CategorySection = ({ category, index }: { category: typeof serviceCategories[0]; index: number }) => {
-  const [expanded, setExpanded] = useState(true);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.6 }}
-      className="relative"
-    >
-      {/* Category Header — with decorative band */}
-      <div className="relative mb-8">
-        {/* Subtle gradient band behind header */}
-        <div className="absolute -inset-x-4 -inset-y-2 rounded-2xl bg-gradient-to-r from-transparent via-muted/50 to-transparent pointer-events-none" />
-
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="relative w-full flex items-center gap-4 md:gap-5 group cursor-pointer text-left"
-        >
-          {/* Icon */}
-          <div className={`relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br ${category.gradient} flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-300`}>
-            <category.icon className="w-7 h-7 md:w-8 md:h-8 text-primary-foreground" strokeWidth={1.5} />
-            <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${category.gradient} opacity-30 blur-xl -z-10`} />
-          </div>
-
-          <div className="flex-grow min-w-0">
-            <div className="flex flex-wrap items-center gap-3 mb-2">
-              {/* Title with gradient underline accent */}
-              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
-                {category.title}
-              </h2>
-              <span className="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold tracking-wide">
-                {category.subtitle}
-              </span>
-            </div>
-            <p className="text-muted-foreground text-base md:text-lg line-clamp-2">
-              {category.description}
-            </p>
-            {/* Decorative gradient underline */}
-            <div className="mt-2 h-[2px] w-16 rounded-full bg-gradient-to-r from-primary/60 to-amber/40 group-hover:w-24 transition-all duration-500" />
-          </div>
-
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="hidden md:inline-flex items-center px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
-              {category.services.length} services
-            </span>
-            <motion.div
-              animate={{ rotate: expanded ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-              className="w-9 h-9 rounded-full bg-muted/80 border border-border/40 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-300"
-            >
-              <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            </motion.div>
-          </div>
-        </button>
-      </div>
-
-      {/* Services Grid */}
-      <AnimatePresence initial={false}>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            className="overflow-hidden"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 pb-4">
-              {category.services.map((service, serviceIndex) => (
-                <ServiceCard key={service.title} service={service} index={serviceIndex} />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
+  return <Link to={paymentLink} className="block h-full">{inner}</Link>;
 };
 
 /* ─────────────── Main Page ─────────────── */
