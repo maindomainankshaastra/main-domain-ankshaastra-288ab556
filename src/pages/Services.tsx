@@ -341,10 +341,10 @@ const ServicesPage = () => {
 
       {/* ── Hero Section ── */}
       <section className="relative overflow-hidden py-20 md:py-28">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0a00] via-[#2a1205] to-[#1a0a00]" />
+        <div className="absolute inset-0 gradient-hero" />
         <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse,hsl(24_95%_53%/0.12),transparent_70%)]" />
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,hsl(43_96%_56%/0.08),transparent_70%)]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse,hsl(var(--amber)/0.18),transparent_70%)]" />
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,hsl(var(--amber-light)/0.12),transparent_70%)]" />
         </div>
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`, backgroundSize: '32px 32px' }} />
 
@@ -360,7 +360,7 @@ const ServicesPage = () => {
             </motion.span>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6 leading-tight">
               Transform Your Life with{" "}
-              <span className="text-gradient-primary">Sacred Numerology</span>
+              <span className="text-amber-light">Sacred Numerology</span>
             </h1>
             <p className="text-lg text-primary-foreground/70 max-w-2xl mx-auto leading-relaxed mb-10">
               Comprehensive numerology solutions designed for clarity, alignment, and positive transformation across all aspects of life and business.
@@ -428,9 +428,9 @@ const ServicesPage = () => {
 
       {/* ── CTA Section ── */}
       <section className="relative overflow-hidden py-20 md:py-24">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0a00] via-[#2a1205] to-[#1a0a00]" />
+        <div className="absolute inset-0 gradient-hero" />
         <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[radial-gradient(ellipse,hsl(24_95%_53%/0.1),transparent_70%)]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[radial-gradient(ellipse,hsl(var(--amber)/0.15),transparent_70%)]" />
         </div>
         <div className="section-container relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center max-w-3xl mx-auto">
@@ -440,7 +440,7 @@ const ServicesPage = () => {
             </span>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
               Not Sure Which Service is{" "}
-              <span className="text-gradient-primary">Right for You?</span>
+              <span className="text-amber-light">Right for You?</span>
             </h2>
             <p className="text-lg text-primary-foreground/60 mb-10 max-w-2xl mx-auto">
               Book a quick consultation call and we'll guide you to the perfect solution for your needs.
