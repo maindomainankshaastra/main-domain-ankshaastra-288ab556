@@ -37,11 +37,24 @@ const CalculatorPage = () => {
   const [name, setName] = useState("");
   const [partnerDate, setPartnerDate] = useState("");
   const [result, setResult] = useState<{ title: string; content: string; mulank?: number; bhagyaank?: number } | null>(null);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const tab = searchParams.get("tab") as CalculatorType | null;
+    const valid: CalculatorType[] = ["numerology", "zodiac", "compatibility", "gemstone", "lucky-number", "name-number"];
+    if (tab && valid.includes(tab)) {
+      setActiveCalculator(tab);
+      setResult(null);
+    }
+  }, [searchParams]);
 
   const calculators = [
     { id: "numerology" as const, icon: Calculator, title: "Numerology", description: "Discover your Mulank & Bhagyaank" },
     { id: "zodiac" as const, icon: Star, title: "Zodiac Sign", description: "Find your sun sign" },
     { id: "compatibility" as const, icon: Heart, title: "Compatibility", description: "Check love compatibility" },
+    { id: "gemstone" as const, icon: Gem, title: "Lucky Gemstone", description: "Find your power gemstone" },
+    { id: "lucky-number" as const, icon: Hash, title: "Lucky Numbers", description: "Today's auspicious numbers" },
+    { id: "name-number" as const, icon: Type, title: "Name Number", description: "Numerology of any name" },
   ];
 
   const reduceToSingleDigit = (num: number): number => {
