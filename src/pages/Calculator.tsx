@@ -593,6 +593,44 @@ const CalculatorPage = () => {
                   </>
                 )}
 
+                {(activeCalculator === "gemstone" || activeCalculator === "lucky-number") && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Date of Birth *
+                    </label>
+                    <input
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {activeCalculator === "gemstone"
+                        ? "Your birth date determines your ruling planet and most beneficial gemstone."
+                        : "We calculate your Mulank, Bhagyaank, and friendly numbers for daily luck."}
+                    </p>
+                  </div>
+                )}
+
+                {activeCalculator === "name-number" && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      maxLength={80}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Enter the full name to test"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Spell exactly as written on official documents — every letter changes the vibration.
+                    </p>
+                  </div>
+                )}
+
                 <button onClick={handleCalculate} className="w-full btn-gold py-4 text-lg">
                   <Sparkles className="w-5 h-5 inline-block mr-2" />
                   Calculate Now
