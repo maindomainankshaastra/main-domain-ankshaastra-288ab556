@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { Calculator, Star, Heart, Sparkles, Gem, Hash, Type } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Calculator, Star, Heart, Sparkles, Gem, Hash, Type, ArrowRight } from "lucide-react";
 
 type CalculatorType =
   | "numerology"
@@ -48,13 +46,57 @@ const CalculatorPage = () => {
   }, [searchParams]);
 
   const calculators = [
-    { id: "numerology" as const, icon: Calculator, title: "Numerology", description: "Discover your Mulank & Bhagyaank" },
-    { id: "zodiac" as const, icon: Star, title: "Zodiac Sign", description: "Find your sun sign" },
-    { id: "compatibility" as const, icon: Heart, title: "Compatibility", description: "Check love compatibility" },
-    { id: "gemstone" as const, icon: Gem, title: "Lucky Gemstone", description: "Find your power gemstone" },
-    { id: "lucky-number" as const, icon: Hash, title: "Lucky Numbers", description: "Today's auspicious numbers" },
-    { id: "name-number" as const, icon: Type, title: "Name Number", description: "Numerology of any name" },
+    {
+      id: "numerology" as const, icon: Calculator, title: "Numerology", description: "Mulank & Bhagyaank",
+      tagline: "Decode your Birth & Destiny numbers",
+      heroSub: "Reveal the two numbers that shape your personality and destiny.",
+      gradient: "from-amber-500 via-orange-500 to-yellow-600",
+      ringColor: "ring-amber-500/40", textColor: "text-amber-600",
+      tone: "amber",
+    },
+    {
+      id: "zodiac" as const, icon: Star, title: "Zodiac Sign", description: "Sun sign & element",
+      tagline: "Find your celestial Sun sign",
+      heroSub: "Discover the cosmic energy assigned to your day of birth.",
+      gradient: "from-indigo-500 via-purple-500 to-pink-500",
+      ringColor: "ring-purple-500/40", textColor: "text-purple-500",
+      tone: "purple",
+    },
+    {
+      id: "compatibility" as const, icon: Heart, title: "Compatibility", description: "Partner harmony",
+      tagline: "Check love & life-path harmony",
+      heroSub: "See how two birth dates align in vibration and emotion.",
+      gradient: "from-rose-500 via-pink-500 to-red-500",
+      ringColor: "ring-rose-500/40", textColor: "text-rose-500",
+      tone: "rose",
+    },
+    {
+      id: "gemstone" as const, icon: Gem, title: "Lucky Gemstone", description: "Your power stone",
+      tagline: "Find your ruling planet's gemstone",
+      heroSub: "Wear the right stone — multiply success, courage, and clarity.",
+      gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+      ringColor: "ring-emerald-500/40", textColor: "text-emerald-500",
+      tone: "emerald",
+    },
+    {
+      id: "lucky-number" as const, icon: Hash, title: "Lucky Numbers", description: "Days, colors, digits",
+      tagline: "Unlock your auspicious numbers",
+      heroSub: "Numbers that attract opportunity, luck, and momentum.",
+      gradient: "from-yellow-500 via-amber-500 to-orange-500",
+      ringColor: "ring-yellow-500/40", textColor: "text-yellow-600",
+      tone: "yellow",
+    },
+    {
+      id: "name-number" as const, icon: Type, title: "Name Number", description: "Name vibration",
+      tagline: "Test any name's numerology",
+      heroSub: "Discover the hidden vibration carried by your name.",
+      gradient: "from-sky-500 via-blue-500 to-indigo-500",
+      ringColor: "ring-blue-500/40", textColor: "text-blue-500",
+      tone: "blue",
+    },
   ];
+
+  const activeCalc = calculators.find((c) => c.id === activeCalculator)!;
 
   const reduceToSingleDigit = (num: number): number => {
     while (num > 9 && num !== 11 && num !== 22) {
@@ -419,8 +461,8 @@ const CalculatorPage = () => {
       );
     }
 
-    // Compatibility background
-    return (
+    if (activeCalculator === "compatibility") {
+      return (
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div 
           className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-gradient-to-br from-rose-500/20 via-pink-400/15 to-red-500/10 rounded-full blur-3xl"
@@ -457,237 +499,414 @@ const CalculatorPage = () => {
           </motion.div>
         ))}
       </div>
-    );
+      );
+    }
+
+    if (activeCalculator === "gemstone") {
+      const gems = ["💎", "💚", "🔷", "🟢", "🔶", "⚪", "🔮"];
+      return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {gems.map((g, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-3xl md:text-4xl"
+              style={{ left: `${10 + i * 13}%`, top: `${15 + (i % 3) * 25}%` }}
+              animate={{ y: [-15, 15, -15], rotate: [-10, 10, -10], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 5 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
+            >
+              {g}
+            </motion.div>
+          ))}
+          <motion.div
+            className="absolute -top-20 -left-20 w-[420px] h-[420px] bg-gradient-to-br from-emerald-500/30 via-teal-400/20 to-cyan-500/15 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+      );
+    }
+
+    if (activeCalculator === "lucky-number") {
+      return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[7, 9, 3, 8, 1, 5, 4, 2, 6].map((n, i) => (
+            <motion.div
+              key={i}
+              className="absolute font-display font-bold text-yellow-300/30 text-5xl md:text-7xl"
+              style={{ left: `${8 + (i % 4) * 23}%`, top: `${10 + Math.floor(i / 4) * 30}%` }}
+              animate={{ y: [-10, 10, -10], opacity: [0.2, 0.5, 0.2], scale: [0.95, 1.1, 0.95] }}
+              transition={{ duration: 5 + i * 0.3, repeat: Infinity, ease: "easeInOut", delay: i * 0.2 }}
+            >
+              {n}
+            </motion.div>
+          ))}
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-br from-yellow-500/25 via-amber-400/15 to-orange-500/15 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.3, 1] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+      );
+    }
+
+    if (activeCalculator === "name-number") {
+      const letters = ["A", "M", "S", "K", "R", "I", "N", "E", "L", "T"];
+      return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {letters.map((ch, i) => (
+            <motion.div
+              key={i}
+              className="absolute font-display font-bold text-blue-300/25 text-4xl md:text-6xl"
+              style={{ left: `${5 + i * 9.5}%`, top: `${15 + (i % 3) * 28}%` }}
+              animate={{ y: [-12, 12, -12], opacity: [0.2, 0.45, 0.2], rotate: [-6, 6, -6] }}
+              transition={{ duration: 5 + i * 0.3, repeat: Infinity, ease: "easeInOut", delay: i * 0.2 }}
+            >
+              {ch}
+            </motion.div>
+          ))}
+          <motion.div
+            className="absolute -bottom-20 -right-20 w-[460px] h-[460px] bg-gradient-to-tl from-blue-500/25 via-sky-400/15 to-indigo-500/15 rounded-full blur-3xl"
+            animate={{ scale: [1.1, 1, 1.1] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
     <Layout>
-      <SEOHead title="Free Numerology Calculator" description="Use our free numerology calculator to find your life path number, zodiac sign, and name compatibility. Powered by Ankshaastra." canonical="/calculator" />
-      {/* Hero Section */}
-      <section className="pt-12 pb-16 relative overflow-hidden">
+      <SEOHead
+        title="Free Numerology & Astrology Calculators"
+        description="Free numerology, zodiac, compatibility, gemstone, lucky number and name number calculators by Ankshaastra. Instant results, no signup."
+        canonical="/calculator"
+      />
+
+      {/* ── Hero Section (themed per active calculator) ── */}
+      <section className="relative overflow-hidden pt-16 pb-20 md:pt-24 md:pb-28">
+        {/* Themed gradient backdrop */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`hero-${activeCalculator}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className={`absolute inset-0 bg-gradient-to-br ${activeCalc.gradient}`}
+          />
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.35)_100%)]" />
+        <div
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: "32px 32px",
+          }}
+        />
         {renderBackground()}
+
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <span className="inline-block px-4 py-1 rounded-full bg-muted border border-border text-secondary text-sm mb-4">
-              Free Tools
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-white text-xs md:text-sm font-semibold mb-5 tracking-wider uppercase">
+              <Sparkles className="w-3.5 h-3.5" />
+              Free Numerology Tools
             </span>
-            <h1 className="font-display text-4xl md:text-6xl font-bold text-foreground mb-6">
-              Astrology <span className="text-gradient-gold">Calculators</span>
-            </h1>
-            <p className="font-elegant text-xl text-muted-foreground">
-              Discover insights about yourself and your relationships with our free calculators
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`title-${activeCalculator}`}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.35 }}
+              >
+                <h1 className="font-display text-4xl md:text-6xl font-bold text-white mb-5 leading-tight drop-shadow-lg">
+                  {activeCalc.tagline}
+                </h1>
+                <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto leading-relaxed">
+                  {activeCalc.heroSub}
+                </p>
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
         </div>
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
       </section>
 
-      {/* Calculator Section */}
-      <section className="py-16 relative overflow-hidden">
-        {renderBackground()}
+      {/* ── Calculator Picker + Form ── */}
+      <section className="relative pb-20 md:pb-28 -mt-10 md:-mt-16">
         <div className="container mx-auto px-4 relative z-10">
-          {/* Calculator Tabs - Centered */}
-          <div className="flex justify-center mb-12">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 max-w-6xl w-full">
-              {calculators.map((calc) => (
-                <motion.button
-                  key={calc.id}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setActiveCalculator(calc.id);
-                    setResult(null);
-                  }}
-                  className={`p-4 md:p-5 rounded-xl border transition-all duration-300 text-center ${
-                    activeCalculator === calc.id
-                      ? "bg-primary/20 border-primary text-foreground"
-                      : "bg-card border-border text-muted-foreground hover:border-primary/50"
-                  }`}
-                >
-                  <calc.icon className={`w-7 h-7 mx-auto mb-2 ${activeCalculator === calc.id ? "text-secondary" : ""}`} strokeWidth={1.5} />
-                  <h3 className="font-display text-sm md:text-base font-semibold mb-1 leading-tight">{calc.title}</h3>
-                  <p className="text-[11px] md:text-xs leading-snug">{calc.description}</p>
-                </motion.button>
-              ))}
+          {/* Calculator picker tiles */}
+          <div className="max-w-6xl mx-auto mb-10 md:mb-14">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+              {calculators.map((calc) => {
+                const isActive = activeCalculator === calc.id;
+                const Icon = calc.icon;
+                return (
+                  <motion.button
+                    key={calc.id}
+                    whileHover={{ y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setActiveCalculator(calc.id);
+                      setResult(null);
+                    }}
+                    className={`relative overflow-hidden p-4 md:p-5 rounded-2xl border-2 text-left transition-all duration-300 ${
+                      isActive
+                        ? "border-transparent shadow-xl"
+                        : "border-border bg-card hover:border-primary/40 hover:shadow-md"
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-calc-bg"
+                        className={`absolute inset-0 bg-gradient-to-br ${calc.gradient}`}
+                        transition={{ type: "spring", duration: 0.5 }}
+                      />
+                    )}
+                    <div className="relative z-10">
+                      <div
+                        className={`w-11 h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center mb-3 transition-colors ${
+                          isActive
+                            ? "bg-white/20 backdrop-blur-sm"
+                            : "bg-primary/10"
+                        }`}
+                      >
+                        <Icon
+                          className={`w-5 h-5 md:w-6 md:h-6 ${isActive ? "text-white" : "text-primary"}`}
+                          strokeWidth={1.75}
+                        />
+                      </div>
+                      <h3
+                        className={`font-display text-sm md:text-base font-bold leading-tight mb-1 ${
+                          isActive ? "text-white" : "text-foreground"
+                        }`}
+                      >
+                        {calc.title}
+                      </h3>
+                      <p className={`text-[11px] md:text-xs leading-snug ${isActive ? "text-white/80" : "text-muted-foreground"}`}>
+                        {calc.description}
+                      </p>
+                    </div>
+                  </motion.button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Calculator Form */}
+          {/* Form card — themed border + soft tinted glow */}
           <div className="max-w-2xl mx-auto">
-            <motion.div
-              key={activeCalculator}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="card-mystical p-8"
-            >
-              <div className="space-y-6">
-                {activeCalculator === "numerology" && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Your Name
-                      </label>
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="Enter your full name"
-                      />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`form-${activeCalculator}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.35 }}
+                className="relative"
+              >
+                {/* Glow */}
+                <div
+                  className={`absolute -inset-1 rounded-3xl bg-gradient-to-br ${activeCalc.gradient} opacity-20 blur-xl`}
+                />
+                <div className="relative bg-card border border-border rounded-3xl p-6 md:p-10 shadow-xl">
+                  {/* Form header */}
+                  <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border">
+                    <div
+                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${activeCalc.gradient} flex items-center justify-center shadow-lg`}
+                    >
+                      <activeCalc.icon className="w-7 h-7 text-white" strokeWidth={1.75} />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Date of Birth *
-                      </label>
-                      <input
-                        type="date"
-                        value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
+                    <div className="flex-1 min-w-0">
+                      <h2 className="font-display text-xl md:text-2xl font-bold text-foreground leading-tight">
+                        {activeCalc.title} Calculator
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-0.5">{activeCalc.tagline}</p>
                     </div>
-                  </>
-                )}
-
-                {activeCalculator === "zodiac" && (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Date of Birth *
-                    </label>
-                    <input
-                      type="date"
-                      value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
                   </div>
-                )}
 
-                {activeCalculator === "compatibility" && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Your Date of Birth *
-                      </label>
-                      <input
-                        type="date"
-                        value={birthDate}
-                        onChange={(e) => setBirthDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Partner's Date of Birth *
-                      </label>
-                      <input
-                        type="date"
-                        value={partnerDate}
-                        onChange={(e) => setPartnerDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                  </>
-                )}
+                  <div className="space-y-5">
+                    {activeCalculator === "numerology" && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">
+                            Your Name <span className="text-muted-foreground font-normal">(optional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                            placeholder="Enter your full name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">
+                            Date of Birth <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={birthDate}
+                            onChange={(e) => setBirthDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                          />
+                        </div>
+                      </>
+                    )}
 
-                {(activeCalculator === "gemstone" || activeCalculator === "lucky-number") && (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Date of Birth *
-                    </label>
-                    <input
-                      type="date"
-                      value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {activeCalculator === "gemstone"
-                        ? "Your birth date determines your ruling planet and most beneficial gemstone."
-                        : "We calculate your Mulank, Bhagyaank, and friendly numbers for daily luck."}
-                    </p>
-                  </div>
-                )}
-
-                {activeCalculator === "name-number" && (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      maxLength={80}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                      placeholder="Enter the full name to test"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Spell exactly as written on official documents — every letter changes the vibration.
-                    </p>
-                  </div>
-                )}
-
-                <button onClick={handleCalculate} className="w-full btn-gold py-4 text-lg">
-                  <Sparkles className="w-5 h-5 inline-block mr-2" />
-                  Calculate Now
-                </button>
-
-                {/* Calculator Type Radio Buttons */}
-                <div className="pt-4 border-t border-border">
-                  <p className="text-sm text-muted-foreground mb-3 text-center">Quick Switch Calculator</p>
-                  <RadioGroup
-                    value={activeCalculator}
-                    onValueChange={(value) => {
-                      setActiveCalculator(value as CalculatorType);
-                      setResult(null);
-                    }}
-                    className="flex justify-center gap-6"
-                  >
-                    {calculators.map((calc) => (
-                      <div key={calc.id} className="flex items-center space-x-2">
-                        <RadioGroupItem value={calc.id} id={calc.id} />
-                        <Label htmlFor={calc.id} className="text-sm cursor-pointer">{calc.title}</Label>
+                    {activeCalculator === "zodiac" && (
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">
+                          Date of Birth <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={birthDate}
+                          onChange={(e) => setBirthDate(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          We map your birth date to its corresponding zodiac sign and ruling planet.
+                        </p>
                       </div>
-                    ))}
-                  </RadioGroup>
+                    )}
+
+                    {activeCalculator === "compatibility" && (
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">
+                            Your Date of Birth <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={birthDate}
+                            onChange={(e) => setBirthDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">
+                            Partner's Date of Birth <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={partnerDate}
+                            onChange={(e) => setPartnerDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {(activeCalculator === "gemstone" || activeCalculator === "lucky-number") && (
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">
+                          Date of Birth <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={birthDate}
+                          onChange={(e) => setBirthDate(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {activeCalculator === "gemstone"
+                            ? "Your birth date determines your ruling planet and most beneficial gemstone."
+                            : "We calculate your Mulank, Bhagyaank and friendly numbers for daily luck."}
+                        </p>
+                      </div>
+                    )}
+
+                    {activeCalculator === "name-number" && (
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">
+                          Full Name <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={name}
+                          maxLength={80}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                          placeholder="e.g. Himansshu Agarwal"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Spell exactly as written on official documents — every letter changes the vibration.
+                        </p>
+                      </div>
+                    )}
+
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={handleCalculate}
+                      className={`w-full py-4 text-base md:text-lg font-bold text-white rounded-xl shadow-lg bg-gradient-to-r ${activeCalc.gradient} hover:shadow-2xl transition-all inline-flex items-center justify-center gap-2`}
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      Calculate Now
+                      <ArrowRight className="w-5 h-5" />
+                    </motion.button>
+                  </div>
+
+                  {/* Result */}
+                  <AnimatePresence>
+                    {result && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.4 }}
+                        className="mt-8 relative overflow-hidden rounded-2xl border border-border"
+                      >
+                        <div className={`absolute inset-0 bg-gradient-to-br ${activeCalc.gradient} opacity-10`} />
+                        <div className="relative p-6 md:p-8">
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-gradient-to-r ${activeCalc.gradient}`}>
+                              <Sparkles className="w-3 h-3" />
+                              Your Result
+                            </span>
+                          </div>
+                          <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-5 leading-tight">
+                            {result.title}
+                          </h3>
+                          {result.mulank !== undefined && result.bhagyaank !== undefined && (
+                            <div className="flex justify-center gap-6 md:gap-10 mb-6">
+                              <div className="text-center">
+                                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br ${activeCalc.gradient} flex items-center justify-center text-3xl md:text-4xl font-bold text-white shadow-2xl`}>
+                                  {result.mulank}
+                                </div>
+                                <p className="mt-3 text-sm font-semibold text-foreground">Mulank</p>
+                                <p className="text-xs text-muted-foreground">Birth Number</p>
+                              </div>
+                              <div className="text-center">
+                                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br ${activeCalc.gradient} flex items-center justify-center text-3xl md:text-4xl font-bold text-white shadow-2xl`}>
+                                  {result.bhagyaank}
+                                </div>
+                                <p className="mt-3 text-sm font-semibold text-foreground">Bhagyaank</p>
+                                <p className="text-xs text-muted-foreground">Destiny Number</p>
+                              </div>
+                            </div>
+                          )}
+                          <p className="text-foreground/90 whitespace-pre-line leading-relaxed text-sm md:text-base">
+                            {result.content}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
+              </motion.div>
+            </AnimatePresence>
 
-              {/* Result */}
-              {result && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 p-6 rounded-xl bg-primary/10 border border-primary/20"
-                >
-                  <h3 className="font-display text-2xl font-bold text-gradient-gold mb-4">
-                    {result.title}
-                  </h3>
-                  {result.mulank !== undefined && result.bhagyaank !== undefined && (
-                    <div className="flex justify-center gap-8 mb-6">
-                      <div className="text-center">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
-                          {result.mulank}
-                        </div>
-                        <p className="mt-2 text-sm font-medium text-muted-foreground">Mulank</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
-                          {result.bhagyaank}
-                        </div>
-                        <p className="mt-2 text-sm font-medium text-muted-foreground">Bhagyaank</p>
-                      </div>
-                    </div>
-                  )}
-                  <p className="text-foreground whitespace-pre-line leading-relaxed">
-                    {result.content}
-                  </p>
-                </motion.div>
-              )}
-            </motion.div>
+            {/* Disclaimer */}
+            <p className="text-center text-xs text-muted-foreground mt-6 max-w-lg mx-auto">
+              These calculators offer indicative guidance based on traditional numerology principles. For a personalized in-depth analysis, book a 1:1 consultation with Himansshu Agarwal Ji.
+            </p>
           </div>
         </div>
       </section>
