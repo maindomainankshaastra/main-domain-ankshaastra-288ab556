@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { Calculator, Star, Heart, Sparkles, Gem, Hash, Type } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Calculator, Star, Heart, Sparkles, Gem, Hash, Type, ArrowRight } from "lucide-react";
 
 type CalculatorType =
   | "numerology"
