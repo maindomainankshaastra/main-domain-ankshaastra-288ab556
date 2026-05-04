@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { Calculator, Star, Heart, Sparkles } from "lucide-react";
+import { Calculator, Star, Heart, Sparkles, Gem, Hash, Type } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
-type CalculatorType = "numerology" | "zodiac" | "compatibility";
+type CalculatorType =
+  | "numerology"
+  | "zodiac"
+  | "compatibility"
+  | "gemstone"
+  | "lucky-number"
+  | "name-number";
 
 const zodiacSymbols: Record<string, string> = {
   Aries: "♈",
