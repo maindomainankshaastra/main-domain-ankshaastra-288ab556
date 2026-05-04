@@ -8,7 +8,7 @@ import {
   Armchair, Building, ArrowRight, Sparkles, ExternalLink,
   Gem, Zap, Car, Smartphone, Home as HomeIcon, Heart, Tag, Users,
   UserCheck, Landmark, MapPin, Grid3X3, Store, Paintbrush, Crown,
-  type LucideIcon
+  Search, X, type LucideIcon
 } from "lucide-react";
 
 /* ─── Service icon map for decorative per-card icons ─── */
@@ -208,13 +208,21 @@ const ServicesPage = () => {
   const totalServices = serviceCategories.reduce((acc, cat) => acc + cat.services.length, 0);
   const tabs = [{ id: "all", title: "All" }, ...serviceCategories.map((c) => ({ id: c.id, title: c.title }))];
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const visibleServices = useMemo(() => {
     const all = serviceCategories.flatMap((cat) =>
       cat.services.map((s) => ({ ...s, _categoryId: cat.id }))
     );
-    return activeTab === "all" ? all : all.filter((s) => s._categoryId === activeTab);
-  }, [activeTab]);
+    const byTab = activeTab === "all" ? all : all.filter((s) => s._categoryId === activeTab);
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return byTab;
+    return byTab.filter(
+      (s) =>
+        s.title.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q)
+    );
+  }, [activeTab, searchQuery]);
 
   return (
     <Layout>
@@ -303,12 +311,48 @@ const ServicesPage = () => {
             ))}
           </div>
 
+          {/* Search bar */}
+          <div className="max-w-xl mx-auto mb-10">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search services by name or description..."
+                aria-label="Search services"
+                className="w-full pl-12 pr-12 py-3.5 rounded-full bg-card border border-accent/40 text-foreground placeholder:text-muted-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="text-center text-sm text-muted-foreground mt-3">
+                {visibleServices.length} {visibleServices.length === 1 ? "result" : "results"} for "{searchQuery}"
+              </p>
+            )}
+          </div>
+
           {/* Cards grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {visibleServices.map((service, i) => (
               <ServiceCard key={`${service._categoryId}-${service.title}`} service={service} index={i} />
             ))}
           </div>
+
+          {visibleServices.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground text-lg">No services found. Try a different search or category.</p>
+            </div>
+          )}
         </div>
       </section>
 
