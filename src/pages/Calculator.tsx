@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { Calculator, Star, Heart, Sparkles } from "lucide-react";
+import { Calculator, Star, Heart, Sparkles, Gem, Hash, Type } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
-type CalculatorType = "numerology" | "zodiac" | "compatibility";
+type CalculatorType =
+  | "numerology"
+  | "zodiac"
+  | "compatibility"
+  | "gemstone"
+  | "lucky-number"
+  | "name-number";
 
 const zodiacSymbols: Record<string, string> = {
   Aries: "♈",
@@ -29,11 +36,24 @@ const CalculatorPage = () => {
   const [name, setName] = useState("");
   const [partnerDate, setPartnerDate] = useState("");
   const [result, setResult] = useState<{ title: string; content: string; mulank?: number; bhagyaank?: number } | null>(null);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const tab = searchParams.get("tab") as CalculatorType | null;
+    const valid: CalculatorType[] = ["numerology", "zodiac", "compatibility", "gemstone", "lucky-number", "name-number"];
+    if (tab && valid.includes(tab)) {
+      setActiveCalculator(tab);
+      setResult(null);
+    }
+  }, [searchParams]);
 
   const calculators = [
     { id: "numerology" as const, icon: Calculator, title: "Numerology", description: "Discover your Mulank & Bhagyaank" },
     { id: "zodiac" as const, icon: Star, title: "Zodiac Sign", description: "Find your sun sign" },
     { id: "compatibility" as const, icon: Heart, title: "Compatibility", description: "Check love compatibility" },
+    { id: "gemstone" as const, icon: Gem, title: "Lucky Gemstone", description: "Find your power gemstone" },
+    { id: "lucky-number" as const, icon: Hash, title: "Lucky Numbers", description: "Today's auspicious numbers" },
+    { id: "name-number" as const, icon: Type, title: "Name Number", description: "Numerology of any name" },
   ];
 
   const reduceToSingleDigit = (num: number): number => {
@@ -180,7 +200,128 @@ const CalculatorPage = () => {
       case "compatibility":
         calculateCompatibility();
         break;
+      case "gemstone":
+        calculateGemstone();
+        break;
+      case "lucky-number":
+        calculateLuckyNumber();
+        break;
+      case "name-number":
+        calculateNameNumber();
+        break;
     }
+  };
+
+  // Pythagorean letter values for name numerology
+  const letterValues: Record<string, number> = {
+    A: 1, J: 1, S: 1,
+    B: 2, K: 2, T: 2,
+    C: 3, L: 3, U: 3,
+    D: 4, M: 4, V: 4,
+    E: 5, N: 5, W: 5,
+    F: 6, O: 6, X: 6,
+    G: 7, P: 7, Y: 7,
+    H: 8, Q: 8, Z: 8,
+    I: 9, R: 9,
+  };
+
+  const calculateNameValue = (input: string): number => {
+    const sum = input
+      .toUpperCase()
+      .split("")
+      .filter((ch) => letterValues[ch])
+      .reduce((acc, ch) => acc + letterValues[ch], 0);
+    return reduceToSingleDigit(sum);
+  };
+
+  const calculateGemstone = () => {
+    if (!birthDate) return;
+    const date = new Date(birthDate);
+    const day = date.getDate();
+    const mulank = reduceToSingleDigit(day);
+
+    const gems: Record<number, { stone: string; planet: string; color: string; benefit: string }> = {
+      1: { stone: "Ruby (Manik)", planet: "Sun (Surya)", color: "Deep Red", benefit: "Boosts confidence, leadership, vitality, and authority." },
+      2: { stone: "Pearl (Moti)", planet: "Moon (Chandra)", color: "Milky White", benefit: "Calms the mind, balances emotions, improves intuition." },
+      3: { stone: "Yellow Sapphire (Pukhraj)", planet: "Jupiter (Guru)", color: "Golden Yellow", benefit: "Brings wisdom, prosperity, and spiritual growth." },
+      4: { stone: "Hessonite (Gomed)", planet: "Rahu", color: "Honey Brown", benefit: "Removes confusion, protects from negativity, sharpens intellect." },
+      5: { stone: "Emerald (Panna)", planet: "Mercury (Budh)", color: "Vivid Green", benefit: "Enhances communication, intelligence, business success." },
+      6: { stone: "Diamond (Heera)", planet: "Venus (Shukra)", color: "Brilliant White", benefit: "Attracts love, luxury, charm, and artistic expression." },
+      7: { stone: "Cat's Eye (Lehsunia)", planet: "Ketu", color: "Greenish Gold", benefit: "Provides spiritual insight, intuition, and protection." },
+      8: { stone: "Blue Sapphire (Neelam)", planet: "Saturn (Shani)", color: "Royal Blue", benefit: "Brings discipline, swift karma resolution, and lasting success." },
+      9: { stone: "Red Coral (Moonga)", planet: "Mars (Mangal)", color: "Bright Red-Orange", benefit: "Increases courage, energy, and victory over obstacles." },
+    };
+
+    const g = gems[mulank];
+    setResult({
+      title: `💎 Your Lucky Gemstone: ${g.stone}`,
+      content: `Birth Number (Mulank): ${mulank}\nRuling Planet: ${g.planet}\nColor: ${g.color}\n\n${g.benefit}\n\n⚠️ Important: Gemstones are powerful energies. Consult Himansshu Agarwal Ji before wearing — incorrect stones can cause adverse effects. Book a 1:1 consultation for a personalized recommendation.`,
+    });
+  };
+
+  const calculateLuckyNumber = () => {
+    if (!birthDate) return;
+    const date = new Date(birthDate);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    const mulank = reduceToSingleDigit(day);
+    const yearSum = year.toString().split("").map(Number).reduce((a, b) => a + b, 0);
+    const bhagyaank = reduceToSingleDigit(day + month + yearSum);
+
+    // Friendly numbers map (traditional numerology friendships)
+    const friendly: Record<number, number[]> = {
+      1: [1, 3, 5, 9],
+      2: [1, 2, 4, 7],
+      3: [1, 3, 5, 9],
+      4: [2, 4, 6, 8],
+      5: [1, 3, 5, 6, 9],
+      6: [4, 5, 6, 8],
+      7: [1, 2, 7],
+      8: [2, 4, 6, 8],
+      9: [1, 3, 5, 9],
+    };
+
+    const luckyDays: Record<number, string> = {
+      1: "Sunday, Monday", 2: "Monday, Friday", 3: "Thursday, Friday",
+      4: "Saturday, Sunday", 5: "Wednesday, Friday", 6: "Friday, Wednesday",
+      7: "Monday, Sunday", 8: "Saturday, Sunday", 9: "Tuesday, Thursday",
+    };
+
+    const luckyColors: Record<number, string> = {
+      1: "Golden, Orange, Yellow", 2: "White, Cream, Silver",
+      3: "Yellow, Pink, Purple", 4: "Grey, Light Blue, Khaki",
+      5: "Green, Light Grey, White", 6: "White, Pink, Sky Blue",
+      7: "Light Green, White, Yellow", 8: "Black, Dark Blue, Purple",
+      9: "Red, Pink, Crimson",
+    };
+
+    const lucky = Array.from(new Set([mulank, bhagyaank, ...(friendly[mulank] || [])])).sort((a, b) => a - b);
+
+    setResult({
+      title: "🍀 Your Lucky Numbers",
+      content: `Mulank: ${mulank}  |  Bhagyaank: ${bhagyaank}\n\nLucky Numbers: ${lucky.join(", ")}\nLucky Days: ${luckyDays[mulank]}\nLucky Colors: ${luckyColors[mulank]}\n\nUse these numbers for important choices — vehicle plates, mobile numbers, house numbers, signing contracts, and travel dates. Avoid numbers that conflict with your Mulank for major financial decisions.`,
+    });
+  };
+
+  const calculateNameNumber = () => {
+    if (!name.trim()) return;
+    const value = calculateNameValue(name);
+    const meanings: Record<number, string> = {
+      1: "Independent, original, ambitious. A name of leaders and pioneers.",
+      2: "Diplomatic, sensitive, partnership-oriented. Brings cooperation and peace.",
+      3: "Creative, expressive, joyful. Excellent for artists and communicators.",
+      4: "Stable, disciplined, hardworking. Builds enduring success step by step.",
+      5: "Adventurous, dynamic, freedom-loving. Suited for travel and change.",
+      6: "Loving, responsible, nurturing. Strong for family and service careers.",
+      7: "Spiritual, analytical, introspective. Names of researchers and seekers.",
+      8: "Powerful, wealth-attracting, karmic. Strong but demands integrity.",
+      9: "Compassionate, humanitarian, magnetic. Inspires and uplifts others.",
+    };
+    setResult({
+      title: `🔤 Name Number: ${value}`,
+      content: `Name Analyzed: ${name.trim()}\nNumerology Value: ${value}\n\n${meanings[value] || "A unique vibration."}\n\n📌 If your Name Number conflicts with your Mulank or Bhagyaank, a Name Correction can realign your energies for smoother success. Book a personal Name Correction Blueprint to get scientifically aligned spelling options.`,
+    });
   };
 
   // Dynamic background based on calculator type
@@ -350,7 +491,7 @@ const CalculatorPage = () => {
         <div className="container mx-auto px-4 relative z-10">
           {/* Calculator Tabs - Centered */}
           <div className="flex justify-center mb-12">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 max-w-6xl w-full">
               {calculators.map((calc) => (
                 <motion.button
                   key={calc.id}
@@ -359,15 +500,15 @@ const CalculatorPage = () => {
                     setActiveCalculator(calc.id);
                     setResult(null);
                   }}
-                  className={`p-6 rounded-xl border transition-all duration-300 ${
+                  className={`p-4 md:p-5 rounded-xl border transition-all duration-300 text-center ${
                     activeCalculator === calc.id
                       ? "bg-primary/20 border-primary text-foreground"
                       : "bg-card border-border text-muted-foreground hover:border-primary/50"
                   }`}
                 >
-                  <calc.icon className={`w-8 h-8 mx-auto mb-3 ${activeCalculator === calc.id ? "text-secondary" : ""}`} />
-                  <h3 className="font-display text-lg font-semibold mb-1">{calc.title}</h3>
-                  <p className="text-sm">{calc.description}</p>
+                  <calc.icon className={`w-7 h-7 mx-auto mb-2 ${activeCalculator === calc.id ? "text-secondary" : ""}`} strokeWidth={1.5} />
+                  <h3 className="font-display text-sm md:text-base font-semibold mb-1 leading-tight">{calc.title}</h3>
+                  <p className="text-[11px] md:text-xs leading-snug">{calc.description}</p>
                 </motion.button>
               ))}
             </div>
@@ -449,6 +590,44 @@ const CalculatorPage = () => {
                       />
                     </div>
                   </>
+                )}
+
+                {(activeCalculator === "gemstone" || activeCalculator === "lucky-number") && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Date of Birth *
+                    </label>
+                    <input
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {activeCalculator === "gemstone"
+                        ? "Your birth date determines your ruling planet and most beneficial gemstone."
+                        : "We calculate your Mulank, Bhagyaank, and friendly numbers for daily luck."}
+                    </p>
+                  </div>
+                )}
+
+                {activeCalculator === "name-number" && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      maxLength={80}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Enter the full name to test"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Spell exactly as written on official documents — every letter changes the vibration.
+                    </p>
+                  </div>
                 )}
 
                 <button onClick={handleCalculate} className="w-full btn-gold py-4 text-lg">

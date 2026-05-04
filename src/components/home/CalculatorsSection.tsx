@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { Calculator, Heart, Gem, Star, ArrowRight, Hash } from "lucide-react";
 
 const calculators = [
-  { icon: Calculator, title: "Numerology Calculator", description: "Discover your life path & destiny number instantly", to: "/calculator" },
-  { icon: Heart, title: "Love Compatibility", description: "Check numerological compatibility with your partner", to: "/calculator" },
-  { icon: Gem, title: "Lucky Gemstone Finder", description: "Find the perfect gemstone for your birth chart", to: "/calculator" },
-  { icon: Star, title: "Lucky Number Calculator", description: "Reveal your most auspicious daily numbers", to: "/calculator" },
+  { icon: Calculator, title: "Numerology Calculator", description: "Discover your life path & destiny number instantly", to: "/calculator?tab=numerology" },
+  { icon: Heart, title: "Love Compatibility", description: "Check numerological compatibility with your partner", to: "/calculator?tab=compatibility" },
+  { icon: Gem, title: "Lucky Gemstone Finder", description: "Find the perfect gemstone for your birth chart", to: "/calculator?tab=gemstone" },
+  { icon: Star, title: "Lucky Number Calculator", description: "Reveal your most auspicious daily numbers", to: "/calculator?tab=lucky-number" },
   { icon: Hash, title: "Mobile Number Check", description: "Test if your mobile number is vibrationally aligned", to: "/services/mobile-numerology" },
-  { icon: Calculator, title: "Name Number Test", description: "Calculate the numerological value of any name", to: "/calculator" },
+  { icon: Calculator, title: "Name Number Test", description: "Calculate the numerological value of any name", to: "/calculator?tab=name-number" },
 ];
 
 const CalculatorsSection = () => {
