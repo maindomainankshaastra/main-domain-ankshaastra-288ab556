@@ -201,7 +201,128 @@ const CalculatorPage = () => {
       case "compatibility":
         calculateCompatibility();
         break;
+      case "gemstone":
+        calculateGemstone();
+        break;
+      case "lucky-number":
+        calculateLuckyNumber();
+        break;
+      case "name-number":
+        calculateNameNumber();
+        break;
     }
+  };
+
+  // Pythagorean letter values for name numerology
+  const letterValues: Record<string, number> = {
+    A: 1, J: 1, S: 1,
+    B: 2, K: 2, T: 2,
+    C: 3, L: 3, U: 3,
+    D: 4, M: 4, V: 4,
+    E: 5, N: 5, W: 5,
+    F: 6, O: 6, X: 6,
+    G: 7, P: 7, Y: 7,
+    H: 8, Q: 8, Z: 8,
+    I: 9, R: 9,
+  };
+
+  const calculateNameValue = (input: string): number => {
+    const sum = input
+      .toUpperCase()
+      .split("")
+      .filter((ch) => letterValues[ch])
+      .reduce((acc, ch) => acc + letterValues[ch], 0);
+    return reduceToSingleDigit(sum);
+  };
+
+  const calculateGemstone = () => {
+    if (!birthDate) return;
+    const date = new Date(birthDate);
+    const day = date.getDate();
+    const mulank = reduceToSingleDigit(day);
+
+    const gems: Record<number, { stone: string; planet: string; color: string; benefit: string }> = {
+      1: { stone: "Ruby (Manik)", planet: "Sun (Surya)", color: "Deep Red", benefit: "Boosts confidence, leadership, vitality, and authority." },
+      2: { stone: "Pearl (Moti)", planet: "Moon (Chandra)", color: "Milky White", benefit: "Calms the mind, balances emotions, improves intuition." },
+      3: { stone: "Yellow Sapphire (Pukhraj)", planet: "Jupiter (Guru)", color: "Golden Yellow", benefit: "Brings wisdom, prosperity, and spiritual growth." },
+      4: { stone: "Hessonite (Gomed)", planet: "Rahu", color: "Honey Brown", benefit: "Removes confusion, protects from negativity, sharpens intellect." },
+      5: { stone: "Emerald (Panna)", planet: "Mercury (Budh)", color: "Vivid Green", benefit: "Enhances communication, intelligence, business success." },
+      6: { stone: "Diamond (Heera)", planet: "Venus (Shukra)", color: "Brilliant White", benefit: "Attracts love, luxury, charm, and artistic expression." },
+      7: { stone: "Cat's Eye (Lehsunia)", planet: "Ketu", color: "Greenish Gold", benefit: "Provides spiritual insight, intuition, and protection." },
+      8: { stone: "Blue Sapphire (Neelam)", planet: "Saturn (Shani)", color: "Royal Blue", benefit: "Brings discipline, swift karma resolution, and lasting success." },
+      9: { stone: "Red Coral (Moonga)", planet: "Mars (Mangal)", color: "Bright Red-Orange", benefit: "Increases courage, energy, and victory over obstacles." },
+    };
+
+    const g = gems[mulank];
+    setResult({
+      title: `💎 Your Lucky Gemstone: ${g.stone}`,
+      content: `Birth Number (Mulank): ${mulank}\nRuling Planet: ${g.planet}\nColor: ${g.color}\n\n${g.benefit}\n\n⚠️ Important: Gemstones are powerful energies. Consult Himansshu Agarwal Ji before wearing — incorrect stones can cause adverse effects. Book a 1:1 consultation for a personalized recommendation.`,
+    });
+  };
+
+  const calculateLuckyNumber = () => {
+    if (!birthDate) return;
+    const date = new Date(birthDate);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    const mulank = reduceToSingleDigit(day);
+    const yearSum = year.toString().split("").map(Number).reduce((a, b) => a + b, 0);
+    const bhagyaank = reduceToSingleDigit(day + month + yearSum);
+
+    // Friendly numbers map (traditional numerology friendships)
+    const friendly: Record<number, number[]> = {
+      1: [1, 3, 5, 9],
+      2: [1, 2, 4, 7],
+      3: [1, 3, 5, 9],
+      4: [2, 4, 6, 8],
+      5: [1, 3, 5, 6, 9],
+      6: [4, 5, 6, 8],
+      7: [1, 2, 7],
+      8: [2, 4, 6, 8],
+      9: [1, 3, 5, 9],
+    };
+
+    const luckyDays: Record<number, string> = {
+      1: "Sunday, Monday", 2: "Monday, Friday", 3: "Thursday, Friday",
+      4: "Saturday, Sunday", 5: "Wednesday, Friday", 6: "Friday, Wednesday",
+      7: "Monday, Sunday", 8: "Saturday, Sunday", 9: "Tuesday, Thursday",
+    };
+
+    const luckyColors: Record<number, string> = {
+      1: "Golden, Orange, Yellow", 2: "White, Cream, Silver",
+      3: "Yellow, Pink, Purple", 4: "Grey, Light Blue, Khaki",
+      5: "Green, Light Grey, White", 6: "White, Pink, Sky Blue",
+      7: "Light Green, White, Yellow", 8: "Black, Dark Blue, Purple",
+      9: "Red, Pink, Crimson",
+    };
+
+    const lucky = Array.from(new Set([mulank, bhagyaank, ...(friendly[mulank] || [])])).sort((a, b) => a - b);
+
+    setResult({
+      title: "🍀 Your Lucky Numbers",
+      content: `Mulank: ${mulank}  |  Bhagyaank: ${bhagyaank}\n\nLucky Numbers: ${lucky.join(", ")}\nLucky Days: ${luckyDays[mulank]}\nLucky Colors: ${luckyColors[mulank]}\n\nUse these numbers for important choices — vehicle plates, mobile numbers, house numbers, signing contracts, and travel dates. Avoid numbers that conflict with your Mulank for major financial decisions.`,
+    });
+  };
+
+  const calculateNameNumber = () => {
+    if (!name.trim()) return;
+    const value = calculateNameValue(name);
+    const meanings: Record<number, string> = {
+      1: "Independent, original, ambitious. A name of leaders and pioneers.",
+      2: "Diplomatic, sensitive, partnership-oriented. Brings cooperation and peace.",
+      3: "Creative, expressive, joyful. Excellent for artists and communicators.",
+      4: "Stable, disciplined, hardworking. Builds enduring success step by step.",
+      5: "Adventurous, dynamic, freedom-loving. Suited for travel and change.",
+      6: "Loving, responsible, nurturing. Strong for family and service careers.",
+      7: "Spiritual, analytical, introspective. Names of researchers and seekers.",
+      8: "Powerful, wealth-attracting, karmic. Strong but demands integrity.",
+      9: "Compassionate, humanitarian, magnetic. Inspires and uplifts others.",
+    };
+    setResult({
+      title: `🔤 Name Number: ${value}`,
+      content: `Name Analyzed: ${name.trim()}\nNumerology Value: ${value}\n\n${meanings[value] || "A unique vibration."}\n\n📌 If your Name Number conflicts with your Mulank or Bhagyaank, a Name Correction can realign your energies for smoother success. Book a personal Name Correction Blueprint to get scientifically aligned spelling options.`,
+    });
   };
 
   // Dynamic background based on calculator type
