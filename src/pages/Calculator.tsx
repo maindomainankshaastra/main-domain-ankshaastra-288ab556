@@ -46,13 +46,57 @@ const CalculatorPage = () => {
   }, [searchParams]);
 
   const calculators = [
-    { id: "numerology" as const, icon: Calculator, title: "Numerology", description: "Discover your Mulank & Bhagyaank" },
-    { id: "zodiac" as const, icon: Star, title: "Zodiac Sign", description: "Find your sun sign" },
-    { id: "compatibility" as const, icon: Heart, title: "Compatibility", description: "Check love compatibility" },
-    { id: "gemstone" as const, icon: Gem, title: "Lucky Gemstone", description: "Find your power gemstone" },
-    { id: "lucky-number" as const, icon: Hash, title: "Lucky Numbers", description: "Today's auspicious numbers" },
-    { id: "name-number" as const, icon: Type, title: "Name Number", description: "Numerology of any name" },
+    {
+      id: "numerology" as const, icon: Calculator, title: "Numerology", description: "Mulank & Bhagyaank",
+      tagline: "Decode your Birth & Destiny numbers",
+      heroSub: "Reveal the two numbers that shape your personality and destiny.",
+      gradient: "from-amber-500 via-orange-500 to-yellow-600",
+      ringColor: "ring-amber-500/40", textColor: "text-amber-600",
+      tone: "amber",
+    },
+    {
+      id: "zodiac" as const, icon: Star, title: "Zodiac Sign", description: "Sun sign & element",
+      tagline: "Find your celestial Sun sign",
+      heroSub: "Discover the cosmic energy assigned to your day of birth.",
+      gradient: "from-indigo-500 via-purple-500 to-pink-500",
+      ringColor: "ring-purple-500/40", textColor: "text-purple-500",
+      tone: "purple",
+    },
+    {
+      id: "compatibility" as const, icon: Heart, title: "Compatibility", description: "Partner harmony",
+      tagline: "Check love & life-path harmony",
+      heroSub: "See how two birth dates align in vibration and emotion.",
+      gradient: "from-rose-500 via-pink-500 to-red-500",
+      ringColor: "ring-rose-500/40", textColor: "text-rose-500",
+      tone: "rose",
+    },
+    {
+      id: "gemstone" as const, icon: Gem, title: "Lucky Gemstone", description: "Your power stone",
+      tagline: "Find your ruling planet's gemstone",
+      heroSub: "Wear the right stone — multiply success, courage, and clarity.",
+      gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+      ringColor: "ring-emerald-500/40", textColor: "text-emerald-500",
+      tone: "emerald",
+    },
+    {
+      id: "lucky-number" as const, icon: Hash, title: "Lucky Numbers", description: "Days, colors, digits",
+      tagline: "Unlock your auspicious numbers",
+      heroSub: "Numbers that attract opportunity, luck, and momentum.",
+      gradient: "from-yellow-500 via-amber-500 to-orange-500",
+      ringColor: "ring-yellow-500/40", textColor: "text-yellow-600",
+      tone: "yellow",
+    },
+    {
+      id: "name-number" as const, icon: Type, title: "Name Number", description: "Name vibration",
+      tagline: "Test any name's numerology",
+      heroSub: "Discover the hidden vibration carried by your name.",
+      gradient: "from-sky-500 via-blue-500 to-indigo-500",
+      ringColor: "ring-blue-500/40", textColor: "text-blue-500",
+      tone: "blue",
+    },
   ];
+
+  const activeCalc = calculators.find((c) => c.id === activeCalculator)!;
 
   const reduceToSingleDigit = (num: number): number => {
     while (num > 9 && num !== 11 && num !== 22) {
