@@ -461,8 +461,8 @@ const CalculatorPage = () => {
       );
     }
 
-    // Compatibility background
-    return (
+    if (activeCalculator === "compatibility") {
+      return (
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div 
           className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-gradient-to-br from-rose-500/20 via-pink-400/15 to-red-500/10 rounded-full blur-3xl"
@@ -499,7 +499,81 @@ const CalculatorPage = () => {
           </motion.div>
         ))}
       </div>
-    );
+      );
+    }
+
+    if (activeCalculator === "gemstone") {
+      const gems = ["💎", "💚", "🔷", "🟢", "🔶", "⚪", "🔮"];
+      return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {gems.map((g, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-3xl md:text-4xl"
+              style={{ left: `${10 + i * 13}%`, top: `${15 + (i % 3) * 25}%` }}
+              animate={{ y: [-15, 15, -15], rotate: [-10, 10, -10], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 5 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
+            >
+              {g}
+            </motion.div>
+          ))}
+          <motion.div
+            className="absolute -top-20 -left-20 w-[420px] h-[420px] bg-gradient-to-br from-emerald-500/30 via-teal-400/20 to-cyan-500/15 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+      );
+    }
+
+    if (activeCalculator === "lucky-number") {
+      return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[7, 9, 3, 8, 1, 5, 4, 2, 6].map((n, i) => (
+            <motion.div
+              key={i}
+              className="absolute font-display font-bold text-yellow-300/30 text-5xl md:text-7xl"
+              style={{ left: `${8 + (i % 4) * 23}%`, top: `${10 + Math.floor(i / 4) * 30}%` }}
+              animate={{ y: [-10, 10, -10], opacity: [0.2, 0.5, 0.2], scale: [0.95, 1.1, 0.95] }}
+              transition={{ duration: 5 + i * 0.3, repeat: Infinity, ease: "easeInOut", delay: i * 0.2 }}
+            >
+              {n}
+            </motion.div>
+          ))}
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-br from-yellow-500/25 via-amber-400/15 to-orange-500/15 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.3, 1] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+      );
+    }
+
+    if (activeCalculator === "name-number") {
+      const letters = ["A", "M", "S", "K", "R", "I", "N", "E", "L", "T"];
+      return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {letters.map((ch, i) => (
+            <motion.div
+              key={i}
+              className="absolute font-display font-bold text-blue-300/25 text-4xl md:text-6xl"
+              style={{ left: `${5 + i * 9.5}%`, top: `${15 + (i % 3) * 28}%` }}
+              animate={{ y: [-12, 12, -12], opacity: [0.2, 0.45, 0.2], rotate: [-6, 6, -6] }}
+              transition={{ duration: 5 + i * 0.3, repeat: Infinity, ease: "easeInOut", delay: i * 0.2 }}
+            >
+              {ch}
+            </motion.div>
+          ))}
+          <motion.div
+            className="absolute -bottom-20 -right-20 w-[460px] h-[460px] bg-gradient-to-tl from-blue-500/25 via-sky-400/15 to-indigo-500/15 rounded-full blur-3xl"
+            animate={{ scale: [1.1, 1, 1.1] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
