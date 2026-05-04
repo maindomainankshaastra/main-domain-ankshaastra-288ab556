@@ -492,7 +492,7 @@ const CalculatorPage = () => {
         <div className="container mx-auto px-4 relative z-10">
           {/* Calculator Tabs - Centered */}
           <div className="flex justify-center mb-12">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 max-w-6xl w-full">
               {calculators.map((calc) => (
                 <motion.button
                   key={calc.id}
@@ -501,15 +501,15 @@ const CalculatorPage = () => {
                     setActiveCalculator(calc.id);
                     setResult(null);
                   }}
-                  className={`p-6 rounded-xl border transition-all duration-300 ${
+                  className={`p-4 md:p-5 rounded-xl border transition-all duration-300 text-center ${
                     activeCalculator === calc.id
                       ? "bg-primary/20 border-primary text-foreground"
                       : "bg-card border-border text-muted-foreground hover:border-primary/50"
                   }`}
                 >
-                  <calc.icon className={`w-8 h-8 mx-auto mb-3 ${activeCalculator === calc.id ? "text-secondary" : ""}`} />
-                  <h3 className="font-display text-lg font-semibold mb-1">{calc.title}</h3>
-                  <p className="text-sm">{calc.description}</p>
+                  <calc.icon className={`w-7 h-7 mx-auto mb-2 ${activeCalculator === calc.id ? "text-secondary" : ""}`} strokeWidth={1.5} />
+                  <h3 className="font-display text-sm md:text-base font-semibold mb-1 leading-tight">{calc.title}</h3>
+                  <p className="text-[11px] md:text-xs leading-snug">{calc.description}</p>
                 </motion.button>
               ))}
             </div>
