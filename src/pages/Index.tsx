@@ -5,6 +5,7 @@ import ServicesSection from "@/components/home/ServicesSection";
 import CalculatorsSection from "@/components/home/CalculatorsSection";
 import YouTubeSection from "@/components/home/YouTubeSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
+import CelebritiesSection from "@/components/home/CelebritiesSection";
 import CTASection from "@/components/home/CTASection";
 import SEOHead from "@/components/SEOHead";
 
@@ -32,6 +33,7 @@ const Index = () => {
       <QuickCategories />
       <ServicesSection />
       <CalculatorsSection />
+      <CelebritiesSection />
       <YouTubeSection />
       <TestimonialsSection />
       <CTASection />
