@@ -311,17 +311,29 @@ const CalculatorPage = () => {
     const yearSum = year.toString().split("").map(Number).reduce((a, b) => a + b, 0);
     const bhagyaank = reduceToSingleDigit(day + month + yearSum);
 
-    // Friendly numbers map (traditional numerology friendships)
+    // Chaldean Friend / Enemy / Neutral table
+    // Lucky logic: union of friends of Mulank & Bhagyaank,
+    // then strike out any number that is an enemy or neutral
+    // for EITHER Mulank or Bhagyaank. The remainder = Lucky Numbers.
     const friendly: Record<number, number[]> = {
-      1: [1, 3, 5, 9],
-      2: [1, 2, 4, 7],
-      3: [1, 3, 5, 9],
-      4: [2, 4, 6, 8],
-      5: [1, 3, 5, 6, 9],
-      6: [4, 5, 6, 8],
-      7: [1, 2, 7],
-      8: [2, 4, 6, 8],
-      9: [1, 3, 5, 9],
+      1: [1, 2, 3, 5, 6, 9],
+      2: [1, 2, 3, 5],
+      3: [1, 2, 3, 5, 7],
+      4: [1, 4, 5, 6, 7, 8],
+      5: [1, 2, 3, 5, 6],
+      6: [1, 4, 5, 6, 7],
+      7: [1, 3, 4, 5, 6],
+      8: [3, 4, 5, 6, 7, 8],
+      9: [1, 3, 5],
+    };
+    const enemy: Record<number, number[]> = {
+      1: [8], 2: [4, 8, 9], 3: [6], 4: [2, 4, 8, 9],
+      5: [], 6: [3], 7: [], 8: [1, 2, 4, 8], 9: [2, 4],
+    };
+    const neutral: Record<number, number[]> = {
+      1: [4, 7], 2: [6, 7], 3: [4, 7, 8, 9], 4: [3],
+      5: [4, 7, 8, 9], 6: [2, 8, 9], 7: [2, 7, 8, 9],
+      8: [9], 9: [6, 7, 8, 9],
     };
 
     const luckyDays: Record<number, string> = {
@@ -338,11 +350,21 @@ const CalculatorPage = () => {
       9: "Red, Pink, Crimson",
     };
 
-    const lucky = Array.from(new Set([mulank, bhagyaank, ...(friendly[mulank] || [])])).sort((a, b) => a - b);
+    const blocked = new Set<number>([
+      ...(enemy[mulank] || []), ...(enemy[bhagyaank] || []),
+      ...(neutral[mulank] || []), ...(neutral[bhagyaank] || []),
+    ]);
+    const friendsUnion = new Set<number>([
+      ...(friendly[mulank] || []), ...(friendly[bhagyaank] || []),
+    ]);
+    const lucky = Array.from(friendsUnion)
+      .filter((n) => !blocked.has(n))
+      .sort((a, b) => a - b);
+    const luckyOut = lucky.length ? lucky.join(", ") : "—";
 
     setResult({
       title: "🍀 Your Lucky Numbers",
-      content: `Mulank: ${mulank}  |  Bhagyaank: ${bhagyaank}\n\nLucky Numbers: ${lucky.join(", ")}\nLucky Days: ${luckyDays[mulank]}\nLucky Colors: ${luckyColors[mulank]}\n\nUse these numbers for important choices — vehicle plates, mobile numbers, house numbers, signing contracts, and travel dates. Avoid numbers that conflict with your Mulank for major financial decisions.`,
+      content: `Mulank: ${mulank}  |  Bhagyaank: ${bhagyaank}\n\nLucky Numbers: ${luckyOut}\nLucky Days: ${luckyDays[mulank]}\nLucky Colors: ${luckyColors[mulank]}\n\nMethod: We took the friendly numbers of both your Mulank and Bhagyaank, then removed every number that appears as an Enemy or Neutral for either one. What remains is your true Chaldean lucky set — use these for vehicle plates, mobile numbers, house numbers, signing contracts and travel dates.`,
     });
   };
 
