@@ -52,15 +52,13 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <a
-                href="https://empower.ankshaastra.com"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/services/name-correction"
                 className="group inline-flex items-center justify-center gap-2.5 bg-primary hover:bg-orange-dark text-primary-foreground font-semibold px-7 py-3.5 rounded-lg shadow-amber transition-all duration-300 hover:-translate-y-0.5"
               >
                 <span>Get Name Check @ ₹293</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </a>
+              </Link>
               <Link
                 to="/consultation"
                 className="inline-flex items-center justify-center gap-2.5 border-2 border-cream-light/70 text-cream-light hover:bg-cream-light hover:text-secondary font-semibold px-7 py-3.5 rounded-lg transition-all duration-300"

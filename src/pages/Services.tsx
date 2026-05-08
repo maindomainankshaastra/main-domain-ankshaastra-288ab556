@@ -63,7 +63,7 @@ const serviceCategories = [
     gradient: "from-blue-500 to-cyan-500",
     borderAccent: "hsl(210, 80%, 55%)",
     services: [
-      { title: "Name Correction", description: "Analysis and correction of name vibration to support smoother personal and professional progress.", price: "₹2,447", rawPrice: 2447, link: "https://empower.ankshaastra.com", external: true, highlight: true },
+      { title: "Name Correction", description: "Analysis and correction of name vibration to support smoother personal and professional progress.", price: "₹2,447", rawPrice: 2447, link: "/services/name-correction", highlight: true },
       { title: "Lucky Vehicle Number", description: "Compatibility analysis of vehicle numbers for comfort, safety, and daily harmony.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
       { title: "Lucky Mobile Number", description: "Assessment of mobile number vibration and its influence on communication and opportunities.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
       { title: "Lucky Flat / Plot Number", description: "Suitability analysis of residential numbers before purchase or occupancy.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
