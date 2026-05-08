@@ -18,7 +18,7 @@ const services: Array<{
   category: Exclude<Category, "All">;
 }> = [
   { icon: Sparkles, title: "Call Consultation", description: "1-on-1 personal guidance with Himansshu Ji on call", link: "/consultation", badge: "1-on-1", cta: "Book Now", category: "Consultations" },
-  { icon: ScrollText, title: "Name Correction", description: "Align your name's vibration for lasting success", link: "https://empower.ankshaastra.com", external: true, badge: "India's No.1", cta: "Order Now", category: "Reports" },
+  { icon: ScrollText, title: "Name Correction", description: "Align your name's vibration for lasting success", link: "/services/name-correction", badge: "India's No.1", cta: "Order Now", category: "Reports" },
   { icon: Heart, title: "Perfect Baby Name", description: "Numerology-based auspicious baby naming", link: "https://empower.ankshaastra.com", external: true, badge: "Bestseller", cta: "Order Now", category: "Reports" },
   { icon: Gem, title: "Business Numerology", description: "Brand & business name alignment for growth", link: "#", action: "business-modal", badge: "For Owners", cta: "Check Now", category: "Consultations" },
   { icon: Star, title: "C-Section Dates", description: "Auspicious birth dates for your newborn", link: "/services/csection-dates", badge: "Specialist", cta: "Book Now", category: "Kundli" },

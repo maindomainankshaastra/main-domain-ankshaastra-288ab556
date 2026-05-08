@@ -47,14 +47,12 @@ const CTASection = () => {
                 Book Consultation Now
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <a
-                href="https://empower.ankshaastra.com"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/services/name-correction"
                 className="inline-flex items-center justify-center gap-2.5 border-2 border-cream-light/70 text-cream-light hover:bg-cream-light hover:text-secondary font-semibold px-8 py-3.5 rounded-lg transition-all"
               >
                 Get Name Check @ ₹293
-              </a>
+              </Link>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-cream-light/70 text-sm">
