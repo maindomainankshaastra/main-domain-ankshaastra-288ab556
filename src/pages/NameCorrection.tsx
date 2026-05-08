@@ -1,437 +1,534 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import {
-  Sparkles, Check, ArrowRight, ChevronDown, Globe2, UserCheck, BookOpen,
-  Star, ShieldCheck, Clock, Award, MessageCircle, Quote
-} from "lucide-react";
-import geetaImg from "@/assets/celebrities/geeta-tyagi.png";
-import darshanImg from "@/assets/celebrities/darshan-patil.jpg";
+import { Check, X, Plus, Minus, ChevronLeft, ChevronRight, Clock, Lock, Bell } from "lucide-react";
 
-const WHATSAPP_URL =
-  "https://wa.me/919667305577?text=" +
-  encodeURIComponent(
-    "Hi Himansshu Ji, I'd like to order the Name Correction Blueprint. Please share the next steps."
-  );
+const COLORS = {
+  amber: "#C17A1A",
+  amberDark: "#A8660E",
+  cream: "#FDF3E3",
+  creamAlt: "#FFF8EE",
+  brown: "#5C2E00",
+  gold: "#D4870A",
+  goldLight: "#FFD580",
+  cardBorder: "#E8D5B0",
+  white: "#FFFFFF",
+  green: "#2E7D32",
+  red: "#C62828",
+};
+
+const WHATSAPP_BASE = "https://wa.me/919667305577?text=";
+const waLink = (msg: string) => WHATSAPP_BASE + encodeURIComponent(msg);
+
+const heading = { fontFamily: "'Cormorant Garamond', serif" };
+const body = { fontFamily: "'Jost', sans-serif" };
+
+const Diamond = ({ color = COLORS.amber }: { color?: string }) => (
+  <span style={{ color, marginRight: 12, fontSize: 14 }}>◆</span>
+);
+
+const bullets1 = [
+  "Give your destiny-aligned name, not just a random one",
+  "Unlock results if previous name changes have failed to deliver",
+  "Break through the feeling of being \"stuck\" despite your hard work",
+  "Dissolve patterns of repeated failures and unexplained delays",
+  "Optimize your business name for growth and high-vibrational branding",
+];
 
 const trustCards = [
-  { icon: Globe2, title: "Globally Trusted", text: "Clients served across 20+ countries on every continent." },
-  { icon: UserCheck, title: "Truly Personalised", text: "Hand-analysed by Himansshu Ji — never an automated PDF." },
-  { icon: BookOpen, title: "Ancient Wisdom", text: "Rooted in Vedic numerology blended with modern Chaldean science." },
+  { title: "Globally Trusted", text: "Trusted by clients across India and internationally." },
+  { title: "Truly Personalized", text: "Not a software PDF. Analyzed by Himansshu Agarwal Ji personally." },
+  { title: "Ancient Wisdom", text: "Based on Chaldean and Vedic Numerology." },
 ];
 
-const includesBasic = [
-  "Personalised name analysis based on your birth date",
-  "Insights into your Mulank, Bhagyaank & name vibration",
-  "Identification of hidden negative vibrations",
-  "Hand-crafted by Himansshu Ji — not computer generated",
-  "Clear guidance on whether name correction is needed",
-];
-
-const includesPro = [
-  ...includesBasic,
-  "Complete corrected name suggestions with reasoning",
-  "Best date to start using your new name",
-  "30-minute call consultation with Himansshu Ji",
-  "50+ page premium PDF report",
-];
+const tableRows = [
+  ["Mulank & Bhagyank Analysis", true, true, true],
+  ["Quick Name Compatibility Check", true, true, true],
+  ["Clear Yes/No Recommendation", true, true, true],
+  ["Expert Analysis Summary", true, true, true],
+  ["Compound Number Analysis", false, true, true],
+  ["Personal Lo Shu Grid Analysis", false, true, true],
+  ["First Alphabet Analysis", false, true, true],
+  ["Corrected Name Suggestions", false, true, true],
+  ["PDF Report (50+ Pages)", false, true, true],
+  ["Call Consultation Included", false, false, true],
+  ["20-Min Live Video with Himansshu Agarwal Ji", false, false, true],
+] as const;
 
 const testimonials = [
-  { name: "Khushi Kapoor", text: "The blueprint didn't just suggest a spelling — it explained my life path and gave me a 10-year direction. Worth every rupee." },
-  { name: "Shivani Chauhan", text: "I was jobless for 6 months. Within 2 months of using my corrected name, I landed the role I'd been chasing since 2022." },
-  { name: "Gaurav Gupta", text: "The compatibility section gave me clarity I never had about my partner. Our relationship has felt lighter ever since." },
+  { name: "Rahul Sharma, Delhi", text: "My business name was corrected by Himansshu Ji and within 3 months I saw a visible shift in client inquiries and revenue." },
+  { name: "Priya Mehta, Mumbai", text: "The report was so detailed and personalized. Nothing like a software-generated PDF. Truly expert work." },
+  { name: "Amit Verma, Pune", text: "The Lo Shu Grid and compound number analysis was incredibly eye-opening. I finally understood what was blocking me." },
 ];
 
 const faqs = [
-  { q: "Do I have to legally change my name?", a: "No. The corrected spelling can be used on social media, business cards, signature, and daily life. Legal change is optional." },
-  { q: "How quickly will I see results?", a: "Most clients begin noticing shifts in mindset and small opportunities within the first few weeks of consistent use." },
-  { q: "How long does delivery take?", a: "Your Name Correction Blueprint is delivered to your email within 24–48 hours of receiving your details." },
-  { q: "What if I don't connect with the suggested name?", a: "You'll receive multiple suggestions — each with its numerology meaning — so you can choose the one that resonates." },
-  { q: "How is the report delivered?", a: "As a beautifully designed PDF on your email and WhatsApp, followed by a call consultation with Himansshu Ji." },
-  { q: "Is there a refund policy?", a: "Because each report is hand-crafted personally for you, refunds are not applicable once delivered. Please review details before ordering." },
+  { q: "Will this change my name in official documents?", a: "No. The corrected name can be used in your signature, social media, business cards, and daily life. Legal documentation change is optional and entirely up to you." },
+  { q: "How is this different from a software-generated report?", a: "Every report is personally analyzed by Himansshu Agarwal Ji using Chaldean and Vedic numerology — not auto-generated PDFs." },
+  { q: "How long does delivery take?", a: "Reports are delivered within 24–48 hours of receiving your details." },
+  { q: "What information do I need to provide?", a: "Your full name, date of birth, time and place of birth (if available)." },
+  { q: "Is a live session included in all packages?", a: "Live video sessions with Himansshu Ji are included only in the Premium 'Name Correction + Live Session' package." },
 ];
 
-const StarField = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {Array.from({ length: 70 }).map((_, i) => (
-      <div
-        key={i}
-        className="absolute rounded-full bg-white"
-        style={{
-          width: `${Math.random() * 2 + 1}px`,
-          height: `${Math.random() * 2 + 1}px`,
-          top: `${Math.random() * 100}%`,
-          left: `${Math.random() * 100}%`,
-          opacity: Math.random() * 0.6 + 0.1,
-          animation: `twinkle ${Math.random() * 4 + 3}s ease-in-out infinite`,
-          animationDelay: `${Math.random() * 5}s`,
-        }}
-      />
-    ))}
-  </div>
-);
+const socialProofMessages = [
+  "Sneha from Hyderabad just purchased a report",
+  "Arjun from Bengaluru just ordered Name Correction",
+  "Pooja from Delhi just booked a Live Session",
+  "Vikram from Mumbai just purchased Name Check",
+  "Neha from Pune just ordered a Premium Report",
+  "Rohit from Jaipur just booked a consultation",
+];
 
-const NameCorrectionPage = () => {
+// Countdown helpers
+const getDailyEnd = () => {
+  const now = new Date();
+  const end = new Date(now);
+  end.setHours(now.getHours() + 8 - (now.getHours() % 8), 0, 0, 0);
+  if (end <= now) end.setHours(end.getHours() + 8);
+  return end;
+};
+
+const NameCorrection = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [activeT, setActiveT] = useState(0);
+  const [nameQty, setNameQty] = useState<1 | 2 | 3>(1);
+  const [now, setNow] = useState(Date.now());
+  const [endTs] = useState(getDailyEnd().getTime());
+  const [proofIdx, setProofIdx] = useState(0);
+  const [proofVisible, setProofVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const show = () => {
+      setProofIdx((i) => (i + 1) % socialProofMessages.length);
+      setProofVisible(true);
+      setTimeout(() => setProofVisible(false), 6000);
+    };
+    const t0 = setTimeout(show, 4000);
+    const t = setInterval(show, 35000);
+    return () => { clearTimeout(t0); clearInterval(t); };
+  }, []);
+
+  const remaining = Math.max(0, endTs - now);
+  const hh = String(Math.floor(remaining / 3600000)).padStart(2, "0");
+  const mm = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, "0");
+  const ss = String(Math.floor((remaining % 60000) / 1000)).padStart(2, "0");
+
+  // Card 1 dynamic price
+  const card1Base = 293;
+  const card1Price = nameQty === 1 ? card1Base : nameQty === 2 ? Math.round(card1Base * nameQty * 0.9) : Math.round(card1Base * nameQty * 0.85);
 
   return (
     <Layout>
       <SEOHead
-        title="Name Correction Report — Ankshaastra"
-        description="A small tweak in your name can change your life. Get your personalised Name Correction Blueprint hand-crafted by Himansshu Agarwal Ji."
-        canonical="/services/name-correction"
+        title="Name Correction Report by Himansshu Agarwal Ji"
+        description="Expert-led Name Correction Report combining Chaldean & Vedic numerology. 5,000+ reports delivered. Personalized analysis by Himansshu Agarwal Ji."
+        canonical="https://ankshaastra.com/services/name-correction"
       />
-      <style>{`
-        @keyframes twinkle { 0%,100%{opacity:.1} 50%{opacity:.85} }
-        .cosmic-bg { background: linear-gradient(180deg,#0a0015 0%,#0d0a2e 50%,#0a0015 100%); }
-        .nebula-blob { background: radial-gradient(ellipse at center,rgba(168,85,247,.18) 0%,rgba(13,10,46,0) 70%); }
-        .nebula-blob-gold { background: radial-gradient(ellipse at center,rgba(232,184,75,.12) 0%,rgba(13,10,46,0) 70%); }
-        .glass-card { background: rgba(255,255,255,.05); border:1px solid rgba(180,100,255,.3); backdrop-filter: blur(12px); }
-        .glass-card-glow { background: rgba(255,255,255,.07); border:1px solid rgba(232,184,75,.45); backdrop-filter: blur(12px); box-shadow: 0 0 20px rgba(200,150,255,.35), 0 0 40px rgba(232,184,75,.15); }
-        .cosmic-heading { color:#f5d78e; }
-        .cosmic-body { color:#c9c0e0; }
-        .cosmic-label { color:#9b7fc7; text-transform:uppercase; letter-spacing:.12em; font-size:.72rem; font-weight:600; }
-        .gold-text { background: linear-gradient(135deg,#e8b84b,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .btn-cosmic-gold { background: linear-gradient(135deg,#e8b84b 0%,#a855f7 100%); color:#0a0015; font-weight:700; border-radius:9999px; padding:14px 32px; font-size:1.05rem; transition:all .3s ease; display:inline-flex; align-items:center; gap:8px; }
-        .btn-cosmic-gold:hover { transform: translateY(-2px); box-shadow:0 8px 30px rgba(232,184,75,.45); }
-        .btn-outline-cosmic { border:1px solid rgba(232,184,75,.5); color:#f5d78e; border-radius:9999px; padding:13px 30px; font-weight:600; display:inline-flex; align-items:center; gap:8px; transition:all .3s; }
-        .btn-outline-cosmic:hover { background: rgba(232,184,75,.1); }
-      `}</style>
 
-      {/* HERO */}
-      <section className="pt-16 pb-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="absolute -top-20 -right-20 w-[600px] h-[600px] nebula-blob" />
-        <div className="absolute -bottom-20 -left-20 w-[500px] h-[500px] nebula-blob-gold" />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <span className="inline-block px-4 py-1 rounded-full glass-card cosmic-label mb-5">
-                Expert-Led Name Correction Report
-              </span>
-              <h1 className="font-display text-4xl md:text-6xl font-bold mb-6 leading-tight cosmic-heading">
-                A Small Tweak In Your Name <span className="gold-text">Can Change Your Life</span>
-              </h1>
-              <p className="font-body text-lg cosmic-body mb-8 max-w-xl">
-                Hand-crafted by Himansshu Agarwal Ji — India's trusted Astro Numerologist with
-                <span className="gold-text font-semibold"> 5,000+ corrections</span> and a 10+ year legacy.
-              </p>
+      {/* Google Fonts */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500;600&display=swap"
+        rel="stylesheet"
+      />
 
-              <div className="flex flex-wrap gap-4 mb-8">
-                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-cosmic-gold">
-                  <MessageCircle className="w-5 h-5" /> Get Your Report on WhatsApp
-                </a>
-                <a href="#packages" className="btn-outline-cosmic">View Packages <ArrowRight className="w-4 h-4" /></a>
-              </div>
+      {/* Countdown bar */}
+      <div style={{ background: COLORS.amber, color: COLORS.white, ...body }} className="w-full text-center text-sm font-medium py-2 px-4">
+        <Clock className="inline w-4 h-4 mr-2 -mt-0.5" />
+        Today's offer ends in: <span className="font-semibold ml-1">{hh}h {mm}m {ss}s</span>
+      </div>
 
-              <div className="flex flex-wrap items-center gap-6 cosmic-body text-sm">
-                <div className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-300 fill-amber-300" /> 4.9/5 rating</div>
-                <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-amber-300" /> 5,000+ corrections</div>
-                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-300" /> 24–48 hr delivery</div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="absolute -inset-10 nebula-blob-gold pointer-events-none" />
-              <div className="glass-card-glow rounded-3xl p-10 relative">
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1], opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="text-center"
-                >
-                  <Sparkles className="w-20 h-20 mx-auto mb-4" style={{ color: "#e8b84b" }} />
-                </motion.div>
-                <h3 className="font-display text-3xl text-center cosmic-heading mb-2">Name Correction Blueprint</h3>
-                <p className="text-center cosmic-body mb-6">Personalised • Hand-analysed • Premium PDF</p>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="glass-card rounded-xl p-3">
-                    <p className="cosmic-label">Pages</p>
-                    <p className="font-display text-2xl cosmic-heading">50+</p>
-                  </div>
-                  <div className="glass-card rounded-xl p-3">
-                    <p className="cosmic-label">Delivery</p>
-                    <p className="font-display text-2xl cosmic-heading">48h</p>
-                  </div>
-                  <div className="glass-card rounded-xl p-3">
-                    <p className="cosmic-label">Call</p>
-                    <p className="font-display text-2xl cosmic-heading">Yes</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* WHAT IS */}
-      <section className="py-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="absolute top-1/3 right-0 w-[500px] h-[500px] nebula-blob" />
-        <div className="container mx-auto px-4 relative z-10 max-w-4xl">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <span className="cosmic-label">What you receive</span>
-            <h2 className="font-display text-3xl md:text-5xl font-bold mt-3 cosmic-heading">
-              What is the <span className="gold-text">Name Correction Report?</span>
-            </h2>
-            <p className="cosmic-body mt-4 text-lg">Led by experts. Backed by mathematical science.</p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            {[
-              "Receive a destiny-aligned name — never a random suggestion",
-              "Unlock results when previous name changes failed to deliver",
-              "Break through the 'stuck' feeling despite your hard work",
-              "Dissolve patterns of repeated failure and unexplained delays",
-              "Optimise your business name for high-vibrational growth",
-              "Re-align your signature, brand and digital identity",
-            ].map((line, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: i % 2 ? 20 : -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-                className="glass-card rounded-2xl p-5 flex gap-4"
-              >
-                <div className="w-10 h-10 rounded-full glass-card-glow flex items-center justify-center flex-shrink-0">
-                  <Check className="w-5 h-5" style={{ color: "#e8b84b" }} />
-                </div>
-                <p className="cosmic-body">{line}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* WHY TRUST */}
-      <section className="py-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] nebula-blob-gold" />
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
-            <span className="cosmic-label">Why trust this report?</span>
-            <h2 className="font-display text-3xl md:text-5xl font-bold mt-3 cosmic-heading">
-              Built on <span className="gold-text">trust, science & legacy</span>
-            </h2>
-          </motion.div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {trustCards.map((c, i) => (
-              <motion.div
-                key={c.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="glass-card-glow rounded-2xl p-8 text-center"
-              >
-                <div className="w-16 h-16 mx-auto rounded-full glass-card flex items-center justify-center mb-5">
-                  <c.icon className="w-8 h-8" style={{ color: "#e8b84b" }} />
-                </div>
-                <h3 className="font-display text-2xl cosmic-heading mb-3">{c.title}</h3>
-                <p className="cosmic-body">{c.text}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PACKAGES */}
-      <section id="packages" className="py-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] nebula-blob" />
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
-            <span className="cosmic-label">Choose your package</span>
-            <h2 className="font-display text-3xl md:text-5xl font-bold mt-3 cosmic-heading">
-              Pick the <span className="gold-text">right blueprint</span> for you
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Basic */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="glass-card rounded-3xl p-8 flex flex-col"
-            >
-              <h3 className="font-display text-2xl cosmic-heading mb-2">Name Analysis</h3>
-              <p className="cosmic-body mb-6">Understand the energy of your current name and how it impacts your life.</p>
-              <div className="flex items-baseline gap-3 mb-6">
-                <span className="text-4xl font-bold gold-text">₹997</span>
-                <span className="cosmic-body line-through">₹2,500</span>
-              </div>
-              <ul className="space-y-3 mb-8 flex-1">
-                {includesBasic.map((f) => (
-                  <li key={f} className="flex gap-3 cosmic-body">
-                    <Check className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: "#e8b84b" }} />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-outline-cosmic justify-center">
-                Order on WhatsApp <ArrowRight className="w-4 h-4" />
-              </a>
-            </motion.div>
-
-            {/* Pro */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="glass-card-glow rounded-3xl p-8 flex flex-col relative"
-            >
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold" style={{ background: "linear-gradient(135deg,#e8b84b,#a855f7)", color: "#0a0015" }}>
-                MOST POPULAR
-              </span>
-              <h3 className="font-display text-2xl cosmic-heading mb-2">Name Analysis + Correction</h3>
-              <p className="cosmic-body mb-6">Everything in Analysis, plus corrected name suggestions, remedies and the best date to start using your new name.</p>
-              <div className="flex items-baseline gap-3 mb-6">
-                <span className="text-4xl font-bold gold-text">₹1,997</span>
-                <span className="cosmic-body line-through">₹4,999</span>
-              </div>
-              <ul className="space-y-3 mb-8 flex-1">
-                {includesPro.map((f) => (
-                  <li key={f} className="flex gap-3 cosmic-body">
-                    <Check className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: "#e8b84b" }} />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-cosmic-gold justify-center">
-                <MessageCircle className="w-5 h-5" /> Buy Now
-              </a>
-            </motion.div>
-          </div>
-          <p className="text-center cosmic-body mt-6 text-sm opacity-70">
-            Strict no-refund policy — each report is personally hand-crafted for you.
-          </p>
-        </div>
-      </section>
-
-      {/* CELEBRITIES (blurred) */}
-      <section className="py-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <span className="cosmic-label">Trusted by public figures</span>
-            <h2 className="font-display text-3xl md:text-5xl font-bold mt-3 cosmic-heading">
-              Names who took the <span className="gold-text">numerological plunge</span>
-            </h2>
-            <p className="cosmic-body mt-3">Identities protected at the request of our clients.</p>
-          </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            {[geetaImg, darshanImg, geetaImg, darshanImg].map((src, i) => (
-              <div key={i} className="relative aspect-square rounded-2xl overflow-hidden glass-card">
-                <img src={src} alt="Identity protected client" className="w-full h-full object-cover blur-xl scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0015]/70 via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs cosmic-label glass-card">
-                  Identity Protected
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ABOUT EXPERT */}
-      <section className="py-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] nebula-blob-gold" />
-        <div className="container mx-auto px-4 relative z-10 max-w-4xl">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="glass-card-glow rounded-3xl p-8 md:p-12 text-center">
-            <Award className="w-14 h-14 mx-auto mb-5" style={{ color: "#e8b84b" }} />
-            <span className="cosmic-label">About the expert</span>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mt-3 cosmic-heading">
-              Himansshu Agarwal Ji
-            </h2>
-            <p className="cosmic-body mt-1 mb-6">Astro Numerologist • Name Correction Expert • Lal Kitab Remedy Specialist</p>
-            <p className="cosmic-body leading-relaxed">
-              With a 10+ year legacy and over 5,000 personalised corrections, Himansshu Ji blends Vedic numerology
-              with the precision of Chaldean science. His belief is simple — numerology is not a matter of belief,
-              it is a precise, mathematical science that, when applied correctly, brings clarity, direction and
-              measurable change to your life.
+      {/* SECTION 1 — HERO */}
+      <section style={{ background: COLORS.amber, ...body }} className="relative overflow-hidden">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 pt-16 lg:pt-24 pb-32 lg:pb-40 grid lg:grid-cols-2 gap-10 items-center relative z-10">
+          {/* Left */}
+          <div className="text-white text-center lg:text-left">
+            <h1 style={heading} className="font-bold text-4xl sm:text-5xl lg:text-[64px] leading-[1.15] mb-6">
+              A Small Tweak In Your Name<br className="hidden md:block" /> Can Change Your Life
+            </h1>
+            <p style={body} className="text-lg text-white/70 mb-8 max-w-xl mx-auto lg:mx-0">
+              Introducing the Expert-Led Name Correction Report by Himansshu Agarwal Ji
             </p>
-            <div className="grid grid-cols-3 gap-4 mt-8">
-              <div><p className="font-display text-3xl gold-text">10+</p><p className="cosmic-label mt-1">Years Legacy</p></div>
-              <div><p className="font-display text-3xl gold-text">5,000+</p><p className="cosmic-label mt-1">Corrections</p></div>
-              <div><p className="font-display text-3xl gold-text">4.9/5</p><p className="cosmic-label mt-1">Avg Rating</p></div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+            <a
+              href={waLink("Hi Himansshu Ji, I'd like to order the Name Correction Report. Please share next steps.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ background: COLORS.gold, color: COLORS.white, ...body, borderRadius: 6 }}
+              className="inline-block font-medium text-base px-8 py-3.5 hover:opacity-90 transition-opacity"
+            >
+              Get Your Name Correction Report
+            </a>
+          </div>
 
-      {/* TESTIMONIALS */}
-      <section className="py-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
-            <span className="cosmic-label">Our happy clients</span>
-            <h2 className="font-display text-3xl md:text-5xl font-bold mt-3 cosmic-heading">
-              Real stories. <span className="gold-text">Real shifts.</span>
-            </h2>
-          </motion.div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="glass-card rounded-2xl p-6"
-              >
-                <Quote className="w-7 h-7 mb-3" style={{ color: "#e8b84b" }} />
-                <p className="cosmic-body mb-5 leading-relaxed">{t.text}</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-full glass-card-glow flex items-center justify-center font-display text-sm cosmic-heading">
-                    {t.name[0]}
-                  </div>
-                  <div>
-                    <p className="cosmic-heading font-semibold text-sm">{t.name}</p>
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, j) => <Star key={j} className="w-3 h-3 fill-amber-300 text-amber-300" />)}
-                    </div>
-                  </div>
+          {/* Right — wheel + book */}
+          <div className="relative h-[320px] lg:h-[420px] flex items-center justify-center">
+            <svg viewBox="0 0 400 400" className="absolute inset-0 w-full h-full animate-spin" style={{ animationDuration: "60s" }}>
+              <g fill="none" stroke={COLORS.amberDark} strokeWidth="1.2">
+                <circle cx="200" cy="200" r="180" />
+                <circle cx="200" cy="200" r="150" />
+                <circle cx="200" cy="200" r="120" />
+                <circle cx="200" cy="200" r="90" />
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const a = (i * 30 * Math.PI) / 180;
+                  return (
+                    <line
+                      key={i}
+                      x1={200 + Math.cos(a) * 90}
+                      y1={200 + Math.sin(a) * 90}
+                      x2={200 + Math.cos(a) * 180}
+                      y2={200 + Math.sin(a) * 180}
+                    />
+                  );
+                })}
+              </g>
+            </svg>
+            {/* Book mockup */}
+            <div className="relative z-10 w-[200px] lg:w-[260px] aspect-[3/4] rounded-md shadow-2xl flex items-center justify-center text-center"
+              style={{ background: "linear-gradient(135deg,#1e3a8a,#0f1e4d)" }}>
+              <div className="text-white p-4">
+                <div style={heading} className="text-2xl lg:text-3xl font-semibold leading-tight">Name<br />Correction<br />Report</div>
+                <div className="mt-3 text-[10px] tracking-[0.2em] text-white/70">ANKSHAASTRA</div>
+                <div className="mt-4 grid grid-cols-3 gap-1 mx-auto w-24">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div key={i} className="aspect-square border border-white/30 text-[10px] flex items-center justify-center text-white/70">{(i + 1)}</div>
+                  ))}
                 </div>
-              </motion.div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust bar */}
+        <div className="absolute left-0 right-0 -bottom-12 lg:-bottom-10 px-4">
+          <div className="max-w-[1100px] mx-auto rounded-xl py-5 px-6 grid grid-cols-3 gap-2"
+            style={{ background: COLORS.cream, boxShadow: "0 2px 16px rgba(193,122,26,0.10)", color: COLORS.brown, ...body }}>
+            {[
+              { v: "5,000+", l: "Reports Delivered" },
+              { v: "4.9/5 ★", l: "Average Rating" },
+              { v: "Personalized", l: "Report" },
+            ].map((s, i) => (
+              <div key={i} className="text-center relative">
+                <div style={heading} className="text-xl md:text-2xl font-semibold">{s.v}</div>
+                <div className="text-[13px] mt-1 opacity-80">{s.l}</div>
+                {i < 2 && <span className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-px" style={{ background: COLORS.amber, opacity: 0.3 }} />}
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="container mx-auto px-4 relative z-10 max-w-3xl">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <span className="cosmic-label">FAQ</span>
-            <h2 className="font-display text-3xl md:text-5xl font-bold mt-3 cosmic-heading">
-              Frequently <span className="gold-text">Asked Questions</span>
+      {/* SECTION 2 — What is Name Correction Report */}
+      <section style={{ background: COLORS.cream, ...body }} className="pt-32 lg:pt-36 pb-20 lg:pb-24">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 grid lg:grid-cols-[3fr_2fr] gap-12 items-center">
+          <div>
+            <h2 style={{ ...heading, color: COLORS.brown }} className="text-3xl md:text-[42px] leading-tight font-semibold mb-4">
+              What is <span style={{ color: COLORS.gold }}>Name Correction</span> Report?
             </h2>
-          </motion.div>
-          <div className="space-y-3">
+            <div className="flex items-center gap-3 my-5">
+              <div className="h-px flex-1 max-w-[60px]" style={{ background: COLORS.amber }} />
+              <span style={{ color: COLORS.amber, fontSize: 14 }}>◆</span>
+              <div className="h-px flex-1 max-w-[60px]" style={{ background: COLORS.amber }} />
+            </div>
+            <p style={{ color: COLORS.brown }} className="text-base mb-6 italic">
+              Led by Experts. Backed by Mathematical Science.
+            </p>
+            <ul className="space-y-[18px] mb-8">
+              {bullets1.map((b, i) => (
+                <li key={i} style={{ color: COLORS.brown }} className="flex items-start text-base leading-relaxed">
+                  <Diamond /> <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href={waLink("Hi, I'd like to order the Name Correction Report.")}
+              target="_blank" rel="noopener noreferrer"
+              style={{ background: COLORS.gold, color: COLORS.white, borderRadius: 6 }}
+              className="inline-block font-medium px-8 py-3.5 hover:opacity-90 transition"
+            >
+              Order Now
+            </a>
+          </div>
+          <div className="flex items-center justify-center">
+            <div className="relative w-full max-w-[420px] aspect-[4/3] rounded-xl flex items-center justify-center"
+              style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 8px 32px rgba(193,122,26,0.15)" }}>
+              <div className="text-center px-8">
+                <div style={heading} className="text-3xl font-semibold mb-2" >50+</div>
+                <div style={{ color: COLORS.brown }} className="text-sm uppercase tracking-widest">Pages of personalised insight</div>
+                <div className="mt-6 grid grid-cols-3 gap-2 max-w-[200px] mx-auto">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div key={i} className="aspect-square rounded text-xs flex items-center justify-center"
+                      style={{ background: COLORS.cream, color: COLORS.amber, border: `1px solid ${COLORS.cardBorder}` }}>{i + 1}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3 — Why Trust */}
+      <section style={{ background: COLORS.amber, ...body }} className="py-20 lg:py-24">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          <h2 style={{ ...heading, color: COLORS.white }} className="text-center text-3xl md:text-[42px] font-semibold mb-12">
+            Why Trust This Report?
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {trustCards.map((c, i) => (
+              <div key={i} style={{ background: COLORS.cream, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }} className="p-8">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-5" style={{ background: COLORS.amber }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12,2 15,9 22,9.5 17,14.5 18.5,22 12,18 5.5,22 7,14.5 2,9.5 9,9" />
+                  </svg>
+                </div>
+                <h3 style={{ ...heading, color: COLORS.brown }} className="text-[22px] font-semibold mb-2">{c.title}</h3>
+                <p style={{ color: COLORS.brown }} className="text-[15px] leading-relaxed">{c.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4 — Comparison Table */}
+      <section style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          <h2 style={{ ...heading, color: COLORS.brown }} className="text-center text-3xl md:text-[44px] font-semibold mb-12 leading-tight">
+            Choose your perfect <span style={{ color: COLORS.gold }}>Name Correction Report</span>
+          </h2>
+          <div className="overflow-x-auto rounded-xl" style={{ border: `1px solid ${COLORS.cardBorder}` }}>
+            <table className="w-full min-w-[640px] border-collapse">
+              <thead>
+                <tr>
+                  <th className="p-4 text-left" style={{ background: COLORS.white, color: COLORS.brown, border: `1px solid ${COLORS.cardBorder}` }}>Features</th>
+                  {["Name Check", "Name Correction", "Name Correction + Live Session"].map((h) => (
+                    <th key={h} className="p-4 text-center font-semibold" style={{ background: COLORS.amber, color: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, ...body, fontSize: 16 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tableRows.map((row, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? COLORS.cream : COLORS.creamAlt }}>
+                    <td className="p-4 text-left text-[15px]" style={{ color: COLORS.brown, border: `1px solid ${COLORS.cardBorder}`, background: COLORS.white }}>{row[0]}</td>
+                    {[row[1], row[2], row[3]].map((v, j) => (
+                      <td key={j} className="p-4 text-center" style={{ border: `1px solid ${COLORS.cardBorder}` }}>
+                        {v ? <Check className="inline w-5 h-5" style={{ color: COLORS.green }} /> : <X className="inline w-5 h-5" style={{ color: COLORS.red }} />}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 5 — Pricing */}
+      <section style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          <h2 style={{ ...heading, color: COLORS.brown }} className="text-center text-3xl md:text-[44px] font-semibold mb-12 leading-tight">
+            Select the <span style={{ color: COLORS.gold }}>Name Correction Report Package</span>
+          </h2>
+
+          <div className="grid lg:grid-cols-3 gap-6 lg:gap-5 items-stretch">
+            {/* Card 1 — Name Check */}
+            <div className="relative rounded-xl p-7 flex flex-col"
+              style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider"
+                style={{ background: COLORS.brown, color: COLORS.white }}>NOT SURE?</div>
+              <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-4">Name Check</h3>
+              <div className="flex gap-2 mb-5">
+                {[1, 2, 3].map((q) => (
+                  <button key={q} onClick={() => setNameQty(q as 1 | 2 | 3)}
+                    className="flex-1 py-2 rounded-md text-xs font-medium transition"
+                    style={{
+                      background: nameQty === q ? COLORS.amber : COLORS.cream,
+                      color: nameQty === q ? COLORS.white : COLORS.brown,
+                      border: `1px solid ${nameQty === q ? COLORS.amber : COLORS.cardBorder}`,
+                    }}>
+                    {q} Name{q > 1 ? "s" : ""}{q === 2 ? " — 10% OFF" : q === 3 ? " — 15% OFF" : ""}
+                  </button>
+                ))}
+              </div>
+              <div style={{ ...heading, color: COLORS.brown }} className="text-5xl font-bold mb-5">₹{card1Price}</div>
+              <ul className="space-y-3 mb-6 flex-1">
+                {["Quick Name Compatibility Check", "Mulank & Bhagyank Overview", "Clear Yes/No Recommendation", "Expert Analysis Summary"].map((f, i) => (
+                  <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
+                ))}
+              </ul>
+              <a href={waLink(`Hi, I'd like the Name Check for ${nameQty} name(s).`)} target="_blank" rel="noopener noreferrer"
+                className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
+                style={{ background: COLORS.brown, color: COLORS.white }}>
+                Get Name Check for {nameQty} Name{nameQty > 1 ? "s" : ""}
+              </a>
+              <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
+                <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr delivery</span>
+                <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
+              </div>
+            </div>
+
+            {/* Card 2 — Name Correction (Most Popular) */}
+            <div className="relative rounded-xl p-7 flex flex-col lg:scale-[1.02]"
+              style={{ background: COLORS.white, border: `2px solid ${COLORS.amber}`, borderRadius: 12, boxShadow: "0 8px 28px rgba(193,122,26,0.18)" }}>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[11px] font-semibold tracking-wider"
+                style={{ background: COLORS.amber, color: COLORS.white }}>★ MOST POPULAR</div>
+              <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction</h3>
+              <div className="flex items-baseline gap-3 mb-1">
+                <span className="line-through text-base" style={{ color: "#987" }}>₹7,500</span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>67% OFF</span>
+              </div>
+              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">₹2,447</div>
+              <ul className="space-y-3 mb-6 flex-1">
+                {["Mulank & Bhagyank Analysis", "First Name & Full Name Analysis", "Compound Number Analysis", "Personal Lo Shu Grid", "First Alphabet Analysis", "Corrected Name Suggestions (3–5 options)", "PDF Report (50+ Pages)", "Call Consultation Included"].map((f, i) => (
+                  <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
+                ))}
+              </ul>
+              <a href={waLink("Hi, I'd like to order the Name Correction Report (₹2,447).")} target="_blank" rel="noopener noreferrer"
+                className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
+                style={{ background: COLORS.gold, color: COLORS.white }}>
+                Get Name Correction Report
+              </a>
+              <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
+                <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr</span>
+                <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
+              </div>
+            </div>
+
+            {/* Card 3 — Premium */}
+            <div className="relative rounded-xl p-7 flex flex-col"
+              style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider"
+                style={{ background: COLORS.brown, color: COLORS.gold }}>✦ PREMIUM</div>
+              <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction + Live Session</h3>
+              <div className="flex items-baseline gap-3 mb-1">
+                <span className="line-through text-base" style={{ color: "#987" }}>₹18,218</span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>51% OFF</span>
+              </div>
+              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">₹8,927</div>
+              <ul className="space-y-2.5 mb-5">
+                {["Mulank & Bhagyank Analysis", "First Name & Full Name Analysis", "Compound Number Analysis", "Personal Lo Shu Grid", "First Alphabet Analysis", "PDF Report (50+ Pages)", "Call Consultation Included"].map((f, i) => (
+                  <li key={i} className="flex items-start text-[14px]" style={{ color: "#888" }}><Diamond color={COLORS.amber} />{f}</li>
+                ))}
+              </ul>
+              <div className="rounded-lg p-4 mb-6" style={{ border: `2px solid ${COLORS.gold}`, background: "#FFF3DC" }}>
+                <div className="text-[15px] font-semibold leading-snug" style={{ color: COLORS.brown, ...body }}>
+                  🎥 20-Minute Live Video Consultation with Himansshu Agarwal Ji
+                </div>
+              </div>
+              <a href={waLink("Hi, I'd like the Premium Name Correction + Live Session (₹8,927).")} target="_blank" rel="noopener noreferrer"
+                className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90 mt-auto"
+                style={{ background: COLORS.brown, color: COLORS.white }}>
+                Get Premium Report + Live Session
+              </a>
+              <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
+                <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr</span>
+                <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 6 — About */}
+      <section style={{ background: COLORS.amber, ...body }} className="py-20 lg:py-24">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="text-white">
+            <div className="text-[13px] uppercase tracking-[0.25em] mb-3" style={{ color: COLORS.goldLight }}>About</div>
+            <h2 style={heading} className="text-4xl md:text-[44px] font-semibold mb-2">Himansshu Agarwal Ji</h2>
+            <div style={{ ...heading, color: COLORS.goldLight }} className="text-xl italic mb-5">
+              Founder, Ankshaastra | Chaldean Numerology Expert
+            </div>
+            <div className="flex items-center gap-3 my-5">
+              <div className="h-px w-12" style={{ background: COLORS.white, opacity: 0.6 }} />
+              <span className="text-white">◆</span>
+              <div className="h-px w-12" style={{ background: COLORS.white, opacity: 0.6 }} />
+            </div>
+            <p className="text-base text-white/85 leading-[1.8] mb-4">
+              Himansshu Agarwal Ji is a widely recognised Name Expert with over 10 years of dedicated research and practical experience in name vibration patterns, Vedic numerology, and Lal Kitab Remedies.
+            </p>
+            <p className="text-base text-white/85 leading-[1.8] mb-6">
+              Through his brand Ankshaastra, he has guided thousands of families in choosing names that truly align with their cosmic blueprint — crafted using numerology principles, Vedic principles, and your birth details.
+            </p>
+            <div className="rounded-lg p-4 flex flex-wrap items-center gap-x-8 gap-y-2 mt-6" style={{ background: COLORS.white }}>
+              <span className="text-xs uppercase tracking-widest" style={{ color: COLORS.brown }}>As seen on:</span>
+              {["INC91", "Hindustan Bytes", "Ubseeb Time", "Daily Hunt"].map((p) => (
+                <span key={p} className="text-sm font-semibold" style={{ color: COLORS.brown, ...heading }}>{p}</span>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-end justify-center lg:justify-end">
+            <div className="relative w-full max-w-[380px] aspect-[3/4] rounded-xl overflow-hidden flex items-end justify-center"
+              style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.25))", border: `1px solid rgba(255,255,255,0.3)` }}>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-white/40 text-[120px]" style={heading}>HA</div>
+              </div>
+              <div className="relative z-10 pb-6 text-white text-center">
+                <div style={heading} className="text-2xl">Himansshu Agarwal Ji</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 7 — Testimonials */}
+      <section style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 text-center">
+          <h2 style={{ ...heading, color: COLORS.brown }} className="text-3xl md:text-[42px] font-semibold mb-2">Our Happy Customers</h2>
+          <p className="text-base mb-10" style={{ color: "#888" }}>We've helped thousands of people</p>
+
+          <div className="relative max-w-3xl mx-auto">
+            <button onClick={() => setActiveT((a) => (a - 1 + testimonials.length) % testimonials.length)}
+              className="absolute -left-2 lg:-left-12 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-white z-10"
+              style={{ background: COLORS.amber }} aria-label="Previous">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button onClick={() => setActiveT((a) => (a + 1) % testimonials.length)}
+              className="absolute -right-2 lg:-right-12 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-white z-10"
+              style={{ background: COLORS.amber }} aria-label="Next">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeT}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.35 }}
+                className="rounded-xl p-10 text-left"
+                style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
+                <div style={{ color: COLORS.amber, fontSize: 36, ...heading }} className="leading-none mb-3">"</div>
+                <p className="text-lg leading-relaxed mb-5" style={{ color: COLORS.brown }}>{testimonials[activeT].text}</p>
+                <div className="text-sm font-semibold" style={{ color: COLORS.amber }}>— {testimonials[activeT].name}</div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 8 — FAQ */}
+      <section style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24">
+        <div className="max-w-[900px] mx-auto px-6 lg:px-8">
+          <h2 style={{ ...heading, color: COLORS.brown }} className="text-center text-3xl md:text-[42px] font-semibold mb-10">
+            Frequently Asked Questions
+          </h2>
+          <div>
             {faqs.map((f, i) => (
-              <div key={f.q} className="glass-card rounded-2xl overflow-hidden">
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between p-5 text-left">
-                  <span className="cosmic-heading font-display text-lg pr-4">{f.q}</span>
-                  <ChevronDown className={`w-5 h-5 transition-transform flex-shrink-0 ${openFaq === i ? "rotate-180" : ""}`} style={{ color: "#e8b84b" }} />
+              <div key={i} style={{ borderBottom: `1px solid ${COLORS.cardBorder}` }}>
+                <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between py-5 text-left">
+                  <span className="text-base md:text-[17px] font-medium" style={{ color: COLORS.brown }}>{f.q}</span>
+                  <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ml-4" style={{ background: COLORS.amber, color: COLORS.white }}>
+                    {openFaq === i ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  </span>
                 </button>
                 <AnimatePresence>
                   {openFaq === i && (
-                    <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
-                      <p className="px-5 pb-5 cosmic-body leading-relaxed">{f.a}</p>
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
+                      <p className="pb-5 text-[15px] leading-relaxed" style={{ color: COLORS.brown, opacity: 0.85 }}>{f.a}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -441,26 +538,29 @@ const NameCorrectionPage = () => {
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section className="py-20 cosmic-bg relative overflow-hidden">
-        <StarField />
-        <div className="absolute inset-0 nebula-blob-gold" />
-        <div className="container mx-auto px-4 relative z-10 text-center max-w-2xl">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2 className="font-display text-3xl md:text-5xl font-bold cosmic-heading mb-5">
-              Ready to align your name with <span className="gold-text">your destiny?</span>
-            </h2>
-            <p className="cosmic-body mb-8 text-lg">
-              Send your details on WhatsApp — Himansshu Ji's team will guide you through the next steps.
-            </p>
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-cosmic-gold">
-              <MessageCircle className="w-5 h-5" /> Start on WhatsApp
-            </a>
+      {/* Sticky bottom bar mobile */}
+      <a href={waLink("Hi, I'd like to order the Name Correction Report.")} target="_blank" rel="noopener noreferrer"
+        className="lg:hidden fixed left-0 right-0 bottom-16 z-40 text-center py-3.5 font-medium"
+        style={{ background: COLORS.gold, color: COLORS.white, ...body }}>
+        Get My Report →
+      </a>
+
+      {/* Social proof toast */}
+      <AnimatePresence>
+        {proofVisible && (
+          <motion.div
+            initial={{ opacity: 0, x: -30, y: 0 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            className="fixed left-4 bottom-32 lg:bottom-6 z-40 max-w-xs rounded-lg px-4 py-3 flex items-start gap-3"
+            style={{ background: COLORS.white, boxShadow: "0 8px 28px rgba(0,0,0,0.15)", border: `1px solid ${COLORS.cardBorder}` }}>
+            <Bell className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: COLORS.amber }} />
+            <span className="text-[13px] leading-snug" style={{ color: COLORS.brown, ...body }}>{socialProofMessages[proofIdx]}</span>
           </motion.div>
-        </div>
-      </section>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 };
 
-export default NameCorrectionPage;
+export default NameCorrection;
