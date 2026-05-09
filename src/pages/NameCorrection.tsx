@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Check, X, Plus, Minus, ChevronLeft, ChevronRight, Clock, Lock, Bell } from "lucide-react";
+import bookMockup from "@/assets/name-blueprint-book.png";
 
 const COLORS = {
   amber: "#C17A1A",
