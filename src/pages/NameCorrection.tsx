@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Check, X, Plus, Minus, ChevronLeft, ChevronRight, Clock, Lock, Bell } from "lucide-react";
+import bookMockup from "@/assets/name-blueprint-book.png";
 
 const COLORS = {
   amber: "#C17A1A",
@@ -167,39 +168,85 @@ const NameCorrection = () => {
           </div>
 
           {/* Right — wheel + book */}
-          <div className="relative h-[320px] lg:h-[420px] flex items-center justify-center">
-            <svg viewBox="0 0 400 400" className="absolute inset-0 w-full h-full animate-spin" style={{ animationDuration: "60s" }}>
-              <g fill="none" stroke={COLORS.amberDark} strokeWidth="1.2">
-                <circle cx="200" cy="200" r="180" />
-                <circle cx="200" cy="200" r="150" />
-                <circle cx="200" cy="200" r="120" />
-                <circle cx="200" cy="200" r="90" />
+          <div className="relative h-[380px] lg:h-[520px] flex items-center justify-center">
+            {/* Mandala with 12 rashi names behind the book */}
+            <svg viewBox="0 0 500 500" className="absolute inset-0 w-full h-full animate-spin opacity-90" style={{ animationDuration: "80s" }}>
+              <defs>
                 {Array.from({ length: 12 }).map((_, i) => {
-                  const a = (i * 30 * Math.PI) / 180;
+                  const startAngle = i * 30 - 90;
+                  const endAngle = startAngle + 30;
+                  const r = 220;
+                  const x1 = 250 + r * Math.cos((startAngle * Math.PI) / 180);
+                  const y1 = 250 + r * Math.sin((startAngle * Math.PI) / 180);
+                  const x2 = 250 + r * Math.cos((endAngle * Math.PI) / 180);
+                  const y2 = 250 + r * Math.sin((endAngle * Math.PI) / 180);
+                  return (
+                    <path
+                      key={i}
+                      id={`rashi-arc-${i}`}
+                      d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`}
+                      fill="none"
+                    />
+                  );
+                })}
+              </defs>
+              <g fill="none" stroke={COLORS.goldLight} strokeWidth="1">
+                <circle cx="250" cy="250" r="240" opacity="0.5" />
+                <circle cx="250" cy="250" r="210" opacity="0.7" />
+                <circle cx="250" cy="250" r="180" opacity="0.4" />
+                <circle cx="250" cy="250" r="120" opacity="0.3" />
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const a = ((i * 30 - 90) * Math.PI) / 180;
                   return (
                     <line
                       key={i}
-                      x1={200 + Math.cos(a) * 90}
-                      y1={200 + Math.sin(a) * 90}
-                      x2={200 + Math.cos(a) * 180}
-                      y2={200 + Math.sin(a) * 180}
+                      x1={250 + Math.cos(a) * 120}
+                      y1={250 + Math.sin(a) * 120}
+                      x2={250 + Math.cos(a) * 210}
+                      y2={250 + Math.sin(a) * 210}
+                      opacity="0.5"
+                    />
+                  );
+                })}
+                {/* 8-petal lotus */}
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const a = (i * 45 * Math.PI) / 180;
+                  return (
+                    <ellipse
+                      key={`p-${i}`}
+                      cx="250"
+                      cy="170"
+                      rx="22"
+                      ry="55"
+                      opacity="0.45"
+                      transform={`rotate(${i * 45} 250 250)`}
                     />
                   );
                 })}
               </g>
+              <g fill={COLORS.goldLight} style={{ ...heading, fontSize: 15, letterSpacing: "2px", fontWeight: 600 }}>
+                {["MESHA","VRISHABHA","MITHUNA","KARKA","SIMHA","KANYA","TULA","VRISHCHIKA","DHANU","MAKARA","KUMBHA","MEENA"].map((name, i) => (
+                  <text key={i} dy="-6">
+                    <textPath href={`#rashi-arc-${i}`} startOffset="50%" textAnchor="middle">{name}</textPath>
+                  </text>
+                ))}
+              </g>
             </svg>
-            {/* Book mockup */}
-            <div className="relative z-10 w-[200px] lg:w-[260px] aspect-[3/4] rounded-md shadow-2xl flex items-center justify-center text-center"
-              style={{ background: "linear-gradient(135deg,#1e3a8a,#0f1e4d)" }}>
-              <div className="text-white p-4">
-                <div style={heading} className="text-2xl lg:text-3xl font-semibold leading-tight">Name<br />Correction<br />Report</div>
-                <div className="mt-3 text-[10px] tracking-[0.2em] text-white/70">ANKSHAASTRA</div>
-                <div className="mt-4 grid grid-cols-3 gap-1 mx-auto w-24">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div key={i} className="aspect-square border border-white/30 text-[10px] flex items-center justify-center text-white/70">{(i + 1)}</div>
-                  ))}
-                </div>
-              </div>
+
+            {/* Book mockup — facing left */}
+            <div
+              className="relative z-10 w-[240px] lg:w-[320px]"
+              style={{
+                transform: "perspective(1200px) rotateY(18deg)",
+                filter: "drop-shadow(0 30px 40px rgba(0,0,0,0.45))",
+              }}
+            >
+              <img
+                src={bookMockup}
+                alt="Ankshaastra Name Alignment Blueprint hardcover book by Himansshu Agarwal"
+                className="w-full h-auto"
+                loading="eager"
+              />
             </div>
           </div>
         </div>
