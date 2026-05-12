@@ -146,7 +146,15 @@ const NameCorrection = () => {
       </div>
 
       {/* SECTION 1 — HERO */}
-      <section style={{ background: COLORS.amber, ...body }} className="relative overflow-hidden">
+      <section
+        style={{
+          backgroundImage: `linear-gradient(135deg, rgba(92,46,0,0.85) 0%, rgba(193,122,26,0.55) 50%, rgba(45,15,0,0.9) 100%), url(${heroBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          ...body,
+        }}
+        className="relative overflow-hidden"
+      >
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 pt-16 lg:pt-24 pb-32 lg:pb-40 grid lg:grid-cols-2 gap-10 items-center relative z-10">
           {/* Left */}
           <div className="text-white text-center lg:text-left">
