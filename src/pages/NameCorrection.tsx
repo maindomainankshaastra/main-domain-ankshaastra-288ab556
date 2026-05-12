@@ -4,6 +4,7 @@ import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Check, X, Plus, Minus, ChevronLeft, ChevronRight, Clock, Lock, Bell } from "lucide-react";
 import bookMockup from "@/assets/name-blueprint-book.png";
+import heroBg from "@/assets/name-correction-hero-bg.jpg";
 
 const COLORS = {
   amber: "#C17A1A",
