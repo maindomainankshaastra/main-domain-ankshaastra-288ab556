@@ -6,6 +6,7 @@ import CalculatorsSection from "@/components/home/CalculatorsSection";
 import YouTubeSection from "@/components/home/YouTubeSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import CelebritiesSection from "@/components/home/CelebritiesSection";
+import BlogSection from "@/components/home/BlogSection";
 import CTASection from "@/components/home/CTASection";
 import SEOHead from "@/components/SEOHead";
 
@@ -36,6 +37,7 @@ const Index = () => {
       <CelebritiesSection />
       <YouTubeSection />
       <TestimonialsSection />
+      <BlogSection />
       <CTASection />
     </Layout>
   );

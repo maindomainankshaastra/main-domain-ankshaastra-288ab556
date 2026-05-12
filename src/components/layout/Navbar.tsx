@@ -23,6 +23,7 @@ const navLinks = [
   { name: "Courses", path: "/courses" },
   { name: "Calculators", path: "/calculator" },
   { name: "Shop", path: "https://ankshaastra.in", external: true },
+  { name: "Blog", path: "/blog" },
   { name: "Consultation", path: "/consultation" },
 ];
 
