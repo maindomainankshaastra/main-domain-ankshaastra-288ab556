@@ -149,37 +149,95 @@ const NameCorrection = () => {
       {/* SECTION 1 — HERO */}
       <section
         style={{
-          backgroundImage: `linear-gradient(135deg, rgba(92,46,0,0.85) 0%, rgba(193,122,26,0.55) 50%, rgba(45,15,0,0.9) 100%), url(${heroBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          background: `radial-gradient(ellipse at 70% 45%, rgba(193,122,26,0.55) 0%, rgba(92,40,0,0.85) 45%, #1a0a00 85%), linear-gradient(180deg, #2a1200 0%, #0f0500 100%)`,
           ...body,
         }}
-        className="relative overflow-hidden"
+        className="relative overflow-hidden isolate"
       >
+        {/* Cinematic background layers */}
+        <div
+          className="absolute inset-0 opacity-[0.18] mix-blend-overlay pointer-events-none"
+          style={{
+            backgroundImage: `url(${heroBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        {/* Gold particles / film grain */}
+        <div
+          className="absolute inset-0 opacity-[0.08] mix-blend-screen pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(255,213,128,0.6) 1px, transparent 0)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+        {/* Top + bottom vignette */}
+        <div className="absolute inset-x-0 top-0 h-32 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, transparent 100%)" }} />
+        <div className="absolute inset-x-0 bottom-0 h-40 pointer-events-none" style={{ background: "linear-gradient(0deg, #1a0a00 0%, transparent 100%)" }} />
+
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 pt-16 lg:pt-24 pb-32 lg:pb-40 grid lg:grid-cols-2 gap-10 items-center relative z-10">
           {/* Left */}
           <div className="text-white text-center lg:text-left">
-            <h1 style={heading} className="font-bold text-4xl sm:text-5xl lg:text-[64px] leading-[1.15] mb-6">
-              A Small Tweak In Your Name<br className="hidden md:block" /> Can Change Your Life
+            <div
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7 backdrop-blur-sm"
+              style={{
+                background: "rgba(255,213,128,0.08)",
+                border: "1px solid rgba(255,213,128,0.25)",
+                color: COLORS.goldLight,
+                ...body,
+              }}
+            >
+              <span style={{ fontSize: 12 }}>✦</span>
+              <span className="text-[11px] tracking-[0.25em] uppercase font-medium">Expert-Led · Personalized · Sacred</span>
+            </div>
+            <h1 style={heading} className="font-bold text-4xl sm:text-5xl lg:text-[64px] leading-[1.08] mb-6 tracking-tight">
+              A Small Tweak In Your Name<br className="hidden md:block" />
+              <span style={{
+                background: "linear-gradient(135deg, #FFE9B5 0%, #D4870A 50%, #C17A1A 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                fontStyle: "italic",
+              }}>Can Change Your Life</span>
             </h1>
-            <p style={body} className="text-lg text-white/70 mb-8 max-w-xl mx-auto lg:mx-0">
+            <div className="flex items-center gap-3 my-5 justify-center lg:justify-start">
+              <div className="h-px w-12" style={{ background: "linear-gradient(90deg, transparent, rgba(255,213,128,0.6))" }} />
+              <span style={{ color: COLORS.goldLight, fontSize: 12 }}>◆</span>
+              <div className="h-px w-12" style={{ background: "linear-gradient(90deg, rgba(255,213,128,0.6), transparent)" }} />
+            </div>
+            <p style={body} className="text-lg text-white/75 mb-9 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
               Introducing the Expert-Led Name Correction Report by Himansshu Agarwal Ji
             </p>
             <a
               href={waLink("Hi Himansshu Ji, I'd like to order the Name Correction Report. Please share next steps.")}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ background: COLORS.gold, color: COLORS.white, ...body, borderRadius: 6 }}
-              className="inline-block font-medium text-base px-8 py-3.5 hover:opacity-90 transition-opacity"
+              style={{
+                background: "linear-gradient(135deg, #D4870A 0%, #C17A1A 100%)",
+                color: COLORS.white,
+                ...body,
+                borderRadius: 8,
+                boxShadow: "0 12px 32px -8px rgba(212,135,10,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+              }}
+              className="inline-block font-medium text-base px-9 py-4 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-300"
             >
-              Get Your Name Correction Report
+              Get Your Name Correction Report →
             </a>
           </div>
 
           {/* Right — wheel + book */}
-          <div className="relative h-[380px] lg:h-[520px] flex items-center justify-center">
+          <div className="relative h-[420px] lg:h-[560px] flex items-center justify-center">
+            {/* Soft amber glow behind everything */}
+            <div
+              className="absolute inset-[-10%] rounded-full pointer-events-none"
+              style={{
+                background: "radial-gradient(circle, rgba(212,135,10,0.35) 0%, rgba(193,122,26,0.15) 35%, transparent 70%)",
+                filter: "blur(40px)",
+              }}
+            />
             {/* Mandala with 12 rashi names behind the book */}
-            <svg viewBox="0 0 500 500" className="absolute inset-0 w-full h-full animate-spin opacity-90" style={{ animationDuration: "80s" }}>
+            <svg viewBox="0 0 500 500" className="absolute inset-0 w-full h-full animate-spin opacity-60" style={{ animationDuration: "120s" }}>
               <defs>
                 {Array.from({ length: 12 }).map((_, i) => {
                   const startAngle = i * 30 - 90;
@@ -242,37 +300,68 @@ const NameCorrection = () => {
               </g>
             </svg>
 
-            {/* Book mockup — facing left */}
-            <div
-              className="relative z-10 w-[240px] lg:w-[320px]"
+            {/* Book mockup — emerging from the scene */}
+            <motion.div
+              initial={{ opacity: 0, y: 30, rotateY: 25 }}
+              animate={{ opacity: 1, y: 0, rotateY: -18 }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+              className="relative z-10 w-[260px] lg:w-[360px]"
               style={{
-                transform: "perspective(1200px) rotateY(18deg)",
-                filter: "drop-shadow(0 30px 40px rgba(0,0,0,0.45))",
+                transform: "perspective(1400px) rotateY(-18deg) rotateX(4deg)",
+                transformStyle: "preserve-3d",
+                filter: "drop-shadow(0 40px 50px rgba(0,0,0,0.7)) drop-shadow(0 0 60px rgba(212,135,10,0.35))",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 75% 85% at 50% 45%, #000 55%, rgba(0,0,0,0.85) 75%, transparent 100%)",
+                maskImage:
+                  "radial-gradient(ellipse 75% 85% at 50% 45%, #000 55%, rgba(0,0,0,0.85) 75%, transparent 100%)",
               }}
             >
               <img
                 src={bookMockup}
                 alt="Ankshaastra Name Alignment Blueprint hardcover book by Himansshu Agarwal"
                 className="w-full h-auto"
+                style={{ mixBlendMode: "luminosity", opacity: 0.96 }}
                 loading="eager"
               />
-            </div>
+              {/* Color version layered on top, slightly transparent, to keep richness */}
+              <img
+                src={bookMockup}
+                alt=""
+                aria-hidden
+                className="w-full h-auto absolute inset-0"
+                style={{ opacity: 0.55 }}
+              />
+              {/* Warm amber light wash on the book */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(212,135,10,0.25) 0%, transparent 40%, rgba(26,10,0,0.45) 100%)",
+                  mixBlendMode: "overlay",
+                }}
+              />
+            </motion.div>
           </div>
         </div>
 
         {/* Trust bar */}
         <div className="absolute left-0 right-0 -bottom-12 lg:-bottom-10 px-4">
-          <div className="max-w-[1100px] mx-auto rounded-xl py-5 px-6 grid grid-cols-3 gap-2"
-            style={{ background: COLORS.cream, boxShadow: "0 2px 16px rgba(193,122,26,0.10)", color: COLORS.brown, ...body }}>
+          <div className="max-w-[1100px] mx-auto rounded-2xl py-6 px-6 grid grid-cols-3 gap-2 backdrop-blur-xl"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,248,238,0.98) 0%, rgba(253,243,227,0.95) 100%)",
+              boxShadow: "0 20px 60px -10px rgba(0,0,0,0.45), 0 0 0 1px rgba(212,135,10,0.15)",
+              color: COLORS.brown,
+              ...body,
+            }}>
             {[
               { v: "5,000+", l: "Reports Delivered" },
               { v: "4.9/5 ★", l: "Average Rating" },
               { v: "Personalized", l: "Report" },
             ].map((s, i) => (
               <div key={i} className="text-center relative">
-                <div style={heading} className="text-xl md:text-2xl font-semibold">{s.v}</div>
-                <div className="text-[13px] mt-1 opacity-80">{s.l}</div>
-                {i < 2 && <span className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-px" style={{ background: COLORS.amber, opacity: 0.3 }} />}
+                <div style={{ ...heading, background: "linear-gradient(135deg, #C17A1A, #D4870A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }} className="text-2xl md:text-3xl font-semibold">{s.v}</div>
+                <div className="text-[12px] mt-1 opacity-70 uppercase tracking-[0.15em]">{s.l}</div>
+                {i < 2 && <span className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-px" style={{ background: COLORS.amber, opacity: 0.25 }} />}
               </div>
             ))}
           </div>
