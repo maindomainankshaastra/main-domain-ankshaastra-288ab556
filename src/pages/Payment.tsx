@@ -137,8 +137,15 @@ const PaymentPage = () => {
       return;
     }
 
-    const options = {
-      key: "YOUR_KEY_ID",
+      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
+      if (!razorpayKey) {
+        alert("Razorpay publishable key is missing (VITE_RAZORPAY_KEY_ID). Please contact admin.");
+        return;
+      }
+
+      const options = {
+        key: razorpayKey,
+
       amount: order.amount,
       currency: "INR",
       name: "Ankshaastra",

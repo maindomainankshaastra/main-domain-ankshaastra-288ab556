@@ -6,9 +6,16 @@ export default async function handler(req: any, res: any) {
     return res.status(405).end();
   }
 
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    return res.status(500).json({ error: "Razorpay credentials missing (RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET)." });
+  }
+
   const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID!,
-    key_secret: process.env.RAZORPAY_KEY_SECRET!,
+    key_id: keyId,
+    key_secret: keySecret,
   });
 
   try {
