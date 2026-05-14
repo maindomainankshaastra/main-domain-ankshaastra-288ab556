@@ -567,20 +567,6 @@ const NameCorrection = () => {
         Get My Report →
       </Link>
 
-      {/* Social proof toast */}
-      <AnimatePresence>
-        {proofVisible && (
-          <motion.div
-            initial={{ opacity: 0, x: -30, y: 0 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -30 }}
-            className="fixed left-4 bottom-32 lg:bottom-6 z-40 max-w-xs rounded-lg px-4 py-3 flex items-start gap-3"
-            style={{ background: COLORS.white, boxShadow: "0 8px 28px rgba(0,0,0,0.15)", border: `1px solid ${COLORS.cardBorder}` }}>
-            <Bell className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: COLORS.amber }} />
-            <span className="text-[13px] leading-snug" style={{ color: COLORS.brown, ...body }}>{socialProofMessages[proofIdx]}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </Layout>
   );
 };
