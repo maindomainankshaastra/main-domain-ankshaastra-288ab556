@@ -1,20 +1,17 @@
 import { Link } from "react-router-dom";
-import { FileText, Phone, Gem, Flame, MessageCircle, BookOpen } from "lucide-react";
+import { FileText, Phone, Gem } from "lucide-react";
 
 const items = [
   { icon: FileText, label: "Explore Reports", to: "/reports" },
   { icon: Phone, label: "Consult Now", to: "/consultation" },
   { icon: Gem, label: "Gems & Rudraksha", to: "https://ankshaastra.in", external: true },
-  { icon: Flame, label: "Powerful Poojas", to: "/services" },
-  { icon: MessageCircle, label: "Ask Astrologer", to: "/contact" },
-  { icon: BookOpen, label: "Occult Gurukul", to: "/courses" },
 ];
 
 const QuickCategories = () => {
   return (
     <section className="bg-cream py-12 md:py-16">
       <div className="section-container">
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6">
+        <div className="grid grid-cols-3 gap-4 md:gap-6 max-w-3xl mx-auto">
           {items.map(({ icon: Icon, label, to, external }) => {
             const inner = (
               <div className="flex flex-col items-center text-center gap-3 group cursor-pointer">

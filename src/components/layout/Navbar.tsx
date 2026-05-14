@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, Globe, User, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, User, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const reportsDropdown = [
-  { name: "Name Correction Blueprint", path: "/reports/name-correction-blueprint", icon: ScrollText, description: "Align your name's vibration for success" },
+  { name: "Name Correction Blueprint", path: "/services/name-correction", icon: ScrollText, description: "Align your name's vibration for success" },
   { name: "Perfect Baby Name Report", path: "https://empower.ankshaastra.com", icon: Baby, description: "Numerology-based baby name selection", external: true },
   { name: "Personalized Kundali", path: "/reports/personalized-kundali", icon: Star, description: "Complete birth chart & life predictions" },
   { name: "Varshphal Report 2026", path: "/services/varshphal-report", icon: Calendar, description: "Your complete yearly numerology guide" },
@@ -62,16 +62,8 @@ const Navbar = () => {
             <img
               src={logo}
               alt="Ankshaastra"
-              className="h-12 lg:h-14 w-auto object-contain rounded-md bg-cream-light/95 p-1"
+              className="h-14 lg:h-16 w-auto object-contain rounded-md bg-cream-light/95 p-1"
             />
-            <div className="hidden sm:flex flex-col leading-tight">
-              <span className="font-display text-xl lg:text-2xl font-bold text-cream-light tracking-wide">
-                Ankshaastra
-              </span>
-              <span className="text-[10px] lg:text-[11px] text-amber/90 tracking-[0.2em] uppercase">
-                Vedic · Numerology · Lal Kitab
-              </span>
-            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -167,14 +159,6 @@ const Navbar = () => {
 
           {/* Right: Language + Auth + mobile toggle */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full border border-cream-light/40 text-cream-light/90 text-sm font-medium hover:bg-cream-light/10 hover:border-cream-light/70 transition-all"
-            >
-              <Globe className="w-4 h-4" />
-              Language
-            </button>
-
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -328,14 +312,6 @@ const Navbar = () => {
                     Sign In / Sign Up
                   </Link>
                 )}
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 mx-4 mt-2 px-4 py-2.5 rounded-full border border-border text-foreground text-sm font-medium hover:bg-muted"
-                  style={{ width: "calc(100% - 2rem)" }}
-                >
-                  <Globe className="w-4 h-4" />
-                  Language
-                </button>
               </div>
             </motion.div>
           )}

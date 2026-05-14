@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
@@ -20,8 +21,8 @@ const COLORS = {
   red: "#C62828",
 };
 
-const WHATSAPP_BASE = "https://wa.me/919667305577?text=";
-const waLink = (msg: string) => WHATSAPP_BASE + encodeURIComponent(msg);
+const payLink = (service: string, amount: number) =>
+  `/payment?service=${encodeURIComponent(service)}&amount=${amount}`;
 
 const heading = { fontFamily: "'Cormorant Garamond', serif" };
 const body = { fontFamily: "'Jost', sans-serif" };
@@ -209,10 +210,8 @@ const NameCorrection = () => {
             <p style={body} className="text-lg text-white/75 mb-9 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
               Introducing the Expert-Led Name Correction Report by Himansshu Agarwal Ji
             </p>
-            <a
-              href={waLink("Hi Himansshu Ji, I'd like to order the Name Correction Report. Please share next steps.")}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to={payLink("Name Correction Report", 2447)}
               style={{
                 background: "linear-gradient(135deg, #D4870A 0%, #C17A1A 100%)",
                 color: COLORS.white,
@@ -223,7 +222,7 @@ const NameCorrection = () => {
               className="inline-block font-medium text-base px-9 py-4 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-300"
             >
               Get Your Name Correction Report →
-            </a>
+            </Link>
           </div>
 
           {/* Right — wheel + book */}
@@ -390,14 +389,13 @@ const NameCorrection = () => {
                 </li>
               ))}
             </ul>
-            <a
-              href={waLink("Hi, I'd like to order the Name Correction Report.")}
-              target="_blank" rel="noopener noreferrer"
+            <Link
+              to={payLink("Name Correction Report", 2447)}
               style={{ background: COLORS.gold, color: COLORS.white, borderRadius: 6 }}
               className="inline-block font-medium px-8 py-3.5 hover:opacity-90 transition"
             >
               Order Now
-            </a>
+            </Link>
           </div>
           <div className="flex items-center justify-center">
             <div className="relative w-full max-w-[420px] aspect-[4/3] rounded-xl flex items-center justify-center"
@@ -505,11 +503,11 @@ const NameCorrection = () => {
                   <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
                 ))}
               </ul>
-              <a href={waLink(`Hi, I'd like the Name Check for ${nameQty} name(s).`)} target="_blank" rel="noopener noreferrer"
+              <Link to={payLink(`Name Check (${nameQty} name${nameQty > 1 ? "s" : ""})`, card1Price)}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
                 Get Name Check for {nameQty} Name{nameQty > 1 ? "s" : ""}
-              </a>
+              </Link>
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
                 <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr delivery</span>
                 <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
@@ -532,11 +530,11 @@ const NameCorrection = () => {
                   <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
                 ))}
               </ul>
-              <a href={waLink("Hi, I'd like to order the Name Correction Report (₹2,447).")} target="_blank" rel="noopener noreferrer"
+              <Link to={payLink("Name Correction Report", 2447)}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
                 style={{ background: COLORS.gold, color: COLORS.white }}>
                 Get Name Correction Report
-              </a>
+              </Link>
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
                 <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr</span>
                 <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
@@ -564,11 +562,11 @@ const NameCorrection = () => {
                   🎥 20-Minute Live Video Consultation with Himansshu Agarwal Ji
                 </div>
               </div>
-              <a href={waLink("Hi, I'd like the Premium Name Correction + Live Session (₹8,927).")} target="_blank" rel="noopener noreferrer"
+              <Link to={payLink("Name Correction + Live Session", 8927)}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90 mt-auto"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
                 Get Premium Report + Live Session
-              </a>
+              </Link>
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
                 <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr</span>
                 <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
@@ -684,11 +682,11 @@ const NameCorrection = () => {
       </section>
 
       {/* Sticky bottom bar mobile */}
-      <a href={waLink("Hi, I'd like to order the Name Correction Report.")} target="_blank" rel="noopener noreferrer"
-        className="lg:hidden fixed left-0 right-0 bottom-16 z-40 text-center py-3.5 font-medium"
+      <Link to={payLink("Name Correction Report", 2447)}
+        className="lg:hidden fixed left-0 right-0 bottom-16 z-40 block text-center py-3.5 font-medium"
         style={{ background: COLORS.gold, color: COLORS.white, ...body }}>
         Get My Report →
-      </a>
+      </Link>
 
       {/* Social proof toast */}
       <AnimatePresence>

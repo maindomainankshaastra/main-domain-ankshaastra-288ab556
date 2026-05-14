@@ -21,7 +21,7 @@ const services: Array<{
   { icon: ScrollText, title: "Name Correction", description: "Align your name's vibration for lasting success", link: "/services/name-correction", badge: "India's No.1", cta: "Order Now", category: "Reports" },
   { icon: Heart, title: "Perfect Baby Name", description: "Numerology-based auspicious baby naming", link: "https://empower.ankshaastra.com", external: true, badge: "Bestseller", cta: "Order Now", category: "Reports" },
   { icon: Gem, title: "Business Numerology", description: "Brand & business name alignment for growth", link: "#", action: "business-modal", badge: "For Owners", cta: "Check Now", category: "Consultations" },
-  { icon: Star, title: "C-Section Dates", description: "Auspicious birth dates for your newborn", link: "/services/csection-dates", badge: "Specialist", cta: "Book Now", category: "Kundli" },
+  { icon: Star, title: "C-Section Dates", description: "Auspicious birth dates for your newborn", link: "https://miraclebaby.ankshaastra.com", external: true, badge: "Specialist", cta: "Book Now", category: "Kundli" },
   { icon: Crown, title: "Varshphal 2026", description: "Your complete annual numerology forecast", link: "/services/varshphal-report", badge: "New", cta: "Order Now", category: "Reports" },
   { icon: Building, title: "Office Vastu", description: "Workplace alignment for prosperity & harmony", link: "/services/office-vastu", badge: "FREE", cta: "Check Now", category: "Online Puja" },
   { icon: Smartphone, title: "Mobile Numerology", description: "Lucky mobile number for vibrational alignment", link: "/services/mobile-numerology", badge: "Quick", cta: "Check Now", category: "Reports" },

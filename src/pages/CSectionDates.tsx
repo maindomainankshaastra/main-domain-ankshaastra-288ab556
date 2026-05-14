@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { 
   Baby, Star, CheckCircle, Shield, Heart, 
@@ -106,6 +106,9 @@ const plans = [
 
 const CSectionDates = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  useEffect(() => {
+    window.location.replace("https://miraclebaby.ankshaastra.com");
+  }, []);
   const [formData, setFormData] = useState({
     parentName: "",
     contact: "",

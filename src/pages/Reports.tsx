@@ -6,26 +6,6 @@ import { ScrollText, Download, Check, ArrowRight, Star } from "lucide-react";
 
 const reports = [
   {
-    id: 1,
-    title: "Birth Chart Analysis",
-    description: "Complete Janam Kundli with detailed planetary positions and their effects on your life.",
-    pages: "25+ Pages",
-    delivery: "24 Hours",
-    price: "₹999",
-    originalPrice: "₹1,499",
-    features: ["Planetary positions", "Dasha predictions", "Favorable periods", "Remedial measures"],
-  },
-  {
-    id: 2,
-    title: "Career Report",
-    description: "In-depth analysis of your career potential, suitable professions, and growth periods.",
-    pages: "20+ Pages",
-    delivery: "24 Hours",
-    price: "₹1,499",
-    originalPrice: "₹1,999",
-    features: ["Career strengths", "Best professions", "Business potential", "Timing for changes"],
-  },
-  {
     id: 3,
     title: "Marriage Compatibility",
     description: "Detailed Kundli matching with Guna Milan and compatibility analysis for couples.",
@@ -33,6 +13,8 @@ const reports = [
     delivery: "48 Hours",
     price: "₹1,999",
     originalPrice: "₹2,499",
+    amount: 1999,
+    link: "/payment?service=Marriage%20Compatibility&amount=1999",
     features: ["Guna Milan (36 points)", "Mangal Dosha check", "Relationship dynamics", "Remedies if needed"],
   },
   {
@@ -41,29 +23,11 @@ const reports = [
     description: "Month-by-month predictions for the coming year covering all aspects of life.",
     pages: "40+ Pages",
     delivery: "48 Hours",
-    price: "₹2,499",
-    originalPrice: "₹3,499",
+    price: "₹699",
+    originalPrice: "₹1,499",
+    amount: 699,
+    link: "/services/varshphal-report",
     features: ["Monthly predictions", "Transit effects", "Lucky periods", "Precautionary months"],
-  },
-  {
-    id: 5,
-    title: "Health Report",
-    description: "Astrological analysis of health tendencies and preventive guidance.",
-    pages: "15+ Pages",
-    delivery: "24 Hours",
-    price: "₹999",
-    originalPrice: "₹1,299",
-    features: ["Health indicators", "Vulnerable periods", "Favorable treatments", "Wellness remedies"],
-  },
-  {
-    id: 6,
-    title: "Complete Life Report",
-    description: "Comprehensive analysis covering all aspects of life - career, marriage, health, and wealth.",
-    pages: "60+ Pages",
-    delivery: "72 Hours",
-    price: "₹4,999",
-    originalPrice: "₹6,999",
-    features: ["All life aspects", "10-year predictions", "Detailed remedies", "Priority support"],
   },
 ];
 
@@ -158,7 +122,7 @@ const ReportsPage = () => {
                 </ul>
 
                 <Link
-                  to={`/payment?service=${encodeURIComponent(report.title)}&amount=${report.id === 1 ? 999 : report.id === 2 ? 1499 : report.id === 3 ? 1999 : report.id === 4 ? 2499 : report.id === 5 ? 999 : 4999}`}
+                  to={report.link}
                   className="flex items-center justify-center gap-2 w-full btn-primary"
                 >
                   Order Now

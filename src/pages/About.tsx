@@ -3,6 +3,7 @@ import SEOHead from "@/components/SEOHead";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Sparkles, Award, Users, BookOpen, Heart, ArrowRight, Star, CheckCircle2 } from "lucide-react";
+import expertImg from "@/assets/expert-himansshu.jpg";
 
 const stats = [
   { icon: Users, value: "5000+", label: "Lives Transformed" },
@@ -76,15 +77,16 @@ const About = () => {
               viewport={{ once: true }}
               className="lg:col-span-2"
             >
-              <div className="relative aspect-square max-w-sm mx-auto lg:mx-0 rounded-3xl gradient-hero overflow-hidden shadow-xl border-2 border-accent/40">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center px-8">
-                    <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-amber-light/20 backdrop-blur-sm border-2 border-amber-light/40 flex items-center justify-center">
-                      <Sparkles className="w-12 h-12 text-amber-light" />
-                    </div>
-                    <h3 className="font-display text-2xl font-bold text-primary-foreground mb-1">Himansshu Agarwal Ji</h3>
-                    <p className="text-amber-light text-sm font-semibold tracking-wider uppercase">Numerology Expert</p>
-                  </div>
+              <div className="relative aspect-[4/5] max-w-sm mx-auto lg:mx-0 rounded-3xl overflow-hidden shadow-xl border-2 border-accent/40">
+                <img
+                  src={expertImg}
+                  alt="Himansshu Agarwal Ji - Numerology Expert"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-6">
+                  <h3 className="font-display text-2xl font-bold text-white mb-1">Himansshu Agarwal Ji</h3>
+                  <p className="text-amber-light text-xs font-semibold tracking-wider uppercase">Numerology Expert</p>
                 </div>
               </div>
             </motion.div>
