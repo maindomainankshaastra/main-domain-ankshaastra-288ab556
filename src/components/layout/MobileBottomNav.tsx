@@ -12,6 +12,14 @@ const navItems = [
 const MobileBottomNav = () => {
   const { pathname } = useLocation();
 
+  // Hide on service detail pages, report detail pages, and payment flow
+  const hideOnPatterns = [
+    /^\/services\/[^/]+/,
+    /^\/reports\/[^/]+/,
+    /^\/payment/,
+  ];
+  if (hideOnPatterns.some((re) => re.test(pathname))) return null;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 xl:hidden bg-secondary border-t border-amber/20 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
