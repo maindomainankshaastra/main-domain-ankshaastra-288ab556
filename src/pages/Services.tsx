@@ -78,7 +78,7 @@ const serviceCategories = [
     gradient: "from-pink-500 to-rose-500",
     borderAccent: "hsl(340, 70%, 55%)",
     services: [
-      { title: "C-Section Baby Dates", description: "Numerology-based guidance for selecting supportive C-section birth dates within medically approved range.", price: "₹1,100", rawPrice: 1100, link: "/services/csection-dates" },
+      { title: "C-Section Baby Dates", description: "Numerology-based guidance for selecting supportive C-section birth dates within medically approved range.", price: "₹1,100", rawPrice: 1100, link: "https://miraclebaby.ankshaastra.com", external: true },
       { title: "Perfect Baby Name", description: "Carefully aligned baby name suggestions based on numerology principles for foundational harmony.", price: "₹2,447", rawPrice: 2447, link: "https://empower.ankshaastra.com", external: true, highlight: true },
       { title: "Relationship Analysis", description: "Analysis of emotional dynamics and compatibility between partners for healthier communication.", price: "₹987", rawPrice: 987, link: "/payment" },
     ]
