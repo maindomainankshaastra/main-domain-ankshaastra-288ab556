@@ -123,7 +123,20 @@ const ConsultationPage = () => {
 
   return (
     <Layout>
-      <SEOHead title="Call Consultation with Himansshu Agarwal Ji" description="Book a one-on-one audio or video consultation with Himansshu Agarwal Ji for career, business, love, health, and child planning guidance through Lal Kitab numerology." canonical="/consultation" />
+      <SEOHead
+        title="Call Consultation with Himansshu Agarwal Ji"
+        description="Book a one-on-one audio or video consultation with Himansshu Agarwal Ji for career, business, love, health, and child planning guidance through Lal Kitab numerology."
+        canonical="/consultation"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }}
+      />
       {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />
