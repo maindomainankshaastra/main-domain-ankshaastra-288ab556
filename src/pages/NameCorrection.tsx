@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
@@ -20,8 +21,8 @@ const COLORS = {
   red: "#C62828",
 };
 
-const WHATSAPP_BASE = "https://wa.me/919667305577?text=";
-const waLink = (msg: string) => WHATSAPP_BASE + encodeURIComponent(msg);
+const payLink = (service: string, amount: number) =>
+  `/payment?service=${encodeURIComponent(service)}&amount=${amount}`;
 
 const heading = { fontFamily: "'Cormorant Garamond', serif" };
 const body = { fontFamily: "'Jost', sans-serif" };
