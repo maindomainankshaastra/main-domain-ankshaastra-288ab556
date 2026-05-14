@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 
 // Consultation packages (only used when type= param is present)
 const consultationPackages = {
@@ -63,12 +64,13 @@ const consultationPackages = {
 };
 
 // ───── form types ─────
-type FormType = "kundali" | "consultation" | "name-correction" | "default";
+type FormType = "kundali" | "consultation" | "name-correction" | "name-check" | "default";
 
 const inferFormType = (service: string | null, hasConsultationType: boolean): FormType => {
   if (hasConsultationType) return "consultation";
   if (!service) return "default";
   const s = service.toLowerCase();
+  if (s.includes("name check")) return "name-check";
   if (s.includes("name correction")) return "name-correction";
   if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
   return "default";
@@ -76,7 +78,7 @@ const inferFormType = (service: string | null, hasConsultationType: boolean): Fo
 
 // ───── shared field validators ─────
 const nameRx = /^[a-zA-Z\s.'-]+$/;
-const phoneField = z.string().trim().min(10, "WhatsApp number must be at least 10 digits").max(15).regex(/^[+]?[0-9\s]{10,15}$/, "Enter a valid number");
+const phoneField = z.string().trim().min(7, "Enter a valid WhatsApp number").max(20).regex(/^[+]?[0-9\s-]{7,20}$/, "Enter a valid number");
 const emailField = z.string().trim().min(1, "Email is required").email("Enter a valid email").max(100);
 const pincodeField = z.string().trim().regex(/^\d{6}$/, "Enter a valid 6-digit pincode");
 const dobField = z.object({
@@ -87,6 +89,7 @@ const dobField = z.object({
 const tobField = z.object({
   hour: z.string().min(1, "Hour required"),
   minute: z.string().min(1, "Minute required"),
+  meridiem: z.enum(["AM", "PM"], { required_error: "AM/PM required" }),
 });
 const genderField = z.enum(["male", "female", "other"], { required_error: "Select gender" });
 const relationField = z.enum(["good", "neutral", "challenging"], { required_error: "Select" });
@@ -144,6 +147,19 @@ const nameCorrectionSchema = z.object({
   reason: z.string().trim().min(10, "Please share (min 10 characters)").max(2000),
 });
 
+// Quick "Name Check" form — minimal fields
+const nameCheckSchema = z.object({
+  firstName: z.string().trim().min(1, "First name required").max(50).regex(nameRx, "Letters only"),
+  middleName: z.string().trim().max(50).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
+  lastName: z.string().trim().min(1, "Last name required").max(50).regex(nameRx, "Letters only"),
+  middleIsFatherName: z.enum(["yes", "no"], { required_error: "Please select" }),
+  whatsapp: phoneField,
+  email: emailField,
+  pincode: pincodeField,
+  dob: dobField,
+  tob: tobField,
+});
+
 // ───── dropdown helpers ─────
 const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const months = [
@@ -152,7 +168,7 @@ const months = [
 ];
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => String(currentYear - i));
-const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const hours12 = Array.from({ length: 12 }, (_, i) => String(i + 1));
 const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 
 // ───── reusable field blocks ─────
@@ -191,31 +207,80 @@ const DOBPicker = ({ control, name = "dob" }: { control: any; name?: string }) =
 const TOBPicker = ({ control, name = "tob" }: { control: any; name?: string }) => (
   <FormItem>
     <FormLabel>Time of Birth *</FormLabel>
-    <div className="grid grid-cols-2 gap-2">
-      {(["hour", "minute"] as const).map((part) => (
-        <FormField
-          key={part}
-          control={control}
-          name={`${name}.${part}`}
-          render={({ field }) => (
-            <FormItem>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger><SelectValue placeholder={part === "hour" ? "Hour (24h)" : "Minute"} /></SelectTrigger>
-                </FormControl>
-                <SelectContent className="max-h-60">
-                  {(part === "hour" ? hours : minutes).map((v) => (
-                    <SelectItem key={v} value={v}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      ))}
+    <div className="grid grid-cols-3 gap-2">
+      <FormField control={control} name={`${name}.hour`} render={({ field }) => (
+        <FormItem>
+          <Select value={field.value} onValueChange={field.onChange}>
+            <FormControl><SelectTrigger><SelectValue placeholder="Hour" /></SelectTrigger></FormControl>
+            <SelectContent className="max-h-60">
+              {hours12.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+      )} />
+      <FormField control={control} name={`${name}.minute`} render={({ field }) => (
+        <FormItem>
+          <Select value={field.value} onValueChange={field.onChange}>
+            <FormControl><SelectTrigger><SelectValue placeholder="Minute" /></SelectTrigger></FormControl>
+            <SelectContent className="max-h-60">
+              {minutes.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+      )} />
+      <FormField control={control} name={`${name}.meridiem`} render={({ field }) => (
+        <FormItem>
+          <Select value={field.value} onValueChange={field.onChange}>
+            <FormControl><SelectTrigger><SelectValue placeholder="AM/PM" /></SelectTrigger></FormControl>
+            <SelectContent>
+              <SelectItem value="AM">AM</SelectItem>
+              <SelectItem value="PM">PM</SelectItem>
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+      )} />
     </div>
   </FormItem>
+);
+
+// WhatsApp number with separate searchable country-code dropdown.
+// Stores combined string ("+91 9876543210") in the form field.
+const WhatsappField = ({ control }: { control: any }) => (
+  <FormField
+    control={control}
+    name="whatsapp"
+    render={({ field }) => {
+      // Split current value into dial + number
+      const raw = field.value || "+91 ";
+      const m = raw.match(/^(\+\d{1,4})\s?(.*)$/);
+      const dial = m ? m[1] : "+91";
+      const number = m ? m[2] : raw;
+      return (
+        <FormItem>
+          <FormLabel>WhatsApp Number *</FormLabel>
+          <div className="flex gap-2">
+            <CountryCodeSelect
+              value={dial}
+              onChange={(d) => field.onChange(`${d} ${number}`.trim())}
+            />
+            <FormControl>
+              <Input
+                inputMode="tel"
+                placeholder="98765 43210"
+                value={number}
+                onChange={(e) => field.onChange(`${dial} ${e.target.value}`.trim())}
+                className="flex-1"
+              />
+            </FormControl>
+          </div>
+          <FormMessage />
+        </FormItem>
+      );
+    }}
+  />
 );
 
 const GenderRadio = ({ control }: { control: any }) => (
@@ -270,28 +335,34 @@ const PaymentPage = () => {
   // Pick schema/defaults by form type
   const { schema, defaults } = useMemo(() => {
     const baseDob = { day: "", month: "", year: "" };
-    const baseTob = { hour: "", minute: "" };
+    const baseTob = { hour: "", minute: "", meridiem: "" as any };
     if (formType === "kundali") {
       return {
         schema: kundaliSchema,
-        defaults: { fullName: "", email: "", whatsapp: "", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any },
+        defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any },
       };
     }
     if (formType === "consultation") {
       return {
         schema: consultationSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, issues: "" },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, issues: "" },
       };
     }
     if (formType === "name-correction") {
       return {
         schema: nameCorrectionSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
+      };
+    }
+    if (formType === "name-check") {
+      return {
+        schema: nameCheckSchema,
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, tob: baseTob },
       };
     }
     return {
       schema: defaultSchema,
-      defaults: { fullName: "", email: "", whatsapp: "", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "" },
+      defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "" },
     };
   }, [formType]);
 
@@ -430,9 +501,7 @@ const PaymentPage = () => {
         <FormField control={c} name="email" render={({ field }) => (
           <FormItem><FormLabel>Email *</FormLabel><FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
-        <FormField control={c} name="whatsapp" render={({ field }) => (
-          <FormItem><FormLabel>WhatsApp Number *</FormLabel><FormControl><Input placeholder="+91 98765 43210" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
+        <WhatsappField control={c} />
       </div>
     );
 
@@ -552,6 +621,21 @@ const PaymentPage = () => {
               <FormMessage />
             </FormItem>
           )} />
+        </>
+      );
+    }
+
+    if (formType === "name-check") {
+      return (
+        <>
+          {NameTriplet}
+          {ContactRow}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={c} name="pincode" render={({ field }) => (
+              <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
+          {BirthRow}
         </>
       );
     }
