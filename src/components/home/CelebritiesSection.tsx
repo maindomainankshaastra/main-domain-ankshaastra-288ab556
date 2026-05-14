@@ -79,9 +79,6 @@ const CelebritiesSection = () => {
                     className="w-full h-full object-cover blur-xl scale-110 group-hover:scale-115 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent pointer-events-none" />
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-background/80 backdrop-blur text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border border-border">
-                    Identity Protected
-                  </div>
                 </div>
 
                 <div className="sm:col-span-3 p-6 md:p-7">
