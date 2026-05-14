@@ -312,14 +312,6 @@ const Navbar = () => {
                     Sign In / Sign Up
                   </Link>
                 )}
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 mx-4 mt-2 px-4 py-2.5 rounded-full border border-border text-foreground text-sm font-medium hover:bg-muted"
-                  style={{ width: "calc(100% - 2rem)" }}
-                >
-                  <Globe className="w-4 h-4" />
-                  Language
-                </button>
               </div>
             </motion.div>
           )}
