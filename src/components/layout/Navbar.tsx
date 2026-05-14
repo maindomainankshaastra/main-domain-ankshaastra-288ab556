@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, Globe, User, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, User, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
@@ -62,16 +62,8 @@ const Navbar = () => {
             <img
               src={logo}
               alt="Ankshaastra"
-              className="h-12 lg:h-14 w-auto object-contain rounded-md bg-cream-light/95 p-1"
+              className="h-14 lg:h-16 w-auto object-contain rounded-md bg-cream-light/95 p-1"
             />
-            <div className="hidden sm:flex flex-col leading-tight">
-              <span className="font-display text-xl lg:text-2xl font-bold text-cream-light tracking-wide">
-                Ankshaastra
-              </span>
-              <span className="text-[10px] lg:text-[11px] text-amber/90 tracking-[0.2em] uppercase">
-                Vedic · Numerology · Lal Kitab
-              </span>
-            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -167,14 +159,6 @@ const Navbar = () => {
 
           {/* Right: Language + Auth + mobile toggle */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full border border-cream-light/40 text-cream-light/90 text-sm font-medium hover:bg-cream-light/10 hover:border-cream-light/70 transition-all"
-            >
-              <Globe className="w-4 h-4" />
-              Language
-            </button>
-
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
