@@ -61,7 +61,7 @@ const Admin = () => {
 
   return (
     <Layout>
-      <SEOHead title="Admin Dashboard | Ankshaastra" description="Manage orders, users, invoices and services." />
+      <SEOHead title="Admin Dashboard" description="Internal admin dashboard for Ankshaastra to manage customer orders, user accounts, invoices, services, and content updates across the platform." />
       <div className="container mx-auto px-4 py-12 max-w-7xl">
         <div className="flex items-center gap-3 mb-8">
           <ShieldCheck className="w-8 h-8 text-primary" />

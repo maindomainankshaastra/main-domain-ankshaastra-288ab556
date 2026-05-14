@@ -98,7 +98,7 @@ const PersonalizedKundali = () => {
   return (
     <Layout>
       <SEOHead
-        title="Premium Personalized Kundli – Himansshu Agarwal (Astro Numerologist)"
+        title="Personalized Kundli Report"
         description="Get your personalized Janam Kundali report covering career, marriage, wealth, health & remedies. Delivered within 3 hours by Himansshu Agarwal Ji."
         canonical="/reports/personalized-kundali"
       />

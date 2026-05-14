@@ -12,12 +12,13 @@ interface SEOHeadProps {
 const SITE_NAME = "Ankshaastra";
 const DEFAULT_DESCRIPTION = "Ankshaastra by Himansshu Agarwal Ji – Numerology, Lal Kitab remedies, name correction, baby name reports, personalized kundali, and consultation services.";
 const BASE_URL = "https://ankshaastra.com";
+const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.jpg`;
 
 const SEOHead = ({
   title,
   description = DEFAULT_DESCRIPTION,
   canonical,
-  ogImage = "/favicon.ico",
+  ogImage = DEFAULT_OG_IMAGE,
   ogType = "website",
   jsonLd,
 }: SEOHeadProps) => {
@@ -40,7 +41,8 @@ const SEOHead = ({
     setMeta("og:title", fullTitle, "property");
     setMeta("og:description", description, "property");
     setMeta("og:type", ogType, "property");
-    setMeta("og:image", ogImage, "property");
+    const absoluteOgImage = ogImage.startsWith("http") ? ogImage : `${BASE_URL}${ogImage.startsWith("/") ? "" : "/"}${ogImage}`;
+    setMeta("og:image", absoluteOgImage, "property");
     setMeta("og:site_name", SITE_NAME, "property");
     setMeta("twitter:card", "summary_large_image", "name");
     setMeta("twitter:title", fullTitle, "name");

@@ -14,7 +14,7 @@ const Index = () => {
   return (
     <Layout>
       <SEOHead
-        title="Numerology & Lal Kitab Remedies by Himansshu Agarwal Ji"
+        title="Numerology & Lal Kitab Remedies"
         description="Ankshaastra offers expert numerology consultations, name correction, baby name reports, personalized kundali, and Lal Kitab remedies by Himansshu Agarwal Ji."
         canonical="/"
         jsonLd={{

@@ -120,7 +120,20 @@ const BabyName = () => {
 
   return (
     <Layout>
-      <SEOHead title="Perfect Baby Name Numerology Report" description="Get a personalized baby name report crafted by Himansshu Agarwal Ji using numerology and vedic principles. 3 name options aligned with your child's birth chart." canonical="/services/baby-name" />
+      <SEOHead
+        title="Perfect Baby Name Numerology Report"
+        description="Get a personalized baby name report crafted by Himansshu Agarwal Ji using numerology and vedic principles. 3 name options aligned with your child's birth chart."
+        canonical="/services/baby-name"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }}
+      />
       {/* Hero */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />

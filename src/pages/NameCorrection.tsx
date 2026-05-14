@@ -130,7 +130,16 @@ const NameCorrection = () => {
       <SEOHead
         title="Name Correction Report by Himansshu Agarwal Ji"
         description="Expert-led Name Correction Report combining Chaldean & Vedic numerology. 5,000+ reports delivered. Personalized analysis by Himansshu Agarwal Ji."
-        canonical="https://ankshaastra.com/services/name-correction"
+        canonical="/services/name-correction"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((f: { q: string; a: string }) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }}
       />
 
       {/* Google Fonts */}
