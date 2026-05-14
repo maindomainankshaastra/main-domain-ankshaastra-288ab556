@@ -105,6 +105,14 @@ const plans = [
 ];
 
 const CSectionDates = () => {
+  useEffect(() => {
+    window.location.replace("https://miraclebaby.ankshaastra.com");
+  }, []);
+
+  return null;
+
+  // legacy unreachable below
+  // eslint-disable-next-line @typescript-eslint/no-unreachable-code
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     parentName: "",
