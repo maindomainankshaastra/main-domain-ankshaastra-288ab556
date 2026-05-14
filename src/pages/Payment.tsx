@@ -1,21 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import { useSearchParams } from "react-router-dom";
-import { Shield, Check, MessageSquare, Phone, Video, CalendarIcon, Sparkles } from "lucide-react";
+import { Shield, Check, MessageSquare, Phone, Video, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Form,
   FormControl,
@@ -26,6 +18,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 // Consultation packages (only used when type= param is present)
 const consultationPackages = {
@@ -61,38 +62,204 @@ const consultationPackages = {
   },
 };
 
-// Validation schema
-const bookingSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required").max(50).regex(/^[a-zA-Z\s]+$/, "First name can only contain letters"),
-  middleName: z.string().trim().max(50).regex(/^[a-zA-Z\s]*$/, "Middle name can only contain letters").optional().or(z.literal("")),
-  lastName: z.string().trim().min(1, "Last name is required").max(50).regex(/^[a-zA-Z\s]+$/, "Last name can only contain letters"),
-  dateOfBirth: z.date({ required_error: "Date of birth is required" }),
-  timeOfBirth: z.string().trim().min(1, "Time of birth is required").regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please enter a valid time (HH:MM)"),
-  mobileNumber: z.string().trim().min(10, "Mobile number must be at least 10 digits").max(15).regex(/^[+]?[0-9]{10,15}$/, "Please enter a valid mobile number"),
-  email: z.string().trim().min(1, "Email is required").email("Please enter a valid email address").max(100),
-  placeOfBirth: z.string().trim().min(1, "Place of birth is required").max(100),
-  problemAreas: z.string().trim().min(10, "Please describe your problem areas (at least 10 characters)").max(1000),
+// ───── form types ─────
+type FormType = "kundali" | "consultation" | "name-correction" | "default";
+
+const inferFormType = (service: string | null, hasConsultationType: boolean): FormType => {
+  if (hasConsultationType) return "consultation";
+  if (!service) return "default";
+  const s = service.toLowerCase();
+  if (s.includes("name correction")) return "name-correction";
+  if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
+  return "default";
+};
+
+// ───── shared field validators ─────
+const nameRx = /^[a-zA-Z\s.'-]+$/;
+const phoneField = z.string().trim().min(10, "WhatsApp number must be at least 10 digits").max(15).regex(/^[+]?[0-9\s]{10,15}$/, "Enter a valid number");
+const emailField = z.string().trim().min(1, "Email is required").email("Enter a valid email").max(100);
+const pincodeField = z.string().trim().regex(/^\d{6}$/, "Enter a valid 6-digit pincode");
+const dobField = z.object({
+  day: z.string().min(1, "Day required"),
+  month: z.string().min(1, "Month required"),
+  year: z.string().min(1, "Year required"),
+});
+const tobField = z.object({
+  hour: z.string().min(1, "Hour required"),
+  minute: z.string().min(1, "Minute required"),
+});
+const genderField = z.enum(["male", "female", "other"], { required_error: "Select gender" });
+const relationField = z.enum(["good", "neutral", "challenging"], { required_error: "Select" });
+
+// ───── per-type schemas ─────
+const defaultSchema = z.object({
+  fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
+  email: emailField,
+  whatsapp: phoneField,
+  dob: dobField,
+  tob: tobField,
+  pob: z.string().trim().min(2, "Place of birth required").max(120),
+  gender: genderField,
+  pincode: pincodeField,
 });
 
-type BookingFormData = z.infer<typeof bookingSchema>;
+const kundaliSchema = defaultSchema.extend({
+  language: z.enum(["hindi", "english"], { required_error: "Select language" }),
+});
+
+const consultationSchema = z.object({
+  firstName: z.string().trim().min(1, "First name required").max(50).regex(nameRx, "Letters only"),
+  middleName: z.string().trim().max(50).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
+  lastName: z.string().trim().min(1, "Last name required").max(50).regex(nameRx, "Letters only"),
+  middleIsFatherName: z.enum(["yes", "no"], { required_error: "Please select" }),
+  email: emailField,
+  whatsapp: phoneField,
+  dob: dobField,
+  tob: tobField,
+  pob: z.string().trim().min(2, "Place of birth required").max(120),
+  pincode: pincodeField,
+  gender: genderField,
+  issues: z.string().trim().min(10, "Please describe (min 10 characters)").max(2000),
+});
+
+const nameCorrectionSchema = z.object({
+  firstName: z.string().trim().min(1, "First name required").max(50).regex(nameRx, "Letters only"),
+  middleName: z.string().trim().max(50).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
+  lastName: z.string().trim().min(1, "Last name required").max(50).regex(nameRx, "Letters only"),
+  middleIsFatherName: z.enum(["yes", "no"], { required_error: "Please select" }),
+  email: emailField,
+  whatsapp: phoneField,
+  dob: dobField,
+  tob: tobField,
+  pob: z.string().trim().min(2, "Place of birth required").max(120),
+  pincode: pincodeField,
+  gender: genderField,
+  relationFather: relationField,
+  relationMother: relationField,
+  relationSpouse: z.enum(["good", "neutral", "challenging", "na"], { required_error: "Select" }),
+  fatherName: z.string().trim().min(1, "Father's name required").max(100).regex(nameRx, "Letters only"),
+  motherName: z.string().trim().min(1, "Mother's name required").max(100).regex(nameRx, "Letters only"),
+  spouseName: z.string().trim().max(100).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
+  profession: z.string().trim().min(2, "Profession required").max(120),
+  reason: z.string().trim().min(10, "Please share (min 10 characters)").max(2000),
+});
+
+// ───── dropdown helpers ─────
+const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => String(currentYear - i));
+const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+
+// ───── reusable field blocks ─────
+const DOBPicker = ({ control, name = "dob" }: { control: any; name?: string }) => (
+  <FormItem>
+    <FormLabel>Date of Birth *</FormLabel>
+    <div className="grid grid-cols-3 gap-2">
+      {(["day", "month", "year"] as const).map((part) => (
+        <FormField
+          key={part}
+          control={control}
+          name={`${name}.${part}`}
+          render={({ field }) => (
+            <FormItem>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger><SelectValue placeholder={part.charAt(0).toUpperCase() + part.slice(1)} /></SelectTrigger>
+                </FormControl>
+                <SelectContent className="max-h-60">
+                  {(part === "day" ? days : part === "month" ? months.map((m, i) => ({ label: m, val: String(i + 1) })) : years).map((opt: any) =>
+                    typeof opt === "string"
+                      ? <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      : <SelectItem key={opt.val} value={opt.val}>{opt.label}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ))}
+    </div>
+  </FormItem>
+);
+
+const TOBPicker = ({ control, name = "tob" }: { control: any; name?: string }) => (
+  <FormItem>
+    <FormLabel>Time of Birth *</FormLabel>
+    <div className="grid grid-cols-2 gap-2">
+      {(["hour", "minute"] as const).map((part) => (
+        <FormField
+          key={part}
+          control={control}
+          name={`${name}.${part}`}
+          render={({ field }) => (
+            <FormItem>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger><SelectValue placeholder={part === "hour" ? "Hour (24h)" : "Minute"} /></SelectTrigger>
+                </FormControl>
+                <SelectContent className="max-h-60">
+                  {(part === "hour" ? hours : minutes).map((v) => (
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ))}
+    </div>
+  </FormItem>
+);
+
+const GenderRadio = ({ control }: { control: any }) => (
+  <FormField
+    control={control}
+    name="gender"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Gender *</FormLabel>
+        <FormControl>
+          <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+            {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
+              <div key={v} className="flex items-center space-x-2">
+                <RadioGroupItem value={v} id={`g-${v}`} />
+                <Label htmlFor={`g-${v}`}>{l}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+);
 
 const PaymentPage = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  
-  // Determine mode: "service" (generic) or "consultation"
+
   const serviceName = searchParams.get("service");
   const serviceAmount = searchParams.get("amount");
   const consultationType = searchParams.get("type") as keyof typeof consultationPackages;
-  
+  const formTypeParam = searchParams.get("formType") as FormType | null;
+
   const isServiceMode = !!(serviceName && serviceAmount);
   const servicePrice = serviceAmount ? parseInt(serviceAmount, 10) : 0;
-  
+
+  const formType: FormType = formTypeParam || inferFormType(serviceName, !!consultationType);
+
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const currentPackage = isServiceMode ? null : (consultationPackages[consultationType] || consultationPackages.audio);
-  const selectedOption = currentPackage?.options.find(opt => opt.id === selectedPackage);
+  const selectedOption = currentPackage?.options.find((opt) => opt.id === selectedPackage);
 
   useEffect(() => {
     if (currentPackage && currentPackage.options.length > 0 && !selectedPackage) {
@@ -100,25 +267,49 @@ const PaymentPage = () => {
     }
   }, [currentPackage, selectedPackage]);
 
-  const form = useForm<BookingFormData>({
-    resolver: zodResolver(bookingSchema),
-    defaultValues: {
-      firstName: "", middleName: "", lastName: "", timeOfBirth: "",
-      mobileNumber: "", email: "", placeOfBirth: "", problemAreas: "",
-    },
+  // Pick schema/defaults by form type
+  const { schema, defaults } = useMemo(() => {
+    const baseDob = { day: "", month: "", year: "" };
+    const baseTob = { hour: "", minute: "" };
+    if (formType === "kundali") {
+      return {
+        schema: kundaliSchema,
+        defaults: { fullName: "", email: "", whatsapp: "", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any },
+      };
+    }
+    if (formType === "consultation") {
+      return {
+        schema: consultationSchema,
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, issues: "" },
+      };
+    }
+    if (formType === "name-correction") {
+      return {
+        schema: nameCorrectionSchema,
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
+      };
+    }
+    return {
+      schema: defaultSchema,
+      defaults: { fullName: "", email: "", whatsapp: "", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "" },
+    };
+  }, [formType]);
+
+  const form = useForm<any>({
+    resolver: zodResolver(schema as any),
+    defaultValues: defaults,
   });
 
-  const loadRazorpay = () => {
-    return new Promise<boolean>((resolve) => {
+  const loadRazorpay = () =>
+    new Promise<boolean>((resolve) => {
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
     });
-  };
 
-  const handlePayment = async (amount: number, formData: BookingFormData) => {
+  const handlePayment = async (amount: number, formData: any) => {
     const res = await loadRazorpay();
     if (!res) { alert("Razorpay SDK failed to load"); return; }
 
@@ -137,36 +328,38 @@ const PaymentPage = () => {
       return;
     }
 
-      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
-      if (!razorpayKey) {
-        alert("Razorpay publishable key is missing (VITE_RAZORPAY_KEY_ID). Please contact admin.");
-        return;
-      }
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
+    if (!razorpayKey) {
+      alert("Razorpay publishable key is missing (VITE_RAZORPAY_KEY_ID). Please contact admin.");
+      return;
+    }
 
-      const options = {
-        key: razorpayKey,
+    const displayPersonName =
+      formData.fullName ||
+      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ");
 
+    const options = {
+      key: razorpayKey,
       amount: order.amount,
       currency: "INR",
       name: "Ankshaastra",
       description: isServiceMode ? serviceName : "Consultation Booking",
       order_id: order.id,
       handler: async function (response: any) {
-        console.log("Payment Success:", response);
         try {
           await fetch("/api/verify-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(response),
+            body: JSON.stringify({ ...response, formData, service: serviceName, amount }),
           });
         } catch (e) {
           console.error("Verification failed", e);
         }
       },
       prefill: {
-        name: formData.firstName,
+        name: displayPersonName,
         email: formData.email,
-        contact: formData.mobileNumber,
+        contact: formData.whatsapp,
       },
       theme: { color: "#ea580c" },
     };
@@ -175,7 +368,7 @@ const PaymentPage = () => {
     paymentObject.open();
   };
 
-  const onSubmit = async (data: BookingFormData) => {
+  const onSubmit = async (data: any) => {
     if (!isServiceMode && !selectedPackage) {
       toast({ title: "Please select a plan", description: "Choose a consultation plan to proceed.", variant: "destructive" });
       return;
@@ -193,6 +386,187 @@ const PaymentPage = () => {
   const displayPrice = isServiceMode ? servicePrice : (selectedOption?.price || 0);
   const heroColor = isServiceMode ? "from-primary to-amber" : (currentPackage?.color || "from-primary to-accent");
   const HeroIcon = isServiceMode ? Sparkles : (currentPackage?.icon || Phone);
+
+  // ───── per-type field renderer ─────
+  const renderFields = () => {
+    const c = form.control;
+
+    const FullName = (
+      <FormField control={c} name="fullName" render={({ field }) => (
+        <FormItem><FormLabel>Full Name *</FormLabel><FormControl><Input placeholder="As per Aadhar" {...field} /></FormControl><FormMessage /></FormItem>
+      )} />
+    );
+
+    const NameTriplet = (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField control={c} name="firstName" render={({ field }) => (
+            <FormItem><FormLabel>First Name *</FormLabel><FormControl><Input placeholder="First name" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name="middleName" render={({ field }) => (
+            <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle name" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name="lastName" render={({ field }) => (
+            <FormItem><FormLabel>Last Name *</FormLabel><FormControl><Input placeholder="Last name" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+        <FormField control={c} name="middleIsFatherName" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Is the middle name your father's name? *</FormLabel>
+            <FormControl>
+              <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="mfn-yes" /><Label htmlFor="mfn-yes">Yes</Label></div>
+                <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="mfn-no" /><Label htmlFor="mfn-no">No</Label></div>
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+      </>
+    );
+
+    const ContactRow = (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField control={c} name="email" render={({ field }) => (
+          <FormItem><FormLabel>Email *</FormLabel><FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={c} name="whatsapp" render={({ field }) => (
+          <FormItem><FormLabel>WhatsApp Number *</FormLabel><FormControl><Input placeholder="+91 98765 43210" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+      </div>
+    );
+
+    const BirthRow = (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <DOBPicker control={c} />
+        <TOBPicker control={c} />
+      </div>
+    );
+
+    const POBPincode = (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField control={c} name="pob" render={({ field }) => (
+          <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={c} name="pincode" render={({ field }) => (
+          <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+      </div>
+    );
+
+    if (formType === "kundali") {
+      return (
+        <>
+          {FullName}
+          {ContactRow}
+          {BirthRow}
+          {POBPincode}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GenderRadio control={c} />
+            <FormField control={c} name="language" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Report Language *</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    <SelectItem value="hindi">Hindi</SelectItem>
+                    <SelectItem value="english">English</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
+        </>
+      );
+    }
+
+    if (formType === "consultation") {
+      return (
+        <>
+          {NameTriplet}
+          {ContactRow}
+          {BirthRow}
+          {POBPincode}
+          <GenderRadio control={c} />
+          <FormField control={c} name="issues" render={({ field }) => (
+            <FormItem><FormLabel>Issues to Discuss *</FormLabel>
+              <FormControl><Textarea placeholder="Describe what you'd like to discuss in this consultation (career, health, relationships, finance, etc.)" className="min-h-[140px] resize-none" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </>
+      );
+    }
+
+    if (formType === "name-correction") {
+      const RelationSelect = ({ name, label, withNA = false }: { name: string; label: string; withNA?: boolean }) => (
+        <FormField control={c} name={name} render={({ field }) => (
+          <FormItem>
+            <FormLabel>{label} *</FormLabel>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
+              <SelectContent>
+                <SelectItem value="good">Good</SelectItem>
+                <SelectItem value="neutral">Neutral</SelectItem>
+                <SelectItem value="challenging">Challenging</SelectItem>
+                {withNA && <SelectItem value="na">Not Applicable</SelectItem>}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+      );
+      return (
+        <>
+          {NameTriplet}
+          {ContactRow}
+          {BirthRow}
+          {POBPincode}
+          <GenderRadio control={c} />
+          <div>
+            <h3 className="font-semibold text-foreground mb-3">Relationship Quality</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <RelationSelect name="relationFather" label="With Father" />
+              <RelationSelect name="relationMother" label="With Mother" />
+              <RelationSelect name="relationSpouse" label="With Spouse" withNA />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField control={c} name="fatherName" render={({ field }) => (
+              <FormItem><FormLabel>Father's Name *</FormLabel><FormControl><Input placeholder="Father's full name" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name="motherName" render={({ field }) => (
+              <FormItem><FormLabel>Mother's Name *</FormLabel><FormControl><Input placeholder="Mother's full name" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name="spouseName" render={({ field }) => (
+              <FormItem><FormLabel>Spouse's Name</FormLabel><FormControl><Input placeholder="If applicable" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
+          <FormField control={c} name="profession" render={({ field }) => (
+            <FormItem><FormLabel>Profession *</FormLabel><FormControl><Input placeholder="Your current profession" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name="reason" render={({ field }) => (
+            <FormItem><FormLabel>Reason for Name Correction *</FormLabel>
+              <FormControl><Textarea placeholder="Why are you considering a name correction? Share your goals, struggles, and what you'd like to improve." className="min-h-[140px] resize-none" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </>
+      );
+    }
+
+    // default
+    return (
+      <>
+        {FullName}
+        {ContactRow}
+        {BirthRow}
+        {POBPincode}
+        <GenderRadio control={c} />
+      </>
+    );
+  };
 
   return (
     <Layout>
@@ -220,73 +594,14 @@ const PaymentPage = () => {
       {/* Form Section */}
       <section className="py-16 bg-gradient-to-b from-brown-dark to-background">
         <div className="container mx-auto px-4">
-          <div className={`grid grid-cols-1 ${isServiceMode ? 'lg:grid-cols-3' : 'lg:grid-cols-3'} gap-8 max-w-6xl mx-auto`}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Booking Form */}
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-2">
               <div className="bg-card border border-border rounded-2xl p-8">
                 <h2 className="font-display text-2xl font-bold text-foreground mb-6">Your Details</h2>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Name Fields */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField control={form.control} name="firstName" render={({ field }) => (
-                        <FormItem><FormLabel>First Name (As per Aadhar) *</FormLabel><FormControl><Input placeholder="First name" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="middleName" render={({ field }) => (
-                        <FormItem><FormLabel>Middle Name (Optional)</FormLabel><FormControl><Input placeholder="Middle name" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="lastName" render={({ field }) => (
-                        <FormItem><FormLabel>Last Name (As per Aadhar) *</FormLabel><FormControl><Input placeholder="Last name" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-
-                    {/* Date and Time of Birth */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField control={form.control} name="dateOfBirth" render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Date of Birth *</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                  {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date > new Date() || date < new Date("1900-01-01")} initialFocus className={cn("p-3 pointer-events-auto")} />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="timeOfBirth" render={({ field }) => (
-                        <FormItem><FormLabel>Time of Birth *</FormLabel><FormControl><Input type="time" placeholder="HH:MM" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-
-                    {/* Contact Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField control={form.control} name="mobileNumber" render={({ field }) => (
-                        <FormItem><FormLabel>Mobile Number *</FormLabel><FormControl><Input placeholder="+91 98765 43210" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel>Email Address *</FormLabel><FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </div>
-
-                    {/* Place of Birth */}
-                    <FormField control={form.control} name="placeOfBirth" render={({ field }) => (
-                      <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-
-                    {/* Problem Areas */}
-                    <FormField control={form.control} name="problemAreas" render={({ field }) => (
-                      <FormItem><FormLabel>Problem Areas *</FormLabel><FormControl>
-                        <Textarea placeholder="Please describe the areas you need guidance with (career, health, relationships, finance, etc.)" className="min-h-[120px] resize-none" {...field} />
-                      </FormControl><FormMessage /></FormItem>
-                    )} />
+                    {renderFields()}
 
                     <button
                       type="submit"
@@ -335,6 +650,7 @@ const PaymentPage = () => {
                     <div className="space-y-3 mb-6">
                       {currentPackage?.options.map((option) => (
                         <button
+                          type="button"
                           key={option.id}
                           onClick={() => setSelectedPackage(option.id)}
                           className={cn(
