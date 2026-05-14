@@ -6,6 +6,7 @@ import SEOHead from "@/components/SEOHead";
 import { Check, X, Plus, Minus, ChevronLeft, ChevronRight, Clock, Lock, Bell } from "lucide-react";
 import bookMockup from "@/assets/name-blueprint-book.png";
 import heroBg from "@/assets/name-correction-hero-bg.jpg";
+import expertPhoto from "@/assets/expert-himansshu.jpg";
 
 const COLORS = {
   amber: "#C17A1A",
@@ -21,8 +22,8 @@ const COLORS = {
   red: "#C62828",
 };
 
-const payLink = (service: string, amount: number) =>
-  `/payment?service=${encodeURIComponent(service)}&amount=${amount}`;
+const payLink = (service: string, amount: number, formType?: string) =>
+  `/payment?service=${encodeURIComponent(service)}&amount=${amount}${formType ? `&formType=${formType}` : ""}`;
 
 const heading = { fontFamily: "'Cormorant Garamond', serif" };
 const body = { fontFamily: "'Jost', sans-serif" };
@@ -220,7 +221,7 @@ const NameCorrection = () => {
               Introducing the Expert-Led Name Correction Report by Himansshu Agarwal Ji
             </p>
             <Link
-              to={payLink("Name Correction Report", 2447)}
+              to={payLink("Name Check", 293, "name-check")}
               style={{
                 background: "linear-gradient(135deg, #D4870A 0%, #C17A1A 100%)",
                 color: COLORS.white,
@@ -230,7 +231,7 @@ const NameCorrection = () => {
               }}
               className="inline-block font-medium text-base px-9 py-4 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-300"
             >
-              Get Your Name Correction Report →
+              Get Name Check @ ₹293 →
             </Link>
           </div>
 
@@ -512,7 +513,7 @@ const NameCorrection = () => {
                   <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
                 ))}
               </ul>
-              <Link to={payLink(`Name Check (${nameQty} name${nameQty > 1 ? "s" : ""})`, card1Price)}
+              <Link to={payLink(`Name Check (${nameQty} name${nameQty > 1 ? "s" : ""})`, card1Price, "name-check")}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
                 Get Name Check for {nameQty} Name{nameQty > 1 ? "s" : ""}
