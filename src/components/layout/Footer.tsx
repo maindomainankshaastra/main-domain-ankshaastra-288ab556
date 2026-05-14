@@ -20,7 +20,7 @@ const columns = [
     title: "Online Puja",
     links: [
       { name: "Office Vastu", to: "/services/office-vastu" },
-      { name: "C-Section Dates", to: "/services/csection-dates" },
+      { name: "C-Section Dates", to: "https://miraclebaby.ankshaastra.com", external: true },
       { name: "Mobile Numerology", to: "/services/mobile-numerology" },
       { name: "All Services", to: "/services" },
     ],
