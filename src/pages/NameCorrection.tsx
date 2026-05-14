@@ -614,13 +614,31 @@ const NameCorrection = () => {
             </div>
           </div>
           <div className="flex items-end justify-center lg:justify-end">
-            <div className="relative w-full max-w-[380px] aspect-[3/4] rounded-xl overflow-hidden flex items-end justify-center"
-              style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.25))", border: `1px solid rgba(255,255,255,0.3)` }}>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-white/40 text-[120px]" style={heading}>HA</div>
-              </div>
-              <div className="relative z-10 pb-6 text-white text-center">
-                <div style={heading} className="text-2xl">Himansshu Agarwal Ji</div>
+            <div
+              className="relative w-full max-w-[420px] aspect-[3/4] rounded-2xl overflow-hidden"
+              style={{
+                boxShadow: "0 30px 80px -20px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,213,128,0.25)",
+              }}
+            >
+              <img
+                src={expertPhoto}
+                alt="Himansshu Agarwal Ji — Founder of Ankshaastra"
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+              />
+              {/* Warm amber wash to blend with section */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(193,122,26,0.08) 0%, transparent 35%, rgba(92,40,0,0.55) 100%)",
+                }}
+              />
+              <div className="absolute bottom-0 inset-x-0 p-5 text-white">
+                <div style={heading} className="text-xl font-semibold">Himansshu Agarwal Ji</div>
+                <div className="text-xs uppercase tracking-[0.2em] mt-1" style={{ color: COLORS.goldLight }}>
+                  Founder · Ankshaastra
+                </div>
               </div>
             </div>
           </div>
