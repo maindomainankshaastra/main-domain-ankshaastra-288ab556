@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { Check, X, Plus, Minus, ChevronLeft, ChevronRight, Clock, Lock, Bell } from "lucide-react";
+import { Check, X, Plus, Minus, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import bookMockup from "@/assets/name-blueprint-book.png";
 import heroBg from "@/assets/name-correction-hero-bg.jpg";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
@@ -74,53 +74,10 @@ const faqs = [
   { q: "Is a live session included in all packages?", a: "Live video sessions with Himansshu Ji are included only in the Premium 'Name Correction + Live Session' package." },
 ];
 
-const socialProofMessages = [
-  "Sneha from Hyderabad just purchased a report",
-  "Arjun from Bengaluru just ordered Name Correction",
-  "Pooja from Delhi just booked a Live Session",
-  "Vikram from Mumbai just purchased Name Check",
-  "Neha from Pune just ordered a Premium Report",
-  "Rohit from Jaipur just booked a consultation",
-];
-
-// Countdown helpers
-const getDailyEnd = () => {
-  const now = new Date();
-  const end = new Date(now);
-  end.setHours(now.getHours() + 8 - (now.getHours() % 8), 0, 0, 0);
-  if (end <= now) end.setHours(end.getHours() + 8);
-  return end;
-};
-
 const NameCorrection = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeT, setActiveT] = useState(0);
   const [nameQty, setNameQty] = useState<1 | 2 | 3>(1);
-  const [now, setNow] = useState(Date.now());
-  const [endTs] = useState(getDailyEnd().getTime());
-  const [proofIdx, setProofIdx] = useState(0);
-  const [proofVisible, setProofVisible] = useState(false);
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  useEffect(() => {
-    const show = () => {
-      setProofIdx((i) => (i + 1) % socialProofMessages.length);
-      setProofVisible(true);
-      setTimeout(() => setProofVisible(false), 6000);
-    };
-    const t0 = setTimeout(show, 4000);
-    const t = setInterval(show, 35000);
-    return () => { clearTimeout(t0); clearInterval(t); };
-  }, []);
-
-  const remaining = Math.max(0, endTs - now);
-  const hh = String(Math.floor(remaining / 3600000)).padStart(2, "0");
-  const mm = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, "0");
-  const ss = String(Math.floor((remaining % 60000) / 1000)).padStart(2, "0");
 
   // Card 1 dynamic price
   const card1Base = 293;
