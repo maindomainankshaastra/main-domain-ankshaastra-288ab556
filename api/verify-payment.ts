@@ -7,7 +7,7 @@ const escapeHtml = (input: string) => {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "<")
     .replaceAll(">", ">")
-.replaceAll('\"', """);
+    .replaceAll('"', "&quot;");
 };
 
 export default async function handler(req: any, res: any) {
