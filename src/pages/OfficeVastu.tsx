@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import serviceOfficeVastu from "@/assets/service-office-vastu.png";
+import { pricing, formatINR } from "@/config/pricing";
 
 const faqs = [
   {
