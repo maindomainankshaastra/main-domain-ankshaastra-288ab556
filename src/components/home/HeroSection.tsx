@@ -56,7 +56,7 @@ const HeroSection = () => {
                 to="/services/name-correction"
                 className="group inline-flex items-center justify-center gap-2.5 bg-primary hover:bg-orange-dark text-primary-foreground font-semibold px-7 py-3.5 rounded-lg shadow-amber transition-all duration-300 hover:-translate-y-0.5"
               >
-                <span>Get Name Check @ ₹293</span>
+                <span>Get Name Check @ ₹{pricing.nameCorrection.nameCheck}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link

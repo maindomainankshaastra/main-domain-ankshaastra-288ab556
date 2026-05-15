@@ -140,9 +140,9 @@ const serviceCategories = [
     gradient: "from-slate-500 to-zinc-600",
     borderAccent: "hsl(220, 13%, 40%)",
     services: [
-      { title: "Plot Number Analysis", description: "Numerological evaluation of plot numbers to assess suitability and long-term alignment.", price: "₹1,499", rawPrice: 1499, link: "/payment" },
-      { title: "Exhibition Stall Number", description: "Analysis of exhibition stall numbers to support visibility and business opportunities.", price: "₹999", rawPrice: 999, link: "/payment" },
-      { title: "Commercial Space Analysis", description: "Assessment of commercial spaces through numerology to evaluate suitability for operations.", price: "₹2,499", rawPrice: 2499, link: "/payment" },
+      { title: "Plot Number Analysis", description: "Numerological evaluation of plot numbers to assess suitability and long-term alignment.", price: formatINR(pricing.property.plotAnalysis), rawPrice: pricing.property.plotAnalysis, link: "/payment" },
+      { title: "Exhibition Stall Number", description: "Analysis of exhibition stall numbers to support visibility and business opportunities.", price: formatINR(pricing.property.exhibitionStall), rawPrice: pricing.property.exhibitionStall, link: "/payment" },
+      { title: "Commercial Space Analysis", description: "Assessment of commercial spaces through numerology to evaluate suitability for operations.", price: formatINR(pricing.property.commercial), rawPrice: pricing.property.commercial, link: "/payment" },
     ]
   }
 ];
