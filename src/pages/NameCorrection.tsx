@@ -3,7 +3,16 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { Check, X, Plus, Minus, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import {
+  Check,
+  X,
+  Plus,
+  Minus,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  Clock
+} from "lucide-react";
 import bookMockup from "@/assets/name-blueprint-book.png";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
 
