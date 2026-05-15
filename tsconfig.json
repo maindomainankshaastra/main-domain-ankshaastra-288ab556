@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2021", "DOM"],
+
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    "strict": true,
+    "skipLibCheck": true,
+
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types"],
+
+    "noEmit": true
+  },
+  "include": ["src", "api", "vitest.config.ts", "vite.config.ts"]
+}
+
