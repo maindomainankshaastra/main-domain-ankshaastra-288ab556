@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import serviceCsectionDates from "@/assets/service-csection-dates.png";
+import { pricing, formatINR } from "@/config/pricing";
 
 const faqs = [
   {

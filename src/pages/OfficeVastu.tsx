@@ -269,16 +269,16 @@ const OfficeVastu = () => {
             {[
               {
                 name: "Remote Consultation",
-                price: "₹3,999",
-                originalPrice: "₹8,000",
+                price: formatINR(pricing.vastu.officeRemote),
+                originalPrice: formatINR(pricing.vastu.officeRemote * 2),
                 features: ["Floor Plan Analysis", "Directional Assessment", "Seating Arrangement Guide", "Colour & Element Recommendations", "Detailed PDF Report", "1 Follow-up Call"],
                 excluded: ["No On-Site Visit"],
                 highlighted: false,
               },
               {
                 name: "On-Site Consultation",
-                price: "₹11,000",
-                originalPrice: "₹21,000",
+                price: formatINR(pricing.vastu.officeOnsite),
+                originalPrice: formatINR(Math.round(pricing.vastu.officeOnsite * 1.9)),
                 badge: "COMPREHENSIVE",
                 features: ["Personal Office Visit", "Complete Directional Analysis", "Zone-Wise Evaluation", "Employee Seating Optimisation", "Detailed Report (50+ Pages)", "Non-Structural Remedies", "3 Follow-up Consultations", "Priority WhatsApp Support (1 Month)"],
                 excluded: [],
