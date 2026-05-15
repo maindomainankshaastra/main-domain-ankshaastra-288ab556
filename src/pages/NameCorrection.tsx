@@ -13,6 +13,7 @@ import {
   Lock,
   Clock
 } from "lucide-react";
+import { pricing, formatINR } from "@/config/pricing";
 import bookMockup from "@/assets/name-blueprint-book.png";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
 
@@ -390,16 +391,16 @@ const NameCorrection = () => {
                 style={{ background: COLORS.amber, color: COLORS.white }}>★ MOST POPULAR</div>
               <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction</h3>
               <div className="flex items-baseline gap-3 mb-1">
-                <span className="line-through text-base" style={{ color: "#987" }}>₹7,500</span>
+                <span className="line-through text-base" style={{ color: "#987" }}>{formatINR(pricing.nameCorrection.standardOriginal)}</span>
                 <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>67% OFF</span>
               </div>
-              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">₹2,447</div>
+              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(pricing.nameCorrection.standard)}</div>
               <ul className="space-y-3 mb-6 flex-1">
                 {["Mulank & Bhagyank Analysis", "First Name & Full Name Analysis", "Compound Number Analysis", "Personal Lo Shu Grid", "First Alphabet Analysis", "Corrected Name Suggestions (3–5 options)", "PDF Report (50+ Pages)", "Call Consultation Included"].map((f, i) => (
                   <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
                 ))}
               </ul>
-              <Link to={payLink("Name Correction Report", 2447)}
+              <Link to={payLink("Name Correction Report", pricing.nameCorrection.standard)}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
                 style={{ background: COLORS.gold, color: COLORS.white }}>
                 Get Name Correction Report
@@ -417,10 +418,10 @@ const NameCorrection = () => {
                 style={{ background: COLORS.brown, color: COLORS.gold }}>✦ PREMIUM</div>
               <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction + Live Session</h3>
               <div className="flex items-baseline gap-3 mb-1">
-                <span className="line-through text-base" style={{ color: "#987" }}>₹18,218</span>
+                <span className="line-through text-base" style={{ color: "#987" }}>{formatINR(pricing.nameCorrection.blueprintPremiumOriginal)}</span>
                 <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>51% OFF</span>
               </div>
-              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">₹8,927</div>
+              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(pricing.nameCorrection.blueprintPremium)}</div>
               <ul className="space-y-2.5 mb-5">
                 {["Mulank & Bhagyank Analysis", "First Name & Full Name Analysis", "Compound Number Analysis", "Personal Lo Shu Grid", "First Alphabet Analysis", "PDF Report (50+ Pages)", "Call Consultation Included"].map((f, i) => (
                   <li key={i} className="flex items-start text-[14px]" style={{ color: "#888" }}><Diamond color={COLORS.amber} />{f}</li>
