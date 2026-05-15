@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight, CheckCircle, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { pricing, formatINR } from "@/config/pricing";
 
 const businessServices = [
-  { title: "Business Name Correction", price: `₹${pricing.business.nameCorrection.toLocaleString("en-IN")}` },
-  { title: "Business Phone Number", price: `₹${pricing.business.phoneNumber.toLocaleString("en-IN")}` },
-  { title: "Brand Tagline Correction", price: `₹${pricing.business.tagline.toLocaleString("en-IN")}` },
-  { title: "Business Partner Compatibility", price: `₹${pricing.business.partnerCompat.toLocaleString("en-IN")}` },
-  { title: "Director Name Compatibility", price: `₹${pricing.business.directorCompat.toLocaleString("en-IN")}` },
+  { title: "Business Name Correction", price: formatINR(pricing.business.nameCorrection) },
+  { title: "Business Phone Number", price: formatINR(pricing.business.phoneNumber) },
+  { title: "Brand Tagline Correction", price: formatINR(pricing.business.tagline) },
+  { title: "Business Partner Compatibility", price: formatINR(pricing.business.partnerCompat) },
+  { title: "Director Name Compatibility", price: formatINR(pricing.business.directorCompat) },
 ];
 
 interface Props {
