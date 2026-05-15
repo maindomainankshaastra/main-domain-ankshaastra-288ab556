@@ -8,24 +8,25 @@ import {
   DollarSign, Users, UserCheck, BookOpen, Zap, Award
 } from "lucide-react";
 import { useState } from "react";
+import { pricing, formatINR } from "@/config/pricing";
 
 const pricingPlans = [
   {
     count: "1 Kundali",
-    price: "₹699",
+    price: formatINR(pricing.reports.kundaliSingle),
     tag: "Best for Personal Analysis",
     desc: "Get deep insights about your love, career, money & health.",
   },
   {
     count: "2 Kundali",
-    price: "₹1,199",
+    price: formatINR(pricing.reports.kundaliDouble),
     tag: "Best for Match-Making",
     desc: "Ideal for couples or kundali matching before marriage.",
     popular: true,
   },
   {
     count: "3 Kundali",
-    price: "₹1,599",
+    price: formatINR(pricing.reports.kundaliTriple),
     tag: "Best for Family",
     desc: "Complete astrological guidance for your entire family.",
   },

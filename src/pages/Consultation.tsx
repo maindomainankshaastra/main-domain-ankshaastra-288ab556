@@ -61,16 +61,18 @@ const callSteps = [
   },
 ];
 
+import { pricing, formatINR } from "@/config/pricing";
+
 const audioPricing = [
-  { duration: "45 Minutes", price: "₹3,998" },
-  { duration: "60 Minutes", price: "₹4,997" },
-  { duration: "75 Minutes", price: "₹5,997" },
+  { duration: "45 Minutes", price: formatINR(pricing.audioCall.min45) },
+  { duration: "60 Minutes", price: formatINR(pricing.audioCall.min60) },
+  { duration: "75 Minutes", price: formatINR(pricing.audioCall.min75) },
 ];
 
 const videoPricing = [
-  { duration: "45 Minutes", price: "₹5,997" },
-  { duration: "60 Minutes", price: "₹7,497" },
-  { duration: "75 Minutes", price: "₹8,997" },
+  { duration: "45 Minutes", price: formatINR(pricing.videoCall.min45) },
+  { duration: "60 Minutes", price: formatINR(pricing.videoCall.min60) },
+  { duration: "75 Minutes", price: formatINR(pricing.videoCall.min75) },
 ];
 
 const importantNotes = [
@@ -159,7 +161,7 @@ const ConsultationPage = () => {
                 Speak directly with Himansshu Agarwal Ji for a deeply personalised one-to-one lal kitab consultation.
               </p>
               <p className="text-base text-amber-200/90 font-semibold mb-8">
-                Consultation Investment: Starting at ₹3,998/-
+                Consultation Investment: Starting at {formatINR(pricing.audioCall.min45)}/-
               </p>
 
               {/* Trust Points */}
