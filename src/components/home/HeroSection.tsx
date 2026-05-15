@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Phone } from "lucide-react";
 import zodiacWheel from "@/assets/zodiac-wheel.png";
+import { pricing } from "@/config/pricing";
 
 const HeroSection = () => {
   return (

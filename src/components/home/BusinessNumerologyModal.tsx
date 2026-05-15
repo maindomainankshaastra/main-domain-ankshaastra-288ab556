@@ -3,11 +3,11 @@ import { X, ArrowRight, CheckCircle, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const businessServices = [
-  { title: "Business Name Correction", price: "₹3,878" },
-  { title: "Business Phone Number", price: "₹1,499" },
-  { title: "Brand Tagline Correction", price: "₹1,997" },
-  { title: "Business Partner Compatibility", price: "₹1,997" },
-  { title: "Director Name Compatibility", price: "₹1,997" },
+  { title: "Business Name Correction", price: `₹${pricing.business.nameCorrection.toLocaleString("en-IN")}` },
+  { title: "Business Phone Number", price: `₹${pricing.business.phoneNumber.toLocaleString("en-IN")}` },
+  { title: "Brand Tagline Correction", price: `₹${pricing.business.tagline.toLocaleString("en-IN")}` },
+  { title: "Business Partner Compatibility", price: `₹${pricing.business.partnerCompat.toLocaleString("en-IN")}` },
+  { title: "Director Name Compatibility", price: `₹${pricing.business.directorCompat.toLocaleString("en-IN")}` },
 ];
 
 interface Props {

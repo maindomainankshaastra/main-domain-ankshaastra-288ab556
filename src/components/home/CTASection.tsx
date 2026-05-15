@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Phone, MessageCircle, Sparkles } from "lucide-react";
+import { pricing } from "@/config/pricing";
 
 const CTASection = () => {
   return (
@@ -51,7 +52,7 @@ const CTASection = () => {
                 to="/services/name-correction"
                 className="inline-flex items-center justify-center gap-2.5 border-2 border-cream-light/70 text-cream-light hover:bg-cream-light hover:text-secondary font-semibold px-8 py-3.5 rounded-lg transition-all"
               >
-                Get Name Check @ ₹293
+                Get Name Check @ ₹{pricing.nameCorrection.nameCheck}
               </Link>
             </div>
 
