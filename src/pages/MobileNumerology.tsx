@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import serviceMobileNumerology from "@/assets/service-mobile-numerology.png";
+import { pricing, formatINR } from "@/config/pricing";
 
 const faqs = [
   {
@@ -262,16 +263,16 @@ const MobileNumerology = () => {
             {[
               {
                 name: "Basic Analysis",
-                price: "₹999",
-                originalPrice: "₹2,500",
+                price: formatINR(pricing.mobile.audit),
+                originalPrice: formatINR(pricing.mobile.auditOriginal),
                 features: ["Total Number Vibration Analysis", "Mulank & Bhagyank Compatibility", "Career & Relationship Impact", "Verbal Recommendations"],
                 excluded: ["No PDF Report"],
                 highlighted: false,
               },
               {
                 name: "Detailed Report",
-                price: "₹1,999",
-                originalPrice: "₹4,500",
+                price: formatINR(pricing.mobile.premium),
+                originalPrice: formatINR(pricing.mobile.premiumOriginal),
                 badge: "BEST VALUE",
                 features: ["Total Number Vibration Analysis", "Mulank & Bhagyank Compatibility", "Career & Relationship Impact", "Detailed PDF Report (20+ Pages)", "Lucky Number Suggestions", "Personalised Loshu Grid Analysis", "1 Follow-up Consultation"],
                 excluded: [],

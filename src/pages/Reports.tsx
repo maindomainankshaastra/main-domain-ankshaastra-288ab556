@@ -3,6 +3,7 @@ import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import { ScrollText, Download, Check, ArrowRight, Star } from "lucide-react";
+import { pricing, formatINR } from "@/config/pricing";
 
 const reports = [
   {
@@ -11,10 +12,10 @@ const reports = [
     description: "Detailed Kundli matching with Guna Milan and compatibility analysis for couples.",
     pages: "30+ Pages",
     delivery: "48 Hours",
-    price: "₹1,999",
-    originalPrice: "₹2,499",
-    amount: 1999,
-    link: "/payment?service=Marriage%20Compatibility&amount=1999",
+    price: formatINR(pricing.reports.numerology),
+    originalPrice: formatINR(pricing.reports.numerologyOriginal),
+    amount: pricing.reports.numerology,
+    link: `/payment?service=Marriage%20Compatibility&amount=${pricing.reports.numerology}`,
     features: ["Guna Milan (36 points)", "Mangal Dosha check", "Relationship dynamics", "Remedies if needed"],
   },
   {
@@ -23,9 +24,9 @@ const reports = [
     description: "Month-by-month predictions for the coming year covering all aspects of life.",
     pages: "40+ Pages",
     delivery: "48 Hours",
-    price: "₹699",
-    originalPrice: "₹1,499",
-    amount: 699,
+    price: formatINR(pricing.reports.varshphal),
+    originalPrice: formatINR(pricing.reports.kundaliSingleOriginal),
+    amount: pricing.reports.varshphal,
     link: "/services/varshphal-report",
     features: ["Monthly predictions", "Transit effects", "Lucky periods", "Precautionary months"],
   },

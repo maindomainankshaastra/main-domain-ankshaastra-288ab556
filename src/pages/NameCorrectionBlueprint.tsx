@@ -7,6 +7,7 @@ import {
   CheckCircle, ScrollText, ArrowRight, Pen, Hash, Sparkles,
   Star, Clock, Shield, ChevronDown
 } from "lucide-react";
+import { pricing, formatINR } from "@/config/pricing";
 
 const faqs = [
   { q: "What is a Name Correction Blueprint?", a: "A Name Correction Blueprint is a personalised numerology report that analyzes your current name, identifies vibrational misalignments, and suggests corrected spellings or modifications to attract success, prosperity, and positive energy." },
@@ -77,10 +78,10 @@ const NameCorrectionBlueprint = () => {
             </div>
 
             <Link
-              to="/payment?service=Name%20Correction%20Blueprint&amount=1997"
+              to={`/payment?service=Name%20Correction%20Blueprint&amount=${pricing.nameCorrection.blueprintBasic}`}
               className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
             >
-              Order Your Blueprint — ₹1,997
+              Order Your Blueprint — {formatINR(pricing.nameCorrection.blueprintBasic)}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
@@ -192,8 +193,8 @@ const NameCorrectionBlueprint = () => {
               <h3 className="font-display text-2xl font-bold text-foreground mb-2">Name Correction Blueprint</h3>
               <p className="text-muted-foreground text-sm mb-6">Personalised by Himansshu Agarwal Ji</p>
               <div className="flex items-baseline justify-center gap-3 mb-2">
-                <span className="text-5xl font-bold text-gradient-gold">₹1,997</span>
-                <span className="text-xl text-muted-foreground line-through">₹3,999</span>
+                <span className="text-5xl font-bold text-gradient-gold">{formatINR(pricing.nameCorrection.blueprintBasic)}</span>
+                <span className="text-xl text-muted-foreground line-through">{formatINR(pricing.nameCorrection.blueprintBasicOriginal)}</span>
               </div>
               <p className="text-muted-foreground text-sm mb-8">Delivered within 24–48 hours</p>
               <div className="flex items-center justify-center gap-1 mb-8">
@@ -264,8 +265,8 @@ const NameCorrectionBlueprint = () => {
             <p className="text-muted-foreground text-lg mb-8">
               One small correction. One big shift. Let Himansshu Agarwal Ji show you the path.
             </p>
-            <Link to="/payment?service=Name%20Correction%20Blueprint&amount=1997" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
-              Get My Blueprint — ₹1,997 <ArrowRight className="w-5 h-5" />
+            <Link to={`/payment?service=Name%20Correction%20Blueprint&amount=${pricing.nameCorrection.blueprintBasic}`} className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
+              Get My Blueprint — {formatINR(pricing.nameCorrection.blueprintBasic)} <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
         </div>

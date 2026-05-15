@@ -6,6 +6,7 @@ import {
   Star, Calendar, ScrollText, ArrowRight, CheckCircle, 
   Sparkles, TrendingUp, Shield, Heart, Briefcase, DollarSign
 } from "lucide-react";
+import { pricing, formatINR } from "@/config/pricing";
 
 const highlights = [
   { icon: TrendingUp, title: "Career & Growth", desc: "Month-by-month career insights and optimal periods for key decisions." },
@@ -54,8 +55,8 @@ const VarshphalReport = () => {
               health, finances, and more — powered by Numerology & Lal Kitab wisdom.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/payment?service=Varshphal%20Report%202026&amount=699" className="group inline-flex items-center justify-center gap-3 bg-white text-primary font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <span><span>Order Report — ₹699</span></span>
+              <Link to={`/payment?service=Varshphal%20Report%202026&amount=${pricing.reports.varshphal}`} className="group inline-flex items-center justify-center gap-3 bg-white text-primary font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <span><span>Order Report — {formatINR(pricing.reports.varshphal)}</span></span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
@@ -117,7 +118,7 @@ const VarshphalReport = () => {
                 <ScrollText className="w-16 h-16 text-primary mx-auto mb-6" />
                 <h3 className="font-display text-2xl font-bold text-foreground mb-2">Complete Yearly Report</h3>
                 <div className="flex items-baseline justify-center gap-2 mb-2">
-                  <span className="text-4xl font-bold text-primary">₹699</span>
+                  <span className="text-4xl font-bold text-primary">{formatINR(pricing.reports.varshphal)}</span>
                 </div>
                 <p className="text-muted-foreground text-sm mb-6">40+ page detailed PDF report</p>
                 <div className="flex items-center justify-center gap-1 mb-6">
@@ -126,7 +127,7 @@ const VarshphalReport = () => {
                   ))}
                   <span className="text-sm text-muted-foreground ml-2">4.9/5 rating</span>
                 </div>
-                <Link to="/payment?service=Varshphal%20Report%202026&amount=699" className="btn-primary w-full inline-flex items-center justify-center gap-2 py-4 text-lg">
+                <Link to={`/payment?service=Varshphal%20Report%202026&amount=${pricing.reports.varshphal}`} className="btn-primary w-full inline-flex items-center justify-center gap-2 py-4 text-lg">
                   Order Now <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>

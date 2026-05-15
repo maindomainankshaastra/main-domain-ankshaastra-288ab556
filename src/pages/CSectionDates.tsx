@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import serviceCsectionDates from "@/assets/service-csection-dates.png";
+import { pricing, formatINR } from "@/config/pricing";
 
 const faqs = [
   {
@@ -57,8 +58,8 @@ const faqs = [
 const plans = [
   {
     name: "Essential Plan",
-    price: "₹1,100",
-    originalPrice: "₹5,100",
+    price: formatINR(pricing.baby.cSectionEssential),
+    originalPrice: formatINR(pricing.baby.perfectNameOriginal),
     badge: null,
     features: [
       "3 Priority Wise Auspicious Dates",
@@ -70,8 +71,8 @@ const plans = [
   },
   {
     name: "Premium Plan",
-    price: "₹4,987",
-    originalPrice: "₹11,000",
+    price: formatINR(pricing.baby.cSectionPremium),
+    originalPrice: formatINR(pricing.vastu.officeOnsite),
     badge: "BEST VALUE",
     features: [
       "3 Priority Wise Auspicious Dates",
@@ -89,8 +90,8 @@ const plans = [
   },
   {
     name: "Perfect Baby Name",
-    price: "₹1,997",
-    originalPrice: "₹5,100",
+    price: formatINR(pricing.baby.perfectName),
+    originalPrice: formatINR(pricing.baby.perfectNameOriginal),
     badge: "ADD-ON",
     features: [
       "2 Baby Name Options (As per Numerology)",

@@ -4,6 +4,6 @@ export function escapeHtml(input: string): string {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "<")
     .replaceAll(">", ">")
-    .replaceAll('"', """);
+    .replaceAll('"', "&quot;");
 }
 

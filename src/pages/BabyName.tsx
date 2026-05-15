@@ -10,11 +10,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import serviceBabyName from "@/assets/service-baby-name.png";
+import { pricing, formatINR } from "@/config/pricing";
 
 const plan = {
   name: "Perfect Baby Name Report",
-  price: "₹1,997",
-  originalPrice: "₹5,100",
+  price: formatINR(pricing.baby.perfectName),
+  originalPrice: formatINR(pricing.baby.perfectNameOriginal),
   features: [
     "2 Baby Name Options (As per Numerology)",
     "Mulank & Bhagyank Analysis",
@@ -198,8 +199,8 @@ const BabyName = () => {
                 </div>
                 <div className="absolute -top-4 -left-4 bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-xl">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">₹1,997</p>
-                    <p className="text-xs text-muted-foreground line-through">₹5,100</p>
+                    <p className="text-2xl font-bold text-primary">{formatINR(pricing.baby.perfectName)}</p>
+                    <p className="text-xs text-muted-foreground line-through">{formatINR(pricing.baby.perfectNameOriginal)}</p>
                   </div>
                 </div>
               </div>
@@ -498,7 +499,7 @@ const BabyName = () => {
                 Submit & Connect on WhatsApp <ArrowRight className="w-5 h-5" />
               </button>
               <p className="text-xs text-muted-foreground text-center">
-                Now at <strong>₹1,987/-</strong> • Report delivered within 3 business days
+                Now at <strong>{formatINR(pricing.baby.perfectName)}/-</strong> • Report delivered within 3 business days
               </p>
             </form>
           </motion.div>

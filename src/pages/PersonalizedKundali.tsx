@@ -8,24 +8,25 @@ import {
   DollarSign, Users, UserCheck, BookOpen, Zap, Award
 } from "lucide-react";
 import { useState } from "react";
+import { pricing, formatINR } from "@/config/pricing";
 
 const pricingPlans = [
   {
     count: "1 Kundali",
-    price: "₹699",
+    price: formatINR(pricing.reports.kundaliSingle),
     tag: "Best for Personal Analysis",
     desc: "Get deep insights about your love, career, money & health.",
   },
   {
     count: "2 Kundali",
-    price: "₹1,199",
+    price: formatINR(pricing.reports.kundaliDouble),
     tag: "Best for Match-Making",
     desc: "Ideal for couples or kundali matching before marriage.",
     popular: true,
   },
   {
     count: "3 Kundali",
-    price: "₹1,599",
+    price: formatINR(pricing.reports.kundaliTriple),
     tag: "Best for Family",
     desc: "Complete astrological guidance for your entire family.",
   },
@@ -134,8 +135,8 @@ const PersonalizedKundali = () => {
               <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-amber-300" /> Expert-Verified</span>
             </div>
 
-            <Link to="/payment?service=Personalized%20Kundali&amount=699" className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
-              Get Your Kundli — Starting ₹699
+            <Link to={`/payment?service=Personalized%20Kundali&amount=${pricing.reports.kundaliSingle}`} className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
+              Get Your Kundli — Starting {formatINR(pricing.reports.kundaliSingle)}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
@@ -353,8 +354,8 @@ const PersonalizedKundali = () => {
             <p className="text-muted-foreground text-lg mb-8">
               Expert-verified, delivered in 3 hours. Start your journey to clarity today.
             </p>
-            <Link to="/payment?service=Personalized%20Kundali&amount=699" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
-              Order My Kundli — Starting ₹699 <ArrowRight className="w-5 h-5" />
+            <Link to={`/payment?service=Personalized%20Kundali&amount=${pricing.reports.kundaliSingle}`} className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
+              Order My Kundli — Starting {formatINR(pricing.reports.kundaliSingle)} <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
         </div>

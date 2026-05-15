@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
+import { pricing, formatINR } from "@/config/pricing";
+import { whatsappHref } from "@/config/business";
 import { 
   Phone, Video, MessageSquare, User, Baby, Building2, Calendar,
   Armchair, Building, ArrowRight, Sparkles, ExternalLink,
@@ -50,8 +52,8 @@ const serviceCategories = [
     gradient: "from-primary to-amber",
     borderAccent: "hsl(var(--orange))",
     services: [
-      { title: "1:1 Audio Call", description: "A private audio call designed for detailed discussion while maintaining flexibility and confidentiality.", price: "₹3,998", rawPrice: 3998, link: "/consultation", highlight: true },
-      { title: "1:1 Video Call", description: "A face-to-face consultation for deeper engagement, visual explanations, and interactive guidance.", price: "₹5,997", rawPrice: 5997, link: "/consultation", highlight: true },
+      { title: "1:1 Audio Call", description: "A private audio call designed for detailed discussion while maintaining flexibility and confidentiality.", price: formatINR(pricing.audioCall.min45), rawPrice: pricing.audioCall.min45, link: "/consultation", highlight: true },
+      { title: "1:1 Video Call", description: "A face-to-face consultation for deeper engagement, visual explanations, and interactive guidance.", price: formatINR(pricing.videoCall.min45), rawPrice: pricing.videoCall.min45, link: "/consultation", highlight: true },
     ]
   },
   {
@@ -63,10 +65,10 @@ const serviceCategories = [
     gradient: "from-blue-500 to-cyan-500",
     borderAccent: "hsl(210, 80%, 55%)",
     services: [
-      { title: "Name Correction", description: "Analysis and correction of name vibration to support smoother personal and professional progress.", price: "₹2,447", rawPrice: 2447, link: "/services/name-correction", highlight: true },
-      { title: "Lucky Vehicle Number", description: "Compatibility analysis of vehicle numbers for comfort, safety, and daily harmony.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
-      { title: "Lucky Mobile Number", description: "Assessment of mobile number vibration and its influence on communication and opportunities.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
-      { title: "Lucky Flat / Plot Number", description: "Suitability analysis of residential numbers before purchase or occupancy.", price: "₹1,100", rawPrice: 1100, link: "/payment" },
+      { title: "Name Correction", description: "Analysis and correction of name vibration to support smoother personal and professional progress.", price: formatINR(pricing.nameCorrection.standard), rawPrice: pricing.nameCorrection.standard, link: "/services/name-correction", highlight: true },
+      { title: "Lucky Vehicle Number", description: "Compatibility analysis of vehicle numbers for comfort, safety, and daily harmony.", price: formatINR(pricing.luckyNumber.vehicle), rawPrice: pricing.luckyNumber.vehicle, link: "/payment" },
+      { title: "Lucky Mobile Number", description: "Assessment of mobile number vibration and its influence on communication and opportunities.", price: formatINR(pricing.luckyNumber.mobile), rawPrice: pricing.luckyNumber.mobile, link: "/payment" },
+      { title: "Lucky Flat / Plot Number", description: "Suitability analysis of residential numbers before purchase or occupancy.", price: formatINR(pricing.luckyNumber.flat), rawPrice: pricing.luckyNumber.flat, link: "/payment" },
     ]
   },
   {
@@ -78,9 +80,9 @@ const serviceCategories = [
     gradient: "from-pink-500 to-rose-500",
     borderAccent: "hsl(340, 70%, 55%)",
     services: [
-      { title: "C-Section Baby Dates", description: "Numerology-based guidance for selecting supportive C-section birth dates within medically approved range.", price: "₹1,100", rawPrice: 1100, link: "https://miraclebaby.ankshaastra.com", external: true },
-      { title: "Perfect Baby Name", description: "Carefully aligned baby name suggestions based on numerology principles for foundational harmony.", price: "₹2,447", rawPrice: 2447, link: "https://empower.ankshaastra.com", external: true, highlight: true },
-      { title: "Relationship Analysis", description: "Analysis of emotional dynamics and compatibility between partners for healthier communication.", price: "₹987", rawPrice: 987, link: "/payment" },
+      { title: "C-Section Baby Dates", description: "Numerology-based guidance for selecting supportive C-section birth dates within medically approved range.", price: formatINR(pricing.baby.cSectionEssential), rawPrice: pricing.baby.cSectionEssential, link: "https://miraclebaby.ankshaastra.com", external: true },
+      { title: "Perfect Baby Name", description: "Carefully aligned baby name suggestions based on numerology principles for foundational harmony.", price: formatINR(pricing.nameCorrection.standard), rawPrice: pricing.nameCorrection.standard, link: "https://empower.ankshaastra.com", external: true, highlight: true },
+      { title: "Relationship Analysis", description: "Analysis of emotional dynamics and compatibility between partners for healthier communication.", price: formatINR(pricing.relationship.analysis), rawPrice: pricing.relationship.analysis, link: "/payment" },
     ]
   },
   {
@@ -92,11 +94,11 @@ const serviceCategories = [
     gradient: "from-emerald to-teal-500",
     borderAccent: "hsl(var(--emerald))",
     services: [
-      { title: "Business Name Correction", description: "Strategic analysis to identify misalignment and suggest corrected options for brand resonance.", price: "₹4,894", rawPrice: 4894, link: "/payment", highlight: true },
-      { title: "Business Phone Number", description: "Selection or evaluation of business phone numbers aligned with brand numerology.", price: "₹1,499", rawPrice: 1499, link: "/payment" },
-      { title: "Brand Tagline Correction", description: "Analysis of brand taglines to ensure wording aligns with business intent and positioning.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
-      { title: "Business Partner Compatibility", description: "Compatibility analysis between business partners' names for smoother collaboration.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
-      { title: "Director Name Compatibility", description: "Evaluation of director or leadership names to assess alignment with company vibration.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
+      { title: "Business Name Correction", description: "Strategic analysis to identify misalignment and suggest corrected options for brand resonance.", price: formatINR(pricing.business.nameCorrection), rawPrice: pricing.business.nameCorrection, link: "/payment", highlight: true },
+      { title: "Business Phone Number", description: "Selection or evaluation of business phone numbers aligned with brand numerology.", price: formatINR(pricing.business.phoneNumber), rawPrice: pricing.business.phoneNumber, link: "/payment" },
+      { title: "Brand Tagline Correction", description: "Analysis of brand taglines to ensure wording aligns with business intent and positioning.", price: formatINR(pricing.business.tagline), rawPrice: pricing.business.tagline, link: "/payment" },
+      { title: "Business Partner Compatibility", description: "Compatibility analysis between business partners' names for smoother collaboration.", price: formatINR(pricing.business.partnerCompat), rawPrice: pricing.business.partnerCompat, link: "/payment" },
+      { title: "Director Name Compatibility", description: "Evaluation of director or leadership names to assess alignment with company vibration.", price: formatINR(pricing.business.directorCompat), rawPrice: pricing.business.directorCompat, link: "/payment" },
     ]
   },
   {
@@ -108,9 +110,9 @@ const serviceCategories = [
     gradient: "from-violet-500 to-purple-500",
     borderAccent: "hsl(260, 60%, 55%)",
     services: [
-      { title: "Company Registration Date", description: "Selection of supportive dates for company registration to encourage smoother beginnings.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
-      { title: "Bank Account Opening Date", description: "Numerology-based date selection for opening business bank accounts, supporting financial flow.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
-      { title: "Land Purchase Date", description: "Guidance on selecting favourable dates for land or property purchase for stability.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
+      { title: "Company Registration Date", description: "Selection of supportive dates for company registration to encourage smoother beginnings.", price: formatINR(pricing.dates.companyRegistration), rawPrice: pricing.dates.companyRegistration, link: "/payment" },
+      { title: "Bank Account Opening Date", description: "Numerology-based date selection for opening business bank accounts, supporting financial flow.", price: formatINR(pricing.dates.bankAccount), rawPrice: pricing.dates.bankAccount, link: "/payment" },
+      { title: "Land Purchase Date", description: "Guidance on selecting favourable dates for land or property purchase for stability.", price: formatINR(pricing.dates.landPurchase), rawPrice: pricing.dates.landPurchase, link: "/payment" },
     ]
   },
   {
@@ -122,11 +124,11 @@ const serviceCategories = [
     gradient: "from-amber to-amber-dark",
     borderAccent: "hsl(var(--amber))",
     services: [
-      { title: "CEO/MD Cabin Sitting", description: "Guidance on cabin direction and seating alignment to support leadership clarity and authority.", price: "₹2,499", rawPrice: 2499, link: "/payment" },
-      { title: "Management Sitting", description: "Numerology-based seating recommendations for key managers to improve efficiency.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
-      { title: "Cash Counter Direction", description: "Alignment of cash counters and billing areas to support smoother financial transactions.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
-      { title: "Office Interior Colors", description: "Color recommendations for office interiors aligned with numerology for focus and balance.", price: "₹1,997", rawPrice: 1997, link: "/payment" },
-      { title: "Departmental Sitting", description: "Structured seating alignment for departments to reduce friction and improve workflow.", price: "₹4,998", rawPrice: 4998, link: "/payment" },
+      { title: "CEO/MD Cabin Sitting", description: "Guidance on cabin direction and seating alignment to support leadership clarity and authority.", price: formatINR(pricing.vastu.ceoCabin), rawPrice: pricing.vastu.ceoCabin, link: "/payment" },
+      { title: "Management Sitting", description: "Numerology-based seating recommendations for key managers to improve efficiency.", price: formatINR(pricing.vastu.management), rawPrice: pricing.vastu.management, link: "/payment" },
+      { title: "Cash Counter Direction", description: "Alignment of cash counters and billing areas to support smoother financial transactions.", price: formatINR(pricing.vastu.cashCounter), rawPrice: pricing.vastu.cashCounter, link: "/payment" },
+      { title: "Office Interior Colors", description: "Color recommendations for office interiors aligned with numerology for focus and balance.", price: formatINR(pricing.vastu.interiorColors), rawPrice: pricing.vastu.interiorColors, link: "/payment" },
+      { title: "Departmental Sitting", description: "Structured seating alignment for departments to reduce friction and improve workflow.", price: formatINR(pricing.vastu.departmental), rawPrice: pricing.vastu.departmental, link: "/payment" },
     ]
   },
   {
@@ -138,9 +140,9 @@ const serviceCategories = [
     gradient: "from-slate-500 to-zinc-600",
     borderAccent: "hsl(220, 13%, 40%)",
     services: [
-      { title: "Plot Number Analysis", description: "Numerological evaluation of plot numbers to assess suitability and long-term alignment.", price: "₹1,499", rawPrice: 1499, link: "/payment" },
-      { title: "Exhibition Stall Number", description: "Analysis of exhibition stall numbers to support visibility and business opportunities.", price: "₹999", rawPrice: 999, link: "/payment" },
-      { title: "Commercial Space Analysis", description: "Assessment of commercial spaces through numerology to evaluate suitability for operations.", price: "₹2,499", rawPrice: 2499, link: "/payment" },
+      { title: "Plot Number Analysis", description: "Numerological evaluation of plot numbers to assess suitability and long-term alignment.", price: formatINR(pricing.property.plotAnalysis), rawPrice: pricing.property.plotAnalysis, link: "/payment" },
+      { title: "Exhibition Stall Number", description: "Analysis of exhibition stall numbers to support visibility and business opportunities.", price: formatINR(pricing.property.exhibitionStall), rawPrice: pricing.property.exhibitionStall, link: "/payment" },
+      { title: "Commercial Space Analysis", description: "Assessment of commercial spaces through numerology to evaluate suitability for operations.", price: formatINR(pricing.property.commercial), rawPrice: pricing.property.commercial, link: "/payment" },
     ]
   }
 ];
@@ -380,7 +382,7 @@ const ServicesPage = () => {
                 Book Consultation
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <a href="https://wa.me/919667305557" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-primary-foreground/20 text-primary-foreground font-bold hover:bg-primary-foreground/10 transition-all duration-300">
+              <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-primary-foreground/20 text-primary-foreground font-bold hover:bg-primary-foreground/10 transition-all duration-300">
                 <MessageSquare className="w-5 h-5" />
                 WhatsApp Us
               </a>
