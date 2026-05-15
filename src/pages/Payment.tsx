@@ -28,6 +28,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
+import { pricing } from "@/config/pricing";
 
 // Consultation packages (only used when type= param is present)
 const consultationPackages = {
@@ -36,9 +37,9 @@ const consultationPackages = {
     icon: MessageSquare,
     color: "from-green-500 to-green-600",
     options: [
-      { id: "whatsapp-3", label: "3 Questions", price: 497 },
-      { id: "whatsapp-6", label: "6 Questions", price: 777 },
-      { id: "whatsapp-10", label: "10 Questions", price: 1111 },
+      { id: "whatsapp-3", label: "3 Questions", price: pricing.whatsapp.q3 },
+      { id: "whatsapp-6", label: "6 Questions", price: pricing.whatsapp.q6 },
+      { id: "whatsapp-10", label: "10 Questions", price: pricing.whatsapp.q10 },
     ],
   },
   audio: {
@@ -46,9 +47,9 @@ const consultationPackages = {
     icon: Phone,
     color: "from-primary to-accent",
     options: [
-      { id: "audio-45", label: "45 Minutes", price: 1987 },
-      { id: "audio-60", label: "60 Minutes", price: 2496 },
-      { id: "audio-75", label: "75 Minutes", price: 3108 },
+      { id: "audio-45", label: "45 Minutes", price: pricing.audioPack.min45 },
+      { id: "audio-60", label: "60 Minutes", price: pricing.audioPack.min60 },
+      { id: "audio-75", label: "75 Minutes", price: pricing.audioPack.min75 },
     ],
   },
   video: {
@@ -56,9 +57,9 @@ const consultationPackages = {
     icon: Video,
     color: "from-blue-500 to-purple-500",
     options: [
-      { id: "video-45", label: "45 Minutes", price: 3648 },
-      { id: "video-60", label: "60 Minutes", price: 4297 },
-      { id: "video-75", label: "75 Minutes", price: 4986 },
+      { id: "video-45", label: "45 Minutes", price: pricing.videoPack.min45 },
+      { id: "video-60", label: "60 Minutes", price: pricing.videoPack.min60 },
+      { id: "video-75", label: "75 Minutes", price: pricing.videoPack.min75 },
     ],
   },
 };

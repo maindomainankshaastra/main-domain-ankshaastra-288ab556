@@ -10,11 +10,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import serviceBabyName from "@/assets/service-baby-name.png";
+import { pricing, formatINR } from "@/config/pricing";
 
 const plan = {
   name: "Perfect Baby Name Report",
-  price: "₹1,997",
-  originalPrice: "₹5,100",
+  price: formatINR(pricing.baby.perfectName),
+  originalPrice: formatINR(pricing.baby.perfectNameOriginal),
   features: [
     "2 Baby Name Options (As per Numerology)",
     "Mulank & Bhagyank Analysis",

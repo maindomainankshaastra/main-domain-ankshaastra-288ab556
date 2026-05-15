@@ -6,6 +6,7 @@ import {
   Star, Calendar, ScrollText, ArrowRight, CheckCircle, 
   Sparkles, TrendingUp, Shield, Heart, Briefcase, DollarSign
 } from "lucide-react";
+import { pricing, formatINR } from "@/config/pricing";
 
 const highlights = [
   { icon: TrendingUp, title: "Career & Growth", desc: "Month-by-month career insights and optimal periods for key decisions." },
