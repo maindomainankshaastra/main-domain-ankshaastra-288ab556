@@ -51,7 +51,12 @@ export const pricing = {
   // ── Personal numerology ──
   nameCorrection: {
     standard: num(env.VITE_NAME_CORRECTION, 2447),
+    standardOriginal: num(env.VITE_NAME_CORRECTION_ORIGINAL, 7500),
     nameCheck: num(env.VITE_NAME_CHECK, 293),
+    blueprintBasic: num(env.VITE_NC_BLUEPRINT_BASIC, 1997),
+    blueprintBasicOriginal: num(env.VITE_NC_BLUEPRINT_BASIC_ORIGINAL, 3999),
+    blueprintPremium: num(env.VITE_NC_BLUEPRINT_PREMIUM, 8927),
+    blueprintPremiumOriginal: num(env.VITE_NC_BLUEPRINT_PREMIUM_ORIGINAL, 18218),
   },
   luckyNumber: {
     vehicle: num(env.VITE_LUCKY_VEHICLE, 1100),
@@ -71,9 +76,12 @@ export const pricing = {
   // ── Reports ──
   reports: {
     kundaliSingle: num(env.VITE_KUNDALI_SINGLE, 699),
+    kundaliSingleOriginal: num(env.VITE_KUNDALI_SINGLE_ORIGINAL, 1499),
     kundaliDouble: num(env.VITE_KUNDALI_DOUBLE, 1199),
     kundaliTriple: num(env.VITE_KUNDALI_TRIPLE, 1599),
     varshphal: num(env.VITE_VARSHPHAL, 699),
+    numerology: num(env.VITE_REPORT_NUMEROLOGY, 1999),
+    numerologyOriginal: num(env.VITE_REPORT_NUMEROLOGY_ORIGINAL, 2499),
   },
   // ── Business & brand ──
   business: {
@@ -104,6 +112,13 @@ export const pricing = {
     plotAnalysis: num(env.VITE_PROPERTY_PLOT, 1499),
     exhibitionStall: num(env.VITE_PROPERTY_STALL, 999),
     commercial: num(env.VITE_PROPERTY_COMMERCIAL, 2499),
+  },
+  // ── Mobile numerology page ──
+  mobile: {
+    audit: num(env.VITE_MOBILE_AUDIT, 999),
+    auditOriginal: num(env.VITE_MOBILE_AUDIT_ORIGINAL, 2500),
+    premium: num(env.VITE_MOBILE_PREMIUM, 1999),
+    premiumOriginal: num(env.VITE_MOBILE_PREMIUM_ORIGINAL, 4500),
   },
   // ── Shop products ──
   shop: {
