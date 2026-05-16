@@ -310,6 +310,7 @@ const GenderRadio = ({ control }: { control: any }) => (
 const PaymentPage = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const serviceName = searchParams.get("service");
   const serviceAmount = searchParams.get("amount");
@@ -419,13 +420,25 @@ const PaymentPage = () => {
       order_id: order.id,
       handler: async function (response: any) {
         try {
-          await fetch("/api/verify-payment", {
+          const verifyRes = await fetch("/api/verify-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...response, formData, service: serviceName, amount }),
           });
+          const verifyData = await verifyRes.json().catch(() => ({}));
+          const params = new URLSearchParams({
+            service: isServiceMode ? String(serviceName) : (currentPackage?.name || "Consultation"),
+            amount: String(amount),
+            payment_id: String(response?.razorpay_payment_id || ""),
+            order_id: String(response?.razorpay_order_id || ""),
+            invoice: String(verifyData?.invoice_number || ""),
+            name: String(formData?.fullName || [formData?.firstName, formData?.lastName].filter(Boolean).join(" ") || ""),
+            email: String(formData?.email || ""),
+          });
+          navigate(`/thank-you?${params.toString()}`);
         } catch (e) {
           console.error("Verification failed", e);
+          toast({ title: "Payment recorded", description: "We received your payment. Please contact support if you don't get a confirmation.", });
         }
       },
       prefill: {
