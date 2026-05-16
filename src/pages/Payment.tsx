@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Shield, Check, MessageSquare, Phone, Video, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -47,9 +47,9 @@ const consultationPackages = {
     icon: Phone,
     color: "from-primary to-accent",
     options: [
-      { id: "audio-45", label: "45 Minutes", price: pricing.audioPack.min45 },
-      { id: "audio-60", label: "60 Minutes", price: pricing.audioPack.min60 },
-      { id: "audio-75", label: "75 Minutes", price: pricing.audioPack.min75 },
+      { id: "audio-45", label: "45 Minutes", price: pricing.audioCall.min45 },
+      { id: "audio-60", label: "60 Minutes", price: pricing.audioCall.min60 },
+      { id: "audio-75", label: "75 Minutes", price: pricing.audioCall.min75 },
     ],
   },
   video: {
@@ -57,9 +57,9 @@ const consultationPackages = {
     icon: Video,
     color: "from-blue-500 to-purple-500",
     options: [
-      { id: "video-45", label: "45 Minutes", price: pricing.videoPack.min45 },
-      { id: "video-60", label: "60 Minutes", price: pricing.videoPack.min60 },
-      { id: "video-75", label: "75 Minutes", price: pricing.videoPack.min75 },
+      { id: "video-45", label: "45 Minutes", price: pricing.videoCall.min45 },
+      { id: "video-60", label: "60 Minutes", price: pricing.videoCall.min60 },
+      { id: "video-75", label: "75 Minutes", price: pricing.videoCall.min75 },
     ],
   },
 };
@@ -310,6 +310,7 @@ const GenderRadio = ({ control }: { control: any }) => (
 const PaymentPage = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const serviceName = searchParams.get("service");
   const serviceAmount = searchParams.get("amount");
@@ -419,13 +420,25 @@ const PaymentPage = () => {
       order_id: order.id,
       handler: async function (response: any) {
         try {
-          await fetch("/api/verify-payment", {
+          const verifyRes = await fetch("/api/verify-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...response, formData, service: serviceName, amount }),
           });
+          const verifyData = await verifyRes.json().catch(() => ({}));
+          const params = new URLSearchParams({
+            service: isServiceMode ? String(serviceName) : (currentPackage?.name || "Consultation"),
+            amount: String(amount),
+            payment_id: String(response?.razorpay_payment_id || ""),
+            order_id: String(response?.razorpay_order_id || ""),
+            invoice: String(verifyData?.invoice_number || ""),
+            name: String(formData?.fullName || [formData?.firstName, formData?.lastName].filter(Boolean).join(" ") || ""),
+            email: String(formData?.email || ""),
+          });
+          navigate(`/thank-you?${params.toString()}`);
         } catch (e) {
           console.error("Verification failed", e);
+          toast({ title: "Payment recorded", description: "We received your payment. Please contact support if you don't get a confirmation.", });
         }
       },
       prefill: {
