@@ -1,0 +1,16 @@
+import { verifyApiKey } from "../lib/webhook-utils";
+import { processPendingJobs } from "../lib/job-processor";
+
+export default async function handler(req: any, res: any) {
+  const cronSecret = process.env.CRON_SECRET;
+  const apiKey = req.headers["x-api-key"] as string | undefined;
+  const authHeader = req.headers.authorization;
+
+  const authorized =
+    (cronSecret && authHeader === `Bearer ${cronSecret}`) || verifyApiKey(apiKey);
+
+  if (!authorized) return res.status(401).json({ error: "Unauthorized" });
+
+  const results = await processPendingJobs(20);
+  return res.status(200).json({ processed: results.length, results });
+}

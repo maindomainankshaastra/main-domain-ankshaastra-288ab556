@@ -33,7 +33,20 @@ const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Admin = lazy(() => import("./pages/Admin"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const OrdersModule = lazy(() => import("./pages/admin/modules/OrdersModule"));
+const InvoicesModule = lazy(() => import("./pages/admin/modules/InvoicesModule"));
+const EmailModule = lazy(() => import("./pages/admin/modules/EmailModule"));
+const WhatsAppModule = lazy(() => import("./pages/admin/modules/WhatsAppModule"));
+const CrmModule = lazy(() => import("./pages/admin/modules/CrmModule"));
+const WorkflowsModule = lazy(() => import("./pages/admin/modules/WorkflowsModule"));
+const WebhooksModule = lazy(() => import("./pages/admin/modules/WebhooksModule"));
+const AiReportsModule = lazy(() => import("./pages/admin/modules/AiReportsModule"));
+const ProductsModule = lazy(() => import("./pages/admin/modules/ProductsModule"));
+const ServicesModule = lazy(() => import("./pages/admin/modules/ServicesModule"));
+const TemplatesModule = lazy(() => import("./pages/admin/modules/TemplatesModule"));
+const SettingsModule = lazy(() => import("./pages/admin/modules/SettingsModule"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 
 const queryClient = new QueryClient();
@@ -74,7 +87,21 @@ const App = () => (
             <Route path="/refund" element={<RefundPolicy />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="orders" element={<OrdersModule />} />
+              <Route path="invoices" element={<InvoicesModule />} />
+              <Route path="email" element={<EmailModule />} />
+              <Route path="whatsapp" element={<WhatsAppModule />} />
+              <Route path="crm" element={<CrmModule />} />
+              <Route path="workflows" element={<WorkflowsModule />} />
+              <Route path="webhooks" element={<WebhooksModule />} />
+              <Route path="ai-reports" element={<AiReportsModule />} />
+              <Route path="products" element={<ProductsModule />} />
+              <Route path="services" element={<ServicesModule />} />
+              <Route path="templates" element={<TemplatesModule />} />
+              <Route path="settings" element={<SettingsModule />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>

@@ -1,31 +1,75 @@
-
 import Razorpay from "razorpay";
+import { getSupabaseAdmin } from "./lib/supabase-admin";
+import { calculateGst } from "./lib/gst";
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== "POST") {
-    return res.status(405).end();
-  }
+export default async function handler(req: { method?: string; body?: Record<string, unknown> }, res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } }) {
+  if (req.method !== "POST") return res.status(405).end();
 
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
   if (!keyId || !keySecret) {
-    return res.status(500).json({ error: "Razorpay credentials missing (RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET)." });
+    return res.status(500).json({ error: "Razorpay credentials missing." });
   }
 
-  const razorpay = new Razorpay({
-    key_id: keyId,
-    key_secret: keySecret,
-  });
+  const body = req.body || {};
+  const amount = Number(body.amount);
+  const serviceTitle = String(body.serviceTitle || body.service || "Service");
+  const userId = body.userId ? String(body.userId) : null;
+  const sourceWebsite = String(body.sourceWebsite || "ankshaastra.com");
+  const orderType = String(body.orderType || "service");
+  const customerName = body.customerName ? String(body.customerName) : null;
+  const customerEmail = body.customerEmail ? String(body.customerEmail) : null;
+  const customerPhone = body.customerPhone ? String(body.customerPhone) : null;
+  const metadata = (body.metadata as Record<string, unknown>) || {};
+
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: "Invalid amount" });
+  }
+
+  const gst = calculateGst({ amount, isGstInclusive: true });
 
   try {
-    const order = await razorpay.orders.create({
-      amount: req.body.amount * 100,
+    const supabase = getSupabaseAdmin();
+    const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
+
+    const rzOrder = await razorpay.orders.create({
+      amount: Math.round(gst.grandTotal * 100),
       currency: "INR",
+      notes: { service: serviceTitle, source: sourceWebsite },
     });
 
-    res.status(200).json(order);
+    const orderRow: Record<string, unknown> = {
+      service_title: serviceTitle,
+      amount: gst.subtotal,
+      gst_amount: gst.gstTotal,
+      total_amount: gst.grandTotal,
+      status: "pending",
+      workflow_stage: "payment_pending",
+      razorpay_order_id: rzOrder.id,
+      source_website: sourceWebsite,
+      order_type: orderType,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
+      metadata,
+    };
+
+    if (userId) orderRow.user_id = userId;
+
+    const { data: dbOrder, error } = await supabase.from("orders").insert(orderRow).select("id").single();
+    if (error) {
+      console.error("Order insert failed:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json({
+      id: rzOrder.id,
+      amount: rzOrder.amount,
+      currency: rzOrder.currency,
+      dbOrderId: dbOrder.id,
+    });
   } catch (err) {
-    res.status(500).json({ error: "Order creation failed" });
+    console.error(err);
+    return res.status(500).json({ error: "Order creation failed" });
   }
 }

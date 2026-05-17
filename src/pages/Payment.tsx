@@ -386,12 +386,25 @@ const PaymentPage = () => {
     const res = await loadRazorpay();
     if (!res) { alert("Razorpay SDK failed to load"); return; }
 
+    const displayPersonName =
+      formData.fullName ||
+      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ");
+
     let order;
     try {
       const response = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({
+          amount,
+          serviceTitle: isServiceMode ? serviceName : currentPackage?.name || "Consultation",
+          sourceWebsite: "ankshaastra.com",
+          orderType: isServiceMode ? "service" : "consultation",
+          customerName: displayPersonName,
+          customerEmail: formData.email,
+          customerPhone: formData.whatsapp,
+          metadata: { formType, serviceSlug: serviceName },
+        }),
       });
       if (!response.ok) throw new Error("Order API failed");
       order = await response.json();
@@ -406,10 +419,6 @@ const PaymentPage = () => {
       alert("Razorpay publishable key is missing (VITE_RAZORPAY_KEY_ID). Please contact admin.");
       return;
     }
-
-    const displayPersonName =
-      formData.fullName ||
-      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ");
 
     const options = {
       key: razorpayKey,
