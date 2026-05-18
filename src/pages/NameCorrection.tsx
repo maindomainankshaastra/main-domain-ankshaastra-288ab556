@@ -18,6 +18,8 @@ import bookMockup from "@/assets/name-blueprint-book.png";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
 import heroDesktop from "@/assets/name-correction-hero.webp";
 import heroMobile from "@/assets/name-correction-hero-mobile.webp";
+import blueprintDesktop from "@/assets/name-alignment-blueprint-desktop.webp";
+import blueprintMobile from "@/assets/name-alignment-blueprint-mobile.webp";
 
 const COLORS = {
   amber: "#C17A1A",
@@ -134,6 +136,25 @@ const NameCorrection = () => {
               className="w-full h-auto block"
               loading="eager"
               fetchPriority="high"
+            />
+          </picture>
+        </Link>
+      </section>
+
+      {/* SECTION 1.5 — Name Alignment Blueprint banner */}
+      <section className="relative overflow-hidden isolate" style={body}>
+        <Link
+          to={payLink("Name Correction Report", pricing.nameCorrection.standard)}
+          aria-label="What is a Name Alignment Blueprint? Order Now"
+          className="block w-full"
+        >
+          <picture>
+            <source media="(min-width: 768px)" srcSet={blueprintDesktop} />
+            <img
+              src={blueprintMobile}
+              alt="What is a Name Alignment Blueprint? Personally crafted by Himansshu Agarwal Ji."
+              className="w-full h-auto block"
+              loading="lazy"
             />
           </picture>
         </Link>
