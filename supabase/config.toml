@@ -12,7 +12,7 @@
 # | Reference ID             | VITE_SUPABASE_PROJECT_ID     | —                           |
 
 # ── Link to remote project (Dashboard → General → Reference ID) ──
-project_id = ""
+project_id = "iiihikzsewdyhgmpsyaj"
 
 # ── API (local `supabase start` only) ──
 [api]
@@ -35,13 +35,13 @@ major_version = 15
 [studio]
 enabled = true
 port = 54323
-api_url = ""
+api_url = "/api"
 
 # ── Auth ──
 [auth]
 enabled = true
 # Production site URL (e.g. https://ankshaastra.com) — required for email links & OAuth
-site_url = ""
+site_url = "https://ankshaastra.com"
 # Add every URL users can return to after sign-in / email confirm (local + production)
 additional_redirect_urls = []
 jwt_expiry = 3600
