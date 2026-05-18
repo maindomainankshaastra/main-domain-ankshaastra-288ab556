@@ -4,7 +4,6 @@
 -- Enums
 CREATE TYPE public.website_source AS ENUM (
   'ankshaastra.com',
-  'ankshaastra.in',
   'empower.ankshaastra.com',
   'miraclebaby.ankshaastra.com'
 );
@@ -48,7 +47,6 @@ CREATE TABLE public.websites (
 
 INSERT INTO public.websites (slug, domain, display_name) VALUES
   ('main', 'ankshaastra.com', 'Ankshaastra Main'),
-  ('store', 'ankshaastra.in', 'Ankshaastra Store'),
   ('empower', 'empower.ankshaastra.com', 'Empower'),
   ('miraclebaby', 'miraclebaby.ankshaastra.com', 'Miracle Baby');
 
@@ -110,7 +108,7 @@ CREATE TABLE public.product_catalog (
   gst_rate NUMERIC(5,2) NOT NULL DEFAULT 18.00,
   hsn_sac_code TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
-  source_websites public.website_source[] DEFAULT ARRAY['ankshaastra.in']::public.website_source[],
+  source_websites public.website_source[] DEFAULT ARRAY['ankshaastra.com']::public.website_source[],
   metadata JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
