@@ -16,6 +16,8 @@ import {
 import { pricing, formatINR } from "@/config/pricing";
 import bookMockup from "@/assets/name-blueprint-book.png";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
+import heroDesktop from "@/assets/name-correction-hero.webp";
+import heroMobile from "@/assets/name-correction-hero-mobile.webp";
 
 const COLORS = {
   amber: "#C17A1A",
@@ -118,123 +120,23 @@ const NameCorrection = () => {
       />
 
       {/* SECTION 1 — HERO (minimal) */}
-      <section
-        style={{
-          background: `radial-gradient(ellipse at 50% 30%, #D4870A 0%, #B86F12 35%, #8C4E0A 80%, #6B3A05 100%)`,
-          ...body,
-        }}
-        className="relative overflow-hidden isolate"
-      >
-        <div className="max-w-[900px] mx-auto px-6 pt-16 lg:pt-24 pb-24 relative z-10 text-center">
-          <h1 style={heading} className="font-bold text-white text-[40px] sm:text-5xl lg:text-[64px] leading-[1.1] mb-5 tracking-tight">
-            A Small Tweak In Your Name Can Change Your Life
-          </h1>
-          <p style={body} className="text-white/85 text-base sm:text-lg mb-10 font-light max-w-xl mx-auto">
-            Introducing the Expert-Led Name Correction Report
-          </p>
-          <Link
-            to={payLink("Name Check", 293, "name-check")}
-            style={{
-              background: "linear-gradient(180deg, #FFD580 0%, #E8A636 100%)",
-              color: "#3A1B00",
-              ...body,
-              borderRadius: 6,
-              boxShadow: "0 10px 30px -8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.5)",
-            }}
-            className="inline-block font-medium text-base sm:text-lg px-10 py-4 hover:-translate-y-0.5 transition-all duration-300"
-          >
-            Get your Name Correction Report
-          </Link>
-
-          {/* Wheel + book */}
-          <div className="relative h-[360px] sm:h-[440px] mt-12 flex items-center justify-center">
-            <svg viewBox="0 0 500 500" className="absolute inset-0 w-full h-full animate-spin opacity-50" style={{ animationDuration: "180s" }}>
-              <defs>
-                {Array.from({ length: 12 }).map((_, i) => {
-                  const startAngle = i * 30 - 90;
-                  const endAngle = startAngle + 30;
-                  const r = 220;
-                  const x1 = 250 + r * Math.cos((startAngle * Math.PI) / 180);
-                  const y1 = 250 + r * Math.sin((startAngle * Math.PI) / 180);
-                  const x2 = 250 + r * Math.cos((endAngle * Math.PI) / 180);
-                  const y2 = 250 + r * Math.sin((endAngle * Math.PI) / 180);
-                  return (
-                    <path
-                      key={i}
-                      id={`rashi-arc-${i}`}
-                      d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`}
-                      fill="none"
-                    />
-                  );
-                })}
-              </defs>
-              <g fill="none" stroke="#FFE9B5" strokeWidth="1">
-                <circle cx="250" cy="250" r="240" opacity="0.4" />
-                <circle cx="250" cy="250" r="210" opacity="0.55" />
-                <circle cx="250" cy="250" r="180" opacity="0.3" />
-                <circle cx="250" cy="250" r="120" opacity="0.25" />
-                {Array.from({ length: 12 }).map((_, i) => {
-                  const a = ((i * 30 - 90) * Math.PI) / 180;
-                  return (
-                    <line
-                      key={i}
-                      x1={250 + Math.cos(a) * 120}
-                      y1={250 + Math.sin(a) * 120}
-                      x2={250 + Math.cos(a) * 210}
-                      y2={250 + Math.sin(a) * 210}
-                      opacity="0.4"
-                    />
-                  );
-                })}
-              </g>
-              <g fill="#FFE9B5" style={{ ...heading, fontSize: 14, letterSpacing: "2px", fontWeight: 600 }}>
-                {["MESHA","VRISHABHA","MITHUNA","KARKA","SIMHA","KANYA","TULA","VRISHCHIKA","DHANU","MAKARA","KUMBHA","MEENA"].map((name, i) => (
-                  <text key={i} dy="-6">
-                    <textPath href={`#rashi-arc-${i}`} startOffset="50%" textAnchor="middle">{name}</textPath>
-                  </text>
-                ))}
-              </g>
-            </svg>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-              className="relative z-10 w-[200px] sm:w-[260px]"
-              style={{ filter: "drop-shadow(0 30px 40px rgba(0,0,0,0.45))" }}
-            >
-              <img
-                src={bookMockup}
-                alt="Ankshaastra Name Correction Report"
-                className="w-full h-auto"
-                loading="eager"
-              />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Trust bar */}
-        <div className="relative z-10 px-4 pb-10 -mt-4">
-          <div className="max-w-[1000px] mx-auto rounded-xl py-5 px-4 grid grid-cols-3 gap-2"
-            style={{
-              background: "#FFF8EE",
-              boxShadow: "0 12px 30px -10px rgba(0,0,0,0.3)",
-              color: COLORS.brown,
-              ...body,
-            }}>
-            {[
-              { v: "5,000+", l: "Reports Delivered" },
-              { v: "4.9/5 ★", l: "Average Rating" },
-              { v: "Personalized", l: "Report" },
-            ].map((s, i) => (
-              <div key={i} className="text-center relative">
-                <div style={{ ...heading, color: COLORS.brown }} className="text-xl sm:text-2xl font-semibold">{s.v}</div>
-                <div className="text-[11px] sm:text-[12px] mt-1 opacity-70">{s.l}</div>
-                {i < 2 && <span className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-px" style={{ background: COLORS.amber, opacity: 0.25 }} />}
-              </div>
-            ))}
-          </div>
-        </div>
+      <section className="relative overflow-hidden isolate" style={body}>
+        <Link
+          to={payLink("Name Check", 293, "name-check")}
+          aria-label="Get your Name Correction Report — ₹293"
+          className="block w-full"
+        >
+          <picture>
+            <source media="(min-width: 768px)" srcSet={heroDesktop} />
+            <img
+              src={heroMobile}
+              alt="A Small Tweak In Your Name Can Change Your Life — Expert-Led Name Correction Report"
+              className="w-full h-auto block"
+              loading="eager"
+              fetchPriority="high"
+            />
+          </picture>
+        </Link>
       </section>
 
       {/* SECTION 2 — What is Name Correction Report */}
