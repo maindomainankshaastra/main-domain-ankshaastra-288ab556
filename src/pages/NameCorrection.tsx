@@ -160,54 +160,6 @@ const NameCorrection = () => {
         </Link>
       </section>
 
-      {/* SECTION 2 — What is Name Correction Report */}
-      <section style={{ background: COLORS.cream, ...body }} className="pt-20 lg:pt-24 pb-20 lg:pb-24">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 grid lg:grid-cols-[3fr_2fr] gap-12 items-center">
-          <div>
-            <h2 style={{ ...heading, color: COLORS.brown }} className="text-3xl md:text-[42px] leading-tight font-semibold mb-4">
-              What is <span style={{ color: COLORS.gold }}>Name Correction</span> Report?
-            </h2>
-            <div className="flex items-center gap-3 my-5">
-              <div className="h-px flex-1 max-w-[60px]" style={{ background: COLORS.amber }} />
-              <span style={{ color: COLORS.amber, fontSize: 14 }}>◆</span>
-              <div className="h-px flex-1 max-w-[60px]" style={{ background: COLORS.amber }} />
-            </div>
-            <p style={{ color: COLORS.brown }} className="text-base mb-6 italic">
-              Led by Experts. Backed by Mathematical Science.
-            </p>
-            <ul className="space-y-[18px] mb-8">
-              {bullets1.map((b, i) => (
-                <li key={i} style={{ color: COLORS.brown }} className="flex items-start text-base leading-relaxed">
-                  <Diamond /> <span>{b}</span>
-                </li>
-              ))}
-            </ul>
-            <Link
-              to={payLink("Name Correction Report", 2447)}
-              style={{ background: COLORS.gold, color: COLORS.white, borderRadius: 6 }}
-              className="inline-block font-medium px-8 py-3.5 hover:opacity-90 transition"
-            >
-              Order Now
-            </Link>
-          </div>
-          <div className="flex items-center justify-center">
-            <div className="relative w-full max-w-[420px] aspect-[4/3] rounded-xl flex items-center justify-center"
-              style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 8px 32px rgba(193,122,26,0.15)" }}>
-              <div className="text-center px-8">
-                <div style={heading} className="text-3xl font-semibold mb-2" >50+</div>
-                <div style={{ color: COLORS.brown }} className="text-sm uppercase tracking-widest">Pages of personalised insight</div>
-                <div className="mt-6 grid grid-cols-3 gap-2 max-w-[200px] mx-auto">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div key={i} className="aspect-square rounded text-xs flex items-center justify-center"
-                      style={{ background: COLORS.cream, color: COLORS.amber, border: `1px solid ${COLORS.cardBorder}` }}>{i + 1}</div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* SECTION 3 — Why Trust */}
       <section style={{ background: COLORS.amber, ...body }} className="py-20 lg:py-24">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
@@ -319,7 +271,7 @@ const NameCorrection = () => {
               </div>
               <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(pricing.nameCorrection.standard)}</div>
               <ul className="space-y-3 mb-6 flex-1">
-                {["Mulank & Bhagyank Analysis", "First Name & Full Name Analysis", "Compound Number Analysis", "Personal Lo Shu Grid", "First Alphabet Analysis", "Corrected Name Suggestions (3–5 options)", "PDF Report (50+ Pages)", "Call Consultation Included"].map((f, i) => (
+                {["Mulank & Bhagyank Analysis", "First Name & Full Name Analysis", "Compound Number Analysis", "Personal Lo Shu Grid", "First Alphabet Analysis", "2 Corrected Name Options", "PDF Report (50+ Pages)", "Call Consultation Included"].map((f, i) => (
                   <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
                 ))}
               </ul>
@@ -339,30 +291,64 @@ const NameCorrection = () => {
               style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider"
                 style={{ background: COLORS.brown, color: COLORS.gold }}>✦ PREMIUM</div>
-              <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction + Live Session</h3>
+              <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction + Complete Numerology Blueprint</h3>
               <div className="flex items-baseline gap-3 mb-1">
-                <span className="line-through text-base" style={{ color: "#987" }}>{formatINR(pricing.nameCorrection.blueprintPremiumOriginal)}</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>51% OFF</span>
+                <span className="line-through text-base" style={{ color: "#987" }}>{formatINR(10076)}</span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>27% OFF</span>
               </div>
-              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(pricing.nameCorrection.blueprintPremium)}</div>
+              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(7397)}</div>
               <ul className="space-y-2.5 mb-5">
-                {["Mulank & Bhagyank Analysis", "First Name & Full Name Analysis", "Compound Number Analysis", "Personal Lo Shu Grid", "First Alphabet Analysis", "PDF Report (50+ Pages)", "Call Consultation Included"].map((f, i) => (
-                  <li key={i} className="flex items-start text-[14px]" style={{ color: "#888" }}><Diamond color={COLORS.amber} />{f}</li>
+                {[
+                  "Everything in Name Correction Report",
+                  "Lucky Color Analysis",
+                  "Lucky Number Analysis",
+                  "Mobile Numerology",
+                  "Missing Number Remedy",
+                  "Repeating Number Remedy",
+                  "Covers 2 People",
+                ].map((f, i) => (
+                  <li key={i} className="flex items-start text-[14px]" style={{ color: COLORS.brown }}><Diamond color={COLORS.amber} />{f}</li>
                 ))}
               </ul>
-              <div className="rounded-lg p-4 mb-6" style={{ border: `2px solid ${COLORS.gold}`, background: "#FFF3DC" }}>
-                <div className="text-[15px] font-semibold leading-snug" style={{ color: COLORS.brown, ...body }}>
-                  🎥 20-Minute Live Video Consultation with Himansshu Agarwal Ji
-                </div>
-              </div>
-              <Link to={payLink("Name Correction + Live Session", 8927)}
+              <Link to={payLink("Name Correction + Complete Numerology Blueprint", 7397)}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90 mt-auto"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
-                Get Premium Report + Live Session
+                Get Complete Blueprint
               </Link>
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
                 <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr</span>
                 <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Add-ons */}
+          <div className="mt-16">
+            <h3 style={{ ...heading, color: COLORS.brown }} className="text-center text-2xl md:text-3xl font-semibold mb-8">
+              Recommended <span style={{ color: COLORS.gold }}>Add-ons</span>
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+              <div className="rounded-xl p-6 flex flex-col"
+                style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
+                <h4 style={{ ...heading, color: COLORS.brown }} className="text-xl font-semibold mb-1">Personalized Kundali</h4>
+                <p className="text-sm mb-4" style={{ color: COLORS.brown, opacity: 0.8 }}>Available in English / Hindi</p>
+                <div style={{ ...heading, color: COLORS.brown }} className="text-3xl font-bold mb-5">{formatINR(699)}</div>
+                <Link to={payLink("Personalized Kundali", 699)}
+                  className="mt-auto block w-full text-center py-3 rounded-md font-medium transition hover:opacity-90"
+                  style={{ background: COLORS.gold, color: COLORS.white }}>
+                  Add Kundali
+                </Link>
+              </div>
+              <div className="rounded-xl p-6 flex flex-col"
+                style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
+                <h4 style={{ ...heading, color: COLORS.brown }} className="text-xl font-semibold mb-1">Lal Kitab Consultation</h4>
+                <p className="text-sm mb-4" style={{ color: COLORS.brown, opacity: 0.8 }}>Personal session with expert</p>
+                <div style={{ ...heading, color: COLORS.brown }} className="text-3xl font-bold mb-5">{formatINR(3998)}</div>
+                <Link to={payLink("Lal Kitab Consultation", 3998)}
+                  className="mt-auto block w-full text-center py-3 rounded-md font-medium transition hover:opacity-90"
+                  style={{ background: COLORS.brown, color: COLORS.white }}>
+                  Book Consultation
+                </Link>
               </div>
             </div>
           </div>
