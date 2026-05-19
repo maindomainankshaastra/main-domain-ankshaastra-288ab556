@@ -429,6 +429,60 @@ const NameCorrection = () => {
         </div>
       </section>
 
+      {/* SECTION 6.5 — Celebrities & Press */}
+      <section style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="text-[13px] uppercase tracking-[0.25em] mb-3" style={{ color: COLORS.amber }}>Trusted Across India</div>
+            <h2 style={{ ...heading, color: COLORS.brown }} className="text-3xl md:text-[42px] font-semibold">
+              Celebrities, Press & <span style={{ color: COLORS.gold }}>5000+ Happy Families</span>
+            </h2>
+            <div className="flex items-center justify-center gap-3 mt-5">
+              <div className="h-px w-12" style={{ background: COLORS.amber }} />
+              <span style={{ color: COLORS.amber }}>◆</span>
+              <div className="h-px w-12" style={{ background: COLORS.amber }} />
+            </div>
+            <div className="flex items-center justify-center gap-6 mt-6 flex-wrap">
+              <div className="flex items-center gap-2 text-sm" style={{ color: COLORS.brown }}>
+                <span className="font-bold text-lg" style={heading}>4.9★</span>
+                <span>Google Reviews</span>
+              </div>
+              <span style={{ color: COLORS.cardBorder }}>|</span>
+              <div className="flex items-center gap-2 text-sm" style={{ color: COLORS.brown }}>
+                <span className="font-bold text-lg" style={heading}>5000+</span>
+                <span>Families Served</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-10">
+            {celebrities.map((c) => (
+              <div key={c.name} className="rounded-xl p-6 flex items-center gap-5"
+                style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
+                <div className="w-20 h-20 rounded-full flex-shrink-0 flex items-center justify-center text-3xl font-semibold"
+                  style={{ background: `linear-gradient(135deg, ${COLORS.gold}, ${COLORS.amber})`, color: COLORS.white, ...heading }}>
+                  {c.initial}
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-widest mb-1" style={{ color: COLORS.amber }}>Celebrity Client</div>
+                  <h3 style={{ ...heading, color: COLORS.brown }} className="text-xl font-semibold">{c.name}</h3>
+                  <div className="text-sm" style={{ color: COLORS.brown }}>{c.role}</div>
+                  <div className="text-xs italic mt-1" style={{ color: COLORS.brown, opacity: 0.7 }}>{c.work}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-xl p-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-3"
+            style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}` }}>
+            <span className="text-xs uppercase tracking-widest" style={{ color: COLORS.brown, opacity: 0.7 }}>As Featured In:</span>
+            {pressLogos.map((p) => (
+              <span key={p} className="text-base font-semibold" style={{ color: COLORS.brown, ...heading }}>{p}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* SECTION 7 — Testimonials */}
       <section style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 text-center">
