@@ -79,6 +79,13 @@ const testimonials = [
   { name: "Amit Verma, Pune", text: "The Lo Shu Grid and compound number analysis was incredibly eye-opening. I finally understood what was blocking me." },
 ];
 
+const celebrities = [
+  { name: "Geita Tyagi", role: "TV & Film Actress", work: "Jagaddhatri · Doli Armaano Ki", initial: "G" },
+  { name: "Darshan Patil", role: "Film Actor", work: "Dhurandhar · Thumbs Up", initial: "D" },
+];
+
+const pressLogos = ["INC91", "DailyHunt", "Hindustan Bytes", "Unseen Times"];
+
 const faqs = [
   { q: "Will this change my name in official documents?", a: "No. The corrected name can be used in your signature, social media, business cards, and daily life. Legal documentation change is optional and entirely up to you." },
   { q: "How is this different from a software-generated report?", a: "Every report is personally analyzed by Himansshu Agarwal Ji using Chaldean and Vedic numerology — not auto-generated PDFs." },
@@ -254,7 +261,7 @@ const NameCorrection = () => {
                 Get Name Check for {nameQty} Name{nameQty > 1 ? "s" : ""}
               </Link>
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
-                <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr delivery</span>
+                <span className="font-semibold"><Clock className="inline w-3 h-3 mr-1" />Delivered within 24 hours</span>
                 <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
               </div>
             </div>
@@ -297,6 +304,14 @@ const NameCorrection = () => {
                 <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>27% OFF</span>
               </div>
               <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(7397)}</div>
+              <div className="rounded-lg px-4 py-3 mb-5" style={{ background: "#FFF3DC", border: `1px solid ${COLORS.gold}` }}>
+                <div className="text-[14px] font-semibold leading-snug" style={{ color: COLORS.brown }}>
+                  ✦ Everything Included — Covers 2 People
+                </div>
+                <div className="text-[12px] mt-1" style={{ color: COLORS.brown, opacity: 0.8 }}>
+                  Full Name Correction + complete numerology blueprint for both individuals.
+                </div>
+              </div>
               <ul className="space-y-2.5 mb-5">
                 {[
                   "Everything in Name Correction Report",
