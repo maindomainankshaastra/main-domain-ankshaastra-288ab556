@@ -30,6 +30,14 @@ import { Label } from "@/components/ui/label";
 import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 import { pricing } from "@/config/pricing";
 
+// Add-ons available at checkout for service-mode orders.
+const AVAILABLE_ADDONS = [
+  { id: "kundali", label: "Personalized Kundali", note: "English / Hindi · PDF report", price: 699 },
+  { id: "lal-kitab", label: "Lal Kitab Consultation", note: "1:1 expert session", price: 3998 },
+] as const;
+
+type AddonId = typeof AVAILABLE_ADDONS[number]["id"];
+
 // Consultation packages (only used when type= param is present)
 const consultationPackages = {
   whatsapp: {
@@ -324,6 +332,15 @@ const PaymentPage = () => {
 
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState<AddonId[]>([]);
+
+  const addonsTotal = selectedAddons.reduce((sum, id) => {
+    const a = AVAILABLE_ADDONS.find((x) => x.id === id);
+    return sum + (a?.price || 0);
+  }, 0);
+  const selectedAddonObjects = AVAILABLE_ADDONS.filter((a) => selectedAddons.includes(a.id));
+  const toggleAddon = (id: AddonId) =>
+    setSelectedAddons((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const currentPackage = isServiceMode ? null : (consultationPackages[consultationType] || consultationPackages.audio);
   const selectedOption = currentPackage?.options.find((opt) => opt.id === selectedPackage);
@@ -403,7 +420,11 @@ const PaymentPage = () => {
           customerName: displayPersonName,
           customerEmail: formData.email,
           customerPhone: formData.whatsapp,
-          metadata: { formType, serviceSlug: serviceName },
+          metadata: {
+            formType,
+            serviceSlug: serviceName,
+            addons: selectedAddonObjects.map((a) => ({ id: a.id, label: a.label, price: a.price })),
+          },
         }),
       });
       if (!response.ok) throw new Error("Order API failed");
@@ -469,7 +490,8 @@ const PaymentPage = () => {
     }
     setIsProcessing(true);
     try {
-      const amount = isServiceMode ? servicePrice : (selectedOption?.price || 500);
+      const baseAmount = isServiceMode ? servicePrice : (selectedOption?.price || 500);
+      const amount = baseAmount + addonsTotal;
       await handlePayment(amount, data);
     } finally {
       setIsProcessing(false);
@@ -477,7 +499,8 @@ const PaymentPage = () => {
   };
 
   const displayName = isServiceMode ? serviceName : (currentPackage?.name || "Consultation");
-  const displayPrice = isServiceMode ? servicePrice : (selectedOption?.price || 0);
+  const basePrice = isServiceMode ? servicePrice : (selectedOption?.price || 0);
+  const displayPrice = basePrice + addonsTotal;
   const heroColor = isServiceMode ? "from-primary to-amber" : (currentPackage?.color || "from-primary to-accent");
   const HeroIcon = isServiceMode ? Sparkles : (currentPackage?.icon || Phone);
 
@@ -735,10 +758,64 @@ const PaymentPage = () => {
                     <h3 className="font-display text-xl font-bold text-foreground mb-4">Order Summary</h3>
                     <div className="border-b border-border pb-4 mb-4">
                       <p className="text-foreground font-semibold text-lg">{serviceName}</p>
+                      <div className="flex justify-between text-sm mt-2 text-muted-foreground">
+                        <span>Base price</span>
+                        <span>₹{servicePrice.toLocaleString()}</span>
+                      </div>
                     </div>
+
+                    {/* Add-ons */}
+                    <div className="mb-4">
+                      <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        Recommended Add-ons
+                      </h4>
+                      <div className="space-y-2">
+                        {AVAILABLE_ADDONS.map((a) => {
+                          const checked = selectedAddons.includes(a.id);
+                          return (
+                            <button
+                              type="button"
+                              key={a.id}
+                              onClick={() => toggleAddon(a.id)}
+                              className={cn(
+                                "w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-start gap-3",
+                                checked ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                              )}
+                            >
+                              <div className={cn(
+                                "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
+                                checked ? "border-primary bg-primary" : "border-muted-foreground"
+                              )}>
+                                {checked && <Check className="w-3 h-3 text-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium text-sm text-foreground">{a.label}</span>
+                                  <span className="font-semibold text-sm text-primary whitespace-nowrap">+₹{a.price.toLocaleString()}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-0.5">{a.note}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {selectedAddonObjects.length > 0 && (
+                      <div className="border-t border-border pt-3 mb-3 space-y-1">
+                        {selectedAddonObjects.map((a) => (
+                          <div key={a.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">+ {a.label}</span>
+                            <span className="text-foreground">₹{a.price.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-lg font-bold pt-2">
                       <span className="text-foreground">Total</span>
-                      <span className="text-gradient-amber">₹{servicePrice.toLocaleString()}</span>
+                      <span className="text-gradient-amber">₹{displayPrice.toLocaleString()}</span>
                     </div>
                     <div className="mt-6 pt-6 border-t border-border">
                       <h4 className="font-medium text-foreground mb-3">What you'll get:</h4>
