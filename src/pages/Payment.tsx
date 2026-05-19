@@ -758,10 +758,64 @@ const PaymentPage = () => {
                     <h3 className="font-display text-xl font-bold text-foreground mb-4">Order Summary</h3>
                     <div className="border-b border-border pb-4 mb-4">
                       <p className="text-foreground font-semibold text-lg">{serviceName}</p>
+                      <div className="flex justify-between text-sm mt-2 text-muted-foreground">
+                        <span>Base price</span>
+                        <span>₹{servicePrice.toLocaleString()}</span>
+                      </div>
                     </div>
+
+                    {/* Add-ons */}
+                    <div className="mb-4">
+                      <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        Recommended Add-ons
+                      </h4>
+                      <div className="space-y-2">
+                        {AVAILABLE_ADDONS.map((a) => {
+                          const checked = selectedAddons.includes(a.id);
+                          return (
+                            <button
+                              type="button"
+                              key={a.id}
+                              onClick={() => toggleAddon(a.id)}
+                              className={cn(
+                                "w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-start gap-3",
+                                checked ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                              )}
+                            >
+                              <div className={cn(
+                                "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
+                                checked ? "border-primary bg-primary" : "border-muted-foreground"
+                              )}>
+                                {checked && <Check className="w-3 h-3 text-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium text-sm text-foreground">{a.label}</span>
+                                  <span className="font-semibold text-sm text-primary whitespace-nowrap">+₹{a.price.toLocaleString()}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-0.5">{a.note}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {selectedAddonObjects.length > 0 && (
+                      <div className="border-t border-border pt-3 mb-3 space-y-1">
+                        {selectedAddonObjects.map((a) => (
+                          <div key={a.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">+ {a.label}</span>
+                            <span className="text-foreground">₹{a.price.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-lg font-bold pt-2">
                       <span className="text-foreground">Total</span>
-                      <span className="text-gradient-amber">₹{servicePrice.toLocaleString()}</span>
+                      <span className="text-gradient-amber">₹{displayPrice.toLocaleString()}</span>
                     </div>
                     <div className="mt-6 pt-6 border-t border-border">
                       <h4 className="font-medium text-foreground mb-3">What you'll get:</h4>
