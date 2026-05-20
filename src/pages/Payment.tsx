@@ -449,7 +449,9 @@ const PaymentPage = () => {
 
     const displayPersonName =
       formData.fullName ||
-      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ");
+      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ") ||
+      formData?.person1?.fullName ||
+      "";
 
     let order;
     try {
