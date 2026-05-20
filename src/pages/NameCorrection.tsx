@@ -20,6 +20,8 @@ import heroDesktop from "@/assets/name-correction-hero.webp";
 import heroMobile from "@/assets/name-correction-hero-mobile.webp";
 import blueprintDesktop from "@/assets/name-alignment-blueprint-desktop.webp";
 import blueprintMobile from "@/assets/name-alignment-blueprint-mobile.webp";
+import geetaImg from "@/assets/celebrities/geeta-tyagi.png";
+import darshanImg from "@/assets/celebrities/darshan-patil.jpg";
 
 const COLORS = {
   amber: "#C17A1A",
@@ -80,8 +82,8 @@ const testimonials = [
 ];
 
 const celebrities = [
-  { name: "Geita Tyagi", role: "TV & Film Actress", work: "Jagaddhatri · Doli Armaano Ki", initial: "G" },
-  { name: "Darshan Patil", role: "Film Actor", work: "Dhurandhar · Thumbs Up", initial: "D" },
+  { name: "Geita Tyagi", role: "TV & Film Actress", work: "Jagaddhatri · Doli Armaano Ki", image: geetaImg },
+  { name: "Darshan Patil", role: "Film Actor", work: "Dhurandhar · Thumbs Up", image: darshanImg },
 ];
 
 const pressLogos = ["INC91", "DailyHunt", "Hindustan Bytes", "Unseen Times"];
@@ -325,7 +327,7 @@ const NameCorrection = () => {
                   <li key={i} className="flex items-start text-[14px]" style={{ color: COLORS.brown }}><Diamond color={COLORS.amber} />{f}</li>
                 ))}
               </ul>
-              <Link to={payLink("Name Correction + Complete Numerology Blueprint", 7397)}
+              <Link to={payLink("Name Correction + Complete Numerology Blueprint", 7397, "couple")}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90 mt-auto"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
                 Get Complete Blueprint
@@ -333,37 +335,6 @@ const NameCorrection = () => {
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
                 <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr</span>
                 <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Add-ons */}
-          <div className="mt-16">
-            <h3 style={{ ...heading, color: COLORS.brown }} className="text-center text-2xl md:text-3xl font-semibold mb-8">
-              Recommended <span style={{ color: COLORS.gold }}>Add-ons</span>
-            </h3>
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-              <div className="rounded-xl p-6 flex flex-col"
-                style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
-                <h4 style={{ ...heading, color: COLORS.brown }} className="text-xl font-semibold mb-1">Personalized Kundali</h4>
-                <p className="text-sm mb-4" style={{ color: COLORS.brown, opacity: 0.8 }}>Available in English / Hindi</p>
-                <div style={{ ...heading, color: COLORS.brown }} className="text-3xl font-bold mb-5">{formatINR(699)}</div>
-                <Link to={payLink("Personalized Kundali", 699)}
-                  className="mt-auto block w-full text-center py-3 rounded-md font-medium transition hover:opacity-90"
-                  style={{ background: COLORS.gold, color: COLORS.white }}>
-                  Add Kundali
-                </Link>
-              </div>
-              <div className="rounded-xl p-6 flex flex-col"
-                style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
-                <h4 style={{ ...heading, color: COLORS.brown }} className="text-xl font-semibold mb-1">Lal Kitab Consultation</h4>
-                <p className="text-sm mb-4" style={{ color: COLORS.brown, opacity: 0.8 }}>Personal session with expert</p>
-                <div style={{ ...heading, color: COLORS.brown }} className="text-3xl font-bold mb-5">{formatINR(3998)}</div>
-                <Link to={payLink("Lal Kitab Consultation", 3998)}
-                  className="mt-auto block w-full text-center py-3 rounded-md font-medium transition hover:opacity-90"
-                  style={{ background: COLORS.brown, color: COLORS.white }}>
-                  Book Consultation
-                </Link>
               </div>
             </div>
           </div>
@@ -459,10 +430,13 @@ const NameCorrection = () => {
             {celebrities.map((c) => (
               <div key={c.name} className="rounded-xl p-6 flex items-center gap-5"
                 style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
-                <div className="w-20 h-20 rounded-full flex-shrink-0 flex items-center justify-center text-3xl font-semibold"
-                  style={{ background: `linear-gradient(135deg, ${COLORS.gold}, ${COLORS.amber})`, color: COLORS.white, ...heading }}>
-                  {c.initial}
-                </div>
+                <img
+                  src={c.image}
+                  alt={`${c.name} — ${c.role}`}
+                  loading="lazy"
+                  className="w-20 h-20 rounded-full flex-shrink-0 object-cover object-top"
+                  style={{ border: `2px solid ${COLORS.gold}` }}
+                />
                 <div>
                   <div className="text-[11px] uppercase tracking-widest mb-1" style={{ color: COLORS.amber }}>Celebrity Client</div>
                   <h3 style={{ ...heading, color: COLORS.brown }} className="text-xl font-semibold">{c.name}</h3>
