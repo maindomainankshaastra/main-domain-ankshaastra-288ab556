@@ -73,6 +73,12 @@ export const pricing = {
   relationship: {
     analysis: num(env.VITE_RELATIONSHIP_ANALYSIS, 987),
   },
+  // ── Pyaar Shastra (love & life compatibility) ──
+  pyaarShastra: {
+    price: num(env.VITE_PYAAR_SHASTRA, 299),
+    originalPrice: num(env.VITE_PYAAR_SHASTRA_ORIGINAL, 699),
+    kundaliAddon: num(env.VITE_PYAAR_SHASTRA_KUNDALI_ADDON, 299),
+  },
   // ── Reports ──
   reports: {
     kundaliSingle: num(env.VITE_KUNDALI_SINGLE, 699),
