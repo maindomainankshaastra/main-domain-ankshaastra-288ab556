@@ -730,6 +730,74 @@ const PaymentPage = () => {
       );
     }
 
+    if (formType === "couple" || formType === "pyaar-shastra") {
+      const isPyaar = formType === "pyaar-shastra";
+      const PersonBlock = ({ name, title, accent }: { name: "person1" | "person2"; title: string; accent: string }) => (
+        <div className="rounded-xl border border-border p-5 bg-background/40 space-y-4">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <span className={`inline-block w-2 h-2 rounded-full ${accent}`} />{title}
+          </h3>
+          <FormField control={c} name={`${name}.fullName`} render={({ field }) => (
+            <FormItem><FormLabel>Full Name *</FormLabel><FormControl><Input placeholder="Full name" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name={`${name}.gender`} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                  {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
+                    <div key={v} className="flex items-center space-x-2">
+                      <RadioGroupItem value={v} id={`${name}-g-${v}`} />
+                      <Label htmlFor={`${name}-g-${v}`}>{l}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DOBPicker control={c} name={`${name}.dob`} />
+            <TOBPicker control={c} name={`${name}.tob`} />
+          </div>
+          <FormField control={c} name={`${name}.pob`} render={({ field }) => (
+            <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+      );
+      return (
+        <>
+          <div className="rounded-lg bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-foreground">
+            This package covers <strong>2 people</strong>. Please provide birth details for both.
+          </div>
+          {isPyaar
+            ? <PersonBlock name="person1" title="Male Details" accent="bg-blue-500" />
+            : <PersonBlock name="person1" title="Person 1 Details" accent="bg-primary" />}
+          {isPyaar
+            ? <PersonBlock name="person2" title="Female Details" accent="bg-pink-500" />
+            : <PersonBlock name="person2" title="Person 2 Details" accent="bg-amber-500" />}
+          <h3 className="font-semibold text-foreground pt-2">Contact Details</h3>
+          {ContactRow}
+          {isPyaar && (
+            <FormField control={c} name="language" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Preferred Report Language *</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    <SelectItem value="english">English</SelectItem>
+                    <SelectItem value="hindi">Hindi</SelectItem>
+                    <SelectItem value="gujarati">Gujarati</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+          )}
+        </>
+      );
+    }
+
     // default
     return (
       <>
