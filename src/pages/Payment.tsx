@@ -815,7 +815,7 @@ const PaymentPage = () => {
                         Recommended Add-ons
                       </h4>
                       <div className="space-y-2">
-                        {AVAILABLE_ADDONS.map((a) => {
+                        {availableAddons.map((a) => {
                           const checked = selectedAddons.includes(a.id);
                           return (
                             <button
