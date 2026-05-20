@@ -31,12 +31,16 @@ import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 import { pricing } from "@/config/pricing";
 
 // Add-ons available at checkout for service-mode orders.
-const AVAILABLE_ADDONS = [
+const DEFAULT_ADDONS = [
   { id: "kundali", label: "Personalized Kundali", note: "English / Hindi · PDF report", price: 699 },
   { id: "lal-kitab", label: "Lal Kitab Consultation", note: "1:1 expert session", price: 3998 },
 ] as const;
 
-type AddonId = typeof AVAILABLE_ADDONS[number]["id"];
+const PYAAR_ADDONS = [
+  { id: "kundali-pyaar", label: "Personalized Kundali", note: "150+ page detailed Kundali · WhatsApp PDF", price: pricing.pyaarShastra.kundaliAddon },
+] as const;
+
+type Addon = { id: string; label: string; note: string; price: number };
 
 // Consultation packages (only used when type= param is present)
 const consultationPackages = {
@@ -73,13 +77,15 @@ const consultationPackages = {
 };
 
 // ───── form types ─────
-type FormType = "kundali" | "consultation" | "name-correction" | "name-check" | "default";
+type FormType = "kundali" | "consultation" | "name-correction" | "name-check" | "couple" | "pyaar-shastra" | "default";
 
 const inferFormType = (service: string | null, hasConsultationType: boolean): FormType => {
   if (hasConsultationType) return "consultation";
   if (!service) return "default";
   const s = service.toLowerCase();
+  if (s.includes("pyaar shastra")) return "pyaar-shastra";
   if (s.includes("name check")) return "name-check";
+  if (s.includes("complete numerology blueprint") || s.includes("for 2 people")) return "couple";
   if (s.includes("name correction")) return "name-correction";
   if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
   return "default";
@@ -167,6 +173,25 @@ const nameCheckSchema = z.object({
   pincode: pincodeField,
   dob: dobField,
   tob: tobField,
+});
+
+// Couple form — two people's birth details (used for premium Name Correction
+// + Complete Numerology Blueprint package and Pyaar Shastra).
+const personSchema = z.object({
+  fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
+  gender: genderField,
+  dob: dobField,
+  tob: tobField,
+  pob: z.string().trim().min(2, "Place of birth required").max(120),
+});
+const coupleSchema = z.object({
+  person1: personSchema,
+  person2: personSchema,
+  email: emailField,
+  whatsapp: phoneField,
+});
+const pyaarShastraSchema = coupleSchema.extend({
+  language: z.enum(["english", "hindi", "gujarati"], { required_error: "Select language" }),
 });
 
 // ───── dropdown helpers ─────
@@ -332,14 +357,19 @@ const PaymentPage = () => {
 
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedAddons, setSelectedAddons] = useState<AddonId[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+
+  const availableAddons: Addon[] = useMemo(() => {
+    if (formType === "pyaar-shastra") return [...PYAAR_ADDONS];
+    return [...DEFAULT_ADDONS];
+  }, [formType]);
 
   const addonsTotal = selectedAddons.reduce((sum, id) => {
-    const a = AVAILABLE_ADDONS.find((x) => x.id === id);
+    const a = availableAddons.find((x) => x.id === id);
     return sum + (a?.price || 0);
   }, 0);
-  const selectedAddonObjects = AVAILABLE_ADDONS.filter((a) => selectedAddons.includes(a.id));
-  const toggleAddon = (id: AddonId) =>
+  const selectedAddonObjects = availableAddons.filter((a) => selectedAddons.includes(a.id));
+  const toggleAddon = (id: string) =>
     setSelectedAddons((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const currentPackage = isServiceMode ? null : (consultationPackages[consultationType] || consultationPackages.audio);
@@ -379,6 +409,20 @@ const PaymentPage = () => {
         defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, tob: baseTob },
       };
     }
+    if (formType === "couple") {
+      const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pob: "" };
+      return {
+        schema: coupleSchema,
+        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 " },
+      };
+    }
+    if (formType === "pyaar-shastra") {
+      const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pob: "" };
+      return {
+        schema: pyaarShastraSchema,
+        defaults: { person1: { ...blankPerson, gender: "male" as any }, person2: { ...blankPerson, gender: "female" as any }, email: "", whatsapp: "+91 ", language: undefined as any },
+      };
+    }
     return {
       schema: defaultSchema,
       defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "" },
@@ -405,7 +449,9 @@ const PaymentPage = () => {
 
     const displayPersonName =
       formData.fullName ||
-      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ");
+      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ") ||
+      formData?.person1?.fullName ||
+      "";
 
     let order;
     try {
@@ -686,6 +732,74 @@ const PaymentPage = () => {
       );
     }
 
+    if (formType === "couple" || formType === "pyaar-shastra") {
+      const isPyaar = formType === "pyaar-shastra";
+      const PersonBlock = ({ name, title, accent }: { name: "person1" | "person2"; title: string; accent: string }) => (
+        <div className="rounded-xl border border-border p-5 bg-background/40 space-y-4">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <span className={`inline-block w-2 h-2 rounded-full ${accent}`} />{title}
+          </h3>
+          <FormField control={c} name={`${name}.fullName`} render={({ field }) => (
+            <FormItem><FormLabel>Full Name *</FormLabel><FormControl><Input placeholder="Full name" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name={`${name}.gender`} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                  {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
+                    <div key={v} className="flex items-center space-x-2">
+                      <RadioGroupItem value={v} id={`${name}-g-${v}`} />
+                      <Label htmlFor={`${name}-g-${v}`}>{l}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DOBPicker control={c} name={`${name}.dob`} />
+            <TOBPicker control={c} name={`${name}.tob`} />
+          </div>
+          <FormField control={c} name={`${name}.pob`} render={({ field }) => (
+            <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+      );
+      return (
+        <>
+          <div className="rounded-lg bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-foreground">
+            This package covers <strong>2 people</strong>. Please provide birth details for both.
+          </div>
+          {isPyaar
+            ? <PersonBlock name="person1" title="Male Details" accent="bg-blue-500" />
+            : <PersonBlock name="person1" title="Person 1 Details" accent="bg-primary" />}
+          {isPyaar
+            ? <PersonBlock name="person2" title="Female Details" accent="bg-pink-500" />
+            : <PersonBlock name="person2" title="Person 2 Details" accent="bg-amber-500" />}
+          <h3 className="font-semibold text-foreground pt-2">Contact Details</h3>
+          {ContactRow}
+          {isPyaar && (
+            <FormField control={c} name="language" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Preferred Report Language *</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    <SelectItem value="english">English</SelectItem>
+                    <SelectItem value="hindi">Hindi</SelectItem>
+                    <SelectItem value="gujarati">Gujarati</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+          )}
+        </>
+      );
+    }
+
     // default
     return (
       <>
@@ -771,7 +885,7 @@ const PaymentPage = () => {
                         Recommended Add-ons
                       </h4>
                       <div className="space-y-2">
-                        {AVAILABLE_ADDONS.map((a) => {
+                        {availableAddons.map((a) => {
                           const checked = selectedAddons.includes(a.id);
                           return (
                             <button

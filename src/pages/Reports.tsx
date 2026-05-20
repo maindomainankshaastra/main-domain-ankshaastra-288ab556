@@ -7,6 +7,18 @@ import { pricing, formatINR } from "@/config/pricing";
 
 const reports = [
   {
+    id: 1,
+    title: "Pyaar Shastra — Love & Life Compatibility",
+    description: "India's first love & life quality compatibility report. Ashtakoot, KP System, Manglik & Dasa analysis — delivered on WhatsApp in 24 hours.",
+    pages: "Detailed PDF",
+    delivery: "24 Hours",
+    price: formatINR(pricing.pyaarShastra.price),
+    originalPrice: formatINR(pricing.pyaarShastra.originalPrice),
+    amount: pricing.pyaarShastra.price,
+    link: "/reports/pyaar-shastra",
+    features: ["Love & Life Compatibility", "Emotional + Financial Harmony", "Marriage Stability Insights", "Compatibility Timing Guidance"],
+  },
+  {
     id: 3,
     title: "Marriage Compatibility",
     description: "Detailed Kundli matching with Guna Milan and compatibility analysis for couples.",

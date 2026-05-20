@@ -14,6 +14,7 @@ const Consultation = lazy(() => import("./pages/Consultation"));
 const Reports = lazy(() => import("./pages/Reports"));
 const NameCorrectionBlueprint = lazy(() => import("./pages/NameCorrectionBlueprint"));
 const PersonalizedKundali = lazy(() => import("./pages/PersonalizedKundali"));
+const PyaarShastra = lazy(() => import("./pages/PyaarShastra"));
 const Courses = lazy(() => import("./pages/Courses"));
 const Shop = lazy(() => import("./pages/Shop"));
 const NameCorrection = lazy(() => import("./pages/NameCorrection"));
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/reports" element={<Reports />} />
             <Route path="/reports/name-correction-blueprint" element={<NameCorrectionBlueprint />} />
             <Route path="/reports/personalized-kundali" element={<PersonalizedKundali />} />
+            <Route path="/reports/pyaar-shastra" element={<PyaarShastra />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/payment" element={<Payment />} />
