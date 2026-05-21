@@ -77,7 +77,7 @@ const consultationPackages = {
 };
 
 // ───── form types ─────
-type FormType = "kundali" | "consultation" | "name-correction" | "name-check" | "couple" | "pyaar-shastra" | "default";
+type FormType = "kundali" | "consultation" | "name-correction" | "name-correction-couple" | "name-check" | "couple" | "pyaar-shastra" | "default";
 
 const inferFormType = (service: string | null, hasConsultationType: boolean): FormType => {
   if (hasConsultationType) return "consultation";
@@ -85,7 +85,7 @@ const inferFormType = (service: string | null, hasConsultationType: boolean): Fo
   const s = service.toLowerCase();
   if (s.includes("pyaar shastra")) return "pyaar-shastra";
   if (s.includes("name check")) return "name-check";
-  if (s.includes("complete numerology blueprint") || s.includes("for 2 people")) return "name-correction-couple" as FormType;
+  if (s.includes("complete numerology blueprint") || s.includes("for 2 people")) return "name-correction-couple";
   if (s.includes("name correction")) return "name-correction";
   if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
   return "default";
