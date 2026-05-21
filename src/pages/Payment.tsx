@@ -444,6 +444,18 @@ const PaymentPage = () => {
         defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 " },
       };
     }
+    if (formType === "name-correction-couple") {
+      const blankPerson = {
+        firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any,
+        dob: baseDob, tob: baseTob, pob: "", gender: undefined as any,
+        relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any,
+        fatherName: "", motherName: "", spouseName: "", profession: "",
+      };
+      return {
+        schema: nameCorrectionCoupleSchema,
+        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", pincode: "", reason: "" },
+      };
+    }
     if (formType === "pyaar-shastra") {
       const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pob: "" };
       return {
