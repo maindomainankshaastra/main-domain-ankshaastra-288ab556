@@ -772,6 +772,117 @@ const PaymentPage = () => {
       );
     }
 
+    if (formType === "name-correction-couple") {
+      const PersonNameCorrBlock = ({ name, title, accent }: { name: "person1" | "person2"; title: string; accent: string }) => (
+        <div className="rounded-xl border border-border p-5 bg-background/40 space-y-4">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <span className={`inline-block w-2 h-2 rounded-full ${accent}`} />{title}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField control={c} name={`${name}.firstName`} render={({ field }) => (
+              <FormItem><FormLabel>First Name *</FormLabel><FormControl><Input placeholder="First name" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name={`${name}.middleName`} render={({ field }) => (
+              <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle name" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name={`${name}.lastName`} render={({ field }) => (
+              <FormItem><FormLabel>Last Name *</FormLabel><FormControl><Input placeholder="Last name" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
+          <FormField control={c} name={`${name}.middleIsFatherName`} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Is the middle name father's name? *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id={`${name}-mfn-yes`} /><Label htmlFor={`${name}-mfn-yes`}>Yes</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="no" id={`${name}-mfn-no`} /><Label htmlFor={`${name}-mfn-no`}>No</Label></div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DOBPicker control={c} name={`${name}.dob`} />
+            <TOBPicker control={c} name={`${name}.tob`} />
+          </div>
+          <FormField control={c} name={`${name}.pob`} render={({ field }) => (
+            <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name={`${name}.gender`} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                  {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
+                    <div key={v} className="flex items-center space-x-2">
+                      <RadioGroupItem value={v} id={`${name}-g-${v}`} />
+                      <Label htmlFor={`${name}-g-${v}`}>{l}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(["relationFather", "relationMother", "relationSpouse"] as const).map((rel) => (
+              <FormField key={rel} control={c} name={`${name}.${rel}`} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{rel === "relationFather" ? "With Father" : rel === "relationMother" ? "With Mother" : "With Spouse"} *</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="good">Good</SelectItem>
+                      <SelectItem value="neutral">Neutral</SelectItem>
+                      <SelectItem value="challenging">Challenging</SelectItem>
+                      {rel === "relationSpouse" && <SelectItem value="na">Not Applicable</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField control={c} name={`${name}.fatherName`} render={({ field }) => (
+              <FormItem><FormLabel>Father's Name *</FormLabel><FormControl><Input placeholder="Father's full name" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name={`${name}.motherName`} render={({ field }) => (
+              <FormItem><FormLabel>Mother's Name *</FormLabel><FormControl><Input placeholder="Mother's full name" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name={`${name}.spouseName`} render={({ field }) => (
+              <FormItem><FormLabel>Spouse's Name</FormLabel><FormControl><Input placeholder="If applicable" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
+          <FormField control={c} name={`${name}.profession`} render={({ field }) => (
+            <FormItem><FormLabel>Profession *</FormLabel><FormControl><Input placeholder="Current profession" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+      );
+      return (
+        <>
+          <div className="rounded-lg bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-foreground">
+            This package covers <strong>2 people</strong>. Please provide complete name correction details for both.
+          </div>
+          <PersonNameCorrBlock name="person1" title="Person 1 — Full Details" accent="bg-primary" />
+          <PersonNameCorrBlock name="person2" title="Person 2 — Full Details" accent="bg-amber-500" />
+          <h3 className="font-semibold text-foreground pt-2">Contact & Delivery</h3>
+          {ContactRow}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={c} name="pincode" render={({ field }) => (
+              <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
+          <FormField control={c} name="reason" render={({ field }) => (
+            <FormItem><FormLabel>Reason for Name Correction *</FormLabel>
+              <FormControl><Textarea placeholder="Share your goals, struggles, and what you'd like to improve for both people." className="min-h-[140px] resize-none" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </>
+      );
+    }
+
     if (formType === "couple" || formType === "pyaar-shastra") {
       const isPyaar = formType === "pyaar-shastra";
       const PersonBlock = ({ name, title, accent }: { name: "person1" | "person2"; title: string; accent: string }) => (
