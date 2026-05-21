@@ -24,6 +24,7 @@ const serviceIconMap: Record<string, LucideIcon> = {
   "C-Section Baby Dates": Calendar,
   "Perfect Baby Name": Baby,
   "Relationship Analysis": Heart,
+  "Pyaar Shastra — Love Report": Heart,
   "Business Name Correction": Building2,
   "Business Phone Number": Phone,
   "Brand Tagline Correction": Tag,
