@@ -24,7 +24,7 @@ const serviceIconMap: Record<string, LucideIcon> = {
   "C-Section Baby Dates": Calendar,
   "Perfect Baby Name": Baby,
   "Relationship Analysis": Heart,
-  "Pyaar Shastra — Love Report": Heart,
+  "Pyaar Shaastra Report": Heart,
   "Business Name Correction": Building2,
   "Business Phone Number": Phone,
   "Brand Tagline Correction": Tag,
@@ -84,7 +84,7 @@ const serviceCategories = [
       { title: "C-Section Baby Dates", description: "Numerology-based guidance for selecting supportive C-section birth dates within medically approved range.", price: formatINR(pricing.baby.cSectionEssential), rawPrice: pricing.baby.cSectionEssential, link: "https://miraclebaby.ankshaastra.com", external: true },
       { title: "Perfect Baby Name", description: "Carefully aligned baby name suggestions based on numerology principles for foundational harmony.", price: formatINR(pricing.nameCorrection.standard), rawPrice: pricing.nameCorrection.standard, link: "https://empower.ankshaastra.com", external: true, highlight: true },
       { title: "Relationship Analysis", description: "Analysis of emotional dynamics and compatibility between partners for healthier communication.", price: formatINR(pricing.relationship.analysis), rawPrice: pricing.relationship.analysis, link: "/payment" },
-      { title: "Pyaar Shastra — Love Report", description: "India's first love & life quality compatibility report. Ashtakoot, KP System, Manglik & Dasa analysis delivered on WhatsApp in 24 hours.", price: formatINR(pricing.pyaarShastra.price), rawPrice: pricing.pyaarShastra.price, link: "/reports/pyaar-shastra", highlight: true },
+      { title: "Pyaar Shaastra Report", description: "India's first love & life quality compatibility report. Ashtakoot, KP System, Manglik & Dasa analysis delivered on WhatsApp in 24 hours.", price: formatINR(pricing.pyaarShastra.price), rawPrice: pricing.pyaarShastra.price, link: "/reports/pyaar-shastra", highlight: true },
     ]
   },
   {

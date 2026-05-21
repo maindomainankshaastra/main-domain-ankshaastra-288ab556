@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 
 const reportsDropdown = [
   { name: "Name Correction Blueprint", path: "/services/name-correction", icon: ScrollText, description: "Align your name's vibration for success" },
-  { name: "Pyaar Shastra — Love Report", path: "/reports/pyaar-shastra", icon: ScrollText, description: "Love & life compatibility report in 24 hours" },
+  { name: "Pyaar Shaastra Report", path: "/reports/pyaar-shastra", icon: ScrollText, description: "Love & life compatibility report in 24 hours" },
   { name: "Perfect Baby Name Report", path: "https://empower.ankshaastra.com", icon: Baby, description: "Numerology-based baby name selection", external: true },
   { name: "Personalized Kundali", path: "/reports/personalized-kundali", icon: Star, description: "Complete birth chart & life predictions" },
   { name: "Varshphal Report 2026", path: "/services/varshphal-report", icon: Calendar, description: "Your complete yearly numerology guide" },
