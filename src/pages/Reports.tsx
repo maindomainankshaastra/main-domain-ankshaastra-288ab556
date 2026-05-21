@@ -8,7 +8,7 @@ import { pricing, formatINR } from "@/config/pricing";
 const reports = [
   {
     id: 1,
-    title: "Pyaar Shastra — Love & Life Compatibility",
+    title: "Pyaar Shaastra Report",
     description: "India's first love & life quality compatibility report. Ashtakoot, KP System, Manglik & Dasa analysis — delivered on WhatsApp in 24 hours.",
     pages: "Detailed PDF",
     delivery: "24 Hours",
