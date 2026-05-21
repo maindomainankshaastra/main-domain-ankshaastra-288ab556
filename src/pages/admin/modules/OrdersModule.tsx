@@ -16,10 +16,14 @@ type Order = {
   created_at: string;
 };
 
+type OrderStatus = "pending" | "paid" | "failed" | "refunded" | "cancelled";
+
+const orderStatuses: OrderStatus[] = ["pending", "paid", "failed", "refunded", "cancelled"];
+
 export default function OrdersModule() {
   const { rows, loading, reload } = useAdminTable<Order>("orders");
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: OrderStatus) => {
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("Updated"); reload(); }
@@ -39,10 +43,10 @@ export default function OrdersModule() {
             </div>
             <div className="flex items-center gap-3">
               <span className="font-semibold">₹{Number(o.total_amount).toLocaleString()}</span>
-              <Select value={o.status} onValueChange={(v) => updateStatus(o.id, v)}>
+              <Select value={o.status} onValueChange={(v) => updateStatus(o.id, v as OrderStatus)}>
                 <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["pending", "paid", "failed", "refunded", "cancelled"].map((s) => (
+                  {orderStatuses.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>
