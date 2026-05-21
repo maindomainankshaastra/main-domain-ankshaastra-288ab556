@@ -14,7 +14,7 @@ export default function WebhooksModule() {
               {statusBadge(String(r.status))}
             </div>
             <p className="text-xs text-muted-foreground mt-2">{new Date(String(r.created_at)).toLocaleString()}</p>
-            {r.error_message && <p className="text-xs text-destructive mt-1">{String(r.error_message)}</p>}
+            {Boolean(r.error_message) && <p className="text-xs text-destructive mt-1">{String(r.error_message)}</p>}
           </div>
         ))}
       </div>

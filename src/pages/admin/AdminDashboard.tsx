@@ -9,7 +9,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     (async () => {
       const tables = ["orders", "invoices", "email_logs", "whatsapp_logs", "webhooks_log", "automation_jobs"] as const;
-      const results = await Promise.all(tables.map((t) => supabase.from(t).select("id", { count: "exact", head: true })));
+      const db = supabase as unknown as { from: (table: string) => ReturnType<typeof supabase.from> };
+      const results = await Promise.all(tables.map((t) => db.from(t).select("id", { count: "exact", head: true })));
       setStats({
         orders: results[0].count ?? 0,
         invoices: results[1].count ?? 0,
