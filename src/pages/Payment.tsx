@@ -83,7 +83,7 @@ const inferFormType = (service: string | null, hasConsultationType: boolean): Fo
   if (hasConsultationType) return "consultation";
   if (!service) return "default";
   const s = service.toLowerCase();
-  if (s.includes("pyaar shastra")) return "pyaar-shastra";
+  if (s.includes("pyaar shastra") || s.includes("pyaar shaastra")) return "pyaar-shastra";
   if (s.includes("name check")) return "name-check";
   if (s.includes("complete numerology blueprint") || s.includes("for 2 people")) return "name-correction-couple";
   if (s.includes("name correction")) return "name-correction";
