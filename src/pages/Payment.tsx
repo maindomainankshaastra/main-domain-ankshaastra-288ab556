@@ -194,6 +194,34 @@ const pyaarShastraSchema = coupleSchema.extend({
   language: z.enum(["english", "hindi", "gujarati"], { required_error: "Select language" }),
 });
 
+// Name Correction for 2 people — full name-correction details per person,
+// shared contact + reason at the bottom.
+const personNameCorrSchema = z.object({
+  firstName: z.string().trim().min(1, "First name required").max(50).regex(nameRx, "Letters only"),
+  middleName: z.string().trim().max(50).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
+  lastName: z.string().trim().min(1, "Last name required").max(50).regex(nameRx, "Letters only"),
+  middleIsFatherName: z.enum(["yes", "no"], { required_error: "Please select" }),
+  dob: dobField,
+  tob: tobField,
+  pob: z.string().trim().min(2, "Place of birth required").max(120),
+  gender: genderField,
+  relationFather: relationField,
+  relationMother: relationField,
+  relationSpouse: z.enum(["good", "neutral", "challenging", "na"], { required_error: "Select" }),
+  fatherName: z.string().trim().min(1, "Father's name required").max(100).regex(nameRx, "Letters only"),
+  motherName: z.string().trim().min(1, "Mother's name required").max(100).regex(nameRx, "Letters only"),
+  spouseName: z.string().trim().max(100).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
+  profession: z.string().trim().min(2, "Profession required").max(120),
+});
+const nameCorrectionCoupleSchema = z.object({
+  person1: personNameCorrSchema,
+  person2: personNameCorrSchema,
+  email: emailField,
+  whatsapp: phoneField,
+  pincode: pincodeField,
+  reason: z.string().trim().min(10, "Please share (min 10 characters)").max(2000),
+});
+
 // ───── dropdown helpers ─────
 const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const months = [
