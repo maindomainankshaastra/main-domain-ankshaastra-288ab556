@@ -6,30 +6,31 @@ import SEOHead from "@/components/SEOHead";
 import { Heart, Check, Plus, Minus, Sparkles, Clock, Shield, MessageCircle, Star } from "lucide-react";
 import { pricing, formatINR } from "@/config/pricing";
 
-const payLink = `/payment?service=${encodeURIComponent("Pyaar Shastra Compatibility Report")}&amount=${pricing.pyaarShastra.price}&formType=pyaar-shastra`;
+const reportName = "Pyaar Shaastra Report";
+const payLink = `/payment?service=${encodeURIComponent(reportName)}&amount=${pricing.pyaarShastra.price}&formType=pyaar-shastra`;
 
 const audiences = [
   {
     emoji: "💑",
     title: "Tum Dono Pehle Se Saath Ho",
-    text: "Pyaar hai — commitment bhi hai. Bas yeh jaanna hai ki aage ka safar kaisa hoga. Kitni harmony hogi, kitni understanding hogi, life mein kya expect karo — Pyaar Shastra yahi batata hai.",
+    text: "Pyaar hai — commitment bhi hai. Bas yeh jaanna hai ki aage ka safar kaisa hoga. Kitni harmony hogi, kitni understanding hogi, life mein kya expect karo — Pyaar Shaastra Report yahi batata hai.",
   },
   {
     emoji: "😕",
     title: "Confused Ho — Decision Nahi Ho Raha",
-    text: "Feelings hain, par certainty nahi. Ghar wale kuch aur bol rahe hain, dil kuch aur. Pyaar Shastra ek neutral expert ki tarah kaam karta hai — jo sirf data dekhta hai, judgment nahi karta.",
+    text: "Feelings hain, par certainty nahi. Ghar wale kuch aur bol rahe hain, dil kuch aur. Pyaar Shaastra Report ek neutral expert ki tarah kaam karta hai — jo sirf data dekhta hai, judgment nahi karta.",
   },
   {
     emoji: "💍",
     title: "Dobaara Shuru Karna Chahte Ho",
-    text: "Pehli baar mein jo toot gaya — usse seekha. Ab sab sahi karna hai. Pyaar Shastra aapko batata hai ki is rishte ki quality kaisi hogi — peace, stability, aur emotional depth ke terms mein.",
+    text: "Pehli baar mein jo toot gaya — usse seekha. Ab sab sahi karna hai. Pyaar Shaastra Report aapko batata hai ki is rishte ki quality kaisi hogi — peace, stability, aur emotional depth ke terms mein.",
   },
 ];
 
 const discoveries = [
   { icon: "☮️", title: "Shanti aur Samajh", text: "Dono ke beech mental compatibility kitni hogi — ek doosre ko kitna samjhoge, arguments kitne hote hain, resolution kaisa hoga." },
   { icon: "💰", title: "Financial Life Ki Quality", text: "Paise ke mamle mein dono ki soch milti hai ya nahi — spending, saving, decisions — sab analyze hota hai." },
-  { icon: "❤️", title: "Emotional Bonding Ki Gehraai", text: "Affection, support, aur emotional intimacy — yeh rishte ki neev hoti hai. Pyaar Shastra batata hai yeh kitni strong hai." },
+  { icon: "❤️", title: "Emotional Bonding Ki Gehraai", text: "Affection, support, aur emotional intimacy — yeh rishte ki neev hoti hai. Pyaar Shaastra Report batata hai yeh kitni strong hai." },
   { icon: "🏡", title: "Ghar Ka Mahaul", text: "Roz ki zindagi kaisi hogi — routine, family involvement, priorities — day-to-day harmony ka analysis." },
   { icon: "🌱", title: "Personal Growth Saath Mein", text: "Kya yeh rishta dono ko aage badhata hai? Career, dreams, aur personal goals ke liye yeh saath kitna supportive hoga." },
   { icon: "⏰", title: "Sabse Acha Waqt", text: "Life ke important moments ke liye sabse favorable timing — shaadi, naya ghar, naya chapter — kab shuru karna best rahega." },
@@ -56,7 +57,7 @@ const inclusions = [
 ];
 
 const faqs = [
-  { q: "Kya yeh batata hai ki rishta hona chahiye ya nahi?", a: "Bilkul nahi. Pyaar Shastra yeh decide nahi karta. Yeh sirf batata hai ki aapke saath ki zindagi ki quality kaisi hogi — sukoon, samajh, aur harmony ke terms mein. Decision aapka hai, hamesha." },
+  { q: "Kya yeh batata hai ki rishta hona chahiye ya nahi?", a: "Bilkul nahi. Pyaar Shaastra Report yeh decide nahi karta. Yeh sirf batata hai ki aapke saath ki zindagi ki quality kaisi hogi — sukoon, samajh, aur harmony ke terms mein. Decision aapka hai, hamesha." },
   { q: "Kya mujhe birth time pata hona chahiye?", a: "Accurate report ke liye helpful hai. Agar exact time nahi pata — toh bhi analysis ho sakti hai. Pehle WhatsApp karein, hum guide karenge." },
   { q: "Report kitne time mein milegi?", a: "24 ghante ke andar — directly WhatsApp pe PDF mein." },
   { q: "Kya yeh sirf shaadi ke liye hai?", a: "Nahi. Jo bhi serious relationship mein hain — engaged, live-in, committed, ya sirf sure hona chahte hain — sabke liye hai." },
@@ -69,7 +70,7 @@ const PyaarShastra = () => {
   return (
     <Layout>
       <SEOHead
-        title="Pyaar Shastra — Love & Life Compatibility Report"
+        title="Pyaar Shaastra Report"
         description="India's first love & life quality compatibility report. Ashtakoot, KP System, Manglik & Dasa analysis — delivered on WhatsApp in 24 hours by Himansshu Agarwal Ji."
         canonical="/reports/pyaar-shastra"
         jsonLd={{
@@ -98,7 +99,7 @@ const PyaarShastra = () => {
               Kitna sukoon hoga? Kitni samajh hogi? Financial life kaisi hogi? Emotional bonding kitni gehri hogi?
             </p>
             <Link to={payLink} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-light text-secondary font-semibold text-lg shadow-amber hover:-translate-y-0.5 transition">
-              Apna Pyaar Shastra Report Lao
+              Apna Pyaar Shaastra Report Lao
               <Heart className="w-5 h-5 fill-current" />
             </Link>
             <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mt-8 text-sm text-primary-foreground/80">
@@ -154,7 +155,7 @@ const PyaarShastra = () => {
           </h2>
           <div className="space-y-4 text-muted-foreground leading-[1.8] mt-8 text-[15px] md:text-base">
             <p>Maine khud apni zindagi mein numerology ko pehle try kiya — apna naam correct kiya — aur jo badlav aaya woh main apni aankhon se dekha. Tab jaake main ne doosron ke liye yeh kaam shuru kiya.</p>
-            <p>Pyaar Shastra mein jo analysis hoti hai woh koi automated software nahi karta. Main khud — <strong className="text-foreground">Himansshu Agarwal</strong> — personally har report review karta hoon.</p>
+            <p>Pyaar Shaastra Report mein jo analysis hoti hai woh koi automated software nahi karta. Main khud — <strong className="text-foreground">Himansshu Agarwal</strong> — personally har report review karta hoon.</p>
           </div>
           <ul className="grid md:grid-cols-2 gap-3 mt-8">
             {differentiators.map((d, i) => (
@@ -179,7 +180,7 @@ const PyaarShastra = () => {
           </h2>
           <div className="card-warm p-8 md:p-10 relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-widest">Most Trusted</div>
-            <h3 className="font-display text-2xl md:text-3xl font-semibold text-foreground text-center mb-4">Pyaar Shastra Compatibility Report</h3>
+            <h3 className="font-display text-2xl md:text-3xl font-semibold text-foreground text-center mb-4">Pyaar Shaastra Report</h3>
             <div className="flex items-baseline justify-center gap-3 mb-6">
               <span className="text-xl line-through text-muted-foreground">{formatINR(pricing.pyaarShastra.originalPrice)}</span>
               <span className="font-display text-5xl md:text-6xl font-bold text-primary">{formatINR(pricing.pyaarShastra.price)}</span>
@@ -252,7 +253,7 @@ const PyaarShastra = () => {
             Pyaar Toh Hai. Ab Yeh Bhi Jaano — <span className="text-amber-light italic">Saath Kaisa Hoga.</span>
           </h2>
           <p className="text-lg text-primary-foreground/85 mb-10">
-            Pyaar Shastra — kyunki ek achhi zindagi sirf feeling se nahi, samajh se bhi banti hai.
+            Pyaar Shaastra Report — kyunki ek achhi zindagi sirf feeling se nahi, samajh se bhi banti hai.
           </p>
           <Link to={payLink} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-light text-secondary font-semibold text-lg shadow-amber hover:-translate-y-0.5 transition">
             Apna Report Book Karo — {formatINR(pricing.pyaarShastra.price)}
