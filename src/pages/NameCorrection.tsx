@@ -327,7 +327,7 @@ const NameCorrection = () => {
                   <li key={i} className="flex items-start text-[14px]" style={{ color: COLORS.brown }}><Diamond color={COLORS.amber} />{f}</li>
                 ))}
               </ul>
-              <Link to={payLink("Name Correction + Complete Numerology Blueprint", 7397, "couple")}
+              <Link to={payLink("Name Correction + Complete Numerology Blueprint", 7397, "name-correction-couple")}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90 mt-auto"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
                 Get Complete Blueprint
