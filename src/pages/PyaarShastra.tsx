@@ -64,6 +64,47 @@ const faqs = [
   { q: "Kya yeh report confidential rehti hai?", a: "100%. Aapki details aur report sirf aapke saath share hoti hai — koi aur nahi." },
 ];
 
+/* Floating hearts decoration */
+const FloatingHearts = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+    <motion.div
+      animate={{ y: [-20, -400], opacity: [1, 1, 0], x: [0, 20, -10] }}
+      transition={{ duration: 12, repeat: Infinity, repeatDelay: 2, ease: "linear" }}
+      className="absolute bottom-0 left-[10%] text-rose-300/30 text-2xl"
+    >
+      <Heart className="w-6 h-6 fill-current" />
+    </motion.div>
+    <motion.div
+      animate={{ y: [-20, -350], opacity: [1, 1, 0], x: [0, -15, 10] }}
+      transition={{ duration: 15, repeat: Infinity, repeatDelay: 5, ease: "linear" }}
+      className="absolute bottom-0 left-[30%] text-rose-300/25 text-xl"
+    >
+      <Heart className="w-5 h-5 fill-current" />
+    </motion.div>
+    <motion.div
+      animate={{ y: [-20, -450], opacity: [1, 1, 0], x: [0, 25, -20] }}
+      transition={{ duration: 18, repeat: Infinity, repeatDelay: 3, ease: "linear" }}
+      className="absolute bottom-0 left-[60%] text-rose-300/35 text-3xl"
+    >
+      <Heart className="w-8 h-8 fill-current" />
+    </motion.div>
+    <motion.div
+      animate={{ y: [-20, -380], opacity: [1, 1, 0], x: [0, -20, 15] }}
+      transition={{ duration: 14, repeat: Infinity, repeatDelay: 7, ease: "linear" }}
+      className="absolute bottom-0 left-[80%] text-rose-300/20 text-lg"
+    >
+      <Heart className="w-4 h-4 fill-current" />
+    </motion.div>
+    <motion.div
+      animate={{ y: [-20, -320], opacity: [1, 1, 0], x: [0, 10, -5] }}
+      transition={{ duration: 10, repeat: Infinity, repeatDelay: 4, ease: "linear" }}
+      className="absolute bottom-0 left-[45%] text-rose-300/25 text-2xl"
+    >
+      <Heart className="w-6 h-6 fill-current" />
+    </motion.div>
+  </div>
+);
+
 const PyaarShastra = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
@@ -80,192 +121,290 @@ const PyaarShastra = () => {
         }}
       />
 
-      {/* HERO */}
-      <section className="relative overflow-hidden gradient-hero pt-20 pb-24">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-[radial-gradient(ellipse,hsl(var(--amber)/0.18),transparent_70%)] pointer-events-none" />
-        <div className="container mx-auto px-4 relative">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto text-center text-primary-foreground">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 mb-5">
-              <Heart className="w-4 h-4 text-amber-light" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-amber-light">India's First Love & Life Quality Report</span>
+      {/* ─── PAGE-SCOPED LOVE THEME ─── */}
+      <div
+        className="relative"
+        style={{
+          // Override semantic tokens just for this page
+          ["--background" as string]: "346 60% 97%",      // #FFF0F3 blush cream
+          ["--foreground" as string]: "330 60% 18%",     // #3D0F1F deep plum
+          ["--card" as string]: "0 0% 100%",             // white cards
+          ["--card-foreground" as string]: "330 60% 18%",
+          ["--primary" as string]: "340 75% 45%",        // #D6336C rose
+          ["--primary-foreground" as string]: "0 0% 100%",
+          ["--secondary" as string]: "330 65% 28%",      // #6B1538 deep plum
+          ["--secondary-foreground" as string]: "0 0% 100%",
+          ["--accent" as string]: "340 60% 88%",           // #F8D7E3 soft blush
+          ["--accent-foreground" as string]: "330 60% 18%",
+          ["--muted" as string]: "346 50% 93%",           // #FAE2E9 light pink
+          ["--muted-foreground" as string]: "330 30% 35%",
+          ["--border" as string]: "340 50% 86%",          // #F2BFD0 pink border
+          ["--input" as string]: "340 50% 86%",
+          ["--ring" as string]: "340 75% 45%",
+          ["--amber" as string]: "340 75% 45%",          // alias primary rose
+          ["--amber-light" as string]: "340 85% 75%",    // #F9A8D4 soft pink
+          ["--amber-dark" as string]: "330 65% 28%",     // deep plum
+          ["--brown" as string]: "330 65% 28%",          // alias secondary
+          ["--brown-light" as string]: "340 60% 50%",
+          ["--brown-dark" as string]: "330 65% 22%",
+          ["--cream" as string]: "346 60% 97%",
+          ["--cream-light" as string]: "0 0% 100%",
+          ["--cream-dark" as string]: "346 50% 92%",
+          ["--orange" as string]: "340 75% 45%",         // alias primary
+          ["--orange-light" as string]: "340 85% 75%",
+          ["--orange-dark" as string]: "330 65% 28%",
+          ["--tan" as string]: "340 60% 88%",
+          ["--tan-light" as string]: "340 70% 92%",
+        } as React.CSSProperties}
+      >
+        {/* ─── HERO ─── */}
+        <section
+          className="relative overflow-hidden pt-20 pb-24"
+          style={{
+            background: "linear-gradient(135deg, #6B1538 0%, #9D174D 40%, #BE185D 100%)",
+          }}
+        >
+          <FloatingHearts />
+          {/* Soft rose glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-[radial-gradient(ellipse,rgba(249,168,212,1),transparent_70%)] pointer-events-none opacity-30" />
+          <div className="container mx-auto px-4 relative">
+            <motion.div initial={{ opacity: 1, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto text-center" style={{ color: "#FFFFFF" }}>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/25 mb-5 backdrop-blur-sm">
+                <Heart className="w-4 h-4" style={{ color: "#F9A8D4" }} />
+                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#F9A8D4" }}>India&apos;s First Love & Life Quality Report</span>
+              </div>
+              <h1 className="font-display text-4xl md:text-6xl font-bold mb-5 leading-tight" style={{ color: "#FFFFFF" }}>
+                Ek Rishta Nahi — <span className="italic" style={{ color: "#F9A8D4" }}>Ek Zindagi</span> Shuru Hone Wali Hai.
+              </h1>
+              <p className="text-lg md:text-xl mb-3 leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
+                Pyaar mein hona kaafi hai — par saath mein kaisi zindagi hogi, yeh jaanna aur bhi zaroori hai.
+              </p>
+              <p className="text-base md:text-lg mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.70)" }}>
+                Kitna sukoon hoga? Kitni samajh hogi? Financial life kaisi hogi? Emotional bonding kitni gehri hogi?
+              </p>
+              <Link
+                to={payLink}
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-lg transition hover:-translate-y-0.5 shadow-lg"
+                style={{
+                  background: "linear-gradient(135deg, #F472B6 0%, #F9A8D4 100%)",
+                  color: "#6B1538",
+                  boxShadow: "0 10px 30px rgba(244,114,182,0.35)",
+                }}
+              >
+                Apna Pyaar Shaastra Report Lao
+                <Heart className="w-5 h-5 fill-current" />
+              </Link>
+              <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mt-8 text-sm" style={{ color: "rgba(255,255,255,0.80)" }}>
+                <span className="flex items-center gap-1"><Star className="w-4 h-4 fill-current" style={{ color: "#F9A8D4" }} /> 4.9 Stars</span>
+                <span>79+ Verified Reviews</span>
+                <span>Pan India</span>
+                <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> Report on WhatsApp in 24 Hours</span>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ─── WHO IS THIS FOR ─── */}
+        <section className="py-20" style={{ background: "#FFF0F3" }}>
+          <div className="container mx-auto px-4 max-w-5xl">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-center mb-12" style={{ color: "#3D0F1F" }}>
+              Yeh Report <span className="italic" style={{ color: "#D6336C" }}>Kinke Liye</span> Hai?
+            </h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {audiences.map((a, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 1, y: 20 }}
+                  whileInView={{ opacity: 1, y: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="p-7 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-white"
+                  style={{ borderColor: "#F2BFD1" }}
+                >
+                  <div className="text-4xl mb-3">{a.emoji}</div>
+                  <h3 className="font-display text-xl font-semibold mb-3" style={{ color: "#3D0F1F" }}>{a.title}</h3>
+                  <p className="leading-relaxed text-[15px]" style={{ color: "#6B3A4F" }}>{a.text}</p>
+                </motion.div>
+              ))}
             </div>
-            <h1 className="font-display text-4xl md:text-6xl font-bold mb-5 leading-tight">
-              Ek Rishta Nahi — <span className="text-amber-light italic">Ek Zindagi</span> Shuru Hone Wali Hai.
-            </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/85 mb-3 leading-relaxed">
-              Pyaar mein hona kaafi hai — par saath mein kaisi zindagi hogi, yeh jaanna aur bhi zaroori hai.
-            </p>
-            <p className="text-base md:text-lg text-primary-foreground/70 mb-8 leading-relaxed">
-              Kitna sukoon hoga? Kitni samajh hogi? Financial life kaisi hogi? Emotional bonding kitni gehri hogi?
-            </p>
-            <Link to={payLink} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-light text-secondary font-semibold text-lg shadow-amber hover:-translate-y-0.5 transition">
-              Apna Pyaar Shaastra Report Lao
-              <Heart className="w-5 h-5 fill-current" />
-            </Link>
-            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mt-8 text-sm text-primary-foreground/80">
-              <span className="flex items-center gap-1"><Star className="w-4 h-4 fill-amber-light text-amber-light" /> 4.9 Stars</span>
-              <span>79+ Verified Reviews</span>
-              <span>Pan India</span>
-              <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> Report on WhatsApp in 24 Hours</span>
+          </div>
+        </section>
+
+        {/* ─── WHAT YOU DISCOVER ─── */}
+        <section className="py-20" style={{ background: "#FAE2E9" }}>
+          <div className="container mx-auto px-4 max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="font-display text-3xl md:text-5xl font-bold mb-4" style={{ color: "#3D0F1F" }}>
+                Yeh Report Kya <span className="italic" style={{ color: "#D6336C" }}>Batati Hai?</span>
+              </h2>
+              <p className="text-lg max-w-2xl mx-auto" style={{ color: "#6B3A4F" }}>Yeh &quot;haan&quot; ya &quot;na&quot; nahi batata. Yeh batata hai — aapka saath kaisa hoga.</p>
             </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* WHO IS THIS FOR */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-center text-foreground mb-12">Yeh Report <span className="text-primary italic">Kinke Liye</span> Hai?</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {audiences.map((a, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="card-warm p-7">
-                <div className="text-4xl mb-3">{a.emoji}</div>
-                <h3 className="font-display text-xl font-semibold text-foreground mb-3">{a.title}</h3>
-                <p className="text-muted-foreground leading-relaxed text-[15px]">{a.text}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* WHAT YOU DISCOVER */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">Yeh Report Kya <span className="text-primary italic">Batati Hai?</span></h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Yeh "haan" ya "na" nahi batata. Yeh batata hai — aapka saath kaisa hoga.</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {discoveries.map((d, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="card-warm p-7">
-                <div className="text-3xl mb-3">{d.icon}</div>
-                <h3 className="font-display text-xl font-semibold text-foreground mb-2">{d.title}</h3>
-                <p className="text-muted-foreground leading-relaxed text-[15px]">{d.text}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ANKSHAASTRA DIFFERENCE */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center text-foreground mb-4 leading-tight">
-            Yeh Ek Report Nahi — <span className="text-primary italic">Ek Expert Ki Nazar</span> Hai Aapke Rishte Par
-          </h2>
-          <div className="space-y-4 text-muted-foreground leading-[1.8] mt-8 text-[15px] md:text-base">
-            <p>Maine khud apni zindagi mein numerology ko pehle try kiya — apna naam correct kiya — aur jo badlav aaya woh main apni aankhon se dekha. Tab jaake main ne doosron ke liye yeh kaam shuru kiya.</p>
-            <p>Pyaar Shaastra Report mein jo analysis hoti hai woh koi automated software nahi karta. Main khud — <strong className="text-foreground">Himansshu Agarwal</strong> — personally har report review karta hoon.</p>
-          </div>
-          <ul className="grid md:grid-cols-2 gap-3 mt-8">
-            {differentiators.map((d, i) => (
-              <li key={i} className="flex items-start gap-3 p-4 rounded-lg bg-muted/40 border border-border">
-                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-sm text-foreground">{d}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-muted-foreground italic mt-8 text-center leading-relaxed">
-            Main woh ₹200 report nahi banata jo ek software generate karta hai aur koi padhta nahi. Main woh report banata hoon jise padhke aap decide kar sako — confidently.
-          </p>
-          <p className="text-center text-foreground font-semibold mt-3">— Himansshu Agarwal, Founder, Ankshaastra</p>
-        </div>
-      </section>
-
-      {/* PACKAGE */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center text-foreground mb-10 leading-tight">
-            Ek Sahi Samajh — <span className="text-primary italic">Poori Zindagi Ka Sukoon</span>
-          </h2>
-          <div className="card-warm p-8 md:p-10 relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-widest">Most Trusted</div>
-            <h3 className="font-display text-2xl md:text-3xl font-semibold text-foreground text-center mb-4">Pyaar Shaastra Report</h3>
-            <div className="flex items-baseline justify-center gap-3 mb-6">
-              <span className="text-xl line-through text-muted-foreground">{formatINR(pricing.pyaarShastra.originalPrice)}</span>
-              <span className="font-display text-5xl md:text-6xl font-bold text-primary">{formatINR(pricing.pyaarShastra.price)}</span>
-              <span className="text-sm font-semibold text-primary">Only</span>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {discoveries.map((d, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 1, y: 20 }}
+                  whileInView={{ opacity: 1, y: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06 }}
+                  className="p-7 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-white"
+                  style={{ borderColor: "#F2BFD1" }}
+                >
+                  <div className="text-3xl mb-3">{d.icon}</div>
+                  <h3 className="font-display text-xl font-semibold mb-2" style={{ color: "#3D0F1F" }}>{d.title}</h3>
+                  <p className="leading-relaxed text-[15px]" style={{ color: "#6B3A4F" }}>{d.text}</p>
+                </motion.div>
+              ))}
             </div>
-            <ul className="space-y-3 mb-8 max-w-md mx-auto">
-              {inclusions.map((f) => (
-                <li key={f} className="flex items-start gap-2 text-foreground"><Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />{f}</li>
+          </div>
+        </section>
+
+        {/* ─── ANKSHAASTRA DIFFERENCE ─── */}
+        <section className="py-20" style={{ background: "#FFF0F3" }}>
+          <div className="container mx-auto px-4 max-w-4xl">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-4 leading-tight" style={{ color: "#3D0F1F" }}>
+              Yeh Ek Report Nahi — <span className="italic" style={{ color: "#D6336C" }}>Ek Expert Ki Nazar</span> Hai Aapke Rishte Par
+            </h2>
+            <div className="space-y-4 leading-[1.8] mt-8 text-[15px] md:text-base" style={{ color: "#6B3A4F" }}>
+              <p>Maine khud apni zindagi mein numerology ko pehle try kiya — apna naam correct kiya — aur jo badlav aaya woh main apni aankhon se dekha. Tab jaake main ne doosron ke liye yeh kaam shuru kiya.</p>
+              <p>Pyaar Shaastra Report mein jo analysis hoti hai woh koi automated software nahi karta. Main khud — <strong style={{ color: "#3D0F1F" }}>Himansshu Agarwal</strong> — personally har report review karta hoon.</p>
+            </div>
+            <ul className="grid md:grid-cols-2 gap-3 mt-8">
+              {differentiators.map((d, i) => (
+                <li key={i} className="flex items-start gap-3 p-4 rounded-lg border" style={{ background: "rgba(250,226,233,0.5)", borderColor: "#F2BFD1" }}>
+                  <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#D6336C" }} />
+                  <span className="text-sm" style={{ color: "#3D0F1F" }}>{d}</span>
+                </li>
               ))}
             </ul>
-            <Link to={payLink} className="block w-full text-center btn-primary py-4 text-lg font-semibold">
-              Apna Report Book Karo — {formatINR(pricing.pyaarShastra.price)}
-            </Link>
-            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 24 Hours</span>
-              <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> 100% Confidential</span>
-              <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WhatsApp Delivery</span>
+            <p className="italic mt-8 text-center leading-relaxed" style={{ color: "#6B3A4F" }}>
+              Main woh ₹200 report nahi banata jo ek software generate karta hai aur koi padhta nahi. Main woh report banata hoon jise padhke aap decide kar sako — confidently.
+            </p>
+            <p className="text-center font-semibold mt-3" style={{ color: "#3D0F1F" }}>— Himansshu Agarwal, Founder, Ankshaastra</p>
+          </div>
+        </section>
+
+        {/* ─── PACKAGE ─── */}
+        <section className="py-20" style={{ background: "#FAE2E9" }}>
+          <div className="container mx-auto px-4 max-w-3xl">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-10 leading-tight" style={{ color: "#3D0F1F" }}>
+              Ek Sahi Samajh — <span className="italic" style={{ color: "#D6336C" }}>Poori Zindagi Ka Sukoon</span>
+            </h2>
+            <div className="p-8 md:p-10 relative rounded-2xl border bg-white" style={{ borderColor: "#F2BFD1" }}>
+              <div
+                className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-widest text-white"
+                style={{ background: "linear-gradient(135deg, #D6336C, #9D174D)" }}
+              >
+                Most Trusted
+              </div>
+              <h3 className="font-display text-2xl md:text-3xl font-semibold text-center mb-4" style={{ color: "#3D0F1F" }}>Pyaar Shaastra Report</h3>
+              <div className="flex items-baseline justify-center gap-3 mb-6">
+                <span className="text-xl line-through" style={{ color: "#9C6B7D" }}>{formatINR(pricing.pyaarShastra.originalPrice)}</span>
+                <span className="font-display text-5xl md:text-6xl font-bold" style={{ color: "#D6336C" }}>{formatINR(pricing.pyaarShastra.price)}</span>
+                <span className="text-sm font-semibold" style={{ color: "#D6336C" }}>Only</span>
+              </div>
+              <ul className="space-y-3 mb-8 max-w-md mx-auto">
+                {inclusions.map((f) => (
+                  <li key={f} className="flex items-start gap-2" style={{ color: "#3D0F1F" }}>
+                    <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#D6336C" }} />{f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to={payLink}
+                className="block w-full text-center py-4 text-lg font-semibold rounded-xl text-white transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  background: "linear-gradient(135deg, #D6336C 0%, #9D174D 100%)",
+                  boxShadow: "0 10px 25px rgba(214,51,108,0.35)",
+                }}
+              >
+                Apna Report Book Karo — {formatINR(pricing.pyaarShastra.price)}
+              </Link>
+              <div className="flex items-center justify-center gap-4 mt-4 text-xs" style={{ color: "#6B3A4F" }}>
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 24 Hours</span>
+                <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> 100% Confidential</span>
+                <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WhatsApp Delivery</span>
+              </div>
+            </div>
+
+            {/* Add-on highlight */}
+            <div className="mt-8 p-6 rounded-2xl border bg-white" style={{ borderColor: "#F472B6", borderWidth: "2px" }}>
+              <div className="flex items-center gap-3 mb-2">
+                <Sparkles className="w-5 h-5" style={{ color: "#D6336C" }} />
+                <h4 className="font-display text-lg font-semibold" style={{ color: "#3D0F1F" }}>Kundali Add-On</h4>
+                <span className="ml-auto font-bold" style={{ color: "#D6336C" }}>+{formatINR(pricing.pyaarShastra.kundaliAddon)}</span>
+              </div>
+              <p className="text-sm mb-3" style={{ color: "#6B3A4F" }}>150+ Page Detailed Kundali — add at checkout for only {formatINR(pricing.pyaarShastra.kundaliAddon)}.</p>
+              <ul className="grid sm:grid-cols-2 gap-1.5 text-xs" style={{ color: "#6B3A4F" }}>
+                <li className="flex items-center gap-1.5"><Check className="w-3 h-3" style={{ color: "#D6336C" }} /> Detailed Birth Chart</li>
+                <li className="flex items-center gap-1.5"><Check className="w-3 h-3" style={{ color: "#D6336C" }} /> Career, Marriage & Finance</li>
+                <li className="flex items-center gap-1.5"><Check className="w-3 h-3" style={{ color: "#D6336C" }} /> Dasha & Transit Reading</li>
+                <li className="flex items-center gap-1.5"><Check className="w-3 h-3" style={{ color: "#D6336C" }} /> Remedies & Guidance</li>
+              </ul>
             </div>
           </div>
+        </section>
 
-          {/* Add-on highlight */}
-          <div className="mt-8 card-warm p-6 border-2 border-amber/40">
-            <div className="flex items-center gap-3 mb-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <h4 className="font-display text-lg font-semibold text-foreground">Kundali Add-On</h4>
-              <span className="ml-auto font-bold text-primary">+{formatINR(pricing.pyaarShastra.kundaliAddon)}</span>
+        {/* ─── FAQ ─── */}
+        <section className="py-20" style={{ background: "#FFF0F3" }}>
+          <div className="container mx-auto px-4 max-w-3xl">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-10" style={{ color: "#3D0F1F" }}>Frequently Asked Questions</h2>
+            <div className="space-y-3">
+              {faqs.map((f, i) => (
+                <div key={i} className="rounded-2xl border overflow-hidden bg-white" style={{ borderColor: "#F2BFD1" }}>
+                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between p-5 text-left">
+                    <span className="font-medium pr-4" style={{ color: "#3D0F1F" }}>{f.q}</span>
+                    <span
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white"
+                      style={{ background: "linear-gradient(135deg, #D6336C, #9D174D)" }}
+                    >
+                      {openFaq === i ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                    </span>
+                  </button>
+                  <AnimatePresence>
+                    {openFaq === i && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                        <p className="px-5 pb-5 leading-relaxed text-[15px]" style={{ color: "#6B3A4F" }}>{f.a}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
             </div>
-            <p className="text-sm text-muted-foreground mb-3">150+ Page Detailed Kundali — add at checkout for only {formatINR(pricing.pyaarShastra.kundaliAddon)}.</p>
-            <ul className="grid sm:grid-cols-2 gap-1.5 text-xs text-muted-foreground">
-              <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" /> Detailed Birth Chart</li>
-              <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" /> Career, Marriage & Finance</li>
-              <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" /> Dasha & Transit Reading</li>
-              <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" /> Remedies & Guidance</li>
+          </div>
+        </section>
+
+        {/* ─── FINAL CTA ─── */}
+        <section className="py-24 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #6B1538 0%, #9D174D 40%, #BE185D 100%)" }}>
+          <FloatingHearts />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[radial-gradient(ellipse,rgba(249,168,212,1),transparent_70%)] pointer-events-none opacity-25" />
+          <div className="container mx-auto px-4 max-w-3xl text-center relative">
+            <h2 className="font-display text-3xl md:text-5xl font-bold mb-5 leading-tight" style={{ color: "#FFFFFF" }}>
+              Pyaar Toh Hai. Ab Yeh Bhi Jaano — <span className="italic" style={{ color: "#F9A8D4" }}>Saath Kaisa Hoga.</span>
+            </h2>
+            <p className="text-lg mb-10" style={{ color: "rgba(255,255,255,0.85)" }}>
+              Pyaar Shaastra Report — kyunki ek achhi zindagi sirf feeling se nahi, samajh se bhi banti hai.
+            </p>
+            <Link
+              to={payLink}
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-lg transition hover:-translate-y-0.5 shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #F472B6 0%, #F9A8D4 100%)",
+                color: "#6B1538",
+                boxShadow: "0 10px 30px rgba(244,114,182,0.35)",
+              }}
+            >
+              Apna Report Book Karo — {formatINR(pricing.pyaarShastra.price)}
+              <Heart className="w-5 h-5 fill-current" />
+            </Link>
+            <ul className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mt-8 text-sm" style={{ color: "rgba(255,255,255,0.80)" }}>
+              <li className="flex items-center gap-1"><Sparkles className="w-4 h-4" style={{ color: "#F9A8D4" }} /> WhatsApp pe directly order karo</li>
+              <li className="flex items-center gap-1"><Clock className="w-4 h-4" style={{ color: "#F9A8D4" }} /> 24 ghante mein report delivery</li>
+              <li className="flex items-center gap-1"><Heart className="w-4 h-4" style={{ color: "#F9A8D4" }} /> Personalized by Ankshaastra</li>
             </ul>
           </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center text-foreground mb-10">Frequently Asked Questions</h2>
-          <div className="space-y-3">
-            {faqs.map((f, i) => (
-              <div key={i} className="card-warm overflow-hidden">
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between p-5 text-left">
-                  <span className="font-medium text-foreground pr-4">{f.q}</span>
-                  <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0">
-                    {openFaq === i ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                  </span>
-                </button>
-                <AnimatePresence>
-                  {openFaq === i && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      <p className="px-5 pb-5 text-muted-foreground leading-relaxed text-[15px]">{f.a}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="py-24 gradient-hero relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[radial-gradient(ellipse,hsl(var(--amber)/0.18),transparent_70%)] pointer-events-none" />
-        <div className="container mx-auto px-4 max-w-3xl text-center relative">
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-5 leading-tight">
-            Pyaar Toh Hai. Ab Yeh Bhi Jaano — <span className="text-amber-light italic">Saath Kaisa Hoga.</span>
-          </h2>
-          <p className="text-lg text-primary-foreground/85 mb-10">
-            Pyaar Shaastra Report — kyunki ek achhi zindagi sirf feeling se nahi, samajh se bhi banti hai.
-          </p>
-          <Link to={payLink} className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-amber-light text-secondary font-semibold text-lg shadow-amber hover:-translate-y-0.5 transition">
-            Apna Report Book Karo — {formatINR(pricing.pyaarShastra.price)}
-            <Heart className="w-5 h-5 fill-current" />
-          </Link>
-          <ul className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mt-8 text-sm text-primary-foreground/80">
-            <li className="flex items-center gap-1"><Sparkles className="w-4 h-4 text-amber-light" /> WhatsApp pe directly order karo</li>
-            <li className="flex items-center gap-1"><Clock className="w-4 h-4 text-amber-light" /> 24 ghante mein report delivery</li>
-            <li className="flex items-center gap-1"><Heart className="w-4 h-4 text-amber-light" /> Personalized by Ankshaastra</li>
-          </ul>
-        </div>
-      </section>
+        </section>
+      </div>
     </Layout>
   );
 };
