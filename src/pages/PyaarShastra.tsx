@@ -325,26 +325,10 @@ const PyaarShastra = () => {
                 Apna Report Book Karo — {formatINR(pricing.pyaarShastra.price)}
               </Link>
               <div className="flex items-center justify-center gap-4 mt-4 text-xs" style={{ color: "#6B3A4F" }}>
-                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 24 Hours</span>
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 9 Hours</span>
                 <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> 100% Confidential</span>
-                <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WhatsApp Delivery</span>
+                <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> Email Delivery</span>
               </div>
-            </div>
-
-            {/* Add-on highlight */}
-            <div className="mt-8 p-6 rounded-2xl border bg-white" style={{ borderColor: "#F472B6", borderWidth: "2px" }}>
-              <div className="flex items-center gap-3 mb-2">
-                <Sparkles className="w-5 h-5" style={{ color: "#D6336C" }} />
-                <h4 className="font-display text-lg font-semibold" style={{ color: "#3D0F1F" }}>Kundali Add-On</h4>
-                <span className="ml-auto font-bold" style={{ color: "#D6336C" }}>+{formatINR(pricing.pyaarShastra.kundaliAddon)}</span>
-              </div>
-              <p className="text-sm mb-3" style={{ color: "#6B3A4F" }}>150+ Page Detailed Kundali — add at checkout for only {formatINR(pricing.pyaarShastra.kundaliAddon)}.</p>
-              <ul className="grid sm:grid-cols-2 gap-1.5 text-xs" style={{ color: "#6B3A4F" }}>
-                <li className="flex items-center gap-1.5"><Check className="w-3 h-3" style={{ color: "#D6336C" }} /> Detailed Birth Chart</li>
-                <li className="flex items-center gap-1.5"><Check className="w-3 h-3" style={{ color: "#D6336C" }} /> Career, Marriage & Finance</li>
-                <li className="flex items-center gap-1.5"><Check className="w-3 h-3" style={{ color: "#D6336C" }} /> Dasha & Transit Reading</li>
-                <li className="flex items-center gap-1.5"><Check className="w-3 h-3" style={{ color: "#D6336C" }} /> Remedies & Guidance</li>
-              </ul>
             </div>
           </div>
         </section>
@@ -403,7 +387,7 @@ const PyaarShastra = () => {
             </Link>
             <ul className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mt-8 text-sm" style={{ color: "rgba(255,255,255,0.80)" }}>
               <li className="flex items-center gap-1"><Sparkles className="w-4 h-4" style={{ color: "#F9A8D4" }} /> WhatsApp pe directly order karo</li>
-              <li className="flex items-center gap-1"><Clock className="w-4 h-4" style={{ color: "#F9A8D4" }} /> 24 ghante mein report delivery</li>
+              <li className="flex items-center gap-1"><Mail className="w-4 h-4" style={{ color: "#F9A8D4" }} /> 9 ghante mein email pe delivery</li>
               <li className="flex items-center gap-1"><Heart className="w-4 h-4" style={{ color: "#F9A8D4" }} /> Personalized by Ankshaastra</li>
             </ul>
           </div>
