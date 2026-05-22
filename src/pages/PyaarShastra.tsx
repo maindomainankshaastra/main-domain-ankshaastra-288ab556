@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { Heart, Check, Plus, Minus, Sparkles, Clock, Shield, MessageCircle, Star } from "lucide-react";
+import { Heart, Check, Plus, Minus, Sparkles, Clock, Shield, MessageCircle, Star, Users, HeartCrack, HeartHandshake, Brain, Wallet, HandHeart, Home, Sprout, Mail } from "lucide-react";
 import { pricing, formatINR } from "@/config/pricing";
 
 const reportName = "Pyaar Shaastra Report";
@@ -11,40 +11,38 @@ const payLink = `/payment?service=${encodeURIComponent(reportName)}&amount=${pri
 
 const audiences = [
   {
-    emoji: "💑",
-    title: "Tum Dono Pehle Se Saath Ho",
-    text: "Pyaar hai — commitment bhi hai. Bas yeh jaanna hai ki aage ka safar kaisa hoga. Kitni harmony hogi, kitni understanding hogi, life mein kya expect karo — Pyaar Shaastra Report yahi batata hai.",
+    Icon: HeartHandshake,
+    title: "Life Mein Kya Expectations Honi Chahiye",
+    text: "Pyaar Shaastra Report yahi batati hai. Jo sirf accurate compatibility check karta hai — judgement nahi karta. Aapko clarity deta hai ki aage ka safar kaisa hoga.",
   },
   {
-    emoji: "😕",
+    Icon: HeartCrack,
+    title: "Pehli Baar Dil Toot Gaya",
+    text: "Ab sab sahi se hona chahiye. Pyaar Shaastra Report aapko batata hai ki is rishte ki quality kaisi hogi — peace, stability, aur emotional depth ke terms mein.",
+  },
+  {
+    Icon: Users,
     title: "Confused Ho — Decision Nahi Ho Raha",
-    text: "Feelings hain, par certainty nahi. Ghar wale kuch aur bol rahe hain, dil kuch aur. Pyaar Shaastra Report ek neutral expert ki tarah kaam karta hai — jo sirf data dekhta hai, judgment nahi karta.",
-  },
-  {
-    emoji: "💍",
-    title: "Dobaara Shuru Karna Chahte Ho",
-    text: "Pehli baar mein jo toot gaya — usse seekha. Ab sab sahi karna hai. Pyaar Shaastra Report aapko batata hai ki is rishte ki quality kaisi hogi — peace, stability, aur emotional depth ke terms mein.",
+    text: "Feelings hain, par certainty nahi. Ghar wale kuch aur bol rahe hain, dil kuch aur. Pyaar Shaastra Report ek neutral expert ki tarah kaam karta hai — jo sirf data dekhta hai.",
   },
 ];
 
 const discoveries = [
-  { icon: "☮️", title: "Shanti aur Samajh", text: "Dono ke beech mental compatibility kitni hogi — ek doosre ko kitna samjhoge, arguments kitne hote hain, resolution kaisa hoga." },
-  { icon: "💰", title: "Financial Life Ki Quality", text: "Paise ke mamle mein dono ki soch milti hai ya nahi — spending, saving, decisions — sab analyze hota hai." },
-  { icon: "❤️", title: "Emotional Bonding Ki Gehraai", text: "Affection, support, aur emotional intimacy — yeh rishte ki neev hoti hai. Pyaar Shaastra Report batata hai yeh kitni strong hai." },
-  { icon: "🏡", title: "Ghar Ka Mahaul", text: "Roz ki zindagi kaisi hogi — routine, family involvement, priorities — day-to-day harmony ka analysis." },
-  { icon: "🌱", title: "Personal Growth Saath Mein", text: "Kya yeh rishta dono ko aage badhata hai? Career, dreams, aur personal goals ke liye yeh saath kitna supportive hoga." },
-  { icon: "⏰", title: "Sabse Acha Waqt", text: "Life ke important moments ke liye sabse favorable timing — shaadi, naya ghar, naya chapter — kab shuru karna best rahega." },
+  { Icon: Brain, title: "Shanti aur Samajh", text: "Dono ke beech mental compatibility kitni hogi — ek doosre ko kitna samjhoge, arguments kitne hote hain, resolution kaisa hoga." },
+  { Icon: Wallet, title: "Financial Life Ki Quality", text: "Paise ke mamle mein dono ki soch milti hai ya nahi — spending, saving, decisions — sab analyze hota hai." },
+  { Icon: HandHeart, title: "Emotional Bonding Ki Gehraai", text: "Affection, support, aur emotional intimacy — yeh rishte ki neev hoti hai. Pyaar Shaastra Report batata hai yeh kitni strong hai." },
+  { Icon: Home, title: "Ghar Ka Mahaul", text: "Roz ki zindagi kaisi hogi — routine, family involvement, priorities — day-to-day harmony ka analysis." },
+  { Icon: Sprout, title: "Personal Growth Saath Mein", text: "Kya yeh rishta dono ko aage badhata hai? Career, dreams, aur personal goals ke liye yeh saath kitna supportive hoga." },
+  { Icon: Users, title: "In-Laws Ke Saath Relation", text: "Sasural ke saath kaisa rishta banega — adjustment, respect, aur family harmony ka deep analysis. Yeh aksar relationship ki sabse badi test hoti hai." },
 ];
 
 const differentiators = [
-  "Ashtakoot 8-factor compatibility — score ke saath explanation",
+  "Ashtakoot 8-factor compatibility / 36 Guns — score ke saath explanation",
   "KP System planetary analysis — woh layer jo 90% log miss karte hain",
   "Moon, Sun, Navamsa — teen chart perspectives",
   "Manglik Dosha analysis — with remedy if needed",
   "Vimsottari Dasa — timing guidance",
-  "Detailed compatibility interpretation — sirf numbers nahi, meaning bhi",
-  "24 hours mein WhatsApp pe deliver",
-  "4.9 stars — 79+ verified reviews",
+  "103 pages — sirf numbers nahi, meaning bhi",
 ];
 
 const inclusions = [
@@ -53,7 +51,7 @@ const inclusions = [
   "Financial Harmony Analysis",
   "Marriage & Long-Term Stability Insights",
   "Compatibility Timing Guidance",
-  "PDF Report on WhatsApp within 24 Hours",
+  "PDF Report on Email within 9 Hours",
 ];
 
 const faqs = [
