@@ -189,14 +189,14 @@ const PyaarShastra = () => {
                   boxShadow: "0 10px 30px rgba(244,114,182,0.35)",
                 }}
               >
-                Apna Pyaar Shaastra Report Lao
+                Get Clarity Now
                 <Heart className="w-5 h-5 fill-current" />
               </Link>
               <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mt-8 text-sm" style={{ color: "rgba(255,255,255,0.80)" }}>
                 <span className="flex items-center gap-1"><Star className="w-4 h-4 fill-current" style={{ color: "#F9A8D4" }} /> 4.9 Stars</span>
-                <span>79+ Verified Reviews</span>
+                <span>90+ Verified Reviews</span>
                 <span>Pan India</span>
-                <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> Report on WhatsApp in 24 Hours</span>
+                <span className="flex items-center gap-1"><Mail className="w-4 h-4" /> Report on Email in 9 Hours</span>
               </div>
             </motion.div>
           </div>
@@ -219,7 +219,12 @@ const PyaarShastra = () => {
                   className="p-7 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-white"
                   style={{ borderColor: "#F2BFD1" }}
                 >
-                  <div className="text-4xl mb-3">{a.emoji}</div>
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                    style={{ background: "linear-gradient(135deg, #FCE7F3, #FBCFE8)" }}
+                  >
+                    <a.Icon className="w-6 h-6" style={{ color: "#D6336C" }} strokeWidth={1.75} />
+                  </div>
                   <h3 className="font-display text-xl font-semibold mb-3" style={{ color: "#3D0F1F" }}>{a.title}</h3>
                   <p className="leading-relaxed text-[15px]" style={{ color: "#6B3A4F" }}>{a.text}</p>
                 </motion.div>
@@ -248,7 +253,12 @@ const PyaarShastra = () => {
                   className="p-7 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-white"
                   style={{ borderColor: "#F2BFD1" }}
                 >
-                  <div className="text-3xl mb-3">{d.icon}</div>
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                    style={{ background: "linear-gradient(135deg, #FCE7F3, #FBCFE8)" }}
+                  >
+                    <d.Icon className="w-6 h-6" style={{ color: "#D6336C" }} strokeWidth={1.75} />
+                  </div>
                   <h3 className="font-display text-xl font-semibold mb-2" style={{ color: "#3D0F1F" }}>{d.title}</h3>
                   <p className="leading-relaxed text-[15px]" style={{ color: "#6B3A4F" }}>{d.text}</p>
                 </motion.div>
@@ -260,14 +270,10 @@ const PyaarShastra = () => {
         {/* ─── ANKSHAASTRA DIFFERENCE ─── */}
         <section className="py-20" style={{ background: "#FFF0F3" }}>
           <div className="container mx-auto px-4 max-w-4xl">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-4 leading-tight" style={{ color: "#3D0F1F" }}>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-10 leading-tight" style={{ color: "#3D0F1F" }}>
               Yeh Ek Report Nahi — <span className="italic" style={{ color: "#D6336C" }}>Ek Expert Ki Nazar</span> Hai Aapke Rishte Par
             </h2>
-            <div className="space-y-4 leading-[1.8] mt-8 text-[15px] md:text-base" style={{ color: "#6B3A4F" }}>
-              <p>Maine khud apni zindagi mein numerology ko pehle try kiya — apna naam correct kiya — aur jo badlav aaya woh main apni aankhon se dekha. Tab jaake main ne doosron ke liye yeh kaam shuru kiya.</p>
-              <p>Pyaar Shaastra Report mein jo analysis hoti hai woh koi automated software nahi karta. Main khud — <strong style={{ color: "#3D0F1F" }}>Himansshu Agarwal</strong> — personally har report review karta hoon.</p>
-            </div>
-            <ul className="grid md:grid-cols-2 gap-3 mt-8">
+            <ul className="grid md:grid-cols-2 gap-3">
               {differentiators.map((d, i) => (
                 <li key={i} className="flex items-start gap-3 p-4 rounded-lg border" style={{ background: "rgba(250,226,233,0.5)", borderColor: "#F2BFD1" }}>
                   <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#D6336C" }} />
