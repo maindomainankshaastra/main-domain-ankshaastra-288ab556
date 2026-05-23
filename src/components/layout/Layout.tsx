@@ -7,20 +7,20 @@ import PageTransition from "../PageTransition";
 
 interface LayoutProps {
   children: ReactNode;
+  /** When true, hides Navbar, Footer, and floating WhatsApp button. Used for focused report pages. */
+  minimal?: boolean;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children, minimal = false }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
-      <main className="flex-1 pt-20">
-        <PageTransition>
-          {children}
-        </PageTransition>
+      {!minimal && <Navbar />}
+      <main className={`flex-1 ${minimal ? "" : "pt-20"}`}>
+        <PageTransition>{children}</PageTransition>
       </main>
-      <Footer />
+      {!minimal && <Footer />}
       <BackToTop />
-      <WhatsAppButton />
+      {!minimal && <WhatsAppButton />}
     </div>
   );
 };

@@ -81,10 +81,12 @@ export const pricing = {
   },
   // ── Reports ──
   reports: {
-    kundaliSingle: num(env.VITE_KUNDALI_SINGLE, 699),
-    kundaliSingleOriginal: num(env.VITE_KUNDALI_SINGLE_ORIGINAL, 1499),
-    kundaliDouble: num(env.VITE_KUNDALI_DOUBLE, 1199),
-    kundaliTriple: num(env.VITE_KUNDALI_TRIPLE, 1599),
+    kundaliSingle: num(env.VITE_KUNDALI_SINGLE, 299),
+    kundaliSingleOriginal: num(env.VITE_KUNDALI_SINGLE_ORIGINAL, 699),
+    kundaliDouble: num(env.VITE_KUNDALI_DOUBLE, 399),
+    kundaliDoubleOriginal: num(env.VITE_KUNDALI_DOUBLE_ORIGINAL, 899),
+    kundaliTriple: num(env.VITE_KUNDALI_TRIPLE, 549),
+    kundaliTripleOriginal: num(env.VITE_KUNDALI_TRIPLE_ORIGINAL, 1199),
     varshphal: num(env.VITE_VARSHPHAL, 699),
     numerology: num(env.VITE_REPORT_NUMEROLOGY, 1999),
     numerologyOriginal: num(env.VITE_REPORT_NUMEROLOGY_ORIGINAL, 2499),
