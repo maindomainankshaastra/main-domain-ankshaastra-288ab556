@@ -119,42 +119,7 @@ const PyaarShastra = () => {
         }}
       />
 
-      {/* ─── PAGE-SCOPED LOVE THEME ─── */}
-      <div
-        className="relative"
-        style={{
-          // Override semantic tokens just for this page
-          ["--background" as string]: "346 60% 97%",      // #FFF0F3 blush cream
-          ["--foreground" as string]: "330 60% 18%",     // #3D0F1F deep plum
-          ["--card" as string]: "0 0% 100%",             // white cards
-          ["--card-foreground" as string]: "330 60% 18%",
-          ["--primary" as string]: "340 75% 45%",        // #D6336C rose
-          ["--primary-foreground" as string]: "0 0% 100%",
-          ["--secondary" as string]: "330 65% 28%",      // #6B1538 deep plum
-          ["--secondary-foreground" as string]: "0 0% 100%",
-          ["--accent" as string]: "340 60% 88%",           // #F8D7E3 soft blush
-          ["--accent-foreground" as string]: "330 60% 18%",
-          ["--muted" as string]: "346 50% 93%",           // #FAE2E9 light pink
-          ["--muted-foreground" as string]: "330 30% 35%",
-          ["--border" as string]: "340 50% 86%",          // #F2BFD0 pink border
-          ["--input" as string]: "340 50% 86%",
-          ["--ring" as string]: "340 75% 45%",
-          ["--amber" as string]: "340 75% 45%",          // alias primary rose
-          ["--amber-light" as string]: "340 85% 75%",    // #F9A8D4 soft pink
-          ["--amber-dark" as string]: "330 65% 28%",     // deep plum
-          ["--brown" as string]: "330 65% 28%",          // alias secondary
-          ["--brown-light" as string]: "340 60% 50%",
-          ["--brown-dark" as string]: "330 65% 22%",
-          ["--cream" as string]: "346 60% 97%",
-          ["--cream-light" as string]: "0 0% 100%",
-          ["--cream-dark" as string]: "346 50% 92%",
-          ["--orange" as string]: "340 75% 45%",         // alias primary
-          ["--orange-light" as string]: "340 85% 75%",
-          ["--orange-dark" as string]: "330 65% 28%",
-          ["--tan" as string]: "340 60% 88%",
-          ["--tan-light" as string]: "340 70% 92%",
-        } as React.CSSProperties}
-      >
+      <div className="relative">
         {/* ─── HERO ─── */}
         <section
           className="relative overflow-hidden pt-20 pb-24"
