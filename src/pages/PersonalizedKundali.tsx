@@ -14,12 +14,18 @@ const pricingPlans = [
   {
     count: "1 Kundali",
     price: formatINR(pricing.reports.kundaliSingle),
+    original: formatINR(pricing.reports.kundaliSingleOriginal),
+    amount: pricing.reports.kundaliSingle,
+    service: "Personalized Kundali",
     tag: "Best for Personal Analysis",
     desc: "Get deep insights about your love, career, money & health.",
   },
   {
     count: "2 Kundali",
     price: formatINR(pricing.reports.kundaliDouble),
+    original: formatINR(pricing.reports.kundaliDoubleOriginal),
+    amount: pricing.reports.kundaliDouble,
+    service: "Personalized Kundali Match-Making",
     tag: "Best for Match-Making",
     desc: "Ideal for couples or kundali matching before marriage.",
     popular: true,
@@ -27,6 +33,9 @@ const pricingPlans = [
   {
     count: "3 Kundali",
     price: formatINR(pricing.reports.kundaliTriple),
+    original: formatINR(pricing.reports.kundaliTripleOriginal),
+    amount: pricing.reports.kundaliTriple,
+    service: "Personalized Kundali Family",
     tag: "Best for Family",
     desc: "Complete astrological guidance for your entire family.",
   },
@@ -97,7 +106,7 @@ const PersonalizedKundali = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
-    <Layout>
+    <Layout minimal>
       <SEOHead
         title="Personalized Kundli Report"
         description="Get your personalized Janam Kundali report covering career, marriage, wealth, health & remedies. Delivered within 3 hours by Himansshu Agarwal Ji."
@@ -136,7 +145,8 @@ const PersonalizedKundali = () => {
             </div>
 
             <Link to={`/payment?service=Personalized%20Kundali&amount=${pricing.reports.kundaliSingle}`} className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
-              Get Your Kundli — Starting {formatINR(pricing.reports.kundaliSingle)}
+              Get Your Kundali in {formatINR(pricing.reports.kundaliSingle)}
+              <span className="text-base font-medium text-primary/60 line-through">{formatINR(pricing.reports.kundaliSingleOriginal)}</span>
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
@@ -175,10 +185,13 @@ const PersonalizedKundali = () => {
                   </div>
                 )}
                 <h3 className="font-display text-xl font-bold text-foreground mb-2">{plan.count}</h3>
-                <div className="text-4xl font-bold text-gradient-gold mb-2">{plan.price}</div>
+                <div className="flex items-baseline justify-center gap-2 mb-2">
+                  <span className="text-lg text-muted-foreground line-through">{plan.original}</span>
+                  <span className="text-4xl font-bold text-gradient-gold">{plan.price}</span>
+                </div>
                 <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">{plan.tag}</span>
                 <p className="text-muted-foreground text-sm mb-6">{plan.desc}</p>
-                <Link to={`/payment?service=${encodeURIComponent(plan.count === "1 Kundali" ? "Personalized Kundali" : plan.count === "2 Kundali" ? "Personalized Kundali Match-Making" : "Personalized Kundali Family")}&amount=${plan.count === "1 Kundali" ? 699 : plan.count === "2 Kundali" ? 1199 : 1599}`} className={`block w-full font-bold py-3 rounded-xl transition-opacity text-base ${plan.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-foreground hover:bg-muted/80"}`}>
+                <Link to={`/payment?service=${encodeURIComponent(plan.service)}&amount=${plan.amount}`} className={`block w-full font-bold py-3 rounded-xl transition-opacity text-base ${plan.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-foreground hover:bg-muted/80"}`}>
                   Buy Now
                 </Link>
               </motion.div>
