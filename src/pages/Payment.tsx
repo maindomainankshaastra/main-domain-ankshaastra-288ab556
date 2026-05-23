@@ -378,8 +378,12 @@ const PaymentPage = () => {
   const consultationType = searchParams.get("type") as keyof typeof consultationPackages;
   const formTypeParam = searchParams.get("formType") as FormType | null;
 
-  const isServiceMode = !!(serviceName && serviceAmount);
-  const servicePrice = serviceAmount ? parseInt(serviceAmount, 10) : 0;
+  const [serviceInfo, setServiceInfo] = useState<{ id: string; title: string; price: number; gst_rate: number } | null>(null);
+  const [serviceLoading, setServiceLoading] = useState(false);
+  const [serviceError, setServiceError] = useState<string | null>(null);
+
+  const isServiceMode = !!serviceName;
+  const servicePrice = serviceInfo?.price ?? (serviceAmount ? parseInt(serviceAmount, 10) : 0);
 
   const formType: FormType = formTypeParam || inferFormType(serviceName, !!consultationType);
 
@@ -408,6 +412,39 @@ const PaymentPage = () => {
       setSelectedPackage(currentPackage.options[0].id);
     }
   }, [currentPackage, selectedPackage]);
+
+  useEffect(() => {
+    if (!serviceName) {
+      return;
+    }
+
+    const controller = new AbortController();
+    setServiceLoading(true);
+    setServiceError(null);
+
+    fetch(`/api/services?title=${encodeURIComponent(serviceName)}`, { signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || "Failed to load service details");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setServiceInfo(data?.service ?? null);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Service lookup failed", error);
+        setServiceError("Unable to load service pricing from the service catalog.");
+        setServiceInfo(null);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setServiceLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [serviceName]);
 
   // Pick schema/defaults by form type
   const { schema, defaults } = useMemo(() => {
@@ -506,11 +543,7 @@ const PaymentPage = () => {
           customerName: displayPersonName,
           customerEmail: formData.email,
           customerPhone: formData.whatsapp,
-          metadata: {
-            formType,
-            serviceSlug: serviceName,
-            addons: selectedAddonObjects.map((a) => ({ id: a.id, label: a.label, price: a.price })),
-          },
+          metadata: { formType, serviceSlug: serviceName },
         }),
       });
       if (!response.ok) throw new Error("Order API failed");
@@ -574,6 +607,12 @@ const PaymentPage = () => {
       toast({ title: "Please select a plan", description: "Choose a consultation plan to proceed.", variant: "destructive" });
       return;
     }
+
+    if (isServiceMode && !servicePrice) {
+      toast({ title: "Service price unavailable", description: "We could not load the current price for this service. Please refresh or contact support.", variant: "destructive" });
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const baseAmount = isServiceMode ? servicePrice : (selectedOption?.price || 500);
@@ -1000,11 +1039,18 @@ const PaymentPage = () => {
 
                     <button
                       type="submit"
-                      disabled={isProcessing || (!isServiceMode && !selectedPackage)}
+                      disabled={isProcessing || (!isServiceMode && !selectedPackage) || (isServiceMode && (serviceLoading || !!serviceError))}
                       className={`w-full py-4 text-lg rounded-xl font-semibold text-white transition-all duration-300 bg-gradient-to-r ${heroColor} hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {isProcessing ? "Processing..." : `Pay ₹${displayPrice.toLocaleString()}`}
                     </button>
+
+                    {isServiceMode && serviceLoading && (
+                      <div className="mt-3 text-sm text-muted-foreground">Loading service pricing...</div>
+                    )}
+                    {isServiceMode && serviceError && (
+                      <div className="mt-3 text-sm text-red-500">{serviceError}</div>
+                    )}
 
                     <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                       <Shield className="w-4 h-4 text-secondary" />

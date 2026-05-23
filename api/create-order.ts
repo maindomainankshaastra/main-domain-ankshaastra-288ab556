@@ -12,8 +12,8 @@ export default async function handler(req: { method?: string; body?: Record<stri
   }
 
   const body = req.body || {};
-  const amount = Number(body.amount);
-  const serviceTitle = String(body.serviceTitle || body.service || "Service");
+  let amount = Number(body.amount);
+  let serviceTitle = String(body.serviceTitle || body.service || "Service");
   const userId = body.userId ? String(body.userId) : null;
   const sourceWebsite = String(body.sourceWebsite || "ankshaastra.com");
   const orderType = String(body.orderType || "service");
@@ -22,14 +22,48 @@ export default async function handler(req: { method?: string; body?: Record<stri
   const customerPhone = body.customerPhone ? String(body.customerPhone) : null;
   const metadata = (body.metadata as Record<string, unknown>) || {};
 
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ error: "Invalid amount" });
-  }
-
-  const gst = calculateGst({ amount, isGstInclusive: true });
+  const serviceSlug = String(metadata.serviceSlug || serviceTitle || "").trim();
+  const requestedServiceId = metadata.serviceId ? String(metadata.serviceId) : null;
+  let resolvedServiceId: string | null = null;
+  let gstRate: number | undefined;
 
   try {
     const supabase = getSupabaseAdmin();
+
+    if (requestedServiceId || serviceSlug) {
+      const query = supabase
+        .from("services")
+        .select("id,title,price,gst_rate,is_active")
+        .limit(1);
+
+      const resolvedQuery = requestedServiceId
+        ? query.eq("id", requestedServiceId)
+        : query.ilike("title", serviceSlug);
+
+      const { data: service, error: serviceError } = await resolvedQuery.maybeSingle();
+
+      if (serviceError) {
+        console.error("Service lookup failed:", serviceError);
+      }
+
+      if (service) {
+        if (!service.is_active) {
+          return res.status(400).json({ error: "This service is currently unavailable." });
+        }
+
+        serviceTitle = service.title;
+        amount = Number(service.price);
+        resolvedServiceId = service.id;
+        gstRate = service.gst_rate ?? undefined;
+      }
+    }
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid amount" });
+    }
+
+    const gst = calculateGst({ amount, isGstInclusive: true, gstRate });
+
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
     const rzOrder = await razorpay.orders.create({
@@ -53,6 +87,7 @@ export default async function handler(req: { method?: string; body?: Record<stri
       customer_phone: customerPhone,
       metadata,
     };
+    if (resolvedServiceId) orderRow.service_id = resolvedServiceId;
 
     if (userId) orderRow.user_id = userId;
 
