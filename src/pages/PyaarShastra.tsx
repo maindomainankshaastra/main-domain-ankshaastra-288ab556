@@ -56,8 +56,8 @@ const inclusions = [
 
 const faqs = [
   { q: "Kya yeh batata hai ki rishta hona chahiye ya nahi?", a: "Bilkul nahi. Pyaar Shaastra Report yeh decide nahi karta. Yeh sirf batata hai ki aapke saath ki zindagi ki quality kaisi hogi — sukoon, samajh, aur harmony ke terms mein. Decision aapka hai, hamesha." },
-  { q: "Kya mujhe birth time pata hona chahiye?", a: "Accurate report ke liye helpful hai. Agar exact time nahi pata — toh bhi analysis ho sakti hai. Pehle WhatsApp karein, hum guide karenge." },
-  { q: "Report kitne time mein milegi?", a: "24 ghante ke andar — directly WhatsApp pe PDF mein." },
+  { q: "Kya mujhe birth time pata hona chahiye?", a: "Haan, 100% exact time of birth, place of birth aur date of birth mandatory hai accurate results ke liye. In details ke bina report ki accuracy compromise ho jaati hai." },
+  { q: "Report kitne time mein milegi?", a: "9 ghante ke andar — directly aapke email pe PDF mein deliver hoti hai." },
   { q: "Kya yeh sirf shaadi ke liye hai?", a: "Nahi. Jo bhi serious relationship mein hain — engaged, live-in, committed, ya sirf sure hona chahte hain — sabke liye hai." },
   { q: "Kya yeh report confidential rehti hai?", a: "100%. Aapki details aur report sirf aapke saath share hoti hai — koi aur nahi." },
 ];
