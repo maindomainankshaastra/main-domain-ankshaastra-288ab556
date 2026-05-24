@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "./lib/supabase-admin";
+import { getSupabaseAdmin } from "./lib/supabase-admin.js";
 
 export default async function handler(req: { method?: string; query?: Record<string, string | string[]> }, res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } }) {
   if (req.method !== "GET") return res.status(405).end();

@@ -1,6 +1,6 @@
-import { logWebhook, verifyRazorpaySignature } from "../lib/webhook-utils";
-import { getSupabaseAdmin } from "../lib/supabase-admin";
-import { runPostPaymentWorkflow } from "../lib/workflow-engine";
+import { logWebhook, verifyRazorpaySignature } from "../lib/webhook-utils.js";
+import { getSupabaseAdmin } from "../lib/supabase-admin.js";
+import { runPostPaymentWorkflow } from "../lib/workflow-engine.js";
 
 export const config = { api: { bodyParser: false } };
 

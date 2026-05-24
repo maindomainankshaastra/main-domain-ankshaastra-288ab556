@@ -1,4 +1,4 @@
-import { renderInvoiceHtml, type InvoiceTemplateData } from "./templates/invoice-html";
+import { renderInvoiceHtml, type InvoiceTemplateData } from "./templates/invoice-html.js";
 
 /** Renders invoice HTML to PDF buffer via Puppeteer (serverless-compatible). */
 export async function renderPdfFromHtml(html: string): Promise<Buffer> {

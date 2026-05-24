@@ -1,6 +1,6 @@
-import { verifyApiKey } from "../lib/webhook-utils";
-import { getSupabaseAdmin } from "../lib/supabase-admin";
-import { processPendingJobs } from "../lib/job-processor";
+import { verifyApiKey } from "../lib/webhook-utils.js";
+import { getSupabaseAdmin } from "../lib/supabase-admin.js";
+import { processPendingJobs } from "../lib/job-processor.js";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).end();

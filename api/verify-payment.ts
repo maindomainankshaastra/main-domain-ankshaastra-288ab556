@@ -1,7 +1,7 @@
 import crypto from "crypto";
-import { getSupabaseAdmin } from "./lib/supabase-admin";
-import { advanceWorkflow, runPostPaymentWorkflow } from "./lib/workflow-engine";
-import { processPendingJobs } from "./lib/job-processor";
+import { getSupabaseAdmin } from "./lib/supabase-admin.js";
+import { advanceWorkflow, runPostPaymentWorkflow } from "./lib/workflow-engine.js";
+import { processPendingJobs } from "./lib/job-processor.js";
 
 export default async function handler(req: { method?: string; body?: Record<string, unknown> }, res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } }) {
   if (req.method !== "POST") return res.status(405).end();

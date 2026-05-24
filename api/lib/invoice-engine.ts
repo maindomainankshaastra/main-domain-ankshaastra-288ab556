@@ -1,10 +1,10 @@
-import { getSupabaseAdmin } from "./supabase-admin";
-import { calculateGst, nextInvoiceNumber } from "./gst";
-import { renderInvoiceHtml, type InvoiceTemplateData } from "./templates/invoice-html";
-import { generateInvoicePdf } from "./pdf-engine";
-import { sendTemplatedEmail } from "./email-engine";
-import { sendTemplatedWhatsApp } from "./whatsapp-engine";
-import { advanceWorkflow } from "./workflow-engine";
+import { getSupabaseAdmin } from "./supabase-admin.js";
+import { calculateGst, nextInvoiceNumber } from "./gst.js";
+import { renderInvoiceHtml, type InvoiceTemplateData } from "./templates/invoice-html.js";
+import { generateInvoicePdf } from "./pdf-engine.js";
+import { sendTemplatedEmail } from "./email-engine.js";
+import { sendTemplatedWhatsApp } from "./whatsapp-engine.js";
+import { advanceWorkflow } from "./workflow-engine.js";
 
 export type GenerateInvoiceInput = {
   orderId: string;

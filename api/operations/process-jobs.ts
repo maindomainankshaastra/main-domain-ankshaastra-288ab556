@@ -1,5 +1,5 @@
-import { verifyApiKey } from "../lib/webhook-utils";
-import { processPendingJobs } from "../lib/job-processor";
+import { verifyApiKey } from "../lib/webhook-utils.js";
+import { processPendingJobs } from "../lib/job-processor.js";
 
 export default async function handler(req: any, res: any) {
   const cronSecret = process.env.CRON_SECRET;

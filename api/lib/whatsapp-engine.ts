@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from "./supabase-admin";
-import { interpolate } from "./templates/email-layout";
+import { getSupabaseAdmin } from "./supabase-admin.js";
+import { interpolate } from "./templates/email-layout.js";
 
 export type SendWhatsAppInput = {
   to: string;

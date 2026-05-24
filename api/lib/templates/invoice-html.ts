@@ -1,4 +1,4 @@
-import type { GstBreakdown } from "../gst";
+import type { GstBreakdown } from "../gst.js";
 
 export type InvoiceTemplateData = {
   invoiceNumber: string;

@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
-import { getSupabaseAdmin } from "./supabase-admin";
-import { wrapEmailLayout, interpolate } from "./templates/email-layout";
+import { getSupabaseAdmin } from "./supabase-admin.js";
+import { wrapEmailLayout, interpolate } from "./templates/email-layout.js";
 
 export type SendEmailInput = {
   to: string;

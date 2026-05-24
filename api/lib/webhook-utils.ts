@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { getSupabaseAdmin } from "./supabase-admin";
+import { getSupabaseAdmin } from "./supabase-admin.js";
 
 export async function logWebhook(params: {
   source: string;

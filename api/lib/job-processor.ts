@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from "./supabase-admin";
-import { processInvoiceJob } from "./invoice-engine";
+import { getSupabaseAdmin } from "./supabase-admin.js";
+import { processInvoiceJob } from "./invoice-engine.js";
 
 const HANDLERS: Record<string, (payload: Record<string, unknown>) => Promise<void>> = {
   generate_and_deliver_invoice: async (payload) => {
