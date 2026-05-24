@@ -386,7 +386,6 @@ const PaymentPage = () => {
   const servicePrice = serviceInfo?.price ?? (serviceAmount ? parseInt(serviceAmount, 10) : 0);
 
   const formType: FormType = formTypeParam || inferFormType(serviceName, !!consultationType);
-  const useMinimalLayout = formType === "pyaar-shastra" || formType === "kundali";
 
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -544,7 +543,12 @@ const PaymentPage = () => {
           customerName: displayPersonName,
           customerEmail: formData.email,
           customerPhone: formData.whatsapp,
-          metadata: { formType, serviceSlug: serviceName },
+          metadata: {
+            formType,
+            serviceSlug: serviceName,
+            serviceId: serviceInfo?.id,
+            addons: selectedAddonObjects.map((a) => ({ id: a.id, label: a.label, price: a.price })),
+          },
         }),
       });
       if (!response.ok) throw new Error("Order API failed");
@@ -1004,7 +1008,7 @@ const PaymentPage = () => {
   };
 
   return (
-    <Layout minimal={useMinimalLayout}>
+    <Layout>
       {/* Hero Section */}
       <section className="pt-12 pb-8 bg-gradient-to-br from-brown-dark via-brown to-brown-dark relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
