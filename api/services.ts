@@ -24,7 +24,9 @@ export default async function handler(req: { method?: string; query?: Record<str
 
     return res.status(200).json({ services: data });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Could not load services" });
+    console.error("Services API error:", error);
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
