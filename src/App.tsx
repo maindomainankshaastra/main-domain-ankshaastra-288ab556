@@ -44,7 +44,6 @@ const CrmModule = lazy(() => import("./pages/admin/modules/CrmModule"));
 const WorkflowsModule = lazy(() => import("./pages/admin/modules/WorkflowsModule"));
 const WebhooksModule = lazy(() => import("./pages/admin/modules/WebhooksModule"));
 const AiReportsModule = lazy(() => import("./pages/admin/modules/AiReportsModule"));
-const ProductsModule = lazy(() => import("./pages/admin/modules/ProductsModule"));
 const ServicesModule = lazy(() => import("./pages/admin/modules/ServicesModule"));
 const TemplatesModule = lazy(() => import("./pages/admin/modules/TemplatesModule"));
 const SettingsModule = lazy(() => import("./pages/admin/modules/SettingsModule"));
@@ -99,7 +98,6 @@ const App = () => (
               <Route path="workflows" element={<WorkflowsModule />} />
               <Route path="webhooks" element={<WebhooksModule />} />
               <Route path="ai-reports" element={<AiReportsModule />} />
-              <Route path="products" element={<ProductsModule />} />
               <Route path="services" element={<ServicesModule />} />
               <Route path="templates" element={<TemplatesModule />} />
               <Route path="settings" element={<SettingsModule />} />
