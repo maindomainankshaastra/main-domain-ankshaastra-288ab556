@@ -7,19 +7,18 @@ export function getSupabaseAdmin(): SupabaseClient {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+  const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!url || !key) {
-    throw new Error(
-      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or VITE_SUPABASE_SERVICE_ROLE_KEY) are required."
-    );
+  if (!url) {
+    throw new Error("SUPABASE_URL or VITE_SUPABASE_URL is required.");
   }
 
-  if (key === process.env.VITE_SUPABASE_PUBLISHABLE_KEY) {
-    console.warn(
-      "Using VITE_SUPABASE_PUBLISHABLE_KEY for a server-side Supabase client. Set SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_SERVICE_ROLE_KEY for secure access."
-    );
+  if (!key) {
+    const publishableHint = publishableKey
+      ? "A VITE_SUPABASE_PUBLISHABLE_KEY was found, but server-side routes require SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_SERVICE_ROLE_KEY."
+      : "Set SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_SERVICE_ROLE_KEY in your environment.";
+    throw new Error(publishableHint);
   }
 
   _client = createClient(url, key, { auth: { persistSession: false } });
