@@ -28,7 +28,8 @@ const nav = [
   { to: "/admin/workflows", label: "Workflows", icon: GitBranch },
   { to: "/admin/webhooks", label: "Webhook Logs", icon: Webhook },
   { to: "/admin/ai-reports", label: "AI Reports", icon: Sparkles },
-  { to: "/admin/services", label: "Service Orders", icon: Briefcase },
+  { to: "/admin/services", label: "Services Management", icon: Briefcase },
+  { to: "/admin/pricing", label: "Pricing Management", icon: FileCode },
   { to: "/admin/templates", label: "Templates", icon: FileCode },
   { to: "/admin/settings", label: "GST & Billing", icon: Settings },
 ];

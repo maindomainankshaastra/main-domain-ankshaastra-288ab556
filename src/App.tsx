@@ -47,6 +47,7 @@ const AiReportsModule = lazy(() => import("./pages/admin/modules/AiReportsModule
 const ServicesModule = lazy(() => import("./pages/admin/modules/ServicesModule"));
 const TemplatesModule = lazy(() => import("./pages/admin/modules/TemplatesModule"));
 const SettingsModule = lazy(() => import("./pages/admin/modules/SettingsModule"));
+const PricingModule = lazy(() => import("./pages/admin/modules/PricingModule"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 
 const queryClient = new QueryClient();
@@ -99,6 +100,7 @@ const App = () => (
               <Route path="webhooks" element={<WebhooksModule />} />
               <Route path="ai-reports" element={<AiReportsModule />} />
               <Route path="services" element={<ServicesModule />} />
+              <Route path="pricing" element={<PricingModule />} />
               <Route path="templates" element={<TemplatesModule />} />
               <Route path="settings" element={<SettingsModule />} />
             </Route>

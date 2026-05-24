@@ -47,7 +47,7 @@ export default function SettingsModule() {
   };
 
   return (
-    <AdminPage title="GST & Billing Settings" description="Invoice numbering, GSTIN, UPI, and footer terms." loading={loading}>
+    <AdminPage title="GST & Billing Settings" description="Manage GST settings, invoice numbering, UPI, and billing footer terms." loading={loading}>
       <div className="grid gap-4 max-w-lg">
         <div><Label>Business Name</Label><Input value={String(form.business_name || "")} onChange={(e) => setForm({ ...form, business_name: e.target.value })} /></div>
         <div><Label>GSTIN</Label><Input value={String(form.gstin || "")} onChange={(e) => setForm({ ...form, gstin: e.target.value })} /></div>
