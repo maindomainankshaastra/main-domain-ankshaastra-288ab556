@@ -47,7 +47,7 @@ export default function ServicesModule() {
   return (
     <AdminPage
       title="Service Catalog"
-      description="Numerology, consultations, reports — managed centrally."
+      description="Manage the live site services currently available to customers."
       loading={loading}
       empty={!services.length}
       emptyMessage='No services. Click "New Service" to add.'

@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
-import { pricing, formatINR } from "@/config/pricing";
+import { formatINR } from "@/config/pricing";
 import { whatsappHref } from "@/config/business";
 import { 
   Phone, Video, MessageSquare, User, Baby, Building2, Calendar,
@@ -43,111 +43,66 @@ const serviceIconMap: Record<string, LucideIcon> = {
   "Commercial Space Analysis": Building,
 };
 
-const serviceCategories = [
-  {
-    id: "remedial",
-    title: "Remedial Guidance",
-    subtitle: "1:1 Call Consultation",
-    description: "Personal guidance and clarity through direct consultation with Himansshu Agarwal Ji.",
-    icon: Phone,
-    gradient: "from-primary to-amber",
-    borderAccent: "hsl(var(--orange))",
-    services: [
-      { title: "1:1 Audio Call", description: "A private audio call designed for detailed discussion while maintaining flexibility and confidentiality.", price: formatINR(pricing.audioCall.min45), rawPrice: pricing.audioCall.min45, link: "/consultation", highlight: true },
-      { title: "1:1 Video Call", description: "A face-to-face consultation for deeper engagement, visual explanations, and interactive guidance.", price: formatINR(pricing.videoCall.min45), rawPrice: pricing.videoCall.min45, link: "/consultation", highlight: true },
-    ]
-  },
-  {
-    id: "personal",
-    title: "Personal Numerology",
-    subtitle: "Identity Alignment",
-    description: "Aligning personal identity elements with numerological principles for smoother life progress.",
-    icon: User,
-    gradient: "from-blue-500 to-cyan-500",
-    borderAccent: "hsl(210, 80%, 55%)",
-    services: [
-      { title: "Name Correction", description: "Analysis and correction of name vibration to support smoother personal and professional progress.", price: formatINR(pricing.nameCorrection.standard), rawPrice: pricing.nameCorrection.standard, link: "/services/name-correction", highlight: true },
-      { title: "Lucky Vehicle Number", description: "Compatibility analysis of vehicle numbers for comfort, safety, and daily harmony.", price: formatINR(pricing.luckyNumber.vehicle), rawPrice: pricing.luckyNumber.vehicle, link: "/payment" },
-      { title: "Lucky Mobile Number", description: "Assessment of mobile number vibration and its influence on communication and opportunities.", price: formatINR(pricing.luckyNumber.mobile), rawPrice: pricing.luckyNumber.mobile, link: "/payment" },
-      { title: "Lucky Flat / Plot Number", description: "Suitability analysis of residential numbers before purchase or occupancy.", price: formatINR(pricing.luckyNumber.flat), rawPrice: pricing.luckyNumber.flat, link: "/payment" },
-    ]
-  },
-  {
-    id: "family",
-    title: "Baby, Family & Relationships",
-    subtitle: "Emotional Harmony",
-    description: "Designed for family planning, relationships, and emotional harmony.",
-    icon: Baby,
-    gradient: "from-pink-500 to-rose-500",
-    borderAccent: "hsl(340, 70%, 55%)",
-    services: [
-      { title: "C-Section Baby Dates", description: "Numerology-based guidance for selecting supportive C-section birth dates within medically approved range.", price: formatINR(pricing.baby.cSectionEssential), rawPrice: pricing.baby.cSectionEssential, link: "https://miraclebaby.ankshaastra.com", external: true },
-      { title: "Perfect Baby Name", description: "Carefully aligned baby name suggestions based on numerology principles for foundational harmony.", price: formatINR(pricing.nameCorrection.standard), rawPrice: pricing.nameCorrection.standard, link: "https://empower.ankshaastra.com", external: true, highlight: true },
-      { title: "Relationship Analysis", description: "Analysis of emotional dynamics and compatibility between partners for healthier communication.", price: formatINR(pricing.relationship.analysis), rawPrice: pricing.relationship.analysis, link: "/payment" },
-      { title: "Pyaar Shaastra Report", description: "India's first love & life quality compatibility report. Ashtakoot, KP System, Manglik & Dasa analysis delivered on WhatsApp in 24 hours.", price: formatINR(pricing.pyaarShastra.price), rawPrice: pricing.pyaarShastra.price, link: "/reports/pyaar-shastra", highlight: true },
-    ]
-  },
-  {
-    id: "business",
-    title: "Business & Brand",
-    subtitle: "Strategic Numerology",
-    description: "Business growth, branding, and stability through strategic numerology alignment.",
-    icon: Building2,
-    gradient: "from-emerald to-teal-500",
-    borderAccent: "hsl(var(--emerald))",
-    services: [
-      { title: "Business Name Correction", description: "Strategic analysis to identify misalignment and suggest corrected options for brand resonance.", price: formatINR(pricing.business.nameCorrection), rawPrice: pricing.business.nameCorrection, link: "/payment", highlight: true },
-      { title: "Business Phone Number", description: "Selection or evaluation of business phone numbers aligned with brand numerology.", price: formatINR(pricing.business.phoneNumber), rawPrice: pricing.business.phoneNumber, link: "/payment" },
-      { title: "Brand Tagline Correction", description: "Analysis of brand taglines to ensure wording aligns with business intent and positioning.", price: formatINR(pricing.business.tagline), rawPrice: pricing.business.tagline, link: "/payment" },
-      { title: "Business Partner Compatibility", description: "Compatibility analysis between business partners' names for smoother collaboration.", price: formatINR(pricing.business.partnerCompat), rawPrice: pricing.business.partnerCompat, link: "/payment" },
-      { title: "Director Name Compatibility", description: "Evaluation of director or leadership names to assess alignment with company vibration.", price: formatINR(pricing.business.directorCompat), rawPrice: pricing.business.directorCompat, link: "/payment" },
-    ]
-  },
-  {
-    id: "dates",
-    title: "Company & Financial",
-    subtitle: "Date Selection",
-    description: "Support important business and financial decisions with auspicious date selection.",
-    icon: Calendar,
-    gradient: "from-violet-500 to-purple-500",
-    borderAccent: "hsl(260, 60%, 55%)",
-    services: [
-      { title: "Company Registration Date", description: "Selection of supportive dates for company registration to encourage smoother beginnings.", price: formatINR(pricing.dates.companyRegistration), rawPrice: pricing.dates.companyRegistration, link: "/payment" },
-      { title: "Bank Account Opening Date", description: "Numerology-based date selection for opening business bank accounts, supporting financial flow.", price: formatINR(pricing.dates.bankAccount), rawPrice: pricing.dates.bankAccount, link: "/payment" },
-      { title: "Land Purchase Date", description: "Guidance on selecting favourable dates for land or property purchase for stability.", price: formatINR(pricing.dates.landPurchase), rawPrice: pricing.dates.landPurchase, link: "/payment" },
-    ]
-  },
-  {
-    id: "vastu",
-    title: "Office Vastu",
-    subtitle: "Spatial Numerology",
-    description: "Integration of numerology with workspace planning for improved productivity.",
-    icon: Armchair,
-    gradient: "from-amber to-amber-dark",
-    borderAccent: "hsl(var(--amber))",
-    services: [
-      { title: "CEO/MD Cabin Sitting", description: "Guidance on cabin direction and seating alignment to support leadership clarity and authority.", price: formatINR(pricing.vastu.ceoCabin), rawPrice: pricing.vastu.ceoCabin, link: "/payment" },
-      { title: "Management Sitting", description: "Numerology-based seating recommendations for key managers to improve efficiency.", price: formatINR(pricing.vastu.management), rawPrice: pricing.vastu.management, link: "/payment" },
-      { title: "Cash Counter Direction", description: "Alignment of cash counters and billing areas to support smoother financial transactions.", price: formatINR(pricing.vastu.cashCounter), rawPrice: pricing.vastu.cashCounter, link: "/payment" },
-      { title: "Office Interior Colors", description: "Color recommendations for office interiors aligned with numerology for focus and balance.", price: formatINR(pricing.vastu.interiorColors), rawPrice: pricing.vastu.interiorColors, link: "/payment" },
-      { title: "Departmental Sitting", description: "Structured seating alignment for departments to reduce friction and improve workflow.", price: formatINR(pricing.vastu.departmental), rawPrice: pricing.vastu.departmental, link: "/payment" },
-    ]
-  },
-  {
-    id: "property",
-    title: "Property, Space & Events",
-    subtitle: "Location Numerology",
-    description: "Analysis of spaces used for business or events for better visibility and growth.",
-    icon: Building,
-    gradient: "from-slate-500 to-zinc-600",
-    borderAccent: "hsl(220, 13%, 40%)",
-    services: [
-      { title: "Plot Number Analysis", description: "Numerological evaluation of plot numbers to assess suitability and long-term alignment.", price: formatINR(pricing.property.plotAnalysis), rawPrice: pricing.property.plotAnalysis, link: "/payment" },
-      { title: "Exhibition Stall Number", description: "Analysis of exhibition stall numbers to support visibility and business opportunities.", price: formatINR(pricing.property.exhibitionStall), rawPrice: pricing.property.exhibitionStall, link: "/payment" },
-      { title: "Commercial Space Analysis", description: "Assessment of commercial spaces through numerology to evaluate suitability for operations.", price: formatINR(pricing.property.commercial), rawPrice: pricing.property.commercial, link: "/payment" },
-    ]
+type Service = {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  price: number;
+  gst_rate: number;
+  is_active: boolean;
+};
+
+const DEFAULT_CATEGORY = "Other";
+
+const badgeText = (title: string): string => {
+  if (title === "Name Correction") return "Popular";
+  if (title.includes("Report")) return "New";
+  return "Book";
+};
+
+const getServiceLink = (service: Service): string => {
+  switch (service.title) {
+    case "Name Correction":
+      return "/services/name-correction";
+    case "Pyaar Shaastra Report":
+      return "/reports/pyaar-shastra";
+    case "Perfect Baby Name":
+      return "https://empower.ankshaastra.com";
+    case "C-Section Baby Dates":
+      return "https://miraclebaby.ankshaastra.com";
+    default:
+      return `/payment?service=${encodeURIComponent(service.title)}&amount=${service.price}`;
   }
-];
+};
+
+const getServiceTarget = (title: string): "_blank" | "_self" =>
+  ["Perfect Baby Name", "C-Section Baby Dates"].includes(title) ? "_blank" : "_self";
+
+const createCategories = (services: Service[]) => {
+  const groups = services.reduce((acc: Record<string, Service[]>, service) => {
+    const category = service.category?.trim() || DEFAULT_CATEGORY;
+    (acc[category] ??= []).push(service);
+    return acc;
+  }, {});
+
+  return Object.entries(groups).map(([category, services]) => ({
+    id: category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+    title: category,
+    services,
+  }));
+};
+
+const serviceCardFromRecord = (service: Service, index: number) => ({
+  title: service.title,
+  description: service.description || "Browse this service and move forward with secure booking.",
+  price: formatINR(service.price),
+  rawPrice: service.price,
+  link: getServiceLink(service),
+  badge: badgeText(service.title),
+  external: getServiceTarget(service.title) === "_blank",
+  _categoryId: service.category?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || DEFAULT_CATEGORY.toLowerCase(),
+});
 
 /* ─────────────── Service Card (clean reference style) ─────────────── */
 const ServiceCard = ({ service, index }: { service: any; index: number }) => {
@@ -209,24 +164,56 @@ const ServiceCard = ({ service, index }: { service: any; index: number }) => {
 
 /* ─────────────── Main Page ─────────────── */
 const ServicesPage = () => {
-  const totalServices = serviceCategories.reduce((acc, cat) => acc + cat.services.length, 0);
-  const tabs = [{ id: "all", title: "All" }, ...serviceCategories.map((c) => ({ id: c.id, title: c.title }))];
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadServices = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/services", { signal: controller.signal });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error((payload?.error as string) || "Unable to load services");
+        }
+
+        setServices((payload.services || []) as Service[]);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error ? err.message : "Unable to load services");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+
+    loadServices();
+    return () => controller.abort();
+  }, []);
+
+  const categories = useMemo(() => createCategories(services), [services]);
+  const totalServices = services.length;
+  const tabs = [{ id: "all", title: "All" }, ...categories.map((c) => ({ id: c.id, title: c.title }))];
+
   const visibleServices = useMemo(() => {
-    const all = serviceCategories.flatMap((cat) =>
-      cat.services.map((s) => ({ ...s, _categoryId: cat.id }))
-    );
+    const all = services.map(serviceCardFromRecord);
     const byTab = activeTab === "all" ? all : all.filter((s) => s._categoryId === activeTab);
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return byTab;
-    return byTab.filter(
-      (s) =>
-        s.title.toLowerCase().includes(q) ||
-        s.description.toLowerCase().includes(q)
-    );
-  }, [activeTab, searchQuery]);
+    return q
+      ? byTab.filter(
+          (s) =>
+            s.title.toLowerCase().includes(q) ||
+            s.description.toLowerCase().includes(q)
+        )
+      : byTab;
+  }, [activeTab, searchQuery, services]);
 
   return (
     <Layout>
@@ -260,7 +247,7 @@ const ServicesPage = () => {
             </p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex items-center justify-center gap-8 md:gap-12">
               {[
-                { label: "Categories", value: "7" },
+                { label: "Categories", value: `${categories.length}` },
                 { label: "Services", value: `${totalServices}+` },
                 { label: "Consultations", value: "5000+" }
               ].map((stat) => (
@@ -346,16 +333,28 @@ const ServicesPage = () => {
           </div>
 
           {/* Cards grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {visibleServices.map((service, i) => (
-              <ServiceCard key={`${service._categoryId}-${service.title}`} service={service} index={i} />
-            ))}
-          </div>
-
-          {visibleServices.length === 0 && (
+          {loading ? (
             <div className="text-center py-16">
-              <p className="text-muted-foreground text-lg">No services found. Try a different search or category.</p>
+              <p className="text-muted-foreground text-lg">Loading available services...</p>
             </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <p className="text-destructive text-lg">{error}</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {visibleServices.map((service, i) => (
+                  <ServiceCard key={`${service._categoryId}-${service.title}`} service={service} index={i} />
+                ))}
+              </div>
+
+              {visibleServices.length === 0 && (
+                <div className="text-center py-16">
+                  <p className="text-muted-foreground text-lg">No services found. Try a different search or category.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
