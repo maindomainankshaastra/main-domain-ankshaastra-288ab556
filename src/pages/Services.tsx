@@ -179,12 +179,12 @@ const ServicesPage = () => {
 
       try {
         const response = await fetch("/api/services", { signal: controller.signal });
-        const payload = await response.json();
 
         if (!response.ok) {
-          throw new Error((payload?.error as string) || "Unable to load services");
+          throw new Error(`Server error: ${response.statusText}`);
         }
 
+        const payload = await response.json();
         setServices((payload.services || []) as Service[]);
       } catch (err) {
         if (controller.signal.aborted) return;
