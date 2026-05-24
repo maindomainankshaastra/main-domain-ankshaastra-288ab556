@@ -386,6 +386,7 @@ const PaymentPage = () => {
   const servicePrice = serviceInfo?.price ?? (serviceAmount ? parseInt(serviceAmount, 10) : 0);
 
   const formType: FormType = formTypeParam || inferFormType(serviceName, !!consultationType);
+  const useMinimalLayout = formType === "pyaar-shastra" || formType === "kundali";
 
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -1003,7 +1004,7 @@ const PaymentPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout minimal={useMinimalLayout}>
       {/* Hero Section */}
       <section className="pt-12 pb-8 bg-gradient-to-br from-brown-dark via-brown to-brown-dark relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
