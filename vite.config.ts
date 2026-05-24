@@ -22,11 +22,27 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          "motion": ["framer-motion"],
-          "ui-vendor": ["@radix-ui/react-dialog", "@radix-ui/react-popover", "@radix-ui/react-dropdown-menu", "@radix-ui/react-select", "@radix-ui/react-tabs"],
-          "supabase": ["@supabase/supabase-js"],
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("react-router-dom") || id.includes("react-dom") || id.includes("/react/")) {
+            return "react-vendor";
+          }
+          if (id.includes("framer-motion")) {
+            return "motion";
+          }
+          if (
+            id.includes("@radix-ui/react-dialog") ||
+            id.includes("@radix-ui/react-popover") ||
+            id.includes("@radix-ui/react-dropdown-menu") ||
+            id.includes("@radix-ui/react-select") ||
+            id.includes("@radix-ui/react-tabs")
+          ) {
+            return "ui-vendor";
+          }
+          if (id.includes("@supabase/supabase-js")) {
+            return "supabase";
+          }
+          return undefined;
         },
       },
     },

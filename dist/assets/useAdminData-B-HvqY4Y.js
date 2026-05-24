@@ -1,1 +1,0 @@
-import{r as t}from"./react-vendor-BAQ-2QuZ.js";import{Z as l}from"./index-C9xijcvW.js";function p(s,a="created_at",r=!1){const[u,c]=t.useState([]),[f,o]=t.useState(!0),e=t.useCallback(async()=>{o(!0);const{data:n,error:i}=await l.from(s).select("*").order(a,{ascending:r});i||c(n||[]),o(!1)},[s,a,r]);return t.useEffect(()=>{e()},[e]),{rows:u,loading:f,reload:e}}export{p as u};
