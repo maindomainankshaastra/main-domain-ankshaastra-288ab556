@@ -1,73 +1,146 @@
-# Welcome to your Lovable project
+# Ankshaastra Main Site
 
-## Project info
+A modern Vite + React + TypeScript website for Ankshaastra's numerology services, reports, consultations, and admin management.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Project overview
 
-## How can I edit this code?
+This repository contains the public-facing Ankshaastra site and an admin dashboard for managing orders, services, pricing, messaging, workflows, and support integrations.
 
-There are several ways of editing your application.
+The site includes:
+- Public service pages for name correction, baby naming, C-section date selection, mobile numerology, office vastu, and annual reports.
+- Report pages for numerology blueprints, personalized kundali, and Pyaar Shaastra.
+- A shop page, blog pages, podcast page, calculators, contact and consultation pages.
+- A protected admin area with modules for orders, invoices, email, WhatsApp, CRM, workflows, webhooks, AI reports, services, pricing, templates, and settings.
+- Client-side routing with lazy-loaded React pages.
+- Supabase-backed authentication and data management.
+- Razorpay payment processing and server-side order/payment verification.
 
-**Use Lovable**
+## Key features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Public site
+- Home page with service highlights and marketing content.
+- `/services` listing plus dedicated service pages:
+  - `/services/name-correction`
+  - `/services/csection-dates`
+  - `/services/baby-name`
+  - `/services/varshphal-report`
+  - `/services/mobile-numerology`
+  - `/services/office-vastu`
+- Reports section and dedicated report pages:
+  - `/reports`
+  - `/reports/name-correction-blueprint`
+  - `/reports/personalized-kundali`
+  - `/reports/pyaar-shastra`
+- Consultation, calculator, courses, contact, shop, podcast, blog, and informational pages.
+- Payment flow including a `/payment` page and `/thank-you` confirmation.
+- Blog listing and blog post pages via `/blog` and `/blog/:slug`.
+- Policy pages: `/privacy`, `/terms`, `/refund`.
 
-Changes made via Lovable will be committed automatically to this repo.
+### Admin dashboard
+- Protected admin routes under `/admin`.
+- Modules for:
+  - Orders
+  - Invoices
+  - Email campaigns
+  - WhatsApp messaging
+  - CRM
+  - Workflows
+  - Webhooks
+  - AI reports
+  - Services management
+  - Pricing management
+  - Templates
+  - Settings
+- Admin auth and role-based access control.
 
-**Use your preferred IDE**
+### Backend and integrations
+- `api/` folder contains server endpoints for:
+  - `create-order.ts`
+  - `verify-payment.ts`
+  - `services.ts`
+  - webhook handling under `webhooks/razorpay.ts`
+- Supabase integration for auth and persistent data storage.
+- Razorpay for payment checkout and verification.
+- Nodemailer and WhatsApp engine support for notifications and messaging.
+- PDF generation and invoice support using Puppeteer core.
+- GST and invoice utilities in `api/lib`.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Project structure
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- `src/` – React application source
+- `src/pages/` – page-level route components
+- `src/components/` – reusable UI and layout components
+- `src/components/layout/` – header, footer, navbar, admin layout
+- `src/components/ui/` – shadcn/ui primitives
+- `src/data/` – static metadata and service page definitions
+- `src/hooks/` – custom React hooks for auth, admin, and UI behavior
+- `src/integrations/` – Supabase client integration
+- `api/` – serverless backend API routes and utilities
+- `supabase/` – database migrations and Supabase config
+- `public/` – static site assets and files
 
-Follow these steps:
+## Tech stack
+
+- React 18
+- TypeScript
+- Vite 8
+- Tailwind CSS
+- shadcn/ui
+- Radix UI
+- React Router v6
+- React Query
+- Supabase
+- Razorpay
+- Framer Motion
+- Zod
+- Sonner
+- Puppeteer core
+
+## Local development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Then open the local Vite URL shown in the terminal.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Build & preview
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+npm run preview
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Linting
 
-## What technologies are used for this project?
+```sh
+npm run lint
+```
 
-This project is built with:
+### Testing
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sh
+npm run test
+npm run test:watch
+```
 
-## How can I deploy this project?
+## Environment configuration
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+This app uses environment variables for Supabase and payments. Common values include:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- email / notification credentials for Nodemailer, WhatsApp, and webhook endpoints.
 
-## Can I connect a custom domain to my Lovable project?
+## Deployment
 
-Yes, you can!
+This project is ready for deployment as a static site with serverless APIs. The build output is generated by Vite and can be deployed to Vercel, Netlify, or any other platform that supports static React apps plus edge/server functions.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Notes
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- The project uses lazy-loaded route components to improve initial load performance.
+- Service pages are managed both via Supabase data and static page metadata.
+- The admin dashboard supports content management and customer workflows without deleting existing page content.
