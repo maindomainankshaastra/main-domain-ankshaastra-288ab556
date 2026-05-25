@@ -4,7 +4,7 @@ import {
   Facebook, Instagram, Youtube, Linkedin,
   MessageCircle, Heart, Sun,
 } from "lucide-react";
-import logo from "@/assets/logo.jpg";
+import logo from "@/assets/New_Logo.png";
 
 const columns = [
   {
