@@ -1,6 +1,5 @@
 # Ankshaastra Main Site
 
-
 A modern Vite + React + TypeScript website for Ankshaastra's numerology services, reports, consultations, and admin management.
 
 ## Project overview
