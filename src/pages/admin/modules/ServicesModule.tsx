@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
+import { existingServicePages } from "@/data/servicePages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +33,10 @@ export default function ServicesModule() {
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
 
+  const missingPageServices = existingServicePages.filter(
+    (page) => !services.some((service) => service.title === page.title)
+  );
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -44,12 +49,32 @@ export default function ServicesModule() {
     else { toast.success("Saved"); setOpen(false); reload(); }
   };
 
+  const addPageService = async (page: typeof existingServicePages[number]) => {
+    const payload = {
+      title: page.title,
+      description: page.description,
+      category: page.category,
+      price: page.price,
+      gst_rate: page.gst_rate,
+      hsn_sac_code: null,
+      is_active: true,
+    };
+
+    const { error } = await supabase.from("services").insert(payload);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`Added ${page.title}`);
+      reload();
+    }
+  };
+
   return (
     <AdminPage
       title="Service Catalog"
       description="Manage the live site services currently available to customers."
       loading={loading}
-      empty={!services.length}
+      empty={!services.length && !missingPageServices.length}
       emptyMessage='No services. Click "New Service" to add.'
       actions={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -71,6 +96,28 @@ export default function ServicesModule() {
         </Dialog>
       }
     >
+      {missingPageServices.length > 0 && (
+        <div className="border border-border rounded-2xl p-4 mb-4 bg-muted/70">
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold">Detected existing service pages</p>
+              <p className="text-sm text-muted-foreground">These pages already exist in the app but are not yet in the live service catalog.</p>
+            </div>
+          </div>
+          <div className="grid gap-3">
+            {missingPageServices.map((page) => (
+              <div key={page.route} className="rounded-xl border border-border p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{page.title}</p>
+                  <p className="text-sm text-muted-foreground">{page.category} · ₹{page.price.toLocaleString()} · {page.gst_rate}% GST</p>
+                </div>
+                <Button size="sm" onClick={() => addPageService(page)}>Add to Catalog</Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         {services.map((s) => (
           <div key={s.id} className="border border-border rounded-lg p-4 flex justify-between gap-3">

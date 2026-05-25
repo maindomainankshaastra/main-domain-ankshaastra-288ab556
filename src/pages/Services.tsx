@@ -5,6 +5,7 @@ import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import { formatINR } from "@/config/pricing";
 import { whatsappHref } from "@/config/business";
+import { existingServicePages } from "@/data/servicePages";
 import { 
   Phone, Video, MessageSquare, User, Baby, Building2, Calendar,
   Armchair, Building, ArrowRight, Sparkles, ExternalLink,
@@ -53,6 +54,10 @@ type Service = {
   is_active: boolean;
 };
 
+type ServiceWithPageRoute = Service & {
+  _pageRoute?: string;
+};
+
 const DEFAULT_CATEGORY = "Other";
 
 const badgeText = (title: string): string => {
@@ -61,23 +66,35 @@ const badgeText = (title: string): string => {
   return "Book";
 };
 
-const getServiceLink = (service: Service): string => {
+const getServiceLink = (service: Service & { _pageRoute?: string }): string => {
+  if (service._pageRoute) return service._pageRoute;
+
   switch (service.title) {
     case "Name Correction":
       return "/services/name-correction";
     case "Pyaar Shaastra Report":
       return "/reports/pyaar-shastra";
     case "Perfect Baby Name":
-      return "https://empower.ankshaastra.com";
+      return "/services/baby-name";
     case "C-Section Baby Dates":
-      return "https://miraclebaby.ankshaastra.com";
+      return "/services/csection-dates";
+    case "Name Correction Blueprint":
+      return "/reports/name-correction-blueprint";
+    case "Personalized Kundali":
+      return "/reports/personalized-kundali";
+    case "Varshphal Report 2026":
+      return "/services/varshphal-report";
+    case "Mobile Numerology":
+      return "/services/mobile-numerology";
+    case "Office Vastu":
+      return "/services/office-vastu";
     default:
       return `/payment?service=${encodeURIComponent(service.title)}&amount=${service.price}`;
   }
 };
 
-const getServiceTarget = (title: string): "_blank" | "_self" =>
-  ["Perfect Baby Name", "C-Section Baby Dates"].includes(title) ? "_blank" : "_self";
+const getServiceTarget = (link: string): "_blank" | "_self" =>
+  link.startsWith("http") ? "_blank" : "_self";
 
 const createCategories = (services: Service[]) => {
   const groups = services.reduce((acc: Record<string, Service[]>, service) => {
@@ -100,7 +117,7 @@ const serviceCardFromRecord = (service: Service, index: number) => ({
   rawPrice: service.price,
   link: getServiceLink(service),
   badge: badgeText(service.title),
-  external: getServiceTarget(service.title) === "_blank",
+  external: getServiceTarget(getServiceLink(service)) === "_blank",
   _categoryId: service.category?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || DEFAULT_CATEGORY.toLowerCase(),
 });
 
@@ -198,12 +215,35 @@ const ServicesPage = () => {
     return () => controller.abort();
   }, []);
 
-  const categories = useMemo(() => createCategories(services), [services]);
-  const totalServices = services.length;
+  const staticServicePages: ServiceWithPageRoute[] = useMemo(
+    () =>
+      existingServicePages.map((page) => ({
+        id: `page-${page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        title: page.title,
+        description: page.description,
+        category: page.category,
+        price: page.price,
+        gst_rate: page.gst_rate,
+        is_active: true,
+        _pageRoute: page.route,
+      })),
+    []
+  );
+
+  const mergedServices = useMemo(() => {
+    const activeServices = services.filter((service) => service.is_active);
+    const pageServices = staticServicePages.filter(
+      (page) => !activeServices.some((service) => service.title === page.title)
+    );
+    return [...activeServices, ...pageServices];
+  }, [services, staticServicePages]);
+
+  const categories = useMemo(() => createCategories(mergedServices), [mergedServices]);
+  const totalServices = mergedServices.length;
   const tabs = [{ id: "all", title: "All" }, ...categories.map((c) => ({ id: c.id, title: c.title }))];
 
   const visibleServices = useMemo(() => {
-    const all = services.map(serviceCardFromRecord);
+    const all = mergedServices.map(serviceCardFromRecord);
     const byTab = activeTab === "all" ? all : all.filter((s) => s._categoryId === activeTab);
     const q = searchQuery.trim().toLowerCase();
     return q
@@ -213,7 +253,7 @@ const ServicesPage = () => {
             s.description.toLowerCase().includes(q)
         )
       : byTab;
-  }, [activeTab, searchQuery, services]);
+  }, [activeTab, searchQuery, mergedServices]);
 
   return (
     <Layout>
