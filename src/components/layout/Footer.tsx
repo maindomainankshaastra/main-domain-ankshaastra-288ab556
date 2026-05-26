@@ -81,7 +81,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10 mb-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-3 lg:col-span-1">
-            <Link to="/" className="inline-flex items-center gap-3 mb-4">
+            <Link to="/" className="flex flex-col items-start gap-2 mb-4">
               <img src={logo} alt="Ankshaastra" className="h-12 w-auto" />
               <div className="flex flex-col leading-tight">
                 <span className="font-display text-xl font-bold">Ankshaastra</span>
