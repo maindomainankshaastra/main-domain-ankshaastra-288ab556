@@ -82,7 +82,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-span-2 md:col-span-3 lg:col-span-1">
             <Link to="/" className="inline-flex items-center gap-3 mb-4">
-              <img src={logo} alt="Ankshaastra" className="h-12 w-auto rounded-md bg-cream-light/95 p-1" />
+              <img src={logo} alt="Ankshaastra" className="h-12 w-auto" />
               <div className="flex flex-col leading-tight">
                 <span className="font-display text-xl font-bold">Ankshaastra</span>
                 <span className="text-[10px] text-amber-light/90 tracking-[0.2em] uppercase">Vedic Guidance</span>

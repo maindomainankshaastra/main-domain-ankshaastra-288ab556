@@ -63,7 +63,7 @@ const Navbar = () => {
             <img
               src={logo}
               alt="Ankshaastra"
-              className="h-14 lg:h-16 w-auto object-contain rounded-md bg-cream-light/95 p-1"
+              className="h-14 lg:h-16 w-auto object-contain"
             />
           </Link>
 
