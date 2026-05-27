@@ -1,6 +1,7 @@
 import { logWebhook, verifyRazorpaySignature } from "../lib/webhook-utils.js";
 import { getSupabaseAdmin } from "../lib/supabase-admin.js";
 import { runPostPaymentWorkflow } from "../lib/workflow-engine.js";
+import { processPendingJobs } from "../lib/job-processor.js";
 
 export const config = { api: { bodyParser: false } };
 
@@ -54,17 +55,20 @@ export default async function handler(req: any, res: any) {
         .eq("razorpay_order_id", entity.order_id)
         .maybeSingle();
 
-      if (order && order.status !== "paid") {
-        await supabase
-          .from("orders")
-          .update({
-            status: "paid",
-            workflow_stage: "payment_received",
-            razorpay_payment_id: entity.id,
-            payment_method: entity.method,
-          })
-          .eq("id", order.id);
+      if (order) {
+        if (order.status !== "paid") {
+          await supabase
+            .from("orders")
+            .update({
+              status: "paid",
+              workflow_stage: "payment_received",
+              razorpay_payment_id: entity.id,
+              payment_method: entity.method,
+            })
+            .eq("id", order.id);
+        }
         await runPostPaymentWorkflow(order.id);
+        await processPendingJobs(3);
       }
     }
 

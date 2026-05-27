@@ -29,6 +29,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 import { pricing } from "@/config/pricing";
+import { useAuth } from "@/hooks/useAuth";
 
 // Add-ons available at checkout for service-mode orders.
 const DEFAULT_ADDONS = [
@@ -370,6 +371,7 @@ const GenderRadio = ({ control }: { control: any }) => (
 
 const PaymentPage = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -540,6 +542,7 @@ const PaymentPage = () => {
           serviceTitle: isServiceMode ? serviceName : currentPackage?.name || "Consultation",
           sourceWebsite: "ankshaastra.com",
           orderType: isServiceMode ? "service" : "consultation",
+          userId: user?.id,
           customerName: displayPersonName,
           customerEmail: formData.email,
           customerPhone: formData.whatsapp,

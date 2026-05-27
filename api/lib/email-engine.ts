@@ -6,6 +6,11 @@ export type SendEmailInput = {
   to: string;
   subject: string;
   html: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }>;
   templateSlug?: string;
   customerId?: string;
   orderId?: string;
@@ -38,7 +43,20 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; m
           Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ from, to: [input.to], subject: input.subject, html: input.html }),
+        body: JSON.stringify({
+          from,
+          to: [input.to],
+          subject: input.subject,
+          html: input.html,
+          attachments: input.attachments?.map((attachment) => ({
+            filename: attachment.filename,
+            content:
+              typeof attachment.content === "string"
+                ? attachment.content
+                : attachment.content.toString("base64"),
+            content_type: attachment.contentType,
+          })),
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       const body = await res.json();
@@ -53,7 +71,13 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; m
         secure: process.env.SMTP_PORT === "465",
         auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASS! },
       });
-      const info = await transporter.sendMail({ from, to: input.to, subject: input.subject, html: input.html });
+      const info = await transporter.sendMail({
+        from,
+        to: input.to,
+        subject: input.subject,
+        html: input.html,
+        attachments: input.attachments,
+      });
       if (log?.id) await supabase.from("email_logs").update({ status: "sent", sent_at: new Date().toISOString(), provider_message_id: info.messageId }).eq("id", log.id);
       return { ok: true, messageId: info.messageId };
     }
@@ -72,7 +96,12 @@ export async function sendTemplatedEmail(
   templateSlug: string,
   to: string,
   vars: Record<string, string | number>,
-  ctx?: { customerId?: string; orderId?: string; invoiceId?: string }
+  ctx?: {
+    customerId?: string;
+    orderId?: string;
+    invoiceId?: string;
+    attachments?: SendEmailInput["attachments"];
+  }
 ) {
   const supabase = getSupabaseAdmin();
   const { data: tpl } = await supabase.from("communication_templates").select("*").eq("slug", templateSlug).eq("is_active", true).maybeSingle();

@@ -1,10 +1,11 @@
 import { getSupabaseAdmin } from "./supabase-admin.js";
 import { calculateGst, nextInvoiceNumber } from "./gst.js";
-import { renderInvoiceHtml, type InvoiceTemplateData } from "./templates/invoice-html.js";
+import { type InvoiceTemplateData } from "./templates/invoice-html.js";
 import { generateInvoicePdf } from "./pdf-engine.js";
-import { sendTemplatedEmail } from "./email-engine.js";
+import { sendEmail, sendTemplatedEmail, type SendEmailInput } from "./email-engine.js";
 import { sendTemplatedWhatsApp } from "./whatsapp-engine.js";
 import { advanceWorkflow } from "./workflow-engine.js";
+import { wrapEmailLayout } from "./templates/email-layout.js";
 
 export type GenerateInvoiceInput = {
   orderId: string;
@@ -45,6 +46,92 @@ export async function upsertCustomerFromOrder(order: Record<string, unknown>) {
 
   if (created?.id) await supabase.from("orders").update({ customer_id: created.id }).eq("id", order.id);
   return created?.id;
+}
+
+async function ensureInvoiceBucket() {
+  const supabase = getSupabaseAdmin();
+  const { data: bucket } = await supabase.storage.getBucket("invoices");
+  if (bucket) return;
+
+  const { error } = await supabase.storage.createBucket("invoices", {
+    public: false,
+    fileSizeLimit: 10 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "text/html"],
+  });
+
+  if (error && !/already exists/i.test(error.message)) {
+    throw error;
+  }
+}
+
+async function uploadInvoiceFile(storagePath: string, buffer: Buffer, mimeType: string) {
+  const supabase = getSupabaseAdmin();
+  await ensureInvoiceBucket();
+
+  const { error } = await supabase.storage.from("invoices").upload(storagePath, buffer, {
+    contentType: mimeType,
+    upsert: true,
+  });
+  if (error) throw error;
+
+  const { data: signed, error: signedError } = await supabase.storage
+    .from("invoices")
+    .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
+  if (signedError) throw signedError;
+
+  return signed?.signedUrl ?? null;
+}
+
+async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput["attachments"]> {
+  const storagePath = invoice.pdf_storage_path as string | undefined;
+  if (!storagePath) return undefined;
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.storage.from("invoices").download(storagePath);
+  if (error || !data) return undefined;
+
+  const bytes = Buffer.from(await data.arrayBuffer());
+  const isPdf = storagePath.toLowerCase().endsWith(".pdf");
+  const invoiceNumber = String(invoice.invoice_number || invoice.id || "invoice").replace(/[^\w.-]+/g, "_");
+
+  return [
+    {
+      filename: `${invoiceNumber}.${isPdf ? "pdf" : "html"}`,
+      content: bytes,
+      contentType: isPdf ? "application/pdf" : "text/html",
+    },
+  ];
+}
+
+function buildAdminInvoiceEmail(invoice: Record<string, unknown>) {
+  const total = Number(invoice.total_amount || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const html = `
+    <p>A paid invoice has been generated and stored in Supabase.</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:16px">
+      <tr><td style="padding:8px;border-bottom:1px solid #2a2a2a;color:#9ca3af">Invoice</td><td style="padding:8px;border-bottom:1px solid #2a2a2a">${escapeHtml(invoice.invoice_number || "")}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #2a2a2a;color:#9ca3af">Customer</td><td style="padding:8px;border-bottom:1px solid #2a2a2a">${escapeHtml(invoice.customer_name || "Customer")}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #2a2a2a;color:#9ca3af">Email</td><td style="padding:8px;border-bottom:1px solid #2a2a2a">${escapeHtml(invoice.customer_email || "N/A")}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #2a2a2a;color:#9ca3af">Phone</td><td style="padding:8px;border-bottom:1px solid #2a2a2a">${escapeHtml(invoice.customer_phone || "N/A")}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #2a2a2a;color:#9ca3af">Service</td><td style="padding:8px;border-bottom:1px solid #2a2a2a">${escapeHtml(invoice.service_title || "")}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #2a2a2a;color:#9ca3af">Amount</td><td style="padding:8px;border-bottom:1px solid #2a2a2a">INR ${total}</td></tr>
+      <tr><td style="padding:8px;border-bottom:1px solid #2a2a2a;color:#9ca3af">Payment ID</td><td style="padding:8px;border-bottom:1px solid #2a2a2a">${escapeHtml(invoice.razorpay_payment_id || "N/A")}</td></tr>
+    </table>
+    ${invoice.pdf_url ? `<p style="margin-top:16px"><a href="${invoice.pdf_url}">Open stored invoice</a></p>` : ""}
+  `;
+
+  return wrapEmailLayout(html, `Invoice generated: ${invoice.invoice_number || ""}`);
+}
+
+function escapeHtml(value: unknown) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
@@ -98,17 +185,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   const { buffer, mimeType } = await generateInvoicePdf(templateData);
   const storagePath = `invoices/${invoiceNumber}.${mimeType === "application/pdf" ? "pdf" : "html"}`;
 
-  let pdfUrl: string | null = null;
-  try {
-    await supabase.storage.from("invoices").upload(storagePath, buffer, {
-      contentType: mimeType,
-      upsert: true,
-    });
-    const { data: signed } = await supabase.storage.from("invoices").createSignedUrl(storagePath, 60 * 60 * 24 * 365);
-    pdfUrl = signed?.signedUrl ?? null;
-  } catch {
-    pdfUrl = null;
-  }
+  const pdfUrl = await uploadInvoiceFile(storagePath, buffer, mimeType);
 
   const { data: invoice, error: invErr } = await supabase
     .from("invoices")
@@ -134,8 +211,8 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
       gst_inclusive: true,
       status: "paid",
       source_website: order.source_website,
-      payment_method: input.paymentMethod,
-      razorpay_payment_id: input.paymentId,
+      payment_method: input.paymentMethod || order.payment_method || "razorpay",
+      razorpay_payment_id: input.paymentId || order.razorpay_payment_id,
       qr_code_data: qrPayload,
       pdf_url: pdfUrl,
       pdf_storage_path: storagePath,
@@ -180,11 +257,13 @@ export async function deliverInvoice(invoiceId: string) {
   const { data: invoice } = await supabase.from("invoices").select("*, orders(*)").eq("id", invoiceId).single();
   if (!invoice) throw new Error("Invoice not found");
 
+  const attachments = await getInvoiceAttachment(invoice);
   const vars = {
     customer_name: invoice.customer_name,
     invoice_number: invoice.invoice_number,
     service_title: invoice.service_title,
     total_amount: invoice.total_amount,
+    invoice_download_url: invoice.pdf_url || "",
   };
 
   if (invoice.customer_email) {
@@ -192,8 +271,23 @@ export async function deliverInvoice(invoiceId: string) {
       customerId: invoice.customer_id,
       orderId: invoice.order_id,
       invoiceId: invoice.id,
+      attachments,
     });
     if (invoice.order_id) await advanceWorkflow(invoice.order_id, "email_sent", "invoice.email_sent");
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL || "social@ankshaastra.com";
+  if (adminEmail) {
+    await sendEmail({
+      to: adminEmail,
+      subject: `Invoice generated: ${invoice.invoice_number}`,
+      html: buildAdminInvoiceEmail(invoice),
+      templateSlug: "invoice_admin_email",
+      customerId: invoice.customer_id,
+      orderId: invoice.order_id,
+      invoiceId: invoice.id,
+      attachments,
+    });
   }
 
   if (invoice.customer_phone) {
