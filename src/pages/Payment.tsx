@@ -775,6 +775,77 @@ const PaymentPage = () => {
       );
     }
 
+    if (formType === "kundali-multi") {
+      const persons: Array<"person1" | "person2" | "person3"> = kundaliCount === 3
+        ? ["person1", "person2", "person3"]
+        : ["person1", "person2"];
+      const accents = ["bg-primary", "bg-amber-500", "bg-pink-500"];
+      const PersonBlock = ({ name, title, accent }: { name: string; title: string; accent: string }) => (
+        <div className="rounded-xl border border-border p-5 bg-background/40 space-y-4">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <span className={`inline-block w-2 h-2 rounded-full ${accent}`} />{title}
+          </h3>
+          <FormField control={c} name={`${name}.fullName`} render={({ field }) => (
+            <FormItem><FormLabel>Full Name *</FormLabel><FormControl><Input placeholder="As per Aadhar" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DOBPicker control={c} name={`${name}.dob`} />
+            <TOBPicker control={c} name={`${name}.tob`} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={c} name={`${name}.pincode`} render={({ field }) => (
+              <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name={`${name}.pob`} render={({ field }) => (
+              <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
+          <FormField control={c} name={`${name}.gender`} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                  {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
+                    <div key={v} className="flex items-center space-x-2">
+                      <RadioGroupItem value={v} id={`${name}-g-${v}`} />
+                      <Label htmlFor={`${name}-g-${v}`}>{l}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+      );
+      return (
+        <>
+          <div className="rounded-lg bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-foreground">
+            This package covers <strong>{kundaliCount} people</strong>. Please provide birth details for each.
+          </div>
+          {persons.map((p, i) => (
+            <PersonBlock key={p} name={p} title={`Person ${i + 1} — Birth Details`} accent={accents[i]} />
+          ))}
+          <h3 className="font-semibold text-foreground pt-2">Contact & Report Language</h3>
+          {ContactRow}
+          <FormField control={c} name="language" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Report Language *</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="hindi">Hindi</SelectItem>
+                  <SelectItem value="gujarati">Gujarati</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </>
+      );
+    }
+
     if (formType === "consultation") {
       return (
         <>
