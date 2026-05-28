@@ -3,7 +3,6 @@ import { calculateGst, nextInvoiceNumber } from './gst.js';
 import { type InvoiceTemplateData } from './templates/invoice-html.js';
 import { generateInvoicePdf } from './pdf-engine.js';
 import { sendEmail, type SendEmailInput } from './email-engine.js';
-import { sendTemplatedWhatsApp } from './whatsapp-engine.js';
 import { advanceWorkflow } from './workflow-engine.js';
 import { downloadInvoicePdfBuffer, invoiceStoragePath, uploadInvoicePdf } from './invoice-storage.js';
 
@@ -303,23 +302,8 @@ export async function deliverInvoice(invoiceId: string) {
     }
   }
 
-  if (invoice.customer_phone) {
-    const vars = {
-      customer_name: invoice.customer_name,
-      invoice_number: invoice.invoice_number,
-      service_title: invoice.service_title,
-      total_amount: invoice.total_amount,
-      invoice_download_url: invoice.pdf_url || '',
-    };
-
-    await sendTemplatedWhatsApp('invoice_whatsapp', invoice.customer_phone, vars, {
-      customerId: invoice.customer_id,
-      orderId: invoice.order_id,
-      invoiceId: invoice.id,
-      mediaUrl: invoice.pdf_url || undefined,
-    });
-
-    if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'whatsapp_sent', 'invoice.whatsapp_sent');
+  if (invoice.order_id) {
+    await advanceWorkflow(invoice.order_id, 'completed', 'invoice.delivery_completed');
   }
 
   return { ok: true };

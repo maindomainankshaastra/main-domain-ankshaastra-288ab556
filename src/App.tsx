@@ -39,7 +39,6 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OrdersModule = lazy(() => import("./pages/admin/modules/OrdersModule"));
 const InvoicesModule = lazy(() => import("./pages/admin/modules/InvoicesModule"));
 const EmailModule = lazy(() => import("./pages/admin/modules/EmailModule"));
-const WhatsAppModule = lazy(() => import("./pages/admin/modules/WhatsAppModule"));
 const CrmModule = lazy(() => import("./pages/admin/modules/CrmModule"));
 const WorkflowsModule = lazy(() => import("./pages/admin/modules/WorkflowsModule"));
 const WebhooksModule = lazy(() => import("./pages/admin/modules/WebhooksModule"));
@@ -94,7 +93,6 @@ const App = () => (
               <Route path="orders" element={<OrdersModule />} />
               <Route path="invoices" element={<InvoicesModule />} />
               <Route path="email" element={<EmailModule />} />
-              <Route path="whatsapp" element={<WhatsAppModule />} />
               <Route path="crm" element={<CrmModule />} />
               <Route path="workflows" element={<WorkflowsModule />} />
               <Route path="webhooks" element={<WebhooksModule />} />

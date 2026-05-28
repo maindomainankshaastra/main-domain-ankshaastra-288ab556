@@ -61,7 +61,7 @@ export default function OrdersModule() {
             </div>
             <div className="flex items-center gap-3">
               <span className="font-semibold">₹{Number(o.total_amount).toLocaleString()}</span>
-              {o.status === "paid" && o.workflow_stage === "payment_received" && (
+              {o.status === "paid" && o.workflow_stage !== "invoice_generated" && o.workflow_stage !== "email_sent" && (
                 <Button
                   size="sm"
                   variant="outline"

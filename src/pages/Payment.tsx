@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 import { pricing } from "@/config/pricing";
 import { useAuth } from "@/hooks/useAuth";
+import { completeOrderInvoice } from "@/lib/complete-order-invoice";
 
 // Add-ons available at checkout for service-mode orders.
 const DEFAULT_ADDONS = [
@@ -572,7 +573,7 @@ const PaymentPage = () => {
       formData?.person1?.fullName ||
       "";
 
-    let order;
+    let order: { id: string; amount: number; dbOrderId?: string };
     try {
       const response = await fetch("/api/create-order", {
         method: "POST",
@@ -622,25 +623,54 @@ const PaymentPage = () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...response,
+              dbOrderId: order.dbOrderId,
               formData: { ...formData, userId: user?.id },
               service: serviceName,
               amount,
             }),
           });
           const verifyData = await verifyRes.json().catch(() => ({}));
+
+          if (!verifyRes.ok || verifyData?.success === false) {
+            throw new Error(verifyData?.error || "Payment verification failed");
+          }
+
+          let invoiceNumber = String(verifyData?.invoice_number || "");
+          let invoiceReady = Boolean(verifyData?.invoice_ready);
+
+          if (!invoiceReady) {
+            const completed = await completeOrderInvoice({
+              razorpay_order_id: String(response?.razorpay_order_id || ""),
+              razorpay_payment_id: String(response?.razorpay_payment_id || ""),
+              razorpay_signature: String(response?.razorpay_signature || ""),
+              dbOrderId: order.dbOrderId,
+            });
+            if (completed.invoice_number) invoiceNumber = completed.invoice_number;
+            invoiceReady = Boolean(completed.invoice_ready);
+            if (completed.error && !invoiceReady) {
+              toast({
+                title: "Payment successful",
+                description: "Your invoice is being prepared and will arrive by email shortly.",
+              });
+            }
+          }
+
           const params = new URLSearchParams({
             service: isServiceMode ? String(serviceName) : (currentPackage?.name || "Consultation"),
             amount: String(amount),
             payment_id: String(response?.razorpay_payment_id || ""),
             order_id: String(response?.razorpay_order_id || ""),
-            invoice: String(verifyData?.invoice_number || ""),
+            invoice: invoiceNumber,
             name: String(formData?.fullName || [formData?.firstName, formData?.lastName].filter(Boolean).join(" ") || ""),
             email: String(formData?.email || ""),
           });
           navigate(`/thank-you?${params.toString()}`);
         } catch (e) {
           console.error("Verification failed", e);
-          toast({ title: "Payment recorded", description: "We received your payment. Please contact support if you don't get a confirmation.", });
+          toast({
+            title: "Payment recorded",
+            description: "We received your payment. Your invoice will be emailed shortly — check your dashboard in a few minutes.",
+          });
         }
       },
       prefill: {

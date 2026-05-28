@@ -10,7 +10,7 @@ The site includes:
 - Public service pages for name correction, baby naming, C-section date selection, mobile numerology, office vastu, and annual reports.
 - Report pages for numerology blueprints, personalized kundali, and Pyaar Shaastra.
 - A shop page, blog pages, podcast page, calculators, contact and consultation pages.
-- A protected admin area with modules for orders, invoices, email, WhatsApp, CRM, workflows, webhooks, AI reports, services, pricing, templates, and settings.
+- A protected admin area with modules for orders, invoices, email, CRM, workflows, webhooks, AI reports, services, pricing, templates, and settings.
 - Client-side routing with lazy-loaded React pages.
 - Supabase-backed authentication and data management.
 - Razorpay payment processing and server-side order/payment verification.
@@ -42,7 +42,6 @@ The site includes:
   - Orders
   - Invoices
   - Email campaigns
-  - WhatsApp messaging
   - CRM
   - Workflows
   - Webhooks
@@ -61,7 +60,7 @@ The site includes:
   - webhook handling under `webhooks/razorpay.ts`
 - Supabase integration for auth and persistent data storage.
 - Razorpay for payment checkout and verification.
-- Nodemailer and WhatsApp engine support for notifications and messaging.
+- Nodemailer email engine for invoice and order notifications.
 - PDF generation and invoice support using Puppeteer core.
 - GST and invoice utilities in `api/lib`.
 
@@ -133,7 +132,7 @@ This app uses environment variables for Supabase and payments. Common values inc
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
-- email / notification credentials for Nodemailer, WhatsApp, and webhook endpoints.
+- email / notification credentials for Nodemailer and Razorpay webhook endpoints.
 
 ## Deployment
 

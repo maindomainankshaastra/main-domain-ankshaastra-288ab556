@@ -63,16 +63,6 @@ Choose one provider path.
 | `CRON_SECRET` | long random string | Used to authorize `/api/operations/process-jobs`. Required if you call the job processor from Vercel Cron. |
 | `OPERATIONS_API_KEYS` | `key1,key2` | Optional comma-separated API keys for operations endpoints. |
 
-### WhatsApp
-
-Only needed if WhatsApp delivery should be active.
-
-| Variable | Example | Notes |
-| --- | --- | --- |
-| `WHATSAPP_PROVIDER` | `cloud_api` | Use `console` to disable real sending. |
-| `WHATSAPP_TOKEN` | Meta access token | Secret. |
-| `WHATSAPP_PHONE_ID` | Meta phone number ID | Used by WhatsApp Cloud API. |
-
 ## Frontend Business Settings
 
 These are browser-safe `VITE_` values used by the UI.

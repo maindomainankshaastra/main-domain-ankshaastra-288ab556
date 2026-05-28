@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import { getSupabaseAdmin } from "./lib/supabase-admin.js";
-import { advanceWorkflow, runPostPaymentWorkflow } from "./lib/workflow-engine.js";
-import { processPendingJobs } from "./lib/job-processor.js";
+import { advanceWorkflow, enqueueJob } from "./lib/workflow-engine.js";
 import { processInvoiceJob } from "./lib/invoice-engine.js";
 
 export default async function handler(req: { method?: string; body?: Record<string, unknown> }, res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } }) {
@@ -14,6 +13,7 @@ export default async function handler(req: { method?: string; body?: Record<stri
   const formData = (body.formData as Record<string, unknown>) || {};
   const service = body.service ? String(body.service) : "Service";
   const amount = Number(body.amount) || 0;
+  const dbOrderIdFromClient = body.dbOrderId ? String(body.dbOrderId) : null;
 
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
   if (!keySecret) return res.status(500).json({ success: false, error: "Razorpay secret missing" });
@@ -35,14 +35,29 @@ export default async function handler(req: { method?: string; body?: Record<stri
       "Customer";
     const customer_email = formData.email ? String(formData.email) : null;
     const customer_phone = formData.whatsapp ? String(formData.whatsapp) : null;
+    const userId = formData.userId || formData.user_id || null;
 
-    const { data: order } = await supabase
-      .from("orders")
-      .select("id")
-      .eq("razorpay_order_id", razorpay_order_id)
-      .maybeSingle();
+    let orderId: string | null = null;
 
-    let orderId = order?.id;
+    if (dbOrderIdFromClient) {
+      const { data: byId } = await supabase
+        .from("orders")
+        .select("id, razorpay_order_id")
+        .eq("id", dbOrderIdFromClient)
+        .maybeSingle();
+      if (byId?.razorpay_order_id === razorpay_order_id) {
+        orderId = byId.id;
+      }
+    }
+
+    if (!orderId) {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("razorpay_order_id", razorpay_order_id)
+        .maybeSingle();
+      orderId = order?.id || null;
+    }
 
     if (!orderId) {
       const gstAmount = Math.round(amount * 0.18 * 100) / 100;
@@ -61,14 +76,13 @@ export default async function handler(req: { method?: string; body?: Record<stri
           customer_name,
           customer_email,
           customer_phone,
-          user_id: formData.userId || formData.user_id || null,
+          user_id: userId,
           source_website: "ankshaastra.com",
         })
         .select("id")
         .single();
-      orderId = created?.id;
+      orderId = created?.id || null;
     } else {
-      const userId = formData.userId || formData.user_id || null;
       await supabase
         .from("orders")
         .update({
@@ -91,17 +105,21 @@ export default async function handler(req: { method?: string; body?: Record<stri
       razorpay_payment_id,
     });
 
-    await runPostPaymentWorkflow(orderId);
-
     let invoiceError: string | undefined;
     try {
-      await processInvoiceJob(orderId, { paymentId: razorpay_payment_id });
+      await processInvoiceJob(orderId, {
+        paymentId: razorpay_payment_id,
+        forceDeliver: true,
+      });
     } catch (invoiceErr: unknown) {
       invoiceError = invoiceErr instanceof Error ? invoiceErr.message : "Invoice generation failed";
       console.error("[verify-payment] Invoice pipeline error:", invoiceErr);
+      await enqueueJob(
+        "generate_and_deliver_invoice",
+        { orderId },
+        { idempotencyKey: `invoice-retry-${orderId}-${Date.now()}`, priority: 1 },
+      );
     }
-
-    await processPendingJobs(10);
 
     const { data: invoice } = await supabase
       .from("invoices")
@@ -109,21 +127,17 @@ export default async function handler(req: { method?: string; body?: Record<stri
       .eq("order_id", orderId)
       .maybeSingle();
 
-    if (invoiceError && !invoice?.invoice_number) {
-      return res.status(500).json({
-        success: false,
-        error: invoiceError,
-        order_id: orderId,
-      });
-    }
+    const invoiceReady = Boolean(invoice?.pdf_storage_path || invoice?.pdf_url);
 
     return res.status(200).json({
       success: true,
       order_id: orderId,
       invoice_number: invoice?.invoice_number,
-      invoice_ready: Boolean(invoice?.pdf_storage_path || invoice?.pdf_url),
+      invoice_ready: invoiceReady,
       invoice_warning: invoiceError,
       razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Verification failed";

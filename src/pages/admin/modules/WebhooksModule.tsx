@@ -5,7 +5,7 @@ import { statusBadge } from "./logHelpers";
 export default function WebhooksModule() {
   const { rows, loading } = useAdminTable<Record<string, unknown>>("webhooks_log");
   return (
-    <AdminPage title="Webhook Logs" description="Razorpay, WhatsApp, email callbacks with deduplication." loading={loading} empty={!rows.length}>
+    <AdminPage title="Webhook Logs" description="Razorpay payment webhooks with deduplication." loading={loading} empty={!rows.length}>
       <div className="space-y-2">
         {rows.map((r) => (
           <div key={String(r.id)} className="border border-border rounded-lg p-4">
