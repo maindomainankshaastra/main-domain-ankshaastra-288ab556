@@ -12,7 +12,7 @@ import { pricing, formatINR } from "@/config/pricing";
 
 const pricingPlans = [
   {
-    count: "1 Kundali",
+    count: "1 Kundli",
     price: formatINR(pricing.reports.kundaliSingle),
     original: formatINR(pricing.reports.kundaliSingleOriginal),
     amount: pricing.reports.kundaliSingle,
@@ -21,7 +21,7 @@ const pricingPlans = [
     desc: "Get deep insights about your love, career, money & health.",
   },
   {
-    count: "2 Kundali",
+    count: "2 Kundli",
     price: formatINR(pricing.reports.kundaliDouble),
     original: formatINR(pricing.reports.kundaliDoubleOriginal),
     amount: pricing.reports.kundaliDouble,
@@ -31,7 +31,7 @@ const pricingPlans = [
     popular: true,
   },
   {
-    count: "3 Kundali",
+    count: "3 Kundli",
     price: formatINR(pricing.reports.kundaliTriple),
     original: formatINR(pricing.reports.kundaliTripleOriginal),
     amount: pricing.reports.kundaliTriple,
@@ -145,7 +145,7 @@ const PersonalizedKundali = () => {
             </div>
 
             <Link to={`/payment?service=Personalized%20Kundali&amount=${pricing.reports.kundaliSingle}`} className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
-              Get Your Kundali in {formatINR(pricing.reports.kundaliSingle)}
+              Get Your Kundli in {formatINR(pricing.reports.kundaliSingle)}
               <span className="text-base font-medium text-primary/60 line-through">{formatINR(pricing.reports.kundaliSingleOriginal)}</span>
               <ArrowRight className="w-5 h-5" />
             </Link>
