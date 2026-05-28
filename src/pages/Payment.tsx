@@ -498,29 +498,6 @@ const PaymentPage = () => {
       if (kundaliCount === 3) defaults.person3 = { ...blank };
       return { schema: makeKundaliMultiSchema(kundaliCount), defaults };
     }
-    if (formType === "mobile-numerology") {
-      return {
-        schema: mobileNumerologySchema,
-        defaults: {
-          fullName: "", dob: baseDob, gender: undefined as any,
-          currentCity: "", currentState: "", currentMobile: "",
-          preferredSeries: "", preferredDigits: "", avoidNumbers: "",
-          purpose: undefined as any, whatsapp: "+91 ", email: "",
-        },
-      };
-    }
-    if (formType === "office-vastu") {
-      return {
-        schema: officeVastuSchema,
-        defaults: {
-          fullName: "", dob: baseDob, tob: baseTob, pincode: "", pob: "",
-          gender: undefined as any, officePincode: "", officeCity: "",
-          officeState: "", layoutAvailable: undefined as any,
-          businessIndustry: "", companyLegalName: "",
-          whatsapp: "+91 ", email: "",
-        },
-      };
-    }
     if (formType === "consultation") {
       return {
         schema: consultationSchema,
