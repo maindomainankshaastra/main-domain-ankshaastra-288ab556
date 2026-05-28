@@ -60,13 +60,14 @@ export default async function handler(req: { method?: string; body?: Record<stri
           customer_name,
           customer_email,
           customer_phone,
-          user_id: formData.user_id || null,
+          user_id: formData.userId || formData.user_id || null,
           source_website: "ankshaastra.com",
         })
         .select("id")
         .single();
       orderId = created?.id;
     } else {
+      const userId = formData.userId || formData.user_id || null;
       await supabase
         .from("orders")
         .update({
@@ -78,6 +79,7 @@ export default async function handler(req: { method?: string; body?: Record<stri
           customer_name,
           customer_email,
           customer_phone,
+          ...(userId ? { user_id: userId } : {}),
         })
         .eq("id", orderId);
     }

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Download, ShieldCheck, Package, FileText, User as UserIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
 
 interface Order {
   id: string;
@@ -27,6 +28,7 @@ interface Invoice {
   total_amount: number;
   invoice_date: string;
   pdf_url: string | null;
+  pdf_storage_path: string | null;
   status: string;
 }
 
@@ -37,14 +39,24 @@ const Dashboard = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
+      const email = (user.email || "").toLowerCase();
+      const invoiceFilter = email
+        ? `user_id.eq.${user.id},customer_email.ilike.${email}`
+        : `user_id.eq.${user.id}`;
+
       const [{ data: p }, { data: o }, { data: i }] = await Promise.all([
         supabase.from("profiles").select("full_name, phone, email").eq("user_id", user.id).maybeSingle(),
         supabase.from("orders").select("id, service_title, total_amount, status, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("invoices").select("id, invoice_number, service_title, total_amount, invoice_date, pdf_url, status").eq("user_id", user.id).order("invoice_date", { ascending: false }),
+        supabase
+          .from("invoices")
+          .select("id, invoice_number, service_title, total_amount, invoice_date, pdf_url, pdf_storage_path, status")
+          .or(invoiceFilter)
+          .order("invoice_date", { ascending: false }),
       ]);
       if (p) setProfile({ full_name: p.full_name || "", phone: p.phone || "", email: p.email || user.email || "" });
       else setProfile({ full_name: "", phone: "", email: user.email || "" });
@@ -53,6 +65,22 @@ const Dashboard = () => {
       setLoading(false);
     })();
   }, [user]);
+
+  const downloadInvoice = async (inv: Invoice) => {
+    setDownloadingId(inv.id);
+    try {
+      const url = (await fetchInvoiceDownloadUrl(inv.id)) || inv.pdf_url;
+      if (!url) {
+        toast.error("Invoice PDF is not ready yet. Please try again shortly.");
+        return;
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Could not download invoice");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,9 +163,19 @@ const Dashboard = () => {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="font-semibold">₹{Number(inv.total_amount).toLocaleString()}</span>
-                          {inv.pdf_url ? (
-                            <Button asChild size="sm" variant="outline">
-                              <a href={inv.pdf_url} target="_blank" rel="noreferrer"><Download className="w-4 h-4 mr-1" />PDF</a>
+                          {inv.pdf_storage_path || inv.pdf_url ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={downloadingId === inv.id}
+                              onClick={() => downloadInvoice(inv)}
+                            >
+                              {downloadingId === inv.id ? (
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4 mr-1" />
+                              )}
+                              PDF
                             </Button>
                           ) : <Badge variant="secondary">Pending</Badge>}
                         </div>

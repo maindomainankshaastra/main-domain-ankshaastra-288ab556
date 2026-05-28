@@ -580,7 +580,12 @@ const PaymentPage = () => {
           const verifyRes = await fetch("/api/verify-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...response, formData, service: serviceName, amount }),
+            body: JSON.stringify({
+              ...response,
+              formData: { ...formData, userId: user?.id },
+              service: serviceName,
+              amount,
+            }),
           });
           const verifyData = await verifyRes.json().catch(() => ({}));
           const params = new URLSearchParams({

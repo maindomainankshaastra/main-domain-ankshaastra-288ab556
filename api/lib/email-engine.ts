@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { getSupabaseAdmin } from './supabase-admin.js';
 
 export type SendEmailInput = {
   to: string;
@@ -15,6 +16,35 @@ export type SendEmailInput = {
   invoiceId?: string;
 };
 
+async function logEmailAttempt(
+  input: SendEmailInput,
+  status: 'sent' | 'failed',
+  details: { messageId?: string; error?: string },
+) {
+  try {
+    const supabase = getSupabaseAdmin();
+    await supabase.from('email_logs').insert({
+      customer_id: input.customerId || null,
+      order_id: input.orderId || null,
+      invoice_id: input.invoiceId || null,
+      template_slug: input.templateSlug || null,
+      to_email: input.to,
+      subject: input.subject,
+      provider: 'smtp',
+      status,
+      provider_message_id: details.messageId || null,
+      error_message: details.error || null,
+      metadata: {
+        has_attachments: Boolean(input.attachments?.length),
+        attachment_count: input.attachments?.length ?? 0,
+      },
+      sent_at: status === 'sent' ? new Date().toISOString() : null,
+    });
+  } catch (e) {
+    console.error('[email] Failed to write email_logs:', e);
+  }
+}
+
 export async function sendEmail(input: SendEmailInput) {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -26,27 +56,33 @@ export async function sendEmail(input: SendEmailInput) {
     },
   });
 
-  const info = await transporter.sendMail({
-    from: process.env.EMAIL_FROM,
-    to: input.to,
-    subject: input.subject,
-    html: input.html,
-    attachments: input.attachments,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+      attachments: input.attachments,
+    });
 
-  return {
-    ok: true,
-    messageId: info.messageId,
-  };
+    await logEmailAttempt(input, 'sent', { messageId: info.messageId });
+
+    return {
+      ok: true,
+      messageId: info.messageId,
+    };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Email send failed';
+    await logEmailAttempt(input, 'failed', { error: msg });
+    throw e;
+  }
 }
 
-// Keep existing signature compatibility for other parts of the codebase.
-// If template-based emails are required later, reintroduce templating helpers.
 export async function sendTemplatedEmail(
-  _templateSlug: string,
+  templateSlug: string,
   to: string,
   vars: Record<string, string | number>,
-  _ctx?: {
+  ctx?: {
     customerId?: string;
     orderId?: string;
     invoiceId?: string;
@@ -62,6 +98,10 @@ export async function sendTemplatedEmail(
     to,
     subject,
     html,
+    attachments: ctx?.attachments,
+    templateSlug,
+    customerId: ctx?.customerId,
+    orderId: ctx?.orderId,
+    invoiceId: ctx?.invoiceId,
   });
 }
-

@@ -2,9 +2,10 @@ import { getSupabaseAdmin } from './supabase-admin.js';
 import { calculateGst, nextInvoiceNumber } from './gst.js';
 import { type InvoiceTemplateData } from './templates/invoice-html.js';
 import { generateInvoicePdf } from './pdf-engine.js';
-import { sendEmail, sendTemplatedEmail, type SendEmailInput } from './email-engine.js';
+import { sendEmail, type SendEmailInput } from './email-engine.js';
 import { sendTemplatedWhatsApp } from './whatsapp-engine.js';
 import { advanceWorkflow } from './workflow-engine.js';
+import { downloadInvoicePdfBuffer, uploadInvoicePdf } from './invoice-storage.js';
 
 import { wrapEmailLayout } from './templates/email-layout.js';
 
@@ -49,36 +50,26 @@ export async function upsertCustomerFromOrder(order: Record<string, unknown>) {
   return created?.id;
 }
 
-async function ensureInvoiceBucket() {
+async function resolveInvoiceUserId(
+  order: Record<string, unknown>,
+  customerId?: string | null,
+): Promise<string | null> {
+  if (order.user_id) return order.user_id as string;
+
   const supabase = getSupabaseAdmin();
-  const { data: bucket } = await supabase.storage.getBucket('invoices');
-  if (bucket) return;
 
-  const { error } = await supabase.storage.createBucket('invoices', {
-    public: false,
-    fileSizeLimit: 10 * 1024 * 1024,
-    allowedMimeTypes: ['application/pdf'],
-  });
-
-  if (error && !/already exists/i.test(error.message)) {
-    throw error;
+  if (customerId) {
+    const { data: customer } = await supabase.from('customers').select('user_id').eq('id', customerId).maybeSingle();
+    if (customer?.user_id) return customer.user_id;
   }
-}
 
-async function uploadInvoiceFile(storagePath: string, buffer: Buffer, mimeType: string) {
-  const supabase = getSupabaseAdmin();
-  await ensureInvoiceBucket();
+  const email = order.customer_email ? String(order.customer_email).toLowerCase() : '';
+  if (email) {
+    const { data: profile } = await supabase.from('profiles').select('user_id').ilike('email', email).maybeSingle();
+    if (profile?.user_id) return profile.user_id;
+  }
 
-  const { error } = await supabase.storage.from('invoices').upload(storagePath, buffer, {
-    contentType: mimeType,
-    upsert: true,
-  });
-  if (error) throw error;
-
-  const { data: signed, error: signedError } = await supabase.storage.from('invoices').createSignedUrl(storagePath, 60 * 60 * 24 * 365);
-  if (signedError) throw signedError;
-
-  return signed?.signedUrl ?? null;
+  return null;
 }
 
 async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput['attachments']> {
@@ -88,22 +79,10 @@ async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<S
     return undefined;
   }
 
-  const supabase = getSupabaseAdmin();
-
   try {
-    const { data, error } = await supabase.storage.from('invoices').download(storagePath);
-    if (error) {
-      console.error('[invoice] Failed to download invoice pdf from storage:', {
-        storagePath,
-        message: error.message,
-      });
-      return undefined;
-    }
-    if (!data) return undefined;
-
-    const bytes = Buffer.from(await data.arrayBuffer());
-    if (bytes.length < 32) {
-      console.error('[invoice] Downloaded invoice pdf buffer looks too small:', bytes.length);
+    const bytes = await downloadInvoicePdfBuffer(storagePath);
+    if (!bytes) {
+      console.error('[invoice] Failed to download invoice pdf from storage:', storagePath);
       return undefined;
     }
 
@@ -177,14 +156,19 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   const { buffer, mimeType } = await generateInvoicePdf(templateData);
   const storagePath = `invoices/${invoiceNumber}.pdf`;
 
-  const pdfUrl = await uploadInvoiceFile(storagePath, buffer, mimeType);
+  const pdfUrl = await uploadInvoicePdf(storagePath, buffer, mimeType);
+  const invoiceUserId = await resolveInvoiceUserId(order, customerId);
+
+  if (invoiceUserId && !order.user_id) {
+    await supabase.from('orders').update({ user_id: invoiceUserId }).eq('id', order.id);
+  }
 
   const { data: invoice, error: invErr } = await supabase
     .from('invoices')
     .insert({
       invoice_number: invoiceNumber,
       order_id: order.id,
-      user_id: order.user_id,
+      user_id: invoiceUserId,
       customer_id: customerId,
       customer_name: order.customer_name || 'Customer',
       customer_email: order.customer_email,
@@ -252,11 +236,16 @@ export async function deliverInvoice(invoiceId: string) {
   const attachments = await getInvoiceAttachment(invoice);
 
   if (invoice.customer_email) {
+    const downloadLink = invoice.pdf_url
+      ? `<p>You can also <a href="${invoice.pdf_url}">download your invoice PDF</a>.</p>`
+      : '';
+
     const customerHtml = wrapEmailLayout(`
       <h2>Payment Successful</h2>
       <p>Dear ${invoice.customer_name},</p>
       <p>Your payment has been received successfully.</p>
       <p>Your invoice is attached with this email.</p>
+      ${downloadLink}
       <br />
       <p>Thank you for choosing Ankshaastra.</p>
     `);
@@ -265,11 +254,11 @@ export async function deliverInvoice(invoiceId: string) {
       to: invoice.customer_email,
       subject: `Invoice - ${invoice.invoice_number}`,
       html: customerHtml,
-      attachments: attachments?.map((a) => ({
-        filename: a.filename,
-        content: a.content,
-        contentType: a.contentType,
-      })),
+      attachments,
+      templateSlug: 'invoice_email',
+      customerId: invoice.customer_id,
+      orderId: invoice.order_id,
+      invoiceId: invoice.id,
     });
 
     if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
@@ -289,11 +278,10 @@ export async function deliverInvoice(invoiceId: string) {
       to: adminEmail,
       subject: `New Order - ${invoice.invoice_number}`,
       html: adminHtml,
-      attachments: attachments?.map((a) => ({
-        filename: a.filename,
-        content: a.content,
-        contentType: a.contentType,
-      })),
+      attachments,
+      templateSlug: 'invoice_admin',
+      orderId: invoice.order_id,
+      invoiceId: invoice.id,
     });
   }
 
@@ -321,7 +309,9 @@ export async function deliverInvoice(invoiceId: string) {
 
 export async function processInvoiceJob(orderId: string) {
   const result = await generateInvoiceForOrder({ orderId });
-  if (result.invoiceId) await deliverInvoice(result.invoiceId);
+  if (result.invoiceId && !result.duplicate) {
+    await deliverInvoice(result.invoiceId);
+  }
   return result;
 }
 

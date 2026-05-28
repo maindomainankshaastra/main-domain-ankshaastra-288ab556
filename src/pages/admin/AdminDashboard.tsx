@@ -1,10 +1,29 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, FileText, Mail, MessageCircle, Webhook, GitBranch } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Package, FileText, Mail, MessageCircle, Webhook, GitBranch, Download, Loader2 } from "lucide-react";
+import { fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
+import { toast } from "sonner";
+
+type RecentInvoice = {
+  id: string;
+  invoice_number: string;
+  customer_name: string;
+  service_title: string;
+  total_amount: number;
+  status: string;
+  invoice_date: string;
+  pdf_url: string | null;
+  pdf_storage_path: string | null;
+};
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ orders: 0, invoices: 0, emails: 0, whatsapp: 0, webhooks: 0, jobs: 0 });
+  const [recentInvoices, setRecentInvoices] = useState<RecentInvoice[]>([]);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -19,8 +38,31 @@ const AdminDashboard = () => {
         webhooks: results[4].count ?? 0,
         jobs: results[5].count ?? 0,
       });
+
+      const { data } = await supabase
+        .from("invoices")
+        .select("id, invoice_number, customer_name, service_title, total_amount, status, invoice_date, pdf_url, pdf_storage_path")
+        .order("invoice_date", { ascending: false })
+        .limit(5);
+      setRecentInvoices((data as RecentInvoice[]) || []);
     })();
   }, []);
+
+  const downloadInvoice = async (inv: RecentInvoice) => {
+    setDownloadingId(inv.id);
+    try {
+      const url = (await fetchInvoiceDownloadUrl(inv.id)) || inv.pdf_url;
+      if (!url) {
+        toast.error("Invoice PDF is not available yet.");
+        return;
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Could not download invoice");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const cards = [
     { label: "Orders", value: stats.orders, icon: Package, color: "text-amber-500" },
@@ -55,6 +97,49 @@ const AdminDashboard = () => {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-base font-medium">Recent Invoices</CardTitle>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/invoices">View all</Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {recentInvoices.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No invoices generated yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {recentInvoices.map((inv) => (
+                <div key={inv.id} className="flex flex-wrap items-center justify-between gap-3 border border-border rounded-lg p-3">
+                  <div>
+                    <p className="font-semibold text-sm text-primary">{inv.invoice_number}</p>
+                    <p className="text-xs text-muted-foreground">{inv.customer_name} · {inv.service_title}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">₹{Number(inv.total_amount).toLocaleString()}</span>
+                    <Badge variant="secondary" className="text-xs">{inv.status}</Badge>
+                    {(inv.pdf_storage_path || inv.pdf_url) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={downloadingId === inv.id}
+                        onClick={() => downloadInvoice(inv)}
+                      >
+                        {downloadingId === inv.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
