@@ -78,7 +78,7 @@ const consultationPackages = {
 };
 
 // ───── form types ─────
-type FormType = "kundali" | "kundali-multi" | "consultation" | "name-correction" | "name-correction-couple" | "name-check" | "couple" | "pyaar-shastra" | "mobile-numerology" | "office-vastu" | "default";
+type FormType = "kundali" | "kundali-multi" | "consultation" | "name-correction" | "name-correction-couple" | "name-check" | "couple" | "pyaar-shastra" | "default";
 
 const inferFormType = (service: string | null, hasConsultationType: boolean): FormType => {
   if (hasConsultationType) return "consultation";
@@ -88,8 +88,6 @@ const inferFormType = (service: string | null, hasConsultationType: boolean): Fo
   if (s.includes("name check")) return "name-check";
   if (s.includes("complete numerology blueprint") || s.includes("for 2 people")) return "name-correction-couple";
   if (s.includes("name correction")) return "name-correction";
-  if (s.includes("office vastu")) return "office-vastu";
-  if (s.includes("mobile numerology") || s.includes("mobile number")) return "mobile-numerology";
   if ((s.includes("kundali") || s.includes("kundli")) && (s.includes("family") || s.includes("match-making") || s.includes("for 2") || s.includes("for 3"))) return "kundali-multi";
   if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
   return "default";
@@ -150,37 +148,6 @@ const makeKundaliMultiSchema = (count: 2 | 3) => {
   return z.object(base);
 };
 
-const mobileNumerologySchema = z.object({
-  fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
-  dob: dobField,
-  gender: genderField,
-  currentCity: z.string().trim().min(2, "City required").max(80),
-  currentState: z.string().trim().min(2, "State required").max(80),
-  currentMobile: z.string().trim().max(20).optional().or(z.literal("")),
-  preferredSeries: z.string().trim().max(120).optional().or(z.literal("")),
-  preferredDigits: z.string().trim().max(120).optional().or(z.literal("")),
-  avoidNumbers: z.string().trim().max(200).optional().or(z.literal("")),
-  purpose: z.enum(["personal", "business", "professional", "financial"], { required_error: "Select purpose" }),
-  whatsapp: phoneField,
-  email: emailField,
-});
-
-const officeVastuSchema = z.object({
-  fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
-  dob: dobField,
-  tob: tobField,
-  pincode: pincodeField,
-  pob: z.string().trim().min(2, "Place of birth required").max(120),
-  gender: genderField,
-  officePincode: pincodeField,
-  officeCity: z.string().trim().min(2, "City required").max(80),
-  officeState: z.string().trim().min(2, "State required").max(80),
-  layoutAvailable: z.enum(["yes", "no"], { required_error: "Please select" }),
-  businessIndustry: z.string().trim().min(2, "Industry required").max(120),
-  companyLegalName: z.string().trim().min(2, "Company name required").max(200),
-  whatsapp: phoneField,
-  email: emailField,
-});
 
 const consultationSchema = z.object({
   firstName: z.string().trim().min(1, "First name required").max(50).regex(nameRx, "Letters only"),
