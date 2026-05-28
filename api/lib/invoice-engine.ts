@@ -84,23 +84,46 @@ async function uploadInvoiceFile(storagePath: string, buffer: Buffer, mimeType: 
 
 async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput["attachments"]> {
   const storagePath = invoice.pdf_storage_path as string | undefined;
-  if (!storagePath) return undefined;
+  if (!storagePath) {
+    console.warn("[invoice] Missing pdf_storage_path on invoice:", invoice?.id);
+    return undefined;
+  }
 
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase.storage.from("invoices").download(storagePath);
-  if (error || !data) return undefined;
 
-  const bytes = Buffer.from(await data.arrayBuffer());
-  const invoiceNumber = String(invoice.invoice_number || invoice.id || "invoice").replace(/[^\w.-]+/g, "_");
+  try {
+    const { data, error } = await supabase.storage.from("invoices").download(storagePath);
 
-  return [
-    {
-      filename: `${invoiceNumber}.pdf`,
-      content: bytes,
-      contentType: "application/pdf",
-    },
-  ];
+    if (error) {
+      console.error("[invoice] Failed to download invoice pdf from storage:", {
+        storagePath,
+        message: error.message,
+      });
+      return undefined;
+    }
+    if (!data) return undefined;
+
+    const bytes = Buffer.from(await data.arrayBuffer());
+    if (bytes.length < 32) {
+      console.error("[invoice] Downloaded invoice pdf buffer looks too small:", bytes.length);
+      return undefined;
+    }
+
+    const invoiceNumber = String(invoice.invoice_number || invoice.id || "invoice").replace(/[^\w.-]+/g, "_");
+
+    return [
+      {
+        filename: `${invoiceNumber}.pdf`,
+        content: bytes,
+        contentType: "application/pdf",
+      },
+    ];
+  } catch (e) {
+    console.error("[invoice] getInvoiceAttachment threw:", e);
+    return undefined;
+  }
 }
+
 
 function buildAdminInvoiceEmail(invoice: Record<string, unknown>) {
   const total = Number(invoice.total_amount || 0).toLocaleString("en-IN", {
