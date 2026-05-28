@@ -58,15 +58,33 @@ const MobileNumerology = () => {
   const [formData, setFormData] = useState({
     fullName: "",
     dob: "",
-    mobile: "",
+    currentCity: "",
+    currentState: "",
+    gender: "",
+    currentMobile: "",
+    preferredSeries: "",
+    preferredDigits: "",
+    avoidNumbers: "",
+    purpose: "",
+    whatsapp: "",
     email: "",
-    city: "",
-    alternateMobile: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const message = `Mobile Numerology Analysis Request:\nName: ${formData.fullName}\nDOB: ${formData.dob}\nMobile: ${formData.mobile}\nAlternate Mobile: ${formData.alternateMobile}\nEmail: ${formData.email}\nCity: ${formData.city}`;
+    const message = `Mobile Numerology Analysis Request:
+Name: ${formData.fullName}
+DOB: ${formData.dob}
+Current City: ${formData.currentCity}
+Current State: ${formData.currentState}
+Gender: ${formData.gender}
+Current Mobile: ${formData.currentMobile}
+Preferred Series: ${formData.preferredSeries}
+Preferred Digits: ${formData.preferredDigits}
+Numbers to Avoid: ${formData.avoidNumbers}
+Purpose: ${formData.purpose}
+WhatsApp: ${formData.whatsapp}
+Email: ${formData.email}`;
     window.open(`https://wa.me/919667305557?text=${encodeURIComponent(message)}`, "_blank");
   };
 
