@@ -57,13 +57,13 @@ const Navbar = () => {
       style={{ isolation: "isolate" }}
     >
       <nav className="w-full px-4 lg:px-6">
-        <div className="flex items-center justify-between h-20 max-w-[1920px] mx-auto gap-4">
+        <div className="flex items-center justify-between h-16 lg:h-[4.25rem] max-w-[1920px] mx-auto gap-4">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0 flex items-center gap-3">
+          <Link to="/" className="flex-shrink-0 flex items-center">
             <img
               src={logo}
               alt="Ankshaastra"
-              className="h-14 lg:h-16 w-auto object-contain"
+              className="h-9 sm:h-10 lg:h-11 w-auto max-w-[140px] sm:max-w-[160px] object-contain object-left"
             />
           </Link>
 

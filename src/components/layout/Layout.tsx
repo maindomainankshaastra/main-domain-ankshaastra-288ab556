@@ -46,7 +46,7 @@ const Layout = ({ children, minimal = false }: LayoutProps) => {
           </div>
         </header>
       )}
-      <main className={`flex-1 ${minimal ? "" : "pt-20"}`}>
+      <main className={`flex-1 ${minimal ? "" : "pt-16 lg:pt-[4.25rem]"}`}>
         <PageTransition>{children}</PageTransition>
       </main>
       {!minimal && <Footer />}

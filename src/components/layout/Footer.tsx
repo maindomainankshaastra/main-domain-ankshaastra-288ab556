@@ -81,12 +81,12 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10 mb-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-3 lg:col-span-1">
-            <Link to="/" className="flex flex-col items-start gap-2 mb-4">
-              <img src={logo} alt="Ankshaastra" className="h-12 w-auto" />
-              <div className="flex flex-col leading-tight">
-                <span className="font-display text-xl font-bold">Ankshaastra</span>
-                <span className="text-[10px] text-amber-light/90 tracking-[0.2em] uppercase">Vedic Guidance</span>
-              </div>
+            <Link to="/" className="inline-block mb-4">
+              <img
+                src={logo}
+                alt="Ankshaastra"
+                className="h-14 w-auto max-w-[200px] object-contain object-left"
+              />
             </Link>
             <p className="text-cream-light/70 text-sm leading-relaxed mb-5">
               Trusted numerology & Lal Kitab guidance by Himansshu Agarwal Ji. Transforming lives across India.
