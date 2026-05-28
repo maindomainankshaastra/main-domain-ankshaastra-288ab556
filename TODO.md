@@ -1,34 +1,21 @@
-# TODO - Ankshaastra changes
+# TODO - Ankshaastra Invoice PDF & Email Template Migration
 
-## Plan (ordered)
-1. Invoice creation on successful payment
-   - Locate current payment verification flow (src/pages/Payment.tsx + /api/verify-payment.ts)
-   - Add server-side invoice creation logic after Razorpay signature verification
-   - Persist invoice row to Supabase (public.invoices)
-   - Generate / store PDF URL (or placeholder if PDF service not present)
-   - Send invoice email to customer + admin using configured email provider (implement minimal integration)
-   - Send email only after payment is confirmed and invoice exists
+## Step 1: Update invoice HTML template
+- Replace `api/lib/templates/invoice-html.ts` with the provided code from the migration guide.
 
-2. Speed/load performance fixes
-   - Identify heavy components and unnecessary animation / renders on main pages
-   - Reduce layout shifts: skeleton fallbacks and remove blocking animations where needed
-   - Check network-heavy images: add proper lazy loading and decoding
-   - Build and run production bundle to inspect chunks
+## Step 2: Update PDF engine
+- Replace `api/lib/pdf-engine.ts` with the provided code from the migration guide.
 
-3. White space / blank screen on /services/name-correction
-   - Reproduce by reviewing router and page component used for that route
-   - Add an error boundary + fallback UI to prevent full blank screen
-   - Fix the underlying runtime error (likely import/asset or undefined state)
+## Step 3: Update email engine
+- Replace `api/lib/email-engine.ts` with the provided SMTP version from the migration guide (removing Supabase email_logs/resend routing as requested).
 
-4. Pricing via environment variables on Vercel
-   - Replace hardcoded prices in src/pages/Services.tsx and src/pages/NameCorrection.tsx (and other price blocks) with values from Vercel env vars
-   - Implement a small pricing config module that reads import.meta.env.*
-   - Ensure defaults exist for local dev
-   - Update any calculation usage (Payment.tsx uses amount query param; ensure query param uses env price)
+## Step 4: Update invoice engine
+- Update `api/lib/invoice-engine.ts` to ensure customer + admin email logic matches the guide (customer “Payment Successful” and admin “New Order Received”, both with PDF attachment).
+- Verify existing functions still compile.
 
-## Step tracking
-- [ ] Step 1: Invoice creation on successful payment
-- [ ] Step 2: Speed/load performance fixes
-- [ ] Step 3: White space / blank screen fix
-- [ ] Step 4: Env-based pricing updates
+## Step 5: Install/verify deps
+- Ensure `nodemailer`, `puppeteer-core`, `@sparticuz/chromium` are installed.
+
+## Step 6: Typecheck/test
+- Run `npm run build` (or available TS check) and any existing tests.
 
