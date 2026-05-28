@@ -445,6 +445,13 @@ const PaymentPage = () => {
 
   const formType: FormType = formTypeParam || inferFormType(serviceName, !!consultationType);
 
+  // For multi-person kundali, infer the number of people from the service name.
+  const kundaliCount: 2 | 3 = useMemo(() => {
+    const s = (serviceName || "").toLowerCase();
+    if (s.includes("family") || s.includes("for 3")) return 3;
+    return 2;
+  }, [serviceName]);
+
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
@@ -514,6 +521,39 @@ const PaymentPage = () => {
         defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any },
       };
     }
+    if (formType === "kundali-multi") {
+      const blank = { fullName: "", dob: baseDob, tob: baseTob, pincode: "", pob: "", gender: undefined as any };
+      const defaults: any = {
+        person1: { ...blank },
+        person2: { ...blank },
+        email: "", whatsapp: "+91 ", language: undefined as any,
+      };
+      if (kundaliCount === 3) defaults.person3 = { ...blank };
+      return { schema: makeKundaliMultiSchema(kundaliCount), defaults };
+    }
+    if (formType === "mobile-numerology") {
+      return {
+        schema: mobileNumerologySchema,
+        defaults: {
+          fullName: "", dob: baseDob, gender: undefined as any,
+          currentCity: "", currentState: "", currentMobile: "",
+          preferredSeries: "", preferredDigits: "", avoidNumbers: "",
+          purpose: undefined as any, whatsapp: "+91 ", email: "",
+        },
+      };
+    }
+    if (formType === "office-vastu") {
+      return {
+        schema: officeVastuSchema,
+        defaults: {
+          fullName: "", dob: baseDob, tob: baseTob, pincode: "", pob: "",
+          gender: undefined as any, officePincode: "", officeCity: "",
+          officeState: "", layoutAvailable: undefined as any,
+          businessIndustry: "", companyLegalName: "",
+          whatsapp: "+91 ", email: "",
+        },
+      };
+    }
     if (formType === "consultation") {
       return {
         schema: consultationSchema,
@@ -562,7 +602,7 @@ const PaymentPage = () => {
       schema: defaultSchema,
       defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "" },
     };
-  }, [formType]);
+  }, [formType, kundaliCount]);
 
   const form = useForm<any>({
     resolver: zodResolver(schema as any),
