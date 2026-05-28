@@ -762,8 +762,9 @@ const PaymentPage = () => {
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
                   <SelectContent>
-                    <SelectItem value="hindi">Hindi</SelectItem>
                     <SelectItem value="english">English</SelectItem>
+                    <SelectItem value="hindi">Hindi</SelectItem>
+                    <SelectItem value="gujarati">Gujarati</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
