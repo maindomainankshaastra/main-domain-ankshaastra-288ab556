@@ -56,7 +56,7 @@ async function ensureInvoiceBucket() {
   const { error } = await supabase.storage.createBucket("invoices", {
     public: false,
     fileSizeLimit: 10 * 1024 * 1024,
-    allowedMimeTypes: ["application/pdf", "text/html"],
+    allowedMimeTypes: ["application/pdf"],
   });
 
   if (error && !/already exists/i.test(error.message)) {
@@ -91,14 +91,13 @@ async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<S
   if (error || !data) return undefined;
 
   const bytes = Buffer.from(await data.arrayBuffer());
-  const isPdf = storagePath.toLowerCase().endsWith(".pdf");
   const invoiceNumber = String(invoice.invoice_number || invoice.id || "invoice").replace(/[^\w.-]+/g, "_");
 
   return [
     {
-      filename: `${invoiceNumber}.${isPdf ? "pdf" : "html"}`,
+      filename: `${invoiceNumber}.pdf`,
       content: bytes,
-      contentType: isPdf ? "application/pdf" : "text/html",
+      contentType: "application/pdf",
     },
   ];
 }
@@ -183,7 +182,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   };
 
   const { buffer, mimeType } = await generateInvoicePdf(templateData);
-  const storagePath = `invoices/${invoiceNumber}.${mimeType === "application/pdf" ? "pdf" : "html"}`;
+  const storagePath = `invoices/${invoiceNumber}.pdf`;
 
   const pdfUrl = await uploadInvoiceFile(storagePath, buffer, mimeType);
 

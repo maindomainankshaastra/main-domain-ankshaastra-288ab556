@@ -7,7 +7,7 @@ VALUES (
   'invoices',
   false,
   10485760,
-  ARRAY['application/pdf', 'text/html']
+  ARRAY['application/pdf']
 )
 ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
