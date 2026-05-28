@@ -354,22 +354,63 @@ Email: ${formData.email}`;
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Mobile Number *</label>
-                  <Input required value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} placeholder="Number to analyse" />
+                  <label className="text-sm font-medium text-foreground mb-2 block">Current City *</label>
+                  <Input required value={formData.currentCity} onChange={e => setFormData({...formData, currentCity: e.target.value})} placeholder="City" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Alternate Mobile</label>
-                  <Input value={formData.alternateMobile} onChange={e => setFormData({...formData, alternateMobile: e.target.value})} placeholder="Optional" />
+                  <label className="text-sm font-medium text-foreground mb-2 block">Current State *</label>
+                  <Input required value={formData.currentState} onChange={e => setFormData({...formData, currentState: e.target.value})} placeholder="State" />
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Email *</label>
-                  <Input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="your@email.com" />
+                  <label className="text-sm font-medium text-foreground mb-2 block">Gender *</label>
+                  <select required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">City *</label>
-                  <Input required value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} placeholder="Your city" />
+                  <label className="text-sm font-medium text-foreground mb-2 block">Current Mobile Number</label>
+                  <Input value={formData.currentMobile} onChange={e => setFormData({...formData, currentMobile: e.target.value})} placeholder="If any" />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Preferred Series</label>
+                  <Input value={formData.preferredSeries} onChange={e => setFormData({...formData, preferredSeries: e.target.value})} placeholder="e.g. 98, 99, 88" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Preferred Digits</label>
+                  <Input value={formData.preferredDigits} onChange={e => setFormData({...formData, preferredDigits: e.target.value})} placeholder="Optional" />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Numbers to Avoid</label>
+                  <Input value={formData.avoidNumbers} onChange={e => setFormData({...formData, avoidNumbers: e.target.value})} placeholder="Optional" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Purpose *</label>
+                  <select required value={formData.purpose} onChange={e => setFormData({...formData, purpose: e.target.value})} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <option value="">Select purpose</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Business">Business</option>
+                    <option value="Professional Growth">Professional Growth</option>
+                    <option value="Financial Growth">Financial Growth</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">WhatsApp Number *</label>
+                  <Input required value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} placeholder="WhatsApp number" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Email *</label>
+                  <Input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="your@email.com" />
                 </div>
               </div>
               <button type="submit" className="btn-primary w-full py-4 rounded-2xl text-lg flex items-center justify-center gap-3">
