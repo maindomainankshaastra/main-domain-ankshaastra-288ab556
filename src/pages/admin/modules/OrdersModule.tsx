@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { FileText, Loader2 } from "lucide-react";
+import { generateInvoiceForOrder } from "@/lib/invoice-admin";
 
 type Order = {
   id: string;
@@ -22,6 +26,20 @@ const orderStatuses: OrderStatus[] = ["pending", "paid", "failed", "refunded", "
 
 export default function OrdersModule() {
   const { rows, loading, reload } = useAdminTable<Order>("orders");
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+
+  const runGenerateInvoice = async (orderId: string) => {
+    setGeneratingId(orderId);
+    try {
+      const result = await generateInvoiceForOrder(orderId);
+      toast.success(result.invoice_number ? `Invoice ${result.invoice_number} generated` : "Invoice generated");
+      reload();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to generate invoice");
+    } finally {
+      setGeneratingId(null);
+    }
+  };
 
   const updateStatus = async (id: string, status: OrderStatus) => {
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
@@ -43,6 +61,21 @@ export default function OrdersModule() {
             </div>
             <div className="flex items-center gap-3">
               <span className="font-semibold">₹{Number(o.total_amount).toLocaleString()}</span>
+              {o.status === "paid" && o.workflow_stage === "payment_received" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={generatingId === o.id}
+                  onClick={() => runGenerateInvoice(o.id)}
+                >
+                  {generatingId === o.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4 mr-1" />
+                  )}
+                  Invoice
+                </Button>
+              )}
               <Select value={o.status} onValueChange={(v) => updateStatus(o.id, v as OrderStatus)}>
                 <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                 <SelectContent>

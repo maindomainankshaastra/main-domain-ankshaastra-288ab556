@@ -58,7 +58,8 @@ export async function nextInvoiceNumber(
   supabase: ReturnType<typeof import("./supabase-admin").getSupabaseAdmin>
 ): Promise<string> {
   const { data: config } = await supabase.from("gst_config").select("*").limit(1).single();
-  const prefix = config?.invoice_prefix ?? "INV";
+  const rawPrefix = String(config?.invoice_prefix ?? "INV").trim();
+  const prefix = rawPrefix.replace(/[/\\]+$/g, "").replace(/[/\\]/g, "-") || "INV";
   const seq = (config?.invoice_sequence ?? 1) as number;
   const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const invoiceNumber = `${prefix}-${datePart}-${String(seq).padStart(5, "0")}`;

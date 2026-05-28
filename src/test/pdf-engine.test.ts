@@ -61,9 +61,12 @@ describe("generateInvoicePdf", () => {
     expect(pdfMock.close).toHaveBeenCalled();
   });
 
-  it("throws instead of falling back to HTML when the renderer does not return a PDF", async () => {
+  it("falls back to pdf-lib when puppeteer does not return a PDF buffer", async () => {
     pdfMock.output = Buffer.from("<html>not a pdf</html>");
 
-    await expect(generateInvoicePdf(invoiceData)).rejects.toThrow("renderer did not return a PDF buffer");
+    const result = await generateInvoicePdf(invoiceData);
+
+    expect(result.mimeType).toBe("application/pdf");
+    expect(result.buffer.subarray(0, 4).toString()).toBe("%PDF");
   });
 });

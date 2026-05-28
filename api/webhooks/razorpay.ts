@@ -2,6 +2,7 @@ import { logWebhook, verifyRazorpaySignature } from "../lib/webhook-utils.js";
 import { getSupabaseAdmin } from "../lib/supabase-admin.js";
 import { runPostPaymentWorkflow } from "../lib/workflow-engine.js";
 import { processPendingJobs } from "../lib/job-processor.js";
+import { processInvoiceJob } from "../lib/invoice-engine.js";
 
 export const config = { api: { bodyParser: false } };
 
@@ -68,7 +69,12 @@ export default async function handler(req: any, res: any) {
             .eq("id", order.id);
         }
         await runPostPaymentWorkflow(order.id);
-        await processPendingJobs(3);
+        try {
+          await processInvoiceJob(order.id, { paymentId: entity.id });
+        } catch (invoiceErr) {
+          console.error("[razorpay-webhook] Invoice pipeline error:", invoiceErr);
+        }
+        await processPendingJobs(10);
       }
     }
 

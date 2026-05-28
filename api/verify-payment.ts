@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { getSupabaseAdmin } from "./lib/supabase-admin.js";
 import { advanceWorkflow, runPostPaymentWorkflow } from "./lib/workflow-engine.js";
 import { processPendingJobs } from "./lib/job-processor.js";
+import { processInvoiceJob } from "./lib/invoice-engine.js";
 
 export default async function handler(req: { method?: string; body?: Record<string, unknown> }, res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } }) {
   if (req.method !== "POST") return res.status(405).end();
@@ -91,18 +92,37 @@ export default async function handler(req: { method?: string; body?: Record<stri
     });
 
     await runPostPaymentWorkflow(orderId);
-    await processPendingJobs(3);
+
+    let invoiceError: string | undefined;
+    try {
+      await processInvoiceJob(orderId, { paymentId: razorpay_payment_id });
+    } catch (invoiceErr: unknown) {
+      invoiceError = invoiceErr instanceof Error ? invoiceErr.message : "Invoice generation failed";
+      console.error("[verify-payment] Invoice pipeline error:", invoiceErr);
+    }
+
+    await processPendingJobs(10);
 
     const { data: invoice } = await supabase
       .from("invoices")
-      .select("invoice_number")
+      .select("invoice_number, pdf_storage_path, pdf_url")
       .eq("order_id", orderId)
       .maybeSingle();
+
+    if (invoiceError && !invoice?.invoice_number) {
+      return res.status(500).json({
+        success: false,
+        error: invoiceError,
+        order_id: orderId,
+      });
+    }
 
     return res.status(200).json({
       success: true,
       order_id: orderId,
       invoice_number: invoice?.invoice_number,
+      invoice_ready: Boolean(invoice?.pdf_storage_path || invoice?.pdf_url),
+      invoice_warning: invoiceError,
       razorpay_payment_id,
     });
   } catch (e: unknown) {

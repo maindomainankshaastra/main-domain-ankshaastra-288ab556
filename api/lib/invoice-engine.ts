@@ -5,7 +5,7 @@ import { generateInvoicePdf } from './pdf-engine.js';
 import { sendEmail, type SendEmailInput } from './email-engine.js';
 import { sendTemplatedWhatsApp } from './whatsapp-engine.js';
 import { advanceWorkflow } from './workflow-engine.js';
-import { downloadInvoicePdfBuffer, uploadInvoicePdf } from './invoice-storage.js';
+import { downloadInvoicePdfBuffer, invoiceStoragePath, uploadInvoicePdf } from './invoice-storage.js';
 
 import { wrapEmailLayout } from './templates/email-layout.js';
 
@@ -107,8 +107,19 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   if (error || !order) throw new Error('Order not found');
 
   const customerId = await upsertCustomerFromOrder(order);
-  const { data: existing } = await supabase.from('invoices').select('id, invoice_number').eq('order_id', order.id).maybeSingle();
-  if (existing) return { invoiceId: existing.id, invoiceNumber: existing.invoice_number, duplicate: true };
+  const { data: existing } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, pdf_storage_path')
+    .eq('order_id', order.id)
+    .maybeSingle();
+
+  if (existing?.pdf_storage_path) {
+    return { invoiceId: existing.id, invoiceNumber: existing.invoice_number, duplicate: true };
+  }
+
+  if (existing?.id && !existing.pdf_storage_path) {
+    await supabase.from('invoices').delete().eq('id', existing.id);
+  }
 
   const { data: gstConfig } = await supabase.from('gst_config').select('*').limit(1).single();
   const gst = calculateGst({
@@ -154,7 +165,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   };
 
   const { buffer, mimeType } = await generateInvoicePdf(templateData);
-  const storagePath = `invoices/${invoiceNumber}.pdf`;
+  const storagePath = invoiceStoragePath(invoiceNumber);
 
   const pdfUrl = await uploadInvoicePdf(storagePath, buffer, mimeType);
   const invoiceUserId = await resolveInvoiceUserId(order, customerId);
@@ -250,18 +261,21 @@ export async function deliverInvoice(invoiceId: string) {
       <p>Thank you for choosing Ankshaastra.</p>
     `);
 
-    await sendEmail({
-      to: invoice.customer_email,
-      subject: `Invoice - ${invoice.invoice_number}`,
-      html: customerHtml,
-      attachments,
-      templateSlug: 'invoice_email',
-      customerId: invoice.customer_id,
-      orderId: invoice.order_id,
-      invoiceId: invoice.id,
-    });
-
-    if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
+    try {
+      await sendEmail({
+        to: invoice.customer_email,
+        subject: `Invoice - ${invoice.invoice_number}`,
+        html: customerHtml,
+        attachments,
+        templateSlug: 'invoice_email',
+        customerId: invoice.customer_id,
+        orderId: invoice.order_id,
+        invoiceId: invoice.id,
+      });
+      if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
+    } catch (emailErr) {
+      console.error('[invoice] Customer email failed:', emailErr);
+    }
   }
 
   const adminEmail = process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL || '';
@@ -274,15 +288,19 @@ export async function deliverInvoice(invoiceId: string) {
       <p><strong>Invoice:</strong> ${invoice.invoice_number}</p>
     `);
 
-    await sendEmail({
-      to: adminEmail,
-      subject: `New Order - ${invoice.invoice_number}`,
-      html: adminHtml,
-      attachments,
-      templateSlug: 'invoice_admin',
-      orderId: invoice.order_id,
-      invoiceId: invoice.id,
-    });
+    try {
+      await sendEmail({
+        to: adminEmail,
+        subject: `New Order - ${invoice.invoice_number}`,
+        html: adminHtml,
+        attachments,
+        templateSlug: 'invoice_admin',
+        orderId: invoice.order_id,
+        invoiceId: invoice.id,
+      });
+    } catch (emailErr) {
+      console.error('[invoice] Admin email failed:', emailErr);
+    }
   }
 
   if (invoice.customer_phone) {
@@ -307,9 +325,13 @@ export async function deliverInvoice(invoiceId: string) {
   return { ok: true };
 }
 
-export async function processInvoiceJob(orderId: string) {
-  const result = await generateInvoiceForOrder({ orderId });
-  if (result.invoiceId && !result.duplicate) {
+export async function processInvoiceJob(orderId: string, opts?: { paymentId?: string; forceDeliver?: boolean }) {
+  const result = await generateInvoiceForOrder({
+    orderId,
+    paymentId: opts?.paymentId,
+  });
+
+  if (result.invoiceId && (!result.duplicate || opts?.forceDeliver)) {
     await deliverInvoice(result.invoiceId);
   }
   return result;

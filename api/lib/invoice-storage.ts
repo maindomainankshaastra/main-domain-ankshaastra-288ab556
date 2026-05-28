@@ -3,6 +3,12 @@ import { getSupabaseAdmin } from './supabase-admin.js';
 const BUCKET = 'invoices';
 const SIGNED_URL_TTL_SEC = 60 * 60 * 24 * 365;
 
+/** Safe object key — invoice numbers may contain slashes from GST prefix config. */
+export function invoiceStoragePath(invoiceNumber: string): string {
+  const safe = invoiceNumber.replace(/[^a-zA-Z0-9_-]+/g, '_');
+  return `invoices/${safe}.pdf`;
+}
+
 export async function ensureInvoiceBucket() {
   const supabase = getSupabaseAdmin();
   const { data: bucket } = await supabase.storage.getBucket(BUCKET);

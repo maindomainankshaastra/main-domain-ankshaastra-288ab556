@@ -7,11 +7,11 @@ const HANDLERS: Record<string, (payload: Record<string, unknown>) => Promise<voi
     await processInvoiceJob(orderId);
   },
   send_invoice_email: async (payload) => {
-    const { deliverInvoice } = await import("./invoice-engine");
+    const { deliverInvoice } = await import("./invoice-engine.js");
     await deliverInvoice(String(payload.invoiceId));
   },
   retry_communication: async (payload) => {
-    const { deliverInvoice } = await import("./invoice-engine");
+    const { deliverInvoice } = await import("./invoice-engine.js");
     if (payload.invoiceId) await deliverInvoice(String(payload.invoiceId));
   },
 };
