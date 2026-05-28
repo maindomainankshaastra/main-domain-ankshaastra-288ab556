@@ -58,17 +58,40 @@ const OfficeVastu = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
-    businessName: "",
-    mobile: "",
+    dob: "",
+    tobHour: "",
+    tobMinute: "",
+    tobMeridiem: "AM",
+    birthPincode: "",
+    pob: "",
+    gender: "",
+    officePincode: "",
+    officeCity: "",
+    officeState: "",
+    layoutAvailable: "",
+    businessIndustry: "",
+    companyLegalName: "",
+    whatsapp: "",
     email: "",
-    city: "",
-    officeAddress: "",
-    concerns: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const message = `Office Vastu Consultation Request:\nName: ${formData.fullName}\nBusiness: ${formData.businessName}\nMobile: ${formData.mobile}\nEmail: ${formData.email}\nCity: ${formData.city}\nOffice Address: ${formData.officeAddress}\nConcerns: ${formData.concerns}`;
+    const message = `Office Vastu Consultation Request:
+Name: ${formData.fullName}
+DOB: ${formData.dob}
+Time of Birth: ${formData.tobHour}:${formData.tobMinute} ${formData.tobMeridiem}
+Birth PIN: ${formData.birthPincode}
+Place of Birth: ${formData.pob}
+Gender: ${formData.gender}
+Office Pincode: ${formData.officePincode}
+Office City: ${formData.officeCity}
+Office State: ${formData.officeState}
+Office Layout Available: ${formData.layoutAvailable}
+Business Industry: ${formData.businessIndustry}
+Company Legal Name: ${formData.companyLegalName}
+WhatsApp: ${formData.whatsapp}
+Email: ${formData.email}`;
     window.open(`https://wa.me/919667305557?text=${encodeURIComponent(message)}`, "_blank");
   };
 

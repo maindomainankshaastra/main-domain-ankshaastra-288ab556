@@ -78,7 +78,7 @@ const consultationPackages = {
 };
 
 // ───── form types ─────
-type FormType = "kundali" | "consultation" | "name-correction" | "name-correction-couple" | "name-check" | "couple" | "pyaar-shastra" | "default";
+type FormType = "kundali" | "kundali-multi" | "consultation" | "name-correction" | "name-correction-couple" | "name-check" | "couple" | "pyaar-shastra" | "default";
 
 const inferFormType = (service: string | null, hasConsultationType: boolean): FormType => {
   if (hasConsultationType) return "consultation";
@@ -88,6 +88,7 @@ const inferFormType = (service: string | null, hasConsultationType: boolean): Fo
   if (s.includes("name check")) return "name-check";
   if (s.includes("complete numerology blueprint") || s.includes("for 2 people")) return "name-correction-couple";
   if (s.includes("name correction")) return "name-correction";
+  if ((s.includes("kundali") || s.includes("kundli")) && (s.includes("family") || s.includes("match-making") || s.includes("for 2") || s.includes("for 3"))) return "kundali-multi";
   if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
   return "default";
 };
@@ -123,8 +124,30 @@ const defaultSchema = z.object({
 });
 
 const kundaliSchema = defaultSchema.extend({
-  language: z.enum(["hindi", "english"], { required_error: "Select language" }),
+  language: z.enum(["english", "hindi", "gujarati"], { required_error: "Select language" }),
 });
+
+// Kundali per-person (used inside kundali-multi)
+const kundaliPersonSchema = z.object({
+  fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
+  dob: dobField,
+  tob: tobField,
+  pincode: pincodeField,
+  pob: z.string().trim().min(2, "Place of birth required").max(120),
+  gender: genderField,
+});
+const makeKundaliMultiSchema = (count: 2 | 3) => {
+  const base: any = {
+    person1: kundaliPersonSchema,
+    person2: kundaliPersonSchema,
+    email: emailField,
+    whatsapp: phoneField,
+    language: z.enum(["english", "hindi", "gujarati"], { required_error: "Select language" }),
+  };
+  if (count === 3) base.person3 = kundaliPersonSchema;
+  return z.object(base);
+};
+
 
 const consultationSchema = z.object({
   firstName: z.string().trim().min(1, "First name required").max(50).regex(nameRx, "Letters only"),
@@ -389,6 +412,13 @@ const PaymentPage = () => {
 
   const formType: FormType = formTypeParam || inferFormType(serviceName, !!consultationType);
 
+  // For multi-person kundali, infer the number of people from the service name.
+  const kundaliCount: 2 | 3 = useMemo(() => {
+    const s = (serviceName || "").toLowerCase();
+    if (s.includes("family") || s.includes("for 3")) return 3;
+    return 2;
+  }, [serviceName]);
+
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
@@ -458,6 +488,16 @@ const PaymentPage = () => {
         defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any },
       };
     }
+    if (formType === "kundali-multi") {
+      const blank = { fullName: "", dob: baseDob, tob: baseTob, pincode: "", pob: "", gender: undefined as any };
+      const defaults: any = {
+        person1: { ...blank },
+        person2: { ...blank },
+        email: "", whatsapp: "+91 ", language: undefined as any,
+      };
+      if (kundaliCount === 3) defaults.person3 = { ...blank };
+      return { schema: makeKundaliMultiSchema(kundaliCount), defaults };
+    }
     if (formType === "consultation") {
       return {
         schema: consultationSchema,
@@ -506,7 +546,7 @@ const PaymentPage = () => {
       schema: defaultSchema,
       defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "" },
     };
-  }, [formType]);
+  }, [formType, kundaliCount]);
 
   const form = useForm<any>({
     resolver: zodResolver(schema as any),
@@ -722,14 +762,86 @@ const PaymentPage = () => {
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
                   <SelectContent>
-                    <SelectItem value="hindi">Hindi</SelectItem>
                     <SelectItem value="english">English</SelectItem>
+                    <SelectItem value="hindi">Hindi</SelectItem>
+                    <SelectItem value="gujarati">Gujarati</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )} />
           </div>
+        </>
+      );
+    }
+
+    if (formType === "kundali-multi") {
+      const persons: Array<"person1" | "person2" | "person3"> = kundaliCount === 3
+        ? ["person1", "person2", "person3"]
+        : ["person1", "person2"];
+      const accents = ["bg-primary", "bg-amber-500", "bg-pink-500"];
+      const PersonBlock = ({ name, title, accent }: { name: string; title: string; accent: string }) => (
+        <div className="rounded-xl border border-border p-5 bg-background/40 space-y-4">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <span className={`inline-block w-2 h-2 rounded-full ${accent}`} />{title}
+          </h3>
+          <FormField control={c} name={`${name}.fullName`} render={({ field }) => (
+            <FormItem><FormLabel>Full Name *</FormLabel><FormControl><Input placeholder="As per Aadhar" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DOBPicker control={c} name={`${name}.dob`} />
+            <TOBPicker control={c} name={`${name}.tob`} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={c} name={`${name}.pincode`} render={({ field }) => (
+              <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name={`${name}.pob`} render={({ field }) => (
+              <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
+          <FormField control={c} name={`${name}.gender`} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                  {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
+                    <div key={v} className="flex items-center space-x-2">
+                      <RadioGroupItem value={v} id={`${name}-g-${v}`} />
+                      <Label htmlFor={`${name}-g-${v}`}>{l}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+      );
+      return (
+        <>
+          <div className="rounded-lg bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-foreground">
+            This package covers <strong>{kundaliCount} people</strong>. Please provide birth details for each.
+          </div>
+          {persons.map((p, i) => (
+            <PersonBlock key={p} name={p} title={`Person ${i + 1} — Birth Details`} accent={accents[i]} />
+          ))}
+          <h3 className="font-semibold text-foreground pt-2">Contact & Report Language</h3>
+          {ContactRow}
+          <FormField control={c} name="language" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Report Language *</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="hindi">Hindi</SelectItem>
+                  <SelectItem value="gujarati">Gujarati</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
         </>
       );
     }
