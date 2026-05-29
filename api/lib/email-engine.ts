@@ -80,7 +80,9 @@ export async function sendEmail(input: SendEmailInput) {
   } catch (e: unknown) {
     const msg = formatSmtpError(e, smtp.host);
     await logEmailAttempt(input, 'failed', { error: msg });
-    throw new Error(msg, { cause: e });
+    const err = new Error(msg);
+    Object.assign(err, { cause: e });
+    throw err;
   }
 }
 
