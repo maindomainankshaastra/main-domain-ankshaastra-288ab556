@@ -18,6 +18,11 @@ export const config = { api: { bodyParser: false } };
 
 type ApiHandler = (req: unknown, res: unknown) => Promise<unknown> | unknown;
 
+type IncomingReq = {
+  query?: Record<string, string | string[] | undefined>;
+  url?: string;
+};
+
 const routes: Record<string, ApiHandler> = {
   "create-order": createOrder,
   services,
@@ -34,14 +39,20 @@ const routes: Record<string, ApiHandler> = {
   "email/test": emailTest,
 };
 
-function resolveRoute(req: { query?: Record<string, string | string[] | undefined> }): string {
+function resolveRoute(req: IncomingReq): string {
   const param = req.query?.route;
-  if (Array.isArray(param)) return param.join("/");
-  return param ? String(param) : "";
+  if (param) {
+    return Array.isArray(param) ? param.join("/") : String(param);
+  }
+
+  const rawUrl = req.url || "";
+  const pathname = rawUrl.split("?")[0] || "";
+  const match = pathname.match(/^\/api\/?(.*)$/);
+  return match?.[1]?.replace(/^index\/?/, "") || "";
 }
 
 export default async function handler(req: Parameters<ApiHandler>[0], res: Parameters<ApiHandler>[1]) {
-  const routeKey = resolveRoute(req as { query?: Record<string, string | string[] | undefined> });
+  const routeKey = resolveRoute(req as IncomingReq);
   const routeHandler = routes[routeKey];
 
   if (!routeHandler) {
