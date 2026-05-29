@@ -1,5 +1,6 @@
 import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 import { sendEmail } from '../lib/email-engine.js';
+import { assertSmtpConfigured, getSmtpConfigStatus } from '../lib/smtp-config.js';
 import { wrapEmailLayout } from '../lib/templates/email-layout.js';
 
 type Req = {
@@ -11,17 +12,6 @@ type Req = {
 type Res = {
   status: (n: number) => { json: (o: unknown) => void; end: () => void };
 };
-
-function smtpConfigStatus() {
-  return {
-    host: Boolean(process.env.SMTP_HOST),
-    port: Boolean(process.env.SMTP_PORT),
-    user: Boolean(process.env.SMTP_USER),
-    password: Boolean(process.env.SMTP_PASSWORD || process.env.SMTP_PASS),
-    from: Boolean(process.env.EMAIL_FROM),
-    secure: process.env.SMTP_SECURE === 'true',
-  };
-}
 
 /** POST — admin-only: send a test email to verify SMTP configuration */
 export default async function handler(req: Req, res: Res) {
@@ -38,12 +28,12 @@ export default async function handler(req: Req, res: Res) {
     return res.status(400).json({ error: 'A valid recipient email is required' });
   }
 
-  const config = smtpConfigStatus();
-  if (!config.host || !config.user || !config.password || !config.from) {
-    return res.status(500).json({
-      error: 'SMTP is not fully configured. Set SMTP_HOST, SMTP_USER, SMTP_PASSWORD, and EMAIL_FROM on the server.',
-      smtp: config,
-    });
+  const config = getSmtpConfigStatus();
+  try {
+    assertSmtpConfigured();
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'SMTP is not configured';
+    return res.status(500).json({ error: msg, smtp: config });
   }
 
   const sentAt = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });

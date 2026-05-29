@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { assertSmtpConfigured, formatSmtpError } from './smtp-config.js';
 import { getSupabaseAdmin } from './supabase-admin.js';
 
 export type SendEmailInput = {
@@ -46,19 +47,24 @@ async function logEmailAttempt(
 }
 
 export async function sendEmail(input: SendEmailInput) {
+  const smtp = assertSmtpConfigured();
+
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === 'true',
+    host: smtp.host,
+    port: smtp.port,
+    secure: smtp.secure,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
+      user: smtp.user,
+      pass: smtp.pass,
+    },
+    tls: {
+      rejectUnauthorized: process.env.SMTP_REJECT_UNAUTHORIZED !== 'false',
     },
   });
 
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: smtp.from,
       to: input.to,
       subject: input.subject,
       html: input.html,
@@ -72,9 +78,9 @@ export async function sendEmail(input: SendEmailInput) {
       messageId: info.messageId,
     };
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Email send failed';
+    const msg = formatSmtpError(e, smtp.host);
     await logEmailAttempt(input, 'failed', { error: msg });
-    throw e;
+    throw new Error(msg, { cause: e });
   }
 }
 

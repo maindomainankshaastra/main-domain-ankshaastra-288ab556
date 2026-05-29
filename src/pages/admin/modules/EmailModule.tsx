@@ -44,7 +44,7 @@ export default function EmailModule() {
             Send test email
           </CardTitle>
           <CardDescription>
-            Verify SMTP settings on Vercel (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_FROM). A successful test appears in the log below.
+            Verify SMTP on Vercel: SMTP_HOST must be a server hostname (e.g. mail.ankshaastra.com), not your mailbox email. Use SMTP_USER for Mail@ankshaastra.com, SMTP_PASSWORD or SMTP_PASS, SMTP_PORT, and EMAIL_FROM.
           </CardDescription>
         </CardHeader>
         <CardContent>

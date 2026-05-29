@@ -34,10 +34,10 @@ Choose one provider path.
 | --- | --- | --- |
 | `MAILER_PROVIDER` | `smtp` | Enables SMTP sending. |
 | `EMAIL_FROM` | `Ankshaastra <no-reply@ankshaastra.com>` | Sender shown to customer/admin. |
-| `SMTP_HOST` | `smtp.example.com` | SMTP host. |
+| `SMTP_HOST` | `mail.ankshaastra.com` | Mail **server hostname** only — not your mailbox email. |
 | `SMTP_PORT` | `587` | Use `465` for secure SMTP if your provider requires it. |
-| `SMTP_USER` | `smtp-user` | SMTP username. |
-| `SMTP_PASS` | `smtp-password` | Secret SMTP password. |
+| `SMTP_USER` | `Mail@ankshaastra.com` | SMTP username (usually your full mailbox address). |
+| `SMTP_PASS` or `SMTP_PASSWORD` | `smtp-password` | Secret SMTP password. |
 
 #### Resend Option
 
