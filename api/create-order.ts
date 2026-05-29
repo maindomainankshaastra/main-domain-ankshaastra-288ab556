@@ -52,9 +52,22 @@ export default async function handler(req: { method?: string; body?: Record<stri
         }
 
         serviceTitle = service.title;
-        amount = Number(service.price);
         resolvedServiceId = service.id;
         gstRate = service.gst_rate ?? undefined;
+
+        const basePrice = Number(service.price);
+        const addons = Array.isArray(metadata.addons)
+          ? (metadata.addons as { price?: number }[])
+          : [];
+        const addonsTotal = addons.reduce((sum, a) => sum + Number(a.price || 0), 0);
+        const clientAmount = Number(body.amount);
+
+        // Keep client total when it includes add-ons; otherwise use catalog price + add-ons.
+        if (clientAmount > 0 && (addonsTotal > 0 || clientAmount !== basePrice)) {
+          amount = clientAmount;
+        } else {
+          amount = basePrice + addonsTotal;
+        }
       }
     }
 

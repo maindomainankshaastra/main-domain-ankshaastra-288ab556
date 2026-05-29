@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -31,6 +31,7 @@ import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 import { pricing } from "@/config/pricing";
 import { useAuth } from "@/hooks/useAuth";
 import { completeOrderInvoice } from "@/lib/complete-order-invoice";
+import { syncPaymentStatus } from "@/lib/sync-payment";
 
 // Add-ons available at checkout for service-mode orders.
 const DEFAULT_ADDONS = [
@@ -378,7 +379,7 @@ const GenderRadio = ({ control }: { control: any }) => (
       <FormItem>
         <FormLabel>Gender *</FormLabel>
         <FormControl>
-          <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+          <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
             {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
               <div key={v} className="flex items-center space-x-2">
                 <RadioGroupItem value={v} id={`g-${v}`} />
@@ -422,6 +423,13 @@ const PaymentPage = () => {
 
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
+  const paymentCtxRef = useRef<{
+    formData: Record<string, unknown>;
+    amount: number;
+    dbOrderId?: string;
+    razorpayOrderId?: string;
+  } | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
   const availableAddons: Addon[] = useMemo(() => {
@@ -556,6 +564,16 @@ const PaymentPage = () => {
 
   const loadRazorpay = () =>
     new Promise<boolean>((resolve) => {
+      if ((window as unknown as { Razorpay?: unknown }).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+      if (existing) {
+        existing.addEventListener("load", () => resolve(true));
+        existing.addEventListener("error", () => resolve(false));
+        return;
+      }
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.onload = () => resolve(true);
@@ -563,9 +581,163 @@ const PaymentPage = () => {
       document.body.appendChild(script);
     });
 
+  const goToThankYou = useCallback(
+    (
+      formData: Record<string, unknown>,
+      amount: number,
+      paymentId: string,
+      orderId: string,
+      invoiceNumber: string,
+    ) => {
+      const params = new URLSearchParams({
+        service: isServiceMode ? String(serviceName) : (currentPackage?.name || "Consultation"),
+        amount: String(amount),
+        payment_id: paymentId,
+        order_id: orderId,
+        invoice: invoiceNumber,
+        name: String(
+          formData?.fullName ||
+            [formData?.firstName, formData?.lastName].filter(Boolean).join(" ") ||
+            "",
+        ),
+        email: String(formData?.email || ""),
+      });
+      setIsAwaitingPayment(false);
+      paymentCtxRef.current = null;
+      navigate(`/thank-you?${params.toString()}`);
+    },
+    [currentPackage?.name, isServiceMode, navigate, serviceName],
+  );
+
+  const finalizePayment = useCallback(
+    async (
+      response: {
+        razorpay_order_id?: string;
+        razorpay_payment_id?: string;
+        razorpay_signature?: string;
+      },
+      ctx: { formData: Record<string, unknown>; amount: number; dbOrderId?: string },
+    ) => {
+      const razorpay_order_id = String(response?.razorpay_order_id || "");
+      const razorpay_payment_id = String(response?.razorpay_payment_id || "");
+      const razorpay_signature = String(response?.razorpay_signature || "");
+
+      let invoiceNumber = "";
+      let invoiceReady = false;
+
+      const verifyRes = await fetch("/api/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+          dbOrderId: ctx.dbOrderId,
+          formData: { ...ctx.formData, userId: user?.id },
+          service: serviceName,
+          amount: ctx.amount,
+        }),
+      });
+      const verifyData = await verifyRes.json().catch(() => ({}));
+
+      if (verifyRes.ok && verifyData?.success !== false) {
+        invoiceNumber = String(verifyData?.invoice_number || "");
+        invoiceReady = Boolean(verifyData?.invoice_ready);
+      } else {
+        const synced = await syncPaymentStatus({
+          razorpay_order_id,
+          dbOrderId: ctx.dbOrderId,
+          formData: { ...ctx.formData, userId: user?.id },
+          service: serviceName || undefined,
+          amount: ctx.amount,
+        });
+        if (!synced.paid) {
+          throw new Error(
+            (verifyData as { error?: string })?.error || synced.error || "Payment verification failed",
+          );
+        }
+        invoiceNumber = String(synced.invoice_number || "");
+        invoiceReady = Boolean(synced.invoice_ready);
+      }
+
+      if (!invoiceReady) {
+        const completed = await completeOrderInvoice({
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+          dbOrderId: ctx.dbOrderId,
+        });
+        if (completed.invoice_number) invoiceNumber = completed.invoice_number;
+        invoiceReady = Boolean(completed.invoice_ready);
+        if (completed.error && !invoiceReady) {
+          toast({
+            title: "Payment successful",
+            description: "Your invoice is being prepared and will arrive by email shortly.",
+          });
+        }
+      }
+
+      goToThankYou(ctx.formData, ctx.amount, razorpay_payment_id, razorpay_order_id, invoiceNumber);
+    },
+    [goToThankYou, serviceName, toast, user?.id],
+  );
+
+  const reconcilePendingPayment = useCallback(async () => {
+    const ctx = paymentCtxRef.current;
+    if (!ctx?.razorpayOrderId || !isAwaitingPayment) return false;
+
+    const synced = await syncPaymentStatus({
+      razorpay_order_id: ctx.razorpayOrderId,
+      dbOrderId: ctx.dbOrderId,
+      formData: { ...ctx.formData, userId: user?.id },
+      service: serviceName || undefined,
+      amount: ctx.amount,
+      pollAttempts: 6,
+    });
+
+    if (!synced.paid || !synced.razorpay_payment_id) return false;
+
+    try {
+      await finalizePayment(
+        {
+          razorpay_order_id: synced.razorpay_order_id || ctx.razorpayOrderId,
+          razorpay_payment_id: synced.razorpay_payment_id,
+          razorpay_signature: synced.razorpay_signature,
+        },
+        ctx,
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }, [finalizePayment, isAwaitingPayment, serviceName, user?.id]);
+
+  useEffect(() => {
+    if (!isAwaitingPayment) return;
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void reconcilePendingPayment();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    const pollId = window.setInterval(() => {
+      void reconcilePendingPayment();
+    }, 8000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(pollId);
+    };
+  }, [isAwaitingPayment, reconcilePendingPayment]);
+
   const handlePayment = async (amount: number, formData: any) => {
     const res = await loadRazorpay();
-    if (!res) { alert("Razorpay SDK failed to load"); return; }
+    if (!res) {
+      alert("Razorpay SDK failed to load");
+      return;
+    }
 
     const displayPersonName =
       formData.fullName ||
@@ -609,6 +781,15 @@ const PaymentPage = () => {
       return;
     }
 
+    const ctx = {
+      formData: formData as Record<string, unknown>,
+      amount,
+      dbOrderId: order.dbOrderId,
+      razorpayOrderId: order.id,
+    };
+    paymentCtxRef.current = ctx;
+    setIsAwaitingPayment(true);
+
     const options = {
       key: razorpayKey,
       amount: order.amount,
@@ -616,62 +797,29 @@ const PaymentPage = () => {
       name: "Ankshaastra",
       description: isServiceMode ? serviceName : "Consultation Booking",
       order_id: order.id,
-      handler: async function (response: any) {
+      handler: async function (response: {
+        razorpay_order_id?: string;
+        razorpay_payment_id?: string;
+        razorpay_signature?: string;
+      }) {
         try {
-          const verifyRes = await fetch("/api/verify-payment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...response,
-              dbOrderId: order.dbOrderId,
-              formData: { ...formData, userId: user?.id },
-              service: serviceName,
-              amount,
-            }),
-          });
-          const verifyData = await verifyRes.json().catch(() => ({}));
-
-          if (!verifyRes.ok || verifyData?.success === false) {
-            throw new Error(verifyData?.error || "Payment verification failed");
-          }
-
-          let invoiceNumber = String(verifyData?.invoice_number || "");
-          let invoiceReady = Boolean(verifyData?.invoice_ready);
-
-          if (!invoiceReady) {
-            const completed = await completeOrderInvoice({
-              razorpay_order_id: String(response?.razorpay_order_id || ""),
-              razorpay_payment_id: String(response?.razorpay_payment_id || ""),
-              razorpay_signature: String(response?.razorpay_signature || ""),
-              dbOrderId: order.dbOrderId,
-            });
-            if (completed.invoice_number) invoiceNumber = completed.invoice_number;
-            invoiceReady = Boolean(completed.invoice_ready);
-            if (completed.error && !invoiceReady) {
-              toast({
-                title: "Payment successful",
-                description: "Your invoice is being prepared and will arrive by email shortly.",
-              });
-            }
-          }
-
-          const params = new URLSearchParams({
-            service: isServiceMode ? String(serviceName) : (currentPackage?.name || "Consultation"),
-            amount: String(amount),
-            payment_id: String(response?.razorpay_payment_id || ""),
-            order_id: String(response?.razorpay_order_id || ""),
-            invoice: invoiceNumber,
-            name: String(formData?.fullName || [formData?.firstName, formData?.lastName].filter(Boolean).join(" ") || ""),
-            email: String(formData?.email || ""),
-          });
-          navigate(`/thank-you?${params.toString()}`);
+          await finalizePayment(response, ctx);
         } catch (e) {
           console.error("Verification failed", e);
-          toast({
-            title: "Payment recorded",
-            description: "We received your payment. Your invoice will be emailed shortly — check your dashboard in a few minutes.",
-          });
+          const recovered = await reconcilePendingPayment();
+          if (!recovered) {
+            toast({
+              title: "Confirming your payment",
+              description:
+                "If money was deducted, stay on this page for a moment or refresh — we are syncing with Razorpay.",
+            });
+          }
         }
+      },
+      modal: {
+        ondismiss: () => {
+          void reconcilePendingPayment();
+        },
       },
       prefill: {
         name: displayPersonName,
@@ -681,7 +829,9 @@ const PaymentPage = () => {
       theme: { color: "#ea580c" },
     };
 
-    const paymentObject = new (window as any).Razorpay(options);
+    const paymentObject = new (window as unknown as { Razorpay: new (o: typeof options) => { open: () => void } }).Razorpay(
+      options,
+    );
     paymentObject.open();
   };
 
@@ -739,7 +889,7 @@ const PaymentPage = () => {
           <FormItem>
             <FormLabel>Is the middle name your father's name? *</FormLabel>
             <FormControl>
-              <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+              <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
                 <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="mfn-yes" /><Label htmlFor="mfn-yes">Yes</Label></div>
                 <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="mfn-no" /><Label htmlFor="mfn-no">No</Label></div>
               </RadioGroup>
@@ -834,7 +984,7 @@ const PaymentPage = () => {
             <FormItem>
               <FormLabel>Gender *</FormLabel>
               <FormControl>
-                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
                   {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
                     <div key={v} className="flex items-center space-x-2">
                       <RadioGroupItem value={v} id={`${name}-g-${v}`} />
@@ -987,7 +1137,7 @@ const PaymentPage = () => {
             <FormItem>
               <FormLabel>Is the middle name father's name? *</FormLabel>
               <FormControl>
-                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
                   <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id={`${name}-mfn-yes`} /><Label htmlFor={`${name}-mfn-yes`}>Yes</Label></div>
                   <div className="flex items-center space-x-2"><RadioGroupItem value="no" id={`${name}-mfn-no`} /><Label htmlFor={`${name}-mfn-no`}>No</Label></div>
                 </RadioGroup>
@@ -1006,7 +1156,7 @@ const PaymentPage = () => {
             <FormItem>
               <FormLabel>Gender *</FormLabel>
               <FormControl>
-                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
                   {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
                     <div key={v} className="flex items-center space-x-2">
                       <RadioGroupItem value={v} id={`${name}-g-${v}`} />
@@ -1091,7 +1241,7 @@ const PaymentPage = () => {
             <FormItem>
               <FormLabel>Gender *</FormLabel>
               <FormControl>
-                <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
                   {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
                     <div key={v} className="flex items-center space-x-2">
                       <RadioGroupItem value={v} id={`${name}-g-${v}`} />

@@ -1,9 +1,10 @@
 import crypto from "crypto";
-import { getSupabaseAdmin } from "./lib/supabase-admin.js";
-import { advanceWorkflow, enqueueJob } from "./lib/workflow-engine.js";
-import { processInvoiceJob } from "./lib/invoice-engine.js";
+import { fulfillPayment } from "./lib/fulfill-payment.js";
 
-export default async function handler(req: { method?: string; body?: Record<string, unknown> }, res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } }) {
+export default async function handler(
+  req: { method?: string; body?: Record<string, unknown> },
+  res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } },
+) {
   if (req.method !== "POST") return res.status(405).end();
 
   const body = req.body || {};
@@ -21,120 +22,31 @@ export default async function handler(req: { method?: string; body?: Record<stri
     return res.status(400).json({ success: false, error: "Missing Razorpay fields" });
   }
 
-  const expected = crypto.createHmac("sha256", keySecret).update(`${razorpay_order_id}|${razorpay_payment_id}`).digest("hex");
+  const expected = crypto
+    .createHmac("sha256", keySecret)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
   if (expected !== razorpay_signature) {
     return res.status(400).json({ success: false, error: "Invalid signature" });
   }
 
   try {
-    const supabase = getSupabaseAdmin();
-
-    const customer_name =
-      (formData.fullName as string) ||
-      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ") ||
-      "Customer";
-    const customer_email = formData.email ? String(formData.email) : null;
-    const customer_phone = formData.whatsapp ? String(formData.whatsapp) : null;
-    const userId = formData.userId || formData.user_id || null;
-
-    let orderId: string | null = null;
-
-    if (dbOrderIdFromClient) {
-      const { data: byId } = await supabase
-        .from("orders")
-        .select("id, razorpay_order_id")
-        .eq("id", dbOrderIdFromClient)
-        .maybeSingle();
-      if (byId?.razorpay_order_id === razorpay_order_id) {
-        orderId = byId.id;
-      }
-    }
-
-    if (!orderId) {
-      const { data: order } = await supabase
-        .from("orders")
-        .select("id")
-        .eq("razorpay_order_id", razorpay_order_id)
-        .maybeSingle();
-      orderId = order?.id || null;
-    }
-
-    if (!orderId) {
-      const gstAmount = Math.round(amount * 0.18 * 100) / 100;
-      const { data: created } = await supabase
-        .from("orders")
-        .insert({
-          service_title: service,
-          amount: amount - gstAmount,
-          gst_amount: gstAmount,
-          total_amount: amount,
-          status: "paid",
-          workflow_stage: "payment_received",
-          razorpay_order_id,
-          razorpay_payment_id,
-          razorpay_signature,
-          customer_name,
-          customer_email,
-          customer_phone,
-          user_id: userId,
-          source_website: "ankshaastra.com",
-        })
-        .select("id")
-        .single();
-      orderId = created?.id || null;
-    } else {
-      await supabase
-        .from("orders")
-        .update({
-          status: "paid",
-          workflow_stage: "payment_received",
-          razorpay_payment_id,
-          razorpay_signature,
-          payment_method: "razorpay",
-          customer_name,
-          customer_email,
-          customer_phone,
-          ...(userId ? { user_id: userId } : {}),
-        })
-        .eq("id", orderId);
-    }
-
-    if (!orderId) throw new Error("Could not resolve order");
-
-    await advanceWorkflow(orderId, "payment_received", "payment.captured", {
+    const result = await fulfillPayment({
+      razorpay_order_id,
       razorpay_payment_id,
+      razorpay_signature,
+      formData,
+      service,
+      amount,
+      dbOrderId: dbOrderIdFromClient,
     });
-
-    let invoiceError: string | undefined;
-    try {
-      await processInvoiceJob(orderId, {
-        paymentId: razorpay_payment_id,
-        forceDeliver: true,
-      });
-    } catch (invoiceErr: unknown) {
-      invoiceError = invoiceErr instanceof Error ? invoiceErr.message : "Invoice generation failed";
-      console.error("[verify-payment] Invoice pipeline error:", invoiceErr);
-      await enqueueJob(
-        "generate_and_deliver_invoice",
-        { orderId },
-        { idempotencyKey: `invoice-retry-${orderId}-${Date.now()}`, priority: 1 },
-      );
-    }
-
-    const { data: invoice } = await supabase
-      .from("invoices")
-      .select("invoice_number, pdf_storage_path, pdf_url")
-      .eq("order_id", orderId)
-      .maybeSingle();
-
-    const invoiceReady = Boolean(invoice?.pdf_storage_path || invoice?.pdf_url);
 
     return res.status(200).json({
       success: true,
-      order_id: orderId,
-      invoice_number: invoice?.invoice_number,
-      invoice_ready: invoiceReady,
-      invoice_warning: invoiceError,
+      order_id: result.order_id,
+      invoice_number: result.invoice_number,
+      invoice_ready: result.invoice_ready,
+      invoice_warning: result.invoice_warning,
       razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
