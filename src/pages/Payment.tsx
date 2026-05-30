@@ -434,6 +434,8 @@ const PaymentPage = () => {
 
   const availableAddons: Addon[] = useMemo(() => {
     if (formType === "pyaar-shastra") return [...PYAAR_ADDONS];
+    // Kundli orders already include the report — no upsell add-ons.
+    if (formType === "kundali" || formType === "kundali-multi") return [];
     return [...DEFAULT_ADDONS];
   }, [formType]);
 
@@ -561,6 +563,43 @@ const PaymentPage = () => {
     resolver: zodResolver(schema as any),
     defaultValues: defaults,
   });
+
+  // Auto-fetch Place of Birth from the entered 6-digit Indian pincode.
+  useEffect(() => {
+    const cache: Record<string, string> = {};
+    const lookup = async (pin: string): Promise<string | null> => {
+      if (cache[pin]) return cache[pin];
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+        const data = await res.json();
+        const po = data?.[0]?.PostOffice?.[0];
+        if (!po) return null;
+        const place = [po.District, po.State, "India"].filter(Boolean).join(", ");
+        cache[pin] = place;
+        return place;
+      } catch {
+        return null;
+      }
+    };
+    const fill = async (pobPath: string, pin: string) => {
+      if (!/^\d{6}$/.test(pin)) return;
+      const place = await lookup(pin);
+      if (!place) return;
+      const current = (form.getValues(pobPath) as string | undefined) || "";
+      if (current.trim() === "") form.setValue(pobPath, place, { shouldValidate: true, shouldDirty: true });
+    };
+    const sub = form.watch((value, { name }) => {
+      if (!name) return;
+      const multi = name.match(/^(person[123])\.pincode$/);
+      if (multi) {
+        const pin = (value as any)?.[multi[1]]?.pincode || "";
+        fill(`${multi[1]}.pob`, pin);
+      } else if (name === "pincode") {
+        fill("pob", (value as any)?.pincode || "");
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [form, formType]);
 
   const loadRazorpay = () =>
     new Promise<boolean>((resolve) => {
