@@ -957,11 +957,11 @@ const PaymentPage = () => {
 
     const POBPincode = (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField control={c} name="pob" render={({ field }) => (
-          <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
         <FormField control={c} name="pincode" render={({ field }) => (
-          <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} inputMode="numeric" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={c} name="pob" render={({ field }) => (
+          <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN — edit if needed" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
       </div>
     );
