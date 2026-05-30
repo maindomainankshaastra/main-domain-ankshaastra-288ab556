@@ -21,6 +21,23 @@ const ThankYou = () => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, []);
 
+  useEffect(() => {
+    if (!paymentId || !amount) return;
+    if (typeof window.fbq !== "function") return;
+
+    window.fbq(
+      "track",
+      "Purchase",
+      {
+        value: amount,
+        currency: "INR",
+      },
+      {
+        eventID: paymentId,
+      },
+    );
+  }, [paymentId, amount]);
+
   const waMsg = `Hello Ankshaastra Team,%0A%0AI have just completed payment for *${service}*.%0AInvoice: ${invoice || "—"}%0APayment ID: ${paymentId || "—"}%0AName: ${name || "—"}%0A%0APlease confirm next steps.`;
 
   return (
