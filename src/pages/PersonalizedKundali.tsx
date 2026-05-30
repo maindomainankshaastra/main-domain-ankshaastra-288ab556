@@ -16,7 +16,7 @@ const pricingPlans = [
     price: formatINR(pricing.reports.kundaliSingle),
     original: formatINR(pricing.reports.kundaliSingleOriginal),
     amount: pricing.reports.kundaliSingle,
-    service: "Personalized Kundali",
+    service: "Personalized Kundli",
     tag: "Best for Personal Analysis",
     desc: "Get deep insights about your love, career, money & health.",
   },
@@ -25,9 +25,9 @@ const pricingPlans = [
     price: formatINR(pricing.reports.kundaliDouble),
     original: formatINR(pricing.reports.kundaliDoubleOriginal),
     amount: pricing.reports.kundaliDouble,
-    service: "Personalized Kundali Match-Making",
-    tag: "Best for Match-Making",
-    desc: "Ideal for couples or kundali matching before marriage.",
+    service: "Personalized Kundli for 2",
+    tag: "Best for Couples & Loved Ones",
+    desc: "Two complete Kundli reports — perfect for partners, parents, or a loved one.",
     popular: true,
   },
   {
@@ -35,7 +35,7 @@ const pricingPlans = [
     price: formatINR(pricing.reports.kundaliTriple),
     original: formatINR(pricing.reports.kundaliTripleOriginal),
     amount: pricing.reports.kundaliTriple,
-    service: "Personalized Kundali Family",
+    service: "Personalized Kundli Family",
     tag: "Best for Family",
     desc: "Complete astrological guidance for your entire family.",
   },
@@ -97,7 +97,7 @@ const faqs = [
   { q: "Is this a free kundli?", a: "No. This is a personalized, expert-reviewed report." },
   { q: "Is it based on Vedic Astrology?", a: "Yes, combined with Numerology and Lal Kitab." },
   { q: "Will I understand it without knowing astrology?", a: "Absolutely. Written in simple, easy language." },
-  { q: "Can it help with Kundli Matching?", a: "Yes, choose the 2 Kundali plan." },
+  { q: "Can I order reports for 2 or 3 people together?", a: "Yes — choose the 2 Kundli or 3 Kundli plan to receive complete personalized reports for each person (partner, parents, children or loved ones)." },
   { q: "What details are required?", a: "Date of Birth, Exact Time of Birth, Place of Birth." },
   { q: "How will I receive it?", a: "As a PDF via Email & WhatsApp within 3 Hours." },
 ];
@@ -109,7 +109,7 @@ const PersonalizedKundali = () => {
     <Layout minimal>
       <SEOHead
         title="Personalized Kundli Report"
-        description="Get your personalized Janam Kundali report covering career, marriage, wealth, health & remedies. Delivered within 3 hours by Himansshu Agarwal Ji."
+        description="Get your personalized Janam Kundli report covering career, marriage, wealth, health & remedies. Delivered within 3 hours by Himansshu Agarwal Ji."
         canonical="/reports/personalized-kundali"
       />
 
@@ -144,11 +144,10 @@ const PersonalizedKundali = () => {
               <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-amber-300" /> Expert-Verified</span>
             </div>
 
-            <Link to={`/payment?service=Personalized%20Kundali&amount=${pricing.reports.kundaliSingle}`} className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
-              Get Your Kundli in {formatINR(pricing.reports.kundaliSingle)}
-              <span className="text-base font-medium text-primary/60 line-through">{formatINR(pricing.reports.kundaliSingleOriginal)}</span>
+            <a href="#choose-plan" className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
+              Get Your Kundli — Choose a Plan
               <ArrowRight className="w-5 h-5" />
-            </Link>
+            </a>
           </motion.div>
         </div>
 
@@ -160,7 +159,7 @@ const PersonalizedKundali = () => {
       </section>
 
       {/* Pricing Plans */}
-      <section className="py-24">
+      <section id="choose-plan" className="py-24 scroll-mt-24">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -206,7 +205,7 @@ const PersonalizedKundali = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
             <span className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">Made Exclusively from Your Birth Details</span>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              What's Inside Your <span className="text-gradient-gold">Janam Kundali Report?</span>
+              What's Inside Your <span className="text-gradient-gold">Janam Kundli Report?</span>
             </h2>
           </motion.div>
           <div className="space-y-4 max-w-2xl mx-auto">
@@ -245,7 +244,7 @@ const PersonalizedKundali = () => {
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Why Choose Our <span className="text-gradient-gold">Janam Kundali Report?</span>
+              Why Choose Our <span className="text-gradient-gold">Janam Kundli Report?</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">This is not a random prediction. It is your Personalized Birth Chart.</p>
           </motion.div>
@@ -367,9 +366,9 @@ const PersonalizedKundali = () => {
             <p className="text-muted-foreground text-lg mb-8">
               Expert-verified, delivered in 3 hours. Start your journey to clarity today.
             </p>
-            <Link to={`/payment?service=Personalized%20Kundali&amount=${pricing.reports.kundaliSingle}`} className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
-              Order My Kundli — Starting {formatINR(pricing.reports.kundaliSingle)} <ArrowRight className="w-5 h-5" />
-            </Link>
+            <a href="#choose-plan" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
+              Order My Kundli — Choose a Plan <ArrowRight className="w-5 h-5" />
+            </a>
           </motion.div>
         </div>
       </section>

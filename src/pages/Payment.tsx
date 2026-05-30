@@ -434,6 +434,8 @@ const PaymentPage = () => {
 
   const availableAddons: Addon[] = useMemo(() => {
     if (formType === "pyaar-shastra") return [...PYAAR_ADDONS];
+    // Kundli orders already include the report — no upsell add-ons.
+    if (formType === "kundali" || formType === "kundali-multi") return [];
     return [...DEFAULT_ADDONS];
   }, [formType]);
 
@@ -561,6 +563,43 @@ const PaymentPage = () => {
     resolver: zodResolver(schema as any),
     defaultValues: defaults,
   });
+
+  // Auto-fetch Place of Birth from the entered 6-digit Indian pincode.
+  useEffect(() => {
+    const cache: Record<string, string> = {};
+    const lookup = async (pin: string): Promise<string | null> => {
+      if (cache[pin]) return cache[pin];
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+        const data = await res.json();
+        const po = data?.[0]?.PostOffice?.[0];
+        if (!po) return null;
+        const place = [po.District, po.State, "India"].filter(Boolean).join(", ");
+        cache[pin] = place;
+        return place;
+      } catch {
+        return null;
+      }
+    };
+    const fill = async (pobPath: string, pin: string) => {
+      if (!/^\d{6}$/.test(pin)) return;
+      const place = await lookup(pin);
+      if (!place) return;
+      const current = (form.getValues(pobPath) as string | undefined) || "";
+      if (current.trim() === "") form.setValue(pobPath, place, { shouldValidate: true, shouldDirty: true });
+    };
+    const sub = form.watch((value, { name }) => {
+      if (!name) return;
+      const multi = name.match(/^(person[123])\.pincode$/);
+      if (multi) {
+        const pin = (value as any)?.[multi[1]]?.pincode || "";
+        fill(`${multi[1]}.pob`, pin);
+      } else if (name === "pincode") {
+        fill("pob", (value as any)?.pincode || "");
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [form, formType]);
 
   const loadRazorpay = () =>
     new Promise<boolean>((resolve) => {
@@ -918,11 +957,11 @@ const PaymentPage = () => {
 
     const POBPincode = (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField control={c} name="pob" render={({ field }) => (
-          <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
         <FormField control={c} name="pincode" render={({ field }) => (
-          <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} inputMode="numeric" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={c} name="pob" render={({ field }) => (
+          <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN — edit if needed" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
       </div>
     );
@@ -1436,7 +1475,19 @@ const PaymentPage = () => {
                     <div className="mt-6 pt-6 border-t border-border">
                       <h4 className="font-medium text-foreground mb-3">What you'll get:</h4>
                       <ul className="space-y-2">
-                        {["Detailed numerology analysis", "Personalized guidance", "Report within 48-72 hours", "Email/WhatsApp follow-up"].map((item) => (
+                        {(formType === "kundali" || formType === "kundali-multi"
+                          ? [
+                              formType === "kundali-multi"
+                                ? `${kundaliCount} complete personalized Kundli reports (one per person)`
+                                : "A complete personalized Janam Kundli report",
+                              "Detailed Lagna, Moon Chart & Navamsa (D9) analysis",
+                              "Dasha, Mahadasha & Varshphal (yearly) predictions",
+                              "Career, marriage, wealth & health guidance",
+                              "Powerful remedies — Mantra, Gemstone, Rudraksha & Lal Kitab",
+                              "Expert-verified PDF · delivered on Email & WhatsApp within 3 hours",
+                            ]
+                          : ["Detailed numerology analysis", "Personalized guidance", "Report within 48-72 hours", "Email/WhatsApp follow-up"]
+                        ).map((item) => (
                           <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Check className="w-4 h-4 text-secondary flex-shrink-0" />{item}
                           </li>
