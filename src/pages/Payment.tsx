@@ -1475,7 +1475,19 @@ const PaymentPage = () => {
                     <div className="mt-6 pt-6 border-t border-border">
                       <h4 className="font-medium text-foreground mb-3">What you'll get:</h4>
                       <ul className="space-y-2">
-                        {["Detailed numerology analysis", "Personalized guidance", "Report within 48-72 hours", "Email/WhatsApp follow-up"].map((item) => (
+                        {(formType === "kundali" || formType === "kundali-multi"
+                          ? [
+                              formType === "kundali-multi"
+                                ? `${kundaliCount} complete personalized Kundli reports (one per person)`
+                                : "A complete personalized Janam Kundli report",
+                              "Detailed Lagna, Moon Chart & Navamsa (D9) analysis",
+                              "Dasha, Mahadasha & Varshphal (yearly) predictions",
+                              "Career, marriage, wealth & health guidance",
+                              "Powerful remedies — Mantra, Gemstone, Rudraksha & Lal Kitab",
+                              "Expert-verified PDF · delivered on Email & WhatsApp within 3 hours",
+                            ]
+                          : ["Detailed numerology analysis", "Personalized guidance", "Report within 48-72 hours", "Email/WhatsApp follow-up"]
+                        ).map((item) => (
                           <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Check className="w-4 h-4 text-secondary flex-shrink-0" />{item}
                           </li>
