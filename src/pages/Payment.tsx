@@ -171,6 +171,7 @@ const nameCorrectionSchema = z.object({
   middleName: z.string().trim().max(50).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
   lastName: z.string().trim().min(1, "Last name required").max(50).regex(nameRx, "Letters only"),
   middleIsFatherName: z.enum(["yes", "no"], { required_error: "Please select" }),
+  lastNameChangeOk: z.enum(["yes", "no"], { required_error: "Please select" }),
   email: emailField,
   whatsapp: phoneField,
   dob: dobField,
@@ -198,7 +199,8 @@ const nameCheckSchema = z.object({
   email: emailField,
   pincode: pincodeField,
   dob: dobField,
-  tob: tobField,
+  pob: z.string().trim().min(2, "Place of birth required").max(120),
+  gender: genderField,
 });
 
 // Couple form — two people's birth details (used for premium Name Correction
