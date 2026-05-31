@@ -1071,6 +1071,18 @@ const PaymentPage = () => {
       return (
         <>
           {NameTriplet}
+          <FormField control={c} name="lastNameChangeOk" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Are you comfortable making a change in your last name (if required)? *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="lnc-yes" /><Label htmlFor="lnc-yes">Yes</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="lnc-no" /><Label htmlFor="lnc-no">No</Label></div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
           {ContactRow}
           {BirthRow}
           {POBPincode}
@@ -1146,13 +1158,10 @@ const PaymentPage = () => {
       return (
         <>
           {NameTriplet}
+          <DOBPicker control={c} />
+          {POBPincode}
+          <GenderRadio control={c} />
           {ContactRow}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={c} name="pincode" render={({ field }) => (
-              <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-          </div>
-          {BirthRow}
         </>
       );
     }
