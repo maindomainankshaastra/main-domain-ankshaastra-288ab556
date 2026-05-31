@@ -10,7 +10,7 @@ const columns = [
   {
     title: "Reports",
     links: [
-      { name: "Name Correction", to: "/reports/name-correction-blueprint" },
+      { name: "Name Correction", to: "/services/name-correction" },
       { name: "Personalized Kundali", to: "/reports/personalized-kundali" },
       { name: "Varshphal 2026", to: "/services/varshphal-report" },
       { name: "Baby Name", to: "https://empower.ankshaastra.com", external: true },

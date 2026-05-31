@@ -59,14 +59,6 @@ export const existingServicePages: ServicePage[] = [
     route: "/services/office-vastu",
   },
   {
-    title: "Name Correction Blueprint",
-    description: "A practical blueprint to help you implement your numerology-based name correction plan.",
-    category: "Reports",
-    price: pricing.nameCorrection.blueprintBasic,
-    gst_rate: 18,
-    route: "/reports/name-correction-blueprint",
-  },
-  {
     title: "Personalized Kundali",
     description: "Get a personalized kundali report for compatibility, career, wealth and relationships.",
     category: "Reports",

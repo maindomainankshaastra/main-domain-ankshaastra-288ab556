@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const reportsDropdown = [
-  { name: "Name Correction Blueprint", path: "/services/name-correction", icon: ScrollText, description: "Align your name's vibration for success" },
+  { name: "Name Correction", path: "/services/name-correction", icon: ScrollText, description: "Align your name's vibration for success" },
   { name: "Pyaar Shaastra Report", path: "/reports/pyaar-shastra", icon: ScrollText, description: "Love & life compatibility report in 24 hours" },
   { name: "Perfect Baby Name Report", path: "https://empower.ankshaastra.com", icon: Baby, description: "Numerology-based baby name selection", external: true },
   { name: "Personalized Kundali", path: "/reports/personalized-kundali", icon: Star, description: "Complete birth chart & life predictions" },

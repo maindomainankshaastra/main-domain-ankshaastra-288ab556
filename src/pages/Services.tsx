@@ -75,11 +75,9 @@ const getServiceLink = (service: Service & { _pageRoute?: string }): string => {
     case "Pyaar Shaastra Report":
       return "/reports/pyaar-shastra";
     case "Perfect Baby Name":
-      return "/services/baby-name";
+      return "https://empower.ankshaastra.com";
     case "C-Section Baby Dates":
       return "/services/csection-dates";
-    case "Name Correction Blueprint":
-      return "/reports/name-correction-blueprint";
     case "Personalized Kundali":
       return "/reports/personalized-kundali";
     case "Varshphal Report 2026":
