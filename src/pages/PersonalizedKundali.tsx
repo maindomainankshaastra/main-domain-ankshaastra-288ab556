@@ -60,7 +60,7 @@ const whyChoose = [
   { title: "Birth Chart Insight", desc: "Your report is based on your exact birth details, not a random horoscope" },
   { title: "Simple Remedies You Can Use", desc: "Easy and practical remedies for life, health, money & relationships" },
   { title: "Guidance for Every Area of Life", desc: "Career, money, health, love, and spiritual growth" },
-  { title: "Delivered in 3 Hours", desc: "Fast, reliable, direct to your Email & WhatsApp as a PDF" },
+  { title: "Delivered in 9 Hours", desc: "Fast, reliable, direct to your Email as a PDF" },
 ];
 
 const reportCovers = [
@@ -99,7 +99,7 @@ const faqs = [
   { q: "Will I understand it without knowing astrology?", a: "Absolutely. Written in simple, easy language." },
   { q: "Can I order reports for 2 or 3 people together?", a: "Yes — choose the 2 Kundli or 3 Kundli plan to receive complete personalized reports for each person (partner, parents, children or loved ones)." },
   { q: "What details are required?", a: "Date of Birth, Exact Time of Birth, Place of Birth." },
-  { q: "How will I receive it?", a: "As a PDF via Email & WhatsApp within 3 Hours." },
+  { q: "How will I receive it?", a: "As a PDF via email within 9 hours." },
 ];
 
 const PersonalizedKundali = () => {
@@ -266,7 +266,7 @@ const PersonalizedKundali = () => {
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               What's Covered in the <span className="text-gradient-gold">Report</span>
             </h2>
-            <p className="text-muted-foreground text-sm">Delivery: PDF via Email & WhatsApp within 3 Hours</p>
+            <p className="text-muted-foreground text-sm">Delivery: PDF via email within 9 hours</p>
           </motion.div>
           <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
             {reportCovers.map((item, i) => (
@@ -276,33 +276,6 @@ const PersonalizedKundali = () => {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Meet the Expert */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <span className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">Meet the Expert</span>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              <span className="text-gradient-gold">Himansshu Agarwal</span>{" "}
-              <span className="text-muted-foreground text-lg font-normal">(Astro Numerologist)</span>
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mx-auto mb-10">
-              A trusted name in Vedic Astrology, Numerology, and Lal Kitab remedies. Himansshu Agarwal brings clarity, logic, and actionable guidance to every reading — blending traditional Vedic astrology with the science of numbers.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              {expertStats.map((stat, i) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={i} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-card border border-border">
-                    <Icon className="w-4 h-4 text-primary" />
-                    <span className="text-foreground text-sm font-medium">{stat.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -364,10 +337,10 @@ const PersonalizedKundali = () => {
               Your Kundli Holds the Answers. <span className="text-gradient-gold">Get Yours Now.</span>
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Expert-verified, delivered in 3 hours. Start your journey to clarity today.
+              Expert-verified, delivered in 9 hours. Start your journey to clarity today.
             </p>
             <a href="#choose-plan" className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
-              Order My Kundli — Choose a Plan <ArrowRight className="w-5 h-5" />
+              Order My Kundli @ ₹299 <ArrowRight className="w-5 h-5" />
             </a>
           </motion.div>
         </div>
