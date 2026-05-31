@@ -25,7 +25,7 @@ export default async function handler(req: { method?: string; body?: Record<stri
     const results: Array<{ orderId: string; ok: boolean; invoiceNumber?: string; error?: string }> = [];
 
     if (orderId) {
-      const result = await processInvoiceJob(orderId, { forceDeliver: true });
+      const result = await processInvoiceJob(orderId);
       return res.status(200).json({
         ok: true,
         processed: 1,
@@ -56,7 +56,6 @@ export default async function handler(req: { method?: string; body?: Record<stri
       try {
         const result = await processInvoiceJob(order.id, {
           paymentId: order.razorpay_payment_id || undefined,
-          forceDeliver: true,
         });
         results.push({ orderId: order.id, ok: true, invoiceNumber: result.invoiceNumber });
       } catch (e: unknown) {

@@ -12,7 +12,7 @@ import { pricing, formatINR } from "@/config/pricing";
 
 const pricingPlans = [
   {
-    count: "1 Kundli",
+count: "1 Kundli",
     price: formatINR(pricing.reports.kundaliSingle),
     original: formatINR(pricing.reports.kundaliSingleOriginal),
     amount: pricing.reports.kundaliSingle,

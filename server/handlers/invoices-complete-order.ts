@@ -84,20 +84,21 @@ export default async function handler(req: Req, res: Res) {
 
     const result = await processInvoiceJob(orderId, {
       paymentId: razorpay_payment_id,
-      forceDeliver: true,
     });
 
     const { data: invoice } = await supabase
       .from('invoices')
       .select('invoice_number, pdf_storage_path, pdf_url')
       .eq('order_id', orderId)
+      .order('created_at', { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (!invoice?.pdf_storage_path && !invoice?.pdf_url) {
       await enqueueJob(
         'generate_and_deliver_invoice',
         { orderId },
-        { idempotencyKey: `invoice-retry-${orderId}-${Date.now()}`, priority: 1 },
+        { idempotencyKey: `invoice-${orderId}`, priority: 1 },
       );
       return res.status(202).json({
         ok: false,

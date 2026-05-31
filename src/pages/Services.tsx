@@ -195,14 +195,45 @@ const ServicesPage = () => {
       setError(null);
 
       try {
-        const response = await fetch("/api/services", { signal: controller.signal });
+        const [servicesRes, pagesRes] = await Promise.all([
+          fetch("/api/services", { signal: controller.signal }),
+          fetch("/api/service-pages", { signal: controller.signal }),
+        ]);
 
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.statusText}`);
+        if (!servicesRes.ok) {
+          throw new Error(`Server error: ${servicesRes.statusText}`);
         }
 
-        const payload = await response.json();
-        setServices((payload.services || []) as Service[]);
+        const payload = await servicesRes.json();
+        const dbServices = (payload.services || []) as Service[];
+
+        let cmsPages: Array<{
+          title: string;
+          description: string | null;
+          category: string | null;
+          route: string;
+        }> = [];
+
+        if (pagesRes.ok) {
+          const pagesPayload = await pagesRes.json();
+          cmsPages = pagesPayload.pages || [];
+        }
+
+        const cmsAsServices: ServiceWithPageRoute[] = cmsPages.map((page) => ({
+          id: `cms-${page.route}`,
+          title: page.title,
+          description: page.description,
+          category: page.category,
+          price: 0,
+          gst_rate: 18,
+          is_active: true,
+          _pageRoute: page.route,
+        }));
+
+        const titles = new Set(dbServices.map((s) => s.title.toLowerCase()));
+        const uniqueCms = cmsAsServices.filter((p) => !titles.has(p.title.toLowerCase()));
+
+        setServices([...dbServices, ...uniqueCms]);
       } catch (err) {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Unable to load services");

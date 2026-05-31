@@ -57,6 +57,9 @@ export function round2(n: number): number {
 export async function nextInvoiceNumber(
   supabase: ReturnType<typeof import("./supabase-admin").getSupabaseAdmin>
 ): Promise<string> {
+  const { data, error } = await supabase.rpc("next_invoice_number");
+  if (!error && data) return String(data);
+
   const { data: config } = await supabase.from("gst_config").select("*").limit(1).single();
   const rawPrefix = String(config?.invoice_prefix ?? "INV").trim();
   const prefix = rawPrefix.replace(/[/\\]+$/g, "").replace(/[/\\]/g, "-") || "INV";

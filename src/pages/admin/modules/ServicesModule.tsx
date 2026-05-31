@@ -72,7 +72,7 @@ export default function ServicesModule() {
   return (
     <AdminPage
       title="Service Catalog"
-      description="Manage the live site services currently available to customers."
+      description="Manage the live site services currently available to customers. For landing pages, packages, and publish workflow, use Pages & Packages."
       loading={loading}
       empty={!services.length && !missingPageServices.length}
       emptyMessage='No services. Click "New Service" to add.'

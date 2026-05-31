@@ -128,6 +128,8 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
     .from("invoices")
     .select("invoice_number, pdf_storage_path, pdf_url")
     .eq("order_id", orderId)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   const hasInvoice = Boolean(existingInvoice?.pdf_storage_path || existingInvoice?.pdf_url);
@@ -136,7 +138,6 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
     try {
       await processInvoiceJob(orderId, {
         paymentId: razorpay_payment_id,
-        forceDeliver: true,
       });
     } catch (invoiceErr: unknown) {
       invoiceError = invoiceErr instanceof Error ? invoiceErr.message : "Invoice generation failed";
@@ -144,7 +145,7 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
       await enqueueJob(
         "generate_and_deliver_invoice",
         { orderId },
-        { idempotencyKey: `invoice-retry-${orderId}-${Date.now()}`, priority: 1 },
+        { idempotencyKey: `invoice-${orderId}`, priority: 1 },
       );
     }
   }

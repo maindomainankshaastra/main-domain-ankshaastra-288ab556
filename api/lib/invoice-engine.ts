@@ -100,25 +100,42 @@ async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<S
   }
 }
 
+async function getExistingInvoiceForOrder(orderId: string) {
+  const supabase = getSupabaseAdmin();
+  const { data } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, pdf_storage_path, pdf_url')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return data;
+}
+
+async function wasInvoiceEmailSent(invoiceId: string, templateSlug: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  const { data } = await supabase
+    .from('email_logs')
+    .select('id')
+    .eq('invoice_id', invoiceId)
+    .eq('template_slug', templateSlug)
+    .eq('status', 'sent')
+    .limit(1)
+    .maybeSingle();
+  return Boolean(data?.id);
+}
+
 export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   const supabase = getSupabaseAdmin();
   const { data: order, error } = await supabase.from('orders').select('*').eq('id', input.orderId).single();
   if (error || !order) throw new Error('Order not found');
 
-  const customerId = await upsertCustomerFromOrder(order);
-  const { data: existing } = await supabase
-    .from('invoices')
-    .select('id, invoice_number, pdf_storage_path')
-    .eq('order_id', order.id)
-    .maybeSingle();
-
-  if (existing?.pdf_storage_path) {
+  const existing = await getExistingInvoiceForOrder(order.id);
+  if (existing?.pdf_storage_path || existing?.pdf_url) {
     return { invoiceId: existing.id, invoiceNumber: existing.invoice_number, duplicate: true };
   }
 
-  if (existing?.id && !existing.pdf_storage_path) {
-    await supabase.from('invoices').delete().eq('id', existing.id);
-  }
+  const customerId = await upsertCustomerFromOrder(order);
 
   const { data: gstConfig } = await supabase.from('gst_config').select('*').limit(1).single();
   const gst = calculateGst({
@@ -206,7 +223,15 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
     .select('*')
     .single();
 
-  if (invErr) throw invErr;
+  if (invErr) {
+    if (invErr.code === '23505') {
+      const dup = await getExistingInvoiceForOrder(order.id);
+      if (dup?.id) {
+        return { invoiceId: dup.id, invoiceNumber: dup.invoice_number, duplicate: true };
+      }
+    }
+    throw invErr;
+  }
 
   await supabase.from('invoice_items').insert({
     invoice_id: invoice.id,
@@ -238,19 +263,22 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   return { invoiceId: invoice.id, invoiceNumber, invoice, pdfUrl, duplicate: false };
 }
 
-export async function deliverInvoice(invoiceId: string) {
+export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean }) {
   const supabase = getSupabaseAdmin();
   const { data: invoice } = await supabase.from('invoices').select('*, orders(*)').eq('id', invoiceId).single();
   if (!invoice) throw new Error('Invoice not found');
 
   const attachments = await getInvoiceAttachment(invoice);
+  const force = opts?.force ?? false;
 
   if (invoice.customer_email) {
-    const downloadLink = invoice.pdf_url
-      ? `<p>You can also <a href="${invoice.pdf_url}">download your invoice PDF</a>.</p>`
-      : '';
+    const alreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
+    if (!alreadySent) {
+      const downloadLink = invoice.pdf_url
+        ? `<p>You can also <a href="${invoice.pdf_url}">download your invoice PDF</a>.</p>`
+        : '';
 
-    const customerHtml = wrapEmailLayout(`
+      const customerHtml = wrapEmailLayout(`
       <h2>Payment Successful</h2>
       <p>Dear ${invoice.customer_name},</p>
       <p>Your payment has been received successfully.</p>
@@ -260,26 +288,29 @@ export async function deliverInvoice(invoiceId: string) {
       <p>Thank you for choosing Ankshaastra.</p>
     `);
 
-    try {
-      await sendEmail({
-        to: invoice.customer_email,
-        subject: `Invoice - ${invoice.invoice_number}`,
-        html: customerHtml,
-        attachments,
-        templateSlug: 'invoice_email',
-        customerId: invoice.customer_id,
-        orderId: invoice.order_id,
-        invoiceId: invoice.id,
-      });
-      if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
-    } catch (emailErr) {
-      console.error('[invoice] Customer email failed:', emailErr);
+      try {
+        await sendEmail({
+          to: invoice.customer_email,
+          subject: `Invoice - ${invoice.invoice_number}`,
+          html: customerHtml,
+          attachments,
+          templateSlug: 'invoice_email',
+          customerId: invoice.customer_id,
+          orderId: invoice.order_id,
+          invoiceId: invoice.id,
+        });
+        if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
+      } catch (emailErr) {
+        console.error('[invoice] Customer email failed:', emailErr);
+      }
     }
   }
 
   const adminEmail = process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL || '';
   if (adminEmail) {
-    const adminHtml = wrapEmailLayout(`
+    const adminAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_admin'));
+    if (!adminAlreadySent) {
+      const adminHtml = wrapEmailLayout(`
       <h2>New Order Received</h2>
       <p><strong>Customer:</strong> ${invoice.customer_name}</p>
       <p><strong>Email:</strong> ${invoice.customer_email}</p>
@@ -287,18 +318,19 @@ export async function deliverInvoice(invoiceId: string) {
       <p><strong>Invoice:</strong> ${invoice.invoice_number}</p>
     `);
 
-    try {
-      await sendEmail({
-        to: adminEmail,
-        subject: `New Order - ${invoice.invoice_number}`,
-        html: adminHtml,
-        attachments,
-        templateSlug: 'invoice_admin',
-        orderId: invoice.order_id,
-        invoiceId: invoice.id,
-      });
-    } catch (emailErr) {
-      console.error('[invoice] Admin email failed:', emailErr);
+      try {
+        await sendEmail({
+          to: adminEmail,
+          subject: `New Order - ${invoice.invoice_number}`,
+          html: adminHtml,
+          attachments,
+          templateSlug: 'invoice_admin',
+          orderId: invoice.order_id,
+          invoiceId: invoice.id,
+        });
+      } catch (emailErr) {
+        console.error('[invoice] Admin email failed:', emailErr);
+      }
     }
   }
 
@@ -315,8 +347,9 @@ export async function processInvoiceJob(orderId: string, opts?: { paymentId?: st
     paymentId: opts?.paymentId,
   });
 
-  if (result.invoiceId && (!result.duplicate || opts?.forceDeliver)) {
-    await deliverInvoice(result.invoiceId);
+  const shouldDeliver = Boolean(result.invoiceId) && (!result.duplicate || opts?.forceDeliver);
+  if (shouldDeliver) {
+    await deliverInvoice(result.invoiceId!, { force: opts?.forceDeliver });
   }
   return result;
 }

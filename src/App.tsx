@@ -47,6 +47,8 @@ const ServicesModule = lazy(() => import("./pages/admin/modules/ServicesModule")
 const TemplatesModule = lazy(() => import("./pages/admin/modules/TemplatesModule"));
 const SettingsModule = lazy(() => import("./pages/admin/modules/SettingsModule"));
 const PricingModule = lazy(() => import("./pages/admin/modules/PricingModule"));
+const ServicePagesModule = lazy(() => import("./pages/admin/modules/ServicePagesModule"));
+const DynamicServicePage = lazy(() => import("./pages/DynamicServicePage"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 
 const queryClient = new QueryClient();
@@ -68,6 +70,7 @@ const App = () => (
             <Route path="/services/varshphal-report" element={<VarshphalReport />} />
             <Route path="/services/mobile-numerology" element={<MobileNumerology />} />
             <Route path="/services/office-vastu" element={<OfficeVastu />} />
+            <Route path="/services/:slug" element={<DynamicServicePage />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/calculator" element={<Calculator />} />
             <Route path="/consultation" element={<Consultation />} />
@@ -75,6 +78,7 @@ const App = () => (
             <Route path="/reports/name-correction-blueprint" element={<NameCorrectionBlueprint />} />
             <Route path="/reports/personalized-kundali" element={<PersonalizedKundali />} />
             <Route path="/reports/pyaar-shastra" element={<PyaarShastra />} />
+            <Route path="/reports/:slug" element={<DynamicServicePage />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/payment" element={<Payment />} />
@@ -98,6 +102,7 @@ const App = () => (
               <Route path="webhooks" element={<WebhooksModule />} />
               <Route path="ai-reports" element={<AiReportsModule />} />
               <Route path="services" element={<ServicesModule />} />
+              <Route path="service-pages" element={<ServicePagesModule />} />
               <Route path="pricing" element={<PricingModule />} />
               <Route path="templates" element={<TemplatesModule />} />
               <Route path="settings" element={<SettingsModule />} />

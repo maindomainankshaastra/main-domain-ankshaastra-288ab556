@@ -430,6 +430,8 @@ const PaymentPage = () => {
     dbOrderId?: string;
     razorpayOrderId?: string;
   } | null>(null);
+  const finalizingRef = useRef(false);
+  const paymentCompletedRef = useRef(false);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
   const availableAddons: Addon[] = useMemo(() => {
@@ -657,71 +659,81 @@ const PaymentPage = () => {
       },
       ctx: { formData: Record<string, unknown>; amount: number; dbOrderId?: string },
     ) => {
-      const razorpay_order_id = String(response?.razorpay_order_id || "");
-      const razorpay_payment_id = String(response?.razorpay_payment_id || "");
-      const razorpay_signature = String(response?.razorpay_signature || "");
+      if (paymentCompletedRef.current || finalizingRef.current) return;
+      finalizingRef.current = true;
+      setIsAwaitingPayment(false);
 
-      let invoiceNumber = "";
-      let invoiceReady = false;
+      try {
+        const razorpay_order_id = String(response?.razorpay_order_id || "");
+        const razorpay_payment_id = String(response?.razorpay_payment_id || "");
+        const razorpay_signature = String(response?.razorpay_signature || "");
 
-      const verifyRes = await fetch("/api/verify-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          razorpay_order_id,
-          razorpay_payment_id,
-          razorpay_signature,
-          dbOrderId: ctx.dbOrderId,
-          formData: { ...ctx.formData, userId: user?.id },
-          service: serviceName,
-          amount: ctx.amount,
-        }),
-      });
-      const verifyData = await verifyRes.json().catch(() => ({}));
+        let invoiceNumber = "";
+        let invoiceReady = false;
 
-      if (verifyRes.ok && verifyData?.success !== false) {
-        invoiceNumber = String(verifyData?.invoice_number || "");
-        invoiceReady = Boolean(verifyData?.invoice_ready);
-      } else {
-        const synced = await syncPaymentStatus({
-          razorpay_order_id,
-          dbOrderId: ctx.dbOrderId,
-          formData: { ...ctx.formData, userId: user?.id },
-          service: serviceName || undefined,
-          amount: ctx.amount,
+        const verifyRes = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            dbOrderId: ctx.dbOrderId,
+            formData: { ...ctx.formData, userId: user?.id },
+            service: serviceName,
+            amount: ctx.amount,
+          }),
         });
-        if (!synced.paid) {
-          throw new Error(
-            (verifyData as { error?: string })?.error || synced.error || "Payment verification failed",
-          );
-        }
-        invoiceNumber = String(synced.invoice_number || "");
-        invoiceReady = Boolean(synced.invoice_ready);
-      }
+        const verifyData = await verifyRes.json().catch(() => ({}));
 
-      if (!invoiceReady) {
-        const completed = await completeOrderInvoice({
-          razorpay_order_id,
-          razorpay_payment_id,
-          razorpay_signature,
-          dbOrderId: ctx.dbOrderId,
-        });
-        if (completed.invoice_number) invoiceNumber = completed.invoice_number;
-        invoiceReady = Boolean(completed.invoice_ready);
-        if (completed.error && !invoiceReady) {
-          toast({
-            title: "Payment successful",
-            description: "Your invoice is being prepared and will arrive by email shortly.",
+        if (verifyRes.ok && verifyData?.success !== false) {
+          invoiceNumber = String(verifyData?.invoice_number || "");
+          invoiceReady = Boolean(verifyData?.invoice_ready);
+        } else {
+          const synced = await syncPaymentStatus({
+            razorpay_order_id,
+            dbOrderId: ctx.dbOrderId,
+            formData: { ...ctx.formData, userId: user?.id },
+            service: serviceName || undefined,
+            amount: ctx.amount,
           });
+          if (!synced.paid) {
+            throw new Error(
+              (verifyData as { error?: string })?.error || synced.error || "Payment verification failed",
+            );
+          }
+          invoiceNumber = String(synced.invoice_number || "");
+          invoiceReady = Boolean(synced.invoice_ready);
         }
-      }
 
-      goToThankYou(ctx.formData, ctx.amount, razorpay_payment_id, razorpay_order_id, invoiceNumber);
+        if (!invoiceReady) {
+          const completed = await completeOrderInvoice({
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            dbOrderId: ctx.dbOrderId,
+          });
+          if (completed.invoice_number) invoiceNumber = completed.invoice_number;
+          invoiceReady = Boolean(completed.invoice_ready);
+          if (completed.error && !invoiceReady) {
+            toast({
+              title: "Payment successful",
+              description: "Your invoice is being prepared and will arrive by email shortly.",
+            });
+          }
+        }
+
+        paymentCompletedRef.current = true;
+        goToThankYou(ctx.formData, ctx.amount, razorpay_payment_id, razorpay_order_id, invoiceNumber);
+      } finally {
+        finalizingRef.current = false;
+      }
     },
     [goToThankYou, serviceName, toast, user?.id],
   );
 
   const reconcilePendingPayment = useCallback(async () => {
+    if (paymentCompletedRef.current || finalizingRef.current) return false;
     const ctx = paymentCtxRef.current;
     if (!ctx?.razorpayOrderId || !isAwaitingPayment) return false;
 
