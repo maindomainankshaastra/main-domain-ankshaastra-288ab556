@@ -6,7 +6,7 @@ import {
   Star, Calendar, ScrollText, ArrowRight, CheckCircle, 
   Sparkles, TrendingUp, Shield, Heart, Briefcase, DollarSign
 } from "lucide-react";
-import { pricing, formatINR } from "@/config/pricing";
+import { pricing, formatINR, payLink } from "@/config/pricing";
 
 const highlights = [
   { icon: TrendingUp, title: "Career & Growth", desc: "Month-by-month career insights and optimal periods for key decisions." },
@@ -55,7 +55,7 @@ const VarshphalReport = () => {
               health, finances, and more — powered by Numerology & Lal Kitab wisdom.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to={`/payment?service=Varshphal%20Report%202026&amount=${pricing.reports.varshphal}`} className="group inline-flex items-center justify-center gap-3 bg-white text-primary font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <Link to={payLink("Varshphal Report 2026", pricing.reports.varshphal, "kundali")} className="group inline-flex items-center justify-center gap-3 bg-white text-primary font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <span><span>Order Report — {formatINR(pricing.reports.varshphal)}</span></span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -127,7 +127,7 @@ const VarshphalReport = () => {
                   ))}
                   <span className="text-sm text-muted-foreground ml-2">4.9/5 rating</span>
                 </div>
-                <Link to={`/payment?service=Varshphal%20Report%202026&amount=${pricing.reports.varshphal}`} className="btn-primary w-full inline-flex items-center justify-center gap-2 py-4 text-lg">
+                <Link to={payLink("Varshphal Report 2026", pricing.reports.varshphal, "kundali")} className="btn-primary w-full inline-flex items-center justify-center gap-2 py-4 text-lg">
                   Order Now <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>

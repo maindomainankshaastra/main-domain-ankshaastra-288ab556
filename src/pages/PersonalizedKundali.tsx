@@ -8,38 +8,20 @@ import {
   DollarSign, Users, UserCheck, BookOpen, Zap, Award
 } from "lucide-react";
 import { useState } from "react";
-import { pricing, formatINR } from "@/config/pricing";
+import { pricing, formatINR, payLink } from "@/config/pricing";
+import { kundli20Packages } from "@/data/serviceCatalog";
 
-const pricingPlans = [
-  {
-count: "1 Kundli",
-    price: formatINR(pricing.reports.kundaliSingle),
-    original: formatINR(pricing.reports.kundaliSingleOriginal),
-    amount: pricing.reports.kundaliSingle,
-    service: "Personalized Kundli",
-    tag: "Best for Personal Analysis",
-    desc: "Get deep insights about your love, career, money & health.",
-  },
-  {
-    count: "2 Kundli",
-    price: formatINR(pricing.reports.kundaliDouble),
-    original: formatINR(pricing.reports.kundaliDoubleOriginal),
-    amount: pricing.reports.kundaliDouble,
-    service: "Personalized Kundli for 2",
-    tag: "Best for 2 People",
-    desc: "Two complete personalized Kundli reports — ideal for any 2 people: partners, parents, siblings or close ones.",
-    popular: true,
-  },
-  {
-    count: "3 Kundli",
-    price: formatINR(pricing.reports.kundaliTriple),
-    original: formatINR(pricing.reports.kundaliTripleOriginal),
-    amount: pricing.reports.kundaliTriple,
-    service: "Personalized Kundli Family",
-    tag: "Best for Family",
-    desc: "Complete astrological guidance for your entire family.",
-  },
-];
+const pricingPlans = kundli20Packages.map((pkg) => ({
+  count: pkg.name,
+  price: formatINR(pkg.price),
+  original: pkg.originalPrice ? formatINR(pkg.originalPrice) : undefined,
+  amount: pkg.price,
+  service: pkg.serviceTitle,
+  tag: pkg.tag || "",
+  desc: pkg.description || "",
+  popular: pkg.popular,
+  link: payLink(pkg.serviceTitle, pkg.price, pkg.formType),
+}));
 
 const whatsInside = [
   "Clear direction for every important decision",
@@ -190,7 +172,7 @@ const PersonalizedKundali = () => {
                 </div>
                 <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">{plan.tag}</span>
                 <p className="text-muted-foreground text-sm mb-6">{plan.desc}</p>
-                <Link to={`/payment?service=${encodeURIComponent(plan.service)}&amount=${plan.amount}`} className={`block w-full font-bold py-3 rounded-xl transition-opacity text-base ${plan.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-foreground hover:bg-muted/80"}`}>
+                <Link to={plan.link} className={`block w-full font-bold py-3 rounded-xl transition-opacity text-base ${plan.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-foreground hover:bg-muted/80"}`}>
                   Buy Now
                 </Link>
               </motion.div>

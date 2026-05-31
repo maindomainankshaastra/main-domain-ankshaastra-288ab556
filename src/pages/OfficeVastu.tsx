@@ -10,7 +10,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import serviceOfficeVastu from "@/assets/service-office-vastu.png";
-import { pricing, formatINR } from "@/config/pricing";
+import { pricing, formatINR, payLink } from "@/config/pricing";
+import { officeVastuPackages } from "@/data/serviceCatalog";
+import { Link } from "react-router-dom";
 
 const faqs = [
   {
@@ -289,55 +291,17 @@ Email: ${formData.email}`;
               Choose Your <span className="text-gradient-primary">Plan</span>
             </h2>
           </motion.div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            {[
-              {
-                name: "Remote Consultation",
-                price: formatINR(pricing.vastu.officeRemote),
-                originalPrice: formatINR(pricing.vastu.officeRemote * 2),
-                features: ["Floor Plan Analysis", "Directional Assessment", "Seating Arrangement Guide", "Colour & Element Recommendations", "Detailed PDF Report", "1 Follow-up Call"],
-                excluded: ["No On-Site Visit"],
-                highlighted: false,
-              },
-              {
-                name: "On-Site Consultation",
-                price: formatINR(pricing.vastu.officeOnsite),
-                originalPrice: formatINR(Math.round(pricing.vastu.officeOnsite * 1.9)),
-                badge: "COMPREHENSIVE",
-                features: ["Personal Office Visit", "Complete Directional Analysis", "Zone-Wise Evaluation", "Employee Seating Optimisation", "Detailed Report (50+ Pages)", "Non-Structural Remedies", "3 Follow-up Consultations", "Priority WhatsApp Support (1 Month)"],
-                excluded: [],
-                highlighted: true,
-              },
-            ].map((plan, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}
-                className={`relative bg-card rounded-3xl border ${plan.highlighted ? 'border-primary shadow-2xl shadow-primary/10 scale-[1.02]' : 'border-border shadow-lg'} p-8 flex flex-col`}>
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold tracking-wider">COMPREHENSIVE</span>
-                  </div>
-                )}
-                <h3 className="font-display text-xl font-bold text-foreground mb-2">{plan.name}</h3>
-                <div className="flex items-baseline gap-3 mb-6">
-                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-lg text-muted-foreground line-through">{plan.originalPrice}</span>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {officeVastuPackages.map((plan, i) => (
+              <motion.div key={plan.name} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
+                className={`relative bg-card rounded-3xl border ${plan.popular ? 'border-primary shadow-2xl shadow-primary/10' : 'border-border shadow-lg'} p-6 flex flex-col`}>
+                <h3 className="font-display text-lg font-bold text-foreground mb-3">{plan.name}</h3>
+                <div className="flex items-baseline gap-2 mb-6">
+                  <span className="text-3xl font-bold text-foreground">{formatINR(plan.price)}</span>
                 </div>
-                <div className="space-y-3 mb-8 flex-grow">
-                  {plan.features.map((f) => (
-                    <div key={f} className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-foreground text-sm">{f}</span>
-                    </div>
-                  ))}
-                  {plan.excluded.map((f) => (
-                    <div key={f} className="flex items-start gap-3 opacity-50">
-                      <AlertTriangle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground text-sm">{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <a href="#form" className={`w-full py-3.5 rounded-2xl font-semibold text-center transition-all duration-300 block ${plan.highlighted ? 'btn-primary' : 'bg-muted text-foreground hover:bg-primary/10'}`}>
-                  Get Started
-                </a>
+                <Link to={payLink(plan.serviceTitle, plan.price, plan.formType)} className={`w-full py-3 rounded-2xl font-semibold text-center transition-all duration-300 block mt-auto ${plan.popular ? 'btn-primary' : 'bg-muted text-foreground hover:bg-primary/10'}`}>
+                  Book Now
+                </Link>
               </motion.div>
             ))}
           </div>

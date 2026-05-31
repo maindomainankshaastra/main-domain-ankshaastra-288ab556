@@ -1,127 +1,82 @@
 /**
  * Centralized pricing configuration.
- *
- * This pricing object now uses fixed application defaults rather than
- * runtime environment variables. Pricing values should be managed through
- * the admin catalog and product tables in Supabase.
- *
- * Add a new entry here once, then reference it from any component:
- *   import { pricing, formatINR } from "@/config/pricing";
- *   <span>{formatINR(pricing.kundaliSingle)}</span>
+ * Admin catalog in Supabase should mirror these values.
  */
 
 export const pricing = {
-  // ── Consultation: Audio ──
-  audioCall: {
-    min45: 3998,
-    min60: 4997,
-    min75: 5997,
+  audioCall: { min45: 3977, min60: 4967, min75: 5957 },
+  videoCall: { min45: 5957, min60: 7397, min75: 8927 },
+  whatsapp: { q3: 497, q6: 777, q10: 1111 },
+  addons: {
+    kundli20: 299,
+    luckyColorNumber: 497,
+    missingNumberRemedy: 917,
+    nickName: 497,
+    extraNames: 497,
   },
-  // ── Consultation: Video ──
-  videoCall: {
-    min45: 5997,
-    min60: 7497,
-    min75: 8997,
-  },
-  // ── Payment page: short audio packs ──
-  audioPack: {
-    min45: 1987,
-    min60: 2496,
-    min75: 3108,
-  },
-  // ── Payment page: short video packs ──
-  videoPack: {
-    min45: 3648,
-    min60: 4297,
-    min75: 4986,
-  },
-  // ── WhatsApp question packs ──
-  whatsapp: {
-    q3: 497,
-    q6: 777,
-    q10: 1111,
-  },
-  // ── Personal numerology ──
   nameCorrection: {
     standard: 2447,
     standardOriginal: 7500,
+    withBlueprint: 7397,
+    withBlueprintOriginal: 10076,
     nameCheck: 293,
-    blueprintBasic: 1997,
-    blueprintBasicOriginal: 3999,
-    blueprintPremium: 8927,
-    blueprintPremiumOriginal: 18218,
+    nameCheck2: 528,
+    nameCheck2Original: 586,
+    nameCheck3: 747,
+    nameCheck3Original: 879,
   },
   luckyNumber: {
-    vehicle: 1100,
-    mobile: 1100,
-    flat: 1100,
+    vehicle: 1097,
+    vehicleColor: 497,
+    vehiclePurchaseDate: 1097,
+    mobile: 1097,
+    flat: 1097,
   },
-  // ── Family ──
   baby: {
-    cSectionEssential: 1100,
-    cSectionPremium: 4987,
-    perfectName: 1997,
-    perfectNameOriginal: 5100,
+    perfectName: 2447,
+    perfectNameOriginal: 7500,
+    blueprint: 4967,
+    blueprintOriginal: 15051,
+    cSectionEssential: 1097,
+    cSectionComplete: 3167,
+    cSectionPremium: 5507,
   },
-  relationship: {
-    analysis: 987,
-  },
-  // ── Pyaar Shastra (love & life compatibility) ──
-  pyaarShastra: {
-    price: 299,
-    originalPrice: 699,
-    kundaliAddon: 299,
-  },
-  // ── Reports ──
+  relationship: { analysis: 917 },
+  pyaarShastra: { price: 299, originalPrice: 699, kundaliAddon: 299 },
   reports: {
     kundaliSingle: 299,
     kundaliSingleOriginal: 699,
-    kundaliDouble: 547,
+    kundaliDouble: 497,
     kundaliDoubleOriginal: 1200,
-    kundaliTriple: 737,
+    kundaliTriple: 597,
     kundaliTripleOriginal: 1800,
     varshphal: 699,
     numerology: 1999,
     numerologyOriginal: 2499,
   },
-  // ── Business & brand ──
   business: {
-    nameCorrection: 4894,
-    phoneNumber: 1499,
-    tagline: 1997,
+    nameCorrection: 4967,
+    phoneNumber: 1457,
+    tagline: 1457,
     partnerCompat: 1997,
     directorCompat: 1997,
-  },
-  // ── Auspicious dates ──
-  dates: {
     companyRegistration: 1997,
     bankAccount: 1997,
     landPurchase: 1997,
+    plotAnalysis: 1457,
+    exhibitionStall: 917,
+    commercial: 2447,
   },
-  // ── Vastu ──
   vastu: {
-    ceoCabin: 2499,
+    departmental: 4987,
+    ceoCabin: 2447,
     management: 1997,
     cashCounter: 1997,
     interiorColors: 1997,
-    departmental: 4998,
-    officeRemote: 3999,
-    officeOnsite: 11000,
+    officeRemote: 3977,
+    officeOnsite: 9987,
   },
-  // ── Property ──
-  property: {
-    plotAnalysis: 1499,
-    exhibitionStall: 999,
-    commercial: 2499,
-  },
-  // ── Mobile numerology page ──
-  mobile: {
-    audit: 1097,
-    auditOriginal: 2500,
-    premium: 1097,
-    premiumOriginal: 4500,
-  },
-  // ── Shop products ──
+  mobile: { audit: 1097, auditOriginal: 2500, premium: 1999, premiumOriginal: 4500 },
   shop: {
     blueSapphire: 15999,
     blueSapphireOriginal: 19999,
@@ -143,8 +98,17 @@ export const pricing = {
   },
 } as const;
 
-/** Format a numeric price as Indian Rupees, e.g. 1997 → "₹1,997". */
 export const formatINR = (value: number): string =>
   `₹${value.toLocaleString("en-IN")}`;
 
 export type Pricing = typeof pricing;
+
+/** Build payment URL with service title, amount, and form type. */
+export const payLink = (service: string, amount: number, formType?: string) => {
+  const params = new URLSearchParams({
+    service,
+    amount: String(amount),
+  });
+  if (formType) params.set("formType", formType);
+  return `/payment?${params.toString()}`;
+};

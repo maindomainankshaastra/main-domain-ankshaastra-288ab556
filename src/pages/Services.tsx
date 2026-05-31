@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
-import { formatINR } from "@/config/pricing";
+import { formatINR, pricing } from "@/config/pricing";
 import { whatsappHref } from "@/config/business";
 import { existingServicePages } from "@/data/servicePages";
 import { 
@@ -77,7 +77,28 @@ const getServiceLink = (service: Service & { _pageRoute?: string }): string => {
     case "Perfect Baby Name":
       return "https://empower.ankshaastra.com";
     case "C-Section Baby Dates":
-      return "/services/csection-dates";
+      return "https://miraclebaby.ankshaastra.com";
+    case "1:1 Audio Call":
+    case "1:1 Video Call":
+    case "1:1 Call Consultation":
+      return "/services/call-consultation";
+    case "Lucky Vehicle Number":
+    case "Lucky Mobile Number":
+    case "Lucky Flat / Plot Number":
+      return "/services/lucky-numerology";
+    case "Business Name Correction":
+    case "Business Phone Number":
+    case "Brand Tagline Correction":
+    case "Business Partner Compatibility":
+    case "Company Registration Date":
+    case "Bank Account Opening Date":
+    case "Land Purchase Date":
+    case "Plot Number Analysis":
+    case "Exhibition Stall Number":
+    case "Commercial Space Analysis":
+      return "/services/business-numerology";
+    case "Relationship Analysis":
+      return `/payment?service=${encodeURIComponent("Relationship Analysis")}&amount=${pricing.relationship.analysis}&formType=relationship-analysis`;
     case "Personalized Kundali":
       return "/reports/personalized-kundali";
     case "Varshphal Report 2026":

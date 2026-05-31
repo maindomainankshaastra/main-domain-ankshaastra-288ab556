@@ -109,6 +109,17 @@ const FORM_TYPES = [
   "name-check",
   "couple",
   "pyaar-shastra",
+  "lucky-vehicle",
+  "lucky-vehicle-color",
+  "lucky-vehicle-date",
+  "lucky-mobile",
+  "lucky-flat",
+  "relationship-analysis",
+  "business-brand",
+  "business-dates",
+  "business-property",
+  "business-partner",
+  "office-vastu",
 ];
 
 function slugify(value: string) {

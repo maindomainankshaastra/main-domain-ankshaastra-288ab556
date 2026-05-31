@@ -32,12 +32,21 @@ import { pricing } from "@/config/pricing";
 import { useAuth } from "@/hooks/useAuth";
 import { completeOrderInvoice } from "@/lib/complete-order-invoice";
 import { syncPaymentStatus } from "@/lib/sync-payment";
+import {
+  EXTENDED_FORM_TYPES,
+  getExtendedDefaultValues,
+  getExtendedSchema,
+  inferExtendedFormType,
+  type ExtendedFormType,
+} from "@/lib/payment-form-ext";
+import { ExtendedPaymentFields } from "@/components/payment/ExtendedPaymentFields";
+
+const KUNDLI_20_ADDON = { id: "kundli-20", label: "Personalised Premium Kundli 2.0", note: "PDF report", price: pricing.addons.kundli20 };
+const LUCKY_COLOR_ADDON = { id: "lucky-color", label: "Lucky Color and Number", note: "", price: pricing.addons.luckyColorNumber };
+const MISSING_NUMBER_ADDON = { id: "missing-number", label: "Missing Number and Repeating Number Remedy", note: "", price: pricing.addons.missingNumberRemedy };
 
 // Add-ons available at checkout for service-mode orders.
-const DEFAULT_ADDONS = [
-  { id: "kundali", label: "Personalized Kundali", note: "English / Hindi · PDF report", price: 699 },
-  { id: "lal-kitab", label: "Lal Kitab Consultation", note: "1:1 expert session", price: 3998 },
-] as const;
+const DEFAULT_ADDONS = [KUNDLI_20_ADDON] as const;
 
 const PYAAR_ADDONS = [
   { id: "kundali-pyaar", label: "Personalized Kundali", note: "150+ page detailed Kundali · WhatsApp PDF", price: pricing.pyaarShastra.kundaliAddon },
@@ -80,18 +89,21 @@ const consultationPackages = {
 };
 
 // ───── form types ─────
-type FormType = "kundali" | "kundali-multi" | "consultation" | "name-correction" | "name-correction-couple" | "name-check" | "couple" | "pyaar-shastra" | "default";
+type BaseFormType = "kundali" | "kundali-multi" | "consultation" | "name-correction" | "name-correction-couple" | "name-check" | "couple" | "pyaar-shastra" | "default";
+type FormType = BaseFormType | ExtendedFormType;
 
-const inferFormType = (service: string | null, hasConsultationType: boolean): FormType => {
+const inferFormType = (service: string | null, hasConsultationType: boolean): BaseFormType => {
   if (hasConsultationType) return "consultation";
   if (!service) return "default";
   const s = service.toLowerCase();
+  if (s.includes("call consultation") || s.includes("1:1 call")) return "consultation";
   if (s.includes("pyaar shastra") || s.includes("pyaar shaastra")) return "pyaar-shastra";
   if (s.includes("name check")) return "name-check";
-  if (s.includes("complete numerology blueprint") || s.includes("for 2 people")) return "name-correction-couple";
+  if (s.includes("complete blueprint") || s.includes("for 2 people")) return "name-correction-couple";
   if (s.includes("name correction")) return "name-correction";
-  if ((s.includes("kundali") || s.includes("kundli")) && (s.includes("family") || s.includes("match-making") || s.includes("for 2") || s.includes("for 3"))) return "kundali-multi";
+  if ((s.includes("kundali") || s.includes("kundli")) && (s.includes("triple") || s.includes("family") || s.includes("for 3") || s.includes("double") || s.includes("for 2") || s.includes("2 kundli") || s.includes("3 kundli"))) return "kundali-multi";
   if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
+  if (s.includes("relationship analysis")) return "couple";
   return "default";
 };
 
@@ -210,6 +222,7 @@ const personSchema = z.object({
   gender: genderField,
   dob: dobField,
   tob: tobField,
+  pincode: pincodeField,
   pob: z.string().trim().min(2, "Place of birth required").max(120),
 });
 const coupleSchema = z.object({
@@ -373,10 +386,10 @@ const WhatsappField = ({ control }: { control: any }) => (
   />
 );
 
-const GenderRadio = ({ control }: { control: any }) => (
+const GenderRadio = ({ control, name = "gender" }: { control: any; name?: string }) => (
   <FormField
     control={control}
-    name="gender"
+    name={name}
     render={({ field }) => (
       <FormItem>
         <FormLabel>Gender *</FormLabel>
@@ -414,12 +427,20 @@ const PaymentPage = () => {
   const isServiceMode = !!serviceName;
   const servicePrice = serviceInfo?.price ?? (serviceAmount ? parseInt(serviceAmount, 10) : 0);
 
-  const formType: FormType = formTypeParam || inferFormType(serviceName, !!consultationType);
+  const formType: FormType = useMemo(() => {
+    if (formTypeParam && EXTENDED_FORM_TYPES.includes(formTypeParam as ExtendedFormType)) {
+      return formTypeParam as ExtendedFormType;
+    }
+    const extended = inferExtendedFormType(serviceName);
+    if (extended) return extended;
+    if (formTypeParam) return formTypeParam as BaseFormType;
+    return inferFormType(serviceName, !!consultationType);
+  }, [formTypeParam, serviceName, consultationType]);
 
   // For multi-person kundali, infer the number of people from the service name.
   const kundaliCount: 2 | 3 = useMemo(() => {
     const s = (serviceName || "").toLowerCase();
-    if (s.includes("family") || s.includes("for 3")) return 3;
+    if (s.includes("triple") || s.includes("family") || s.includes("for 3") || s.includes("3 kundli")) return 3;
     return 2;
   }, [serviceName]);
 
@@ -438,8 +459,20 @@ const PaymentPage = () => {
 
   const availableAddons: Addon[] = useMemo(() => {
     if (formType === "pyaar-shastra") return [...PYAAR_ADDONS];
-    // Kundli orders already include the report — no upsell add-ons.
     if (formType === "kundali" || formType === "kundali-multi") return [];
+    if (formType === "consultation") return [KUNDLI_20_ADDON];
+    if (formType === "name-correction" || formType === "name-check") {
+      return [KUNDLI_20_ADDON, LUCKY_COLOR_ADDON, MISSING_NUMBER_ADDON];
+    }
+    if (
+      formType === "lucky-vehicle" ||
+      formType === "lucky-vehicle-color" ||
+      formType === "lucky-vehicle-date" ||
+      formType === "lucky-mobile" ||
+      formType === "lucky-flat"
+    ) {
+      return [MISSING_NUMBER_ADDON, LUCKY_COLOR_ADDON];
+    }
     return [...DEFAULT_ADDONS];
   }, [formType]);
 
@@ -532,7 +565,7 @@ const PaymentPage = () => {
       };
     }
     if (formType === "couple") {
-      const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pob: "" };
+      const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pincode: "", pob: "" };
       return {
         schema: coupleSchema,
         defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 " },
@@ -551,10 +584,17 @@ const PaymentPage = () => {
       };
     }
     if (formType === "pyaar-shastra") {
-      const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pob: "" };
+      const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pincode: "", pob: "" };
       return {
         schema: pyaarShastraSchema,
         defaults: { person1: { ...blankPerson, gender: "male" as any }, person2: { ...blankPerson, gender: "female" as any }, email: "", whatsapp: "+91 ", language: undefined as any },
+      };
+    }
+    if (EXTENDED_FORM_TYPES.includes(formType as ExtendedFormType)) {
+      const ext = formType as ExtendedFormType;
+      return {
+        schema: getExtendedSchema(ext),
+        defaults: { ...getExtendedDefaultValues(ext), whatsapp: "+91 " },
       };
     }
     return {
@@ -1083,18 +1123,6 @@ const PaymentPage = () => {
       return (
         <>
           {NameTriplet}
-          <FormField control={c} name="lastNameChangeOk" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Are you comfortable making a change in your last name (if required)? *</FormLabel>
-              <FormControl>
-                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="lnc-yes" /><Label htmlFor="lnc-yes">Yes</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="lnc-no" /><Label htmlFor="lnc-no">No</Label></div>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
           {ContactRow}
           {BirthRow}
           {POBPincode}
@@ -1130,6 +1158,18 @@ const PaymentPage = () => {
       return (
         <>
           {NameTriplet}
+          <FormField control={c} name="lastNameChangeOk" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Are you comfortable making a change in your last name (if required)? *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="nc-lnc-yes" /><Label htmlFor="nc-lnc-yes">Yes</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="nc-lnc-no" /><Label htmlFor="nc-lnc-no">No</Label></div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
           {ContactRow}
           {BirthRow}
           {POBPincode}
@@ -1319,9 +1359,14 @@ const PaymentPage = () => {
             <DOBPicker control={c} name={`${name}.dob`} />
             <TOBPicker control={c} name={`${name}.tob`} />
           </div>
-          <FormField control={c} name={`${name}.pob`} render={({ field }) => (
-            <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={c} name={`${name}.pincode`} render={({ field }) => (
+              <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name={`${name}.pob`} render={({ field }) => (
+              <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN — edit if needed" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
         </div>
       );
       return (
@@ -1330,10 +1375,10 @@ const PaymentPage = () => {
             This package covers <strong>2 people</strong>. Please provide birth details for both.
           </div>
           {isPyaar
-            ? <PersonBlock name="person1" title="Male Details" accent="bg-blue-500" />
+            ? <PersonBlock name="person1" title="Male Partner Details" accent="bg-blue-500" />
             : <PersonBlock name="person1" title="Person 1 Details" accent="bg-primary" />}
           {isPyaar
-            ? <PersonBlock name="person2" title="Female Details" accent="bg-pink-500" />
+            ? <PersonBlock name="person2" title="Female Partner Details" accent="bg-pink-500" />
             : <PersonBlock name="person2" title="Person 2 Details" accent="bg-amber-500" />}
           <h3 className="font-semibold text-foreground pt-2">Contact Details</h3>
           {ContactRow}
@@ -1354,6 +1399,25 @@ const PaymentPage = () => {
             )} />
           )}
         </>
+      );
+    }
+
+    if (EXTENDED_FORM_TYPES.includes(formType as ExtendedFormType)) {
+      const EmailField = ({ control: emailControl }: { control: any }) => (
+        <FormField control={emailControl} name="email" render={({ field }) => (
+          <FormItem><FormLabel>Email ID *</FormLabel><FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+      );
+      return (
+        <ExtendedPaymentFields
+          formType={formType as ExtendedFormType}
+          control={c}
+          DOBPicker={DOBPicker}
+          TOBPicker={TOBPicker}
+          GenderRadio={GenderRadio}
+          WhatsappField={WhatsappField}
+          EmailField={EmailField}
+        />
       );
     }
 
