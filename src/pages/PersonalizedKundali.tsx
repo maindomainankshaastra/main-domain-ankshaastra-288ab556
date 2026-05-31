@@ -26,8 +26,8 @@ const pricingPlans = [
     original: formatINR(pricing.reports.kundaliDoubleOriginal),
     amount: pricing.reports.kundaliDouble,
     service: "Personalized Kundli for 2",
-    tag: "Best for Couples & Loved Ones",
-    desc: "Two complete Kundli reports — perfect for partners, parents, or a loved one.",
+    tag: "Best for 2 People",
+    desc: "Two complete personalized Kundli reports — ideal for any 2 people: partners, parents, siblings or close ones.",
     popular: true,
   },
   {
@@ -108,8 +108,8 @@ const PersonalizedKundali = () => {
   return (
     <Layout minimal>
       <SEOHead
-        title="Personalized Kundli Report"
-        description="Get your personalized Janam Kundli report covering career, marriage, wealth, health & remedies. Delivered within 3 hours by Himansshu Agarwal Ji."
+        title="Personalised Premium Kundli 2.0"
+        description="Get your Personalised Premium Kundli 2.0 covering career, marriage, wealth, health & remedies. Delivered within 9 hours by Himansshu Agarwal Ji."
         canonical="/reports/personalized-kundali"
       />
 
@@ -126,7 +126,7 @@ const PersonalizedKundali = () => {
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="text-center max-w-3xl mx-auto">
             <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 mb-6">
               <Moon className="w-4 h-4 text-amber-200" />
-              <span className="text-sm text-white font-medium">Premium Personalized Kundli</span>
+              <span className="text-sm text-white font-medium">Personalised Premium Kundli 2.0</span>
             </span>
             <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-[1.15] mb-6">
               Career problems? Marriage troubles?{" "}
@@ -134,18 +134,18 @@ const PersonalizedKundali = () => {
               Kundli can answer everything for you!
             </h1>
             <p className="text-lg text-white/80 mb-10 leading-relaxed max-w-2xl mx-auto">
-              100% Personalized | Delivered within 3 Hours | Expert-Verified Predictions
+              100% Personalized | Delivered within 9 Hours | Expert-Verified Predictions
             </p>
 
             <div className="flex flex-wrap justify-center gap-6 mb-10 text-white/70 text-sm">
               <span className="flex items-center gap-2"><Star className="w-4 h-4 text-amber-300 fill-amber-300" /> 4.9/5 Rating</span>
-              <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-300" /> Delivered in 3 Hours</span>
+              <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-300" /> Delivered in 9 Hours</span>
               <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-amber-300" /> 100% Confidential</span>
               <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-amber-300" /> Expert-Verified</span>
             </div>
 
             <a href="#choose-plan" className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
-              Get Your Kundli — Choose a Plan
+              Get Your Kundli @ ₹299
               <ArrowRight className="w-5 h-5" />
             </a>
           </motion.div>
