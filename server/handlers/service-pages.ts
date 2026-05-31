@@ -19,7 +19,12 @@ export default async function handler(
         .eq("status", "published")
         .maybeSingle();
 
-      if (error) return res.status(500).json({ error: error.message });
+      if (error) {
+        if (error.code === "42P01" || error.message?.includes("service_pages")) {
+          return res.status(404).json({ error: "Page not found" });
+        }
+        return res.status(500).json({ error: error.message });
+      }
       if (!page) return res.status(404).json({ error: "Page not found" });
 
       const { data: packages } = await supabase
@@ -38,7 +43,13 @@ export default async function handler(
       .eq("status", "published")
       .order("sort_order", { ascending: true });
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      // Table may not exist until migration is applied — treat as empty catalog.
+      if (error.code === "42P01" || error.message?.includes("service_pages")) {
+        return res.status(200).json({ pages: [] });
+      }
+      return res.status(500).json({ error: error.message });
+    }
     return res.status(200).json({ pages: data || [] });
   } catch (error) {
     console.error("Service pages API error:", error);

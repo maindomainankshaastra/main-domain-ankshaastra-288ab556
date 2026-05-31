@@ -198,12 +198,11 @@ const ServicesPage = () => {
           fetch("/api/service-pages", { signal: controller.signal }),
         ]);
 
-        if (!servicesRes.ok) {
-          throw new Error(`Server error: ${servicesRes.statusText}`);
+        let dbServices: Service[] = [];
+        if (servicesRes.ok) {
+          const payload = await servicesRes.json();
+          dbServices = (payload.services || []) as Service[];
         }
-
-        const payload = await servicesRes.json();
-        const dbServices = (payload.services || []) as Service[];
 
         let cmsPages: Array<{
           title: string;
@@ -232,6 +231,10 @@ const ServicesPage = () => {
         const uniqueCms = cmsAsServices.filter((p) => !titles.has(p.title.toLowerCase()));
 
         setServices([...dbServices, ...uniqueCms]);
+
+        if (!servicesRes.ok && !pagesRes.ok) {
+          throw new Error(`Server error: ${servicesRes.statusText}`);
+        }
       } catch (err) {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Unable to load services");
