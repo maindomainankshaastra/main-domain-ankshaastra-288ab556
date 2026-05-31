@@ -520,13 +520,13 @@ const PaymentPage = () => {
     if (formType === "name-correction") {
       return {
         schema: nameCorrectionSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, lastNameChangeOk: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
       };
     }
     if (formType === "name-check") {
       return {
         schema: nameCheckSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, tob: baseTob },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, pob: "", gender: undefined as any },
       };
     }
     if (formType === "couple") {
