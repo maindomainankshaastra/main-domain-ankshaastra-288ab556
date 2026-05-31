@@ -76,9 +76,9 @@ export const pricing = {
   reports: {
     kundaliSingle: 299,
     kundaliSingleOriginal: 699,
-    kundaliDouble: 497,
+    kundaliDouble: 547,
     kundaliDoubleOriginal: 1200,
-    kundaliTriple: 597,
+    kundaliTriple: 737,
     kundaliTripleOriginal: 1800,
     varshphal: 699,
     numerology: 1999,
@@ -116,9 +116,9 @@ export const pricing = {
   },
   // ── Mobile numerology page ──
   mobile: {
-    audit: 999,
+    audit: 1097,
     auditOriginal: 2500,
-    premium: 1999,
+    premium: 1097,
     premiumOriginal: 4500,
   },
   // ── Shop products ──

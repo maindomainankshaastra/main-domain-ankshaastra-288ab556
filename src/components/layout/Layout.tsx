@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import BackToTop from "../ui/BackToTop";
 import WhatsAppButton from "../ui/WhatsAppButton";
 import PageTransition from "../PageTransition";
+import logo from "@/assets/logo.jpg";
 
 interface LayoutProps {
   children: ReactNode;
@@ -29,11 +30,8 @@ const Layout = ({ children, minimal = false }: LayoutProps) => {
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
             </button>
-            <Link
-              to="/"
-              className="font-display text-lg font-bold text-primary tracking-wide"
-            >
-              Ankshaastra
+            <Link to="/" className="flex items-center" aria-label="Ankshaastra home">
+              <img src={logo} alt="Ankshaastra" className="h-8 sm:h-9 w-auto object-contain" />
             </Link>
             <Link
               to="/"
