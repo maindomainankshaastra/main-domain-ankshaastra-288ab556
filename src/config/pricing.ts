@@ -76,9 +76,9 @@ export const pricing = {
   reports: {
     kundaliSingle: 299,
     kundaliSingleOriginal: 699,
-    kundaliDouble: 497,
+    kundaliDouble: 547,
     kundaliDoubleOriginal: 1200,
-    kundaliTriple: 597,
+    kundaliTriple: 737,
     kundaliTripleOriginal: 1800,
     varshphal: 699,
     numerology: 1999,

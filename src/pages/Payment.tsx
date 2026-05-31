@@ -1420,6 +1420,7 @@ const PaymentPage = () => {
                     </div>
 
                     {/* Add-ons */}
+                    {availableAddons.length > 0 && (
                     <div className="mb-4">
                       <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-primary" />
@@ -1456,6 +1457,7 @@ const PaymentPage = () => {
                         })}
                       </div>
                     </div>
+                    )}
 
                     {selectedAddonObjects.length > 0 && (
                       <div className="border-t border-border pt-3 mb-3 space-y-1">
