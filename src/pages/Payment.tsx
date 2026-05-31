@@ -171,6 +171,7 @@ const nameCorrectionSchema = z.object({
   middleName: z.string().trim().max(50).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
   lastName: z.string().trim().min(1, "Last name required").max(50).regex(nameRx, "Letters only"),
   middleIsFatherName: z.enum(["yes", "no"], { required_error: "Please select" }),
+  lastNameChangeOk: z.enum(["yes", "no"], { required_error: "Please select" }),
   email: emailField,
   whatsapp: phoneField,
   dob: dobField,
@@ -198,7 +199,8 @@ const nameCheckSchema = z.object({
   email: emailField,
   pincode: pincodeField,
   dob: dobField,
-  tob: tobField,
+  pob: z.string().trim().min(2, "Place of birth required").max(120),
+  gender: genderField,
 });
 
 // Couple form — two people's birth details (used for premium Name Correction
@@ -518,13 +520,13 @@ const PaymentPage = () => {
     if (formType === "name-correction") {
       return {
         schema: nameCorrectionSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, lastNameChangeOk: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
       };
     }
     if (formType === "name-check") {
       return {
         schema: nameCheckSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, tob: baseTob },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, pob: "", gender: undefined as any },
       };
     }
     if (formType === "couple") {
@@ -1069,6 +1071,18 @@ const PaymentPage = () => {
       return (
         <>
           {NameTriplet}
+          <FormField control={c} name="lastNameChangeOk" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Are you comfortable making a change in your last name (if required)? *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="lnc-yes" /><Label htmlFor="lnc-yes">Yes</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="lnc-no" /><Label htmlFor="lnc-no">No</Label></div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
           {ContactRow}
           {BirthRow}
           {POBPincode}
@@ -1144,13 +1158,10 @@ const PaymentPage = () => {
       return (
         <>
           {NameTriplet}
+          <DOBPicker control={c} />
+          {POBPincode}
+          <GenderRadio control={c} />
           {ContactRow}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={c} name="pincode" render={({ field }) => (
-              <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-          </div>
-          {BirthRow}
         </>
       );
     }
@@ -1475,21 +1486,8 @@ const PaymentPage = () => {
                       <span className="text-gradient-amber">₹{displayPrice.toLocaleString()}</span>
                     </div>
                     <div className="mt-6 pt-6 border-t border-border">
-                      <h4 className="font-medium text-foreground mb-3">What you'll get:</h4>
                       <ul className="space-y-2">
-                        {(formType === "kundali" || formType === "kundali-multi"
-                          ? [
-                              formType === "kundali-multi"
-                                ? `${kundaliCount} complete personalized Kundli reports (one per person)`
-                                : "A complete personalized Janam Kundli report",
-                              "Detailed Lagna, Moon Chart & Navamsa (D9) analysis",
-                              "Dasha, Mahadasha & Varshphal (yearly) predictions",
-                              "Career, marriage, wealth & health guidance",
-                              "Powerful remedies — Mantra, Gemstone, Rudraksha & Lal Kitab",
-                              "Expert-verified PDF · delivered on Email & WhatsApp within 3 hours",
-                            ]
-                          : ["Detailed numerology analysis", "Personalized guidance", "Report within 48-72 hours", "Email/WhatsApp follow-up"]
-                        ).map((item) => (
+                        {["Delivered via Email in 9 Hours"].map((item) => (
                           <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Check className="w-4 h-4 text-secondary flex-shrink-0" />{item}
                           </li>

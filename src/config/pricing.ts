@@ -116,9 +116,9 @@ export const pricing = {
   },
   // ── Mobile numerology page ──
   mobile: {
-    audit: 999,
+    audit: 1097,
     auditOriginal: 2500,
-    premium: 1999,
+    premium: 1097,
     premiumOriginal: 4500,
   },
   // ── Shop products ──

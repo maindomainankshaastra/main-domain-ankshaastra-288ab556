@@ -12,7 +12,6 @@ const Contact = lazy(() => import("./pages/Contact"));
 const Calculator = lazy(() => import("./pages/Calculator"));
 const Consultation = lazy(() => import("./pages/Consultation"));
 const Reports = lazy(() => import("./pages/Reports"));
-const NameCorrectionBlueprint = lazy(() => import("./pages/NameCorrectionBlueprint"));
 const PersonalizedKundali = lazy(() => import("./pages/PersonalizedKundali"));
 const PyaarShastra = lazy(() => import("./pages/PyaarShastra"));
 const Courses = lazy(() => import("./pages/Courses"));
@@ -72,7 +71,6 @@ const App = () => (
             <Route path="/calculator" element={<Calculator />} />
             <Route path="/consultation" element={<Consultation />} />
             <Route path="/reports" element={<Reports />} />
-            <Route path="/reports/name-correction-blueprint" element={<NameCorrectionBlueprint />} />
             <Route path="/reports/personalized-kundali" element={<PersonalizedKundali />} />
             <Route path="/reports/pyaar-shastra" element={<PyaarShastra />} />
             <Route path="/courses" element={<Courses />} />
