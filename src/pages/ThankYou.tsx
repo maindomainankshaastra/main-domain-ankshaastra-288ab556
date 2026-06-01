@@ -3,8 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { CheckCircle2, MessageCircle, Mail, ArrowRight, Sparkles, FileText } from "lucide-react";
-import { business, whatsappHref } from "@/config/business";
+import { CheckCircle2, Mail, ArrowRight, Sparkles, FileText } from "lucide-react";
+import { business } from "@/config/business";
 import { formatINR } from "@/config/pricing";
 
 const ThankYou = () => {
@@ -12,7 +12,6 @@ const ThankYou = () => {
   const service = params.get("service") || "Your Order";
   const amount = Number(params.get("amount") || 0);
   const paymentId = params.get("payment_id") || "";
-  const orderId = params.get("order_id") || "";
   const invoice = params.get("invoice") || "";
   const name = params.get("name") || "";
   const email = params.get("email") || "";
@@ -37,8 +36,6 @@ const ThankYou = () => {
       },
     );
   }, [paymentId, amount]);
-
-  const waMsg = `Hello Ankshaastra Team,%0A%0AI have just completed payment for *${service}*.%0AInvoice: ${invoice || "—"}%0APayment ID: ${paymentId || "—"}%0AName: ${name || "—"}%0A%0APlease confirm next steps.`;
 
   return (
     <Layout>
@@ -73,7 +70,7 @@ const ThankYou = () => {
                 Thank you{name ? `, ${name.split(" ")[0]}` : ""}!
               </h1>
               <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-                We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{service}</span>. Our team will personally connect with you on WhatsApp shortly to begin your consultation.
+                We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{service}</span>. Our team will connect with you shortly to begin your consultation.
               </p>
 
               <div className="grid sm:grid-cols-2 gap-4 mb-8 text-left">
@@ -109,20 +106,12 @@ const ThankYou = () => {
                 </h2>
                 <ul className="space-y-3 text-white/80 text-sm">
                   <li className="flex gap-3"><span className="text-amber-200 font-bold">1.</span> You&apos;ll receive an invoice and confirmation on your email{email ? ` (${email})` : ""}.</li>
-                  <li className="flex gap-3"><span className="text-amber-200 font-bold">2.</span> Our team will reach out on WhatsApp to schedule or deliver your service.</li>
+                  <li className="flex gap-3"><span className="text-amber-200 font-bold">2.</span> Our team will reach out to schedule or deliver your service.</li>
                   <li className="flex gap-3"><span className="text-amber-200 font-bold">3.</span> For premium reports, expect delivery within 3–7 working days.</li>
                 </ul>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <a
-                  href={`https://wa.me/${business.leadWhatsappNumber}?text=${waMsg}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary inline-flex items-center justify-center gap-2 px-8 py-4"
-                >
-                  <MessageCircle className="w-5 h-5" /> Chat on WhatsApp
-                </a>
+              <div className="flex justify-center">
                 <Link
                   to="/"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-white/20 text-white hover:bg-white/10 transition-all font-semibold"
