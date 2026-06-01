@@ -172,7 +172,14 @@ const PersonalizedKundali = () => {
                 </div>
                 <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">{plan.tag}</span>
                 <p className="text-muted-foreground text-sm mb-6">{plan.desc}</p>
-                <Link to={plan.link} className={`block w-full font-bold py-3 rounded-xl transition-opacity text-base ${plan.popular ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-foreground hover:bg-muted/80"}`}>
+                <Link
+                  to={plan.link}
+                  className={`block w-full font-bold py-3.5 rounded-xl text-base transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+                    plan.popular
+                      ? "gradient-primary text-white shadow-lg shadow-orange-500/30"
+                      : "border-2 border-primary text-primary bg-white/60 hover:bg-primary hover:text-primary-foreground shadow-md"
+                  }`}
+                >
                   Buy Now
                 </Link>
               </motion.div>
