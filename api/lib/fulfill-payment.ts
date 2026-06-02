@@ -1,7 +1,12 @@
 import crypto from "crypto";
 import { getSupabaseAdmin } from "./supabase-admin.js";
 import { advanceWorkflow, enqueueJob } from "./workflow-engine.js";
-import { processInvoiceJob } from "./invoice-engine.js";
+import { processInvoiceJob, orderHasDeliverableInvoice, orderInvoiceGenerationActive, paymentHasDeliverableInvoice, paymentInvoiceGenerationActive } from "./invoice-engine.js";
+import {
+  resolveOrderForPayment,
+  resolveOrderAfterConflict,
+  invoiceJobKey,
+} from "./payment-order-map.js";
 
 export type FulfillPaymentInput = {
   razorpay_order_id: string;
@@ -51,33 +56,19 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
   let orderId: string | null = null;
   let alreadyPaid = false;
 
-  if (dbOrderIdFromClient) {
-    const { data: byId } = await supabase
-      .from("orders")
-      .select("id, razorpay_order_id, status")
-      .eq("id", dbOrderIdFromClient)
-      .maybeSingle();
-    if (byId?.razorpay_order_id === razorpay_order_id) {
-      orderId = byId.id;
-      alreadyPaid = byId.status === "paid";
-    }
-  }
-
-  if (!orderId) {
-    const { data: order } = await supabase
-      .from("orders")
-      .select("id, status")
-      .eq("razorpay_order_id", razorpay_order_id)
-      .maybeSingle();
-    orderId = order?.id || null;
-    if (order?.status === "paid") alreadyPaid = true;
-  }
+  const resolved = await resolveOrderForPayment({
+    razorpay_payment_id,
+    razorpay_order_id,
+    dbOrderId: dbOrderIdFromClient,
+  });
+  orderId = resolved.orderId;
+  alreadyPaid = resolved.alreadyPaid;
 
   const signature = razorpay_signature || buildPaymentSignature(razorpay_order_id, razorpay_payment_id) || null;
 
   if (!orderId) {
     const gstAmount = Math.round(amount * 0.18 * 100) / 100;
-    const { data: created } = await supabase
+    const { data: created, error: createErr } = await supabase
       .from("orders")
       .insert({
         service_title: service,
@@ -97,7 +88,14 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
       })
       .select("id")
       .single();
-    orderId = created?.id || null;
+
+    if (createErr?.code === "23505") {
+      const existing = await resolveOrderAfterConflict(razorpay_payment_id, razorpay_order_id);
+      orderId = existing.orderId;
+      alreadyPaid = existing.alreadyPaid;
+    } else {
+      orderId = created?.id || null;
+    }
   } else if (!alreadyPaid) {
     await supabase
       .from("orders")
@@ -124,17 +122,14 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
   }
 
   let invoiceError: string | undefined;
-  const { data: existingInvoice } = await supabase
-    .from("invoices")
-    .select("invoice_number, pdf_storage_path, pdf_url")
-    .eq("order_id", orderId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const hasInvoice =
+    (await paymentHasDeliverableInvoice(razorpay_payment_id)) ||
+    (await orderHasDeliverableInvoice(orderId));
+  const invoiceActive =
+    (await paymentInvoiceGenerationActive(razorpay_payment_id)) ||
+    (await orderInvoiceGenerationActive(orderId));
 
-  const hasInvoice = Boolean(existingInvoice?.pdf_storage_path || existingInvoice?.pdf_url);
-
-  if (!hasInvoice) {
+  if (!hasInvoice && !invoiceActive) {
     try {
       await processInvoiceJob(orderId, {
         paymentId: razorpay_payment_id,
@@ -144,8 +139,8 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
       console.error("[fulfill-payment] Invoice pipeline error:", invoiceErr);
       await enqueueJob(
         "generate_and_deliver_invoice",
-        { orderId },
-        { idempotencyKey: `invoice-${orderId}`, priority: 1 },
+        { orderId, paymentId: razorpay_payment_id },
+        { idempotencyKey: invoiceJobKey(orderId, razorpay_payment_id), priority: 1 },
       );
     }
   }
@@ -154,6 +149,8 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
     .from("invoices")
     .select("invoice_number, pdf_storage_path, pdf_url")
     .eq("order_id", orderId)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   const invoiceReady = Boolean(invoice?.pdf_storage_path || invoice?.pdf_url);

@@ -1,7 +1,14 @@
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '../../api/lib/supabase-admin.js';
-import { processInvoiceJob } from '../../api/lib/invoice-engine.js';
+import {
+  processInvoiceJob,
+  orderHasDeliverableInvoice,
+  orderInvoiceGenerationActive,
+  paymentHasDeliverableInvoice,
+  paymentInvoiceGenerationActive,
+} from '../../api/lib/invoice-engine.js';
 import { enqueueJob } from '../../api/lib/workflow-engine.js';
+import { resolveOrderForPayment, invoiceJobKey } from '../../api/lib/payment-order-map.js';
 
 type Req = {
   method?: string;
@@ -44,39 +51,34 @@ export default async function handler(req: Req, res: Res) {
   try {
     const supabase = getSupabaseAdmin();
 
-    let orderId = dbOrderId;
-    if (orderId) {
-      const { data: byId } = await supabase
-        .from('orders')
-        .select('id, razorpay_order_id, status')
-        .eq('id', orderId)
-        .maybeSingle();
-      if (!byId || byId.razorpay_order_id !== razorpay_order_id) {
-        orderId = null;
-      }
-    }
-
-    if (!orderId) {
-      const { data: byRz } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('razorpay_order_id', razorpay_order_id)
-        .maybeSingle();
-      orderId = byRz?.id || null;
-    }
+    const resolved = await resolveOrderForPayment({
+      razorpay_payment_id,
+      razorpay_order_id,
+      dbOrderId,
+    });
+    const orderId = resolved.orderId;
 
     if (!orderId) return res.status(404).json({ error: 'Order not found' });
 
-    const { data: existing } = await supabase
-      .from('invoices')
-      .select('invoice_number, pdf_storage_path, pdf_url')
-      .eq('order_id', orderId)
-      .maybeSingle();
+    const hasInvoice =
+      (await paymentHasDeliverableInvoice(razorpay_payment_id)) ||
+      (await orderHasDeliverableInvoice(orderId));
+    const invoiceActive =
+      (await paymentInvoiceGenerationActive(razorpay_payment_id)) ||
+      (await orderInvoiceGenerationActive(orderId));
 
-    if (existing?.pdf_storage_path || existing?.pdf_url) {
+    if (hasInvoice || invoiceActive) {
+      const { data: existing } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
       return res.status(200).json({
         ok: true,
-        invoice_number: existing.invoice_number,
+        invoice_number: existing?.invoice_number,
         invoice_ready: true,
         already_exists: true,
       });
@@ -97,8 +99,8 @@ export default async function handler(req: Req, res: Res) {
     if (!invoice?.pdf_storage_path && !invoice?.pdf_url) {
       await enqueueJob(
         'generate_and_deliver_invoice',
-        { orderId },
-        { idempotencyKey: `invoice-${orderId}`, priority: 1 },
+        { orderId, paymentId: razorpay_payment_id },
+        { idempotencyKey: invoiceJobKey(orderId, razorpay_payment_id), priority: 1 },
       );
       return res.status(202).json({
         ok: false,

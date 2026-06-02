@@ -1,7 +1,14 @@
 import { logWebhook, verifyRazorpaySignature } from "../../api/lib/webhook-utils.js";
 import { getSupabaseAdmin } from "../../api/lib/supabase-admin.js";
 import { enqueueJob } from "../../api/lib/workflow-engine.js";
-import { processInvoiceJob } from "../../api/lib/invoice-engine.js";
+import {
+  processInvoiceJob,
+  orderHasDeliverableInvoice,
+  orderInvoiceGenerationActive,
+  paymentHasDeliverableInvoice,
+  paymentInvoiceGenerationActive,
+} from "../../api/lib/invoice-engine.js";
+import { invoiceJobKey } from "../../api/lib/payment-order-map.js";
 
 async function readRawBody(req: { on: (e: string, cb: (c: Buffer) => void) => void }): Promise<string> {
   const chunks: Buffer[] = [];
@@ -47,13 +54,28 @@ export default async function handler(req: any, res: any) {
   try {
     if (event === "payment.captured" && entity?.order_id) {
       const supabase = getSupabaseAdmin();
-      const { data: order } = await supabase
-        .from("orders")
-        .select("id, status")
-        .eq("razorpay_order_id", entity.order_id)
-        .maybeSingle();
+      let orderRecord: { id: string; status: string } | null = null;
 
-      if (order) {
+      if (entity.id) {
+        const { data: byPayment } = await supabase
+          .from("orders")
+          .select("id, status")
+          .eq("razorpay_payment_id", entity.id)
+          .maybeSingle();
+        if (byPayment) orderRecord = byPayment;
+      }
+
+      if (!orderRecord) {
+        const { data: byRzOrder } = await supabase
+          .from("orders")
+          .select("id, status")
+          .eq("razorpay_order_id", entity.order_id)
+          .maybeSingle();
+        orderRecord = byRzOrder;
+      }
+
+      if (orderRecord) {
+        const order = orderRecord;
         if (order.status !== "paid") {
           await supabase
             .from("orders")
@@ -66,16 +88,13 @@ export default async function handler(req: any, res: any) {
             .eq("id", order.id);
         }
 
-        const { data: existingInvoice } = await supabase
-          .from("invoices")
-          .select("id, pdf_storage_path, pdf_url")
-          .eq("order_id", order.id)
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-
-        const hasInvoice = Boolean(existingInvoice?.pdf_storage_path || existingInvoice?.pdf_url);
-        if (hasInvoice) {
+        const hasInvoice =
+          (entity.id && (await paymentHasDeliverableInvoice(entity.id))) ||
+          (await orderHasDeliverableInvoice(order.id));
+        const invoiceActive =
+          (entity.id && (await paymentInvoiceGenerationActive(entity.id))) ||
+          (await orderInvoiceGenerationActive(order.id));
+        if (hasInvoice || invoiceActive) {
           await getSupabaseAdmin().from("webhooks_log").update({ status: "processed", processed_at: new Date().toISOString() }).eq("id", logId);
           return res.status(200).json({ ok: true, invoice_exists: true });
         }
@@ -86,8 +105,8 @@ export default async function handler(req: any, res: any) {
           console.error("[razorpay-webhook] Invoice pipeline error:", invoiceErr);
           await enqueueJob(
             "generate_and_deliver_invoice",
-            { orderId: order.id },
-            { idempotencyKey: `invoice-${order.id}`, priority: 1 },
+            { orderId: order.id, paymentId: entity.id },
+            { idempotencyKey: invoiceJobKey(order.id, entity.id), priority: 1 },
           );
         }
       }

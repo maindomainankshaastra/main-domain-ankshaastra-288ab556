@@ -4,7 +4,8 @@ import { processInvoiceJob } from "./invoice-engine.js";
 const HANDLERS: Record<string, (payload: Record<string, unknown>) => Promise<void>> = {
   generate_and_deliver_invoice: async (payload) => {
     const orderId = String(payload.orderId);
-    await processInvoiceJob(orderId);
+    const paymentId = payload.paymentId ? String(payload.paymentId) : undefined;
+    await processInvoiceJob(orderId, { paymentId });
   },
   send_invoice_email: async (payload) => {
     const { deliverInvoice } = await import("./invoice-engine.js");

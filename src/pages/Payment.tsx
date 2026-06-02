@@ -30,7 +30,6 @@ import { Label } from "@/components/ui/label";
 import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 import { pricing } from "@/config/pricing";
 import { useAuth } from "@/hooks/useAuth";
-import { completeOrderInvoice } from "@/lib/complete-order-invoice";
 import { syncPaymentStatus } from "@/lib/sync-payment";
 import {
   EXTENDED_FORM_TYPES,
@@ -749,20 +748,10 @@ const PaymentPage = () => {
         }
 
         if (!invoiceReady) {
-          const completed = await completeOrderInvoice({
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-            dbOrderId: ctx.dbOrderId,
+          toast({
+            title: "Payment successful",
+            description: "Your invoice is being prepared and will arrive by email shortly.",
           });
-          if (completed.invoice_number) invoiceNumber = completed.invoice_number;
-          invoiceReady = Boolean(completed.invoice_ready);
-          if (completed.error && !invoiceReady) {
-            toast({
-              title: "Payment successful",
-              description: "Your invoice is being prepared and will arrive by email shortly.",
-            });
-          }
         }
 
         paymentCompletedRef.current = true;
@@ -779,31 +768,41 @@ const PaymentPage = () => {
     const ctx = paymentCtxRef.current;
     if (!ctx?.razorpayOrderId || !isAwaitingPayment) return false;
 
-    const synced = await syncPaymentStatus({
-      razorpay_order_id: ctx.razorpayOrderId,
-      dbOrderId: ctx.dbOrderId,
-      formData: { ...ctx.formData, userId: user?.id },
-      service: serviceName || undefined,
-      amount: ctx.amount,
-      pollAttempts: 6,
-    });
-
-    if (!synced.paid || !synced.razorpay_payment_id) return false;
-
+    finalizingRef.current = true;
     try {
-      await finalizePayment(
-        {
-          razorpay_order_id: synced.razorpay_order_id || ctx.razorpayOrderId,
-          razorpay_payment_id: synced.razorpay_payment_id,
-          razorpay_signature: synced.razorpay_signature,
-        },
-        ctx,
+      const synced = await syncPaymentStatus({
+        razorpay_order_id: ctx.razorpayOrderId,
+        dbOrderId: ctx.dbOrderId,
+        formData: { ...ctx.formData, userId: user?.id },
+        service: serviceName || undefined,
+        amount: ctx.amount,
+        pollAttempts: 6,
+      });
+
+      if (!synced.paid || !synced.razorpay_payment_id) return false;
+
+      paymentCompletedRef.current = true;
+      setIsAwaitingPayment(false);
+
+      if (!synced.invoice_ready) {
+        toast({
+          title: "Payment successful",
+          description: "Your invoice is being prepared and will arrive by email shortly.",
+        });
+      }
+
+      goToThankYou(
+        ctx.formData,
+        ctx.amount,
+        synced.razorpay_payment_id,
+        synced.razorpay_order_id || ctx.razorpayOrderId,
+        String(synced.invoice_number || ""),
       );
       return true;
-    } catch {
-      return false;
+    } finally {
+      finalizingRef.current = false;
     }
-  }, [finalizePayment, isAwaitingPayment, serviceName, user?.id]);
+  }, [goToThankYou, isAwaitingPayment, serviceName, toast, user?.id]);
 
   useEffect(() => {
     if (!isAwaitingPayment) return;

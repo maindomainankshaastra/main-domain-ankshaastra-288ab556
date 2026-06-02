@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "./supabase-admin.js";
+import { invoiceJobKey } from "./payment-order-map.js";
 
 export type WorkflowStage =
   | "order_created"
@@ -65,9 +66,13 @@ export async function enqueueJob(
   return { jobId: data.id, duplicate: false };
 }
 
-export async function runPostPaymentWorkflow(orderId: string) {
-  await enqueueJob("generate_and_deliver_invoice", { orderId }, {
-    idempotencyKey: `invoice-${orderId}`,
-    priority: 1,
-  });
+export async function runPostPaymentWorkflow(orderId: string, paymentId?: string) {
+  await enqueueJob(
+    "generate_and_deliver_invoice",
+    { orderId, ...(paymentId ? { paymentId } : {}) },
+    {
+      idempotencyKey: invoiceJobKey(orderId, paymentId),
+      priority: 1,
+    },
+  );
 }
