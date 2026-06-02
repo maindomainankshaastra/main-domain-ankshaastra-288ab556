@@ -1,14 +1,12 @@
 import { logWebhook, verifyRazorpaySignature } from "../../api/lib/webhook-utils.js";
 import { getSupabaseAdmin } from "../../api/lib/supabase-admin.js";
-import { enqueueJob } from "../../api/lib/workflow-engine.js";
 import {
-  processInvoiceJob,
   orderHasDeliverableInvoice,
   orderInvoiceGenerationActive,
   paymentHasDeliverableInvoice,
   paymentInvoiceGenerationActive,
 } from "../../api/lib/invoice-engine.js";
-import { invoiceJobKey } from "../../api/lib/payment-order-map.js";
+import { scheduleInvoiceGeneration } from "../../api/lib/schedule-invoice.js";
 
 async function readRawBody(req: { on: (e: string, cb: (c: Buffer) => void) => void }): Promise<string> {
   const chunks: Buffer[] = [];
@@ -99,16 +97,7 @@ export default async function handler(req: any, res: any) {
           return res.status(200).json({ ok: true, invoice_exists: true });
         }
 
-        try {
-          await processInvoiceJob(order.id, { paymentId: entity.id });
-        } catch (invoiceErr) {
-          console.error("[razorpay-webhook] Invoice pipeline error:", invoiceErr);
-          await enqueueJob(
-            "generate_and_deliver_invoice",
-            { orderId: order.id, paymentId: entity.id },
-            { idempotencyKey: invoiceJobKey(order.id, entity.id), priority: 1 },
-          );
-        }
+        scheduleInvoiceGeneration(order.id, entity.id);
       }
     }
 

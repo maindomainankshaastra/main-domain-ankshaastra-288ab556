@@ -727,34 +727,49 @@ const PaymentPage = () => {
         const verifyData = await verifyRes.json().catch(() => ({}));
 
         if (verifyRes.ok && verifyData?.success !== false) {
+          paymentCompletedRef.current = true;
           invoiceNumber = String(verifyData?.invoice_number || "");
           invoiceReady = Boolean(verifyData?.invoice_ready);
-        } else {
-          const synced = await syncPaymentStatus({
-            razorpay_order_id,
-            dbOrderId: ctx.dbOrderId,
-            formData: { ...ctx.formData, userId: user?.id },
-            service: serviceName || undefined,
-            amount: ctx.amount,
-          });
-          if (!synced.paid) {
-            throw new Error(
-              (verifyData as { error?: string })?.error || synced.error || "Payment verification failed",
-            );
+          if (!invoiceReady) {
+            toast({
+              title: "Payment successful",
+              description: "Your invoice is being prepared and will arrive by email shortly.",
+            });
           }
-          invoiceNumber = String(synced.invoice_number || "");
-          invoiceReady = Boolean(synced.invoice_ready);
+          goToThankYou(ctx.formData, ctx.amount, razorpay_payment_id, razorpay_order_id, invoiceNumber);
+          return;
         }
 
+        const synced = await syncPaymentStatus({
+          razorpay_order_id,
+          dbOrderId: ctx.dbOrderId,
+          formData: { ...ctx.formData, userId: user?.id },
+          service: serviceName || undefined,
+          amount: ctx.amount,
+        });
+
+        if (!synced.paid) {
+          throw new Error(
+            (verifyData as { error?: string })?.error || synced.error || "Payment verification failed",
+          );
+        }
+
+        paymentCompletedRef.current = true;
+        invoiceNumber = String(synced.invoice_number || "");
+        invoiceReady = Boolean(synced.invoice_ready);
         if (!invoiceReady) {
           toast({
             title: "Payment successful",
             description: "Your invoice is being prepared and will arrive by email shortly.",
           });
         }
-
-        paymentCompletedRef.current = true;
-        goToThankYou(ctx.formData, ctx.amount, razorpay_payment_id, razorpay_order_id, invoiceNumber);
+        goToThankYou(
+          ctx.formData,
+          ctx.amount,
+          synced.razorpay_payment_id || razorpay_payment_id,
+          synced.razorpay_order_id || razorpay_order_id,
+          invoiceNumber,
+        );
       } finally {
         finalizingRef.current = false;
       }

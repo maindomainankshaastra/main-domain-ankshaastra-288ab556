@@ -196,8 +196,8 @@ export function buildOrderDetailsHtml(order: Record<string, unknown>): string {
     .join('');
 
   return `
-    <h3 style="margin:24px 0 12px;font-size:16px;">Order Details</h3>
-    <table style="border-collapse:collapse;width:100%;max-width:560px;font-size:14px;line-height:1.5;">
+    <h3 style="margin:24px 0 12px;font-size:16px;color:#8B5CF6;">Order Details</h3>
+    <table style="border-collapse:collapse;width:100%;max-width:560px;font-size:14px;line-height:1.5;background:#faf9ff;border:1px solid #e5e7eb;border-radius:6px;padding:4px 12px;">
       ${tableRows}
     </table>
   `;

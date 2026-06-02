@@ -8,6 +8,7 @@ import { downloadInvoicePdfBuffer, invoiceStoragePath, uploadInvoicePdf } from '
 
 import { wrapEmailLayout } from './templates/email-layout.js';
 import { buildOrderDetailsHtml } from './order-form-details.js';
+import { buildInvoiceEmailSubject } from './schedule-invoice.js';
 
 export type GenerateInvoiceInput = {
   orderId: string;
@@ -410,30 +411,33 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   const order = (invoice.orders as Record<string, unknown> | null) || {};
   const orderDetailsHtml = buildOrderDetailsHtml(order);
   const serviceTitle = String(invoice.service_title || order.service_title || 'Service');
+  const emailSubject = buildInvoiceEmailSubject(serviceTitle, String(invoice.invoice_number));
 
   if (invoice.customer_email) {
     const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
     const invoiceAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
     if (!orderAlreadySent && !invoiceAlreadySent) {
       const downloadLink = invoice.pdf_url
-        ? `<p>You can also <a href="${invoice.pdf_url}">download your invoice PDF</a>.</p>`
+        ? `<p style="margin-top:16px;">You can also <a href="${invoice.pdf_url}" style="color:#8B5CF6;">download your invoice PDF</a>.</p>`
         : '';
 
-      const customerHtml = wrapEmailLayout(`
-      <h2>Payment Successful</h2>
+      const customerHtml = wrapEmailLayout(
+        `
+      <p style="margin:0 0 16px;font-size:16px;color:#8B5CF6;font-weight:600;">Payment Successful</p>
       <p>Dear ${invoice.customer_name},</p>
       <p>Thank you for your payment for <strong>${serviceTitle}</strong>.</p>
       <p>Your invoice <strong>${invoice.invoice_number}</strong> is attached with this email.</p>
       ${orderDetailsHtml}
       ${downloadLink}
-      <br />
-      <p>Thank you for choosing Ankshaastra.</p>
-    `);
+      <p style="margin-top:20px;">Thank you for choosing Ankshaastra Occult Experts LLP.</p>
+    `,
+        emailSubject,
+      );
 
       try {
         await sendEmail({
           to: invoice.customer_email,
-          subject: `Invoice - ${invoice.invoice_number}`,
+          subject: emailSubject,
           html: customerHtml,
           attachments,
           templateSlug: 'invoice_email',
@@ -453,19 +457,22 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     const orderAdminSent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : false;
     const adminAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_admin'));
     if (!orderAdminSent && !adminAlreadySent) {
-      const adminHtml = wrapEmailLayout(`
-      <h2>New Order Received</h2>
+      const adminHtml = wrapEmailLayout(
+        `
+      <p style="margin:0 0 16px;font-size:16px;color:#8B5CF6;font-weight:600;">New Order Received</p>
       <p><strong>Service:</strong> ${serviceTitle}</p>
       <p><strong>Invoice:</strong> ${invoice.invoice_number}</p>
       <p><strong>Amount:</strong> ₹${invoice.total_amount}</p>
       ${orderDetailsHtml}
       <p style="margin-top:16px;">Invoice PDF is attached.</p>
-    `);
+    `,
+        `New order: ${serviceTitle}`,
+      );
 
       try {
         await sendEmail({
           to: adminEmail,
-          subject: `New Order - ${invoice.invoice_number}`,
+          subject: emailSubject,
           html: adminHtml,
           attachments,
           templateSlug: 'invoice_admin',

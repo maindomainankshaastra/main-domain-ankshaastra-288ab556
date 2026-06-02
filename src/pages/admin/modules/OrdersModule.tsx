@@ -32,7 +32,11 @@ export default function OrdersModule() {
     setGeneratingId(orderId);
     try {
       const result = await generateInvoiceForOrder(orderId);
-      toast.success(result.invoice_number ? `Invoice ${result.invoice_number} generated` : "Invoice generated");
+      toast.success(
+        result.invoice_number
+          ? `Invoice ${result.invoice_number} generated and emailed`
+          : "Invoice generated and emailed",
+      );
       reload();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Failed to generate invoice");
@@ -44,7 +48,24 @@ export default function OrdersModule() {
   const updateStatus = async (id: string, status: OrderStatus) => {
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
     if (error) toast.error(error.message);
-    else { toast.success("Updated"); reload(); }
+    else {
+      toast.success("Updated");
+      reload();
+    }
+  };
+
+  const markPaidAndInvoice = async (order: Order) => {
+    if (order.status !== "paid") {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "paid", workflow_stage: "payment_received" })
+        .eq("id", order.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+    }
+    await runGenerateInvoice(order.id);
   };
 
   return (
@@ -61,7 +82,7 @@ export default function OrdersModule() {
             </div>
             <div className="flex items-center gap-3">
               <span className="font-semibold">₹{Number(o.total_amount).toLocaleString()}</span>
-              {o.status === "paid" && o.workflow_stage !== "invoice_generated" && o.workflow_stage !== "email_sent" && (
+              {o.status === "paid" ? (
                 <Button
                   size="sm"
                   variant="outline"
@@ -71,9 +92,24 @@ export default function OrdersModule() {
                   {generatingId === o.id ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <FileText className="w-4 h-4 mr-1" />
+                    <>
+                      <FileText className="w-4 h-4 mr-1" />
+                      Generate Invoice
+                    </>
                   )}
-                  Invoice
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={generatingId === o.id}
+                  onClick={() => markPaidAndInvoice(o)}
+                >
+                  {generatingId === o.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Mark paid + Invoice"
+                  )}
                 </Button>
               )}
               <Select value={o.status} onValueChange={(v) => updateStatus(o.id, v as OrderStatus)}>

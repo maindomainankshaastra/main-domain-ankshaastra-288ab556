@@ -1,13 +1,15 @@
 import crypto from "crypto";
 import { getSupabaseAdmin } from "./supabase-admin.js";
-import { advanceWorkflow, enqueueJob } from "./workflow-engine.js";
-import { processInvoiceJob, orderHasDeliverableInvoice, orderInvoiceGenerationActive, paymentHasDeliverableInvoice, paymentInvoiceGenerationActive } from "./invoice-engine.js";
+import {
+  orderHasDeliverableInvoice,
+  paymentHasDeliverableInvoice,
+} from "./invoice-engine.js";
 import {
   resolveOrderForPayment,
   resolveOrderAfterConflict,
-  invoiceJobKey,
 } from "./payment-order-map.js";
 import { mergeOrderMetadata } from "./order-form-details.js";
+import { scheduleInvoiceGeneration } from "./schedule-invoice.js";
 
 export type FulfillPaymentInput = {
   razorpay_order_id: string;
@@ -33,18 +35,15 @@ export function buildPaymentSignature(orderId: string, paymentId: string): strin
   return crypto.createHmac("sha256", keySecret).update(`${orderId}|${paymentId}`).digest("hex");
 }
 
-async function triggerJobProcessor(): Promise<void> {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) return;
-
-  const host = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL;
-  if (!host) return;
-
-  void fetch(`${host}/api/operations/process-jobs`, {
-    headers: { Authorization: `Bearer ${cronSecret}` },
-  }).catch((err) => console.warn("[fulfill-payment] Could not trigger job processor:", err));
+async function saveOrderMetadata(orderId: string, formData: Record<string, unknown>): Promise<void> {
+  if (!Object.keys(formData).length) return;
+  const supabase = getSupabaseAdmin();
+  const { data: existingOrder } = await supabase.from("orders").select("metadata").eq("id", orderId).maybeSingle();
+  const metadata = mergeOrderMetadata(
+    existingOrder?.metadata as Record<string, unknown> | undefined,
+    formData,
+  );
+  await supabase.from("orders").update({ metadata }).eq("id", orderId);
 }
 
 export async function fulfillPayment(input: FulfillPaymentInput): Promise<FulfillPaymentResult> {
@@ -108,11 +107,13 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
       const existing = await resolveOrderAfterConflict(razorpay_payment_id, razorpay_order_id);
       orderId = existing.orderId;
       alreadyPaid = existing.alreadyPaid;
+    } else if (createErr) {
+      throw createErr;
     } else {
       orderId = created?.id || null;
     }
   } else if (!alreadyPaid) {
-    await supabase
+    const { error: updateErr } = await supabase
       .from("orders")
       .update({
         status: "paid",
@@ -126,93 +127,40 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
         ...(userId ? { user_id: userId } : {}),
       })
       .eq("id", orderId);
+    if (updateErr) throw updateErr;
   }
 
   if (!orderId) throw new Error("Could not resolve order");
 
-  if (Object.keys(formData).length > 0) {
-    try {
-      const { data: existingOrder } = await supabase.from("orders").select("metadata").eq("id", orderId).maybeSingle();
-      const metadata = mergeOrderMetadata(
-        existingOrder?.metadata as Record<string, unknown> | undefined,
-        formData,
-      );
-      await supabase.from("orders").update({ metadata }).eq("id", orderId);
-    } catch (metaErr) {
-      console.warn("[fulfill-payment] Could not save form metadata:", metaErr);
-    }
-  }
+  void saveOrderMetadata(orderId, formData).catch((err) => {
+    console.warn("[fulfill-payment] Could not save form metadata:", err);
+  });
 
-  if (!alreadyPaid) {
-    try {
-      await advanceWorkflow(orderId, "payment_received", "payment.captured", {
-        razorpay_payment_id,
-      });
-    } catch (wfErr) {
-      console.warn("[fulfill-payment] Workflow advance failed:", wfErr);
-    }
-  }
-
-  let invoiceError: string | undefined;
   const hasInvoice =
     (await paymentHasDeliverableInvoice(razorpay_payment_id)) ||
     (await orderHasDeliverableInvoice(orderId));
-  const invoiceActive =
-    (await paymentInvoiceGenerationActive(razorpay_payment_id)) ||
-    (await orderInvoiceGenerationActive(orderId));
 
-  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-
-  if (!hasInvoice && !invoiceActive) {
-    if (isServerless) {
-      // Never block payment confirmation on invoice PDF/email — queue and return quickly.
-      try {
-        await enqueueJob(
-          "generate_and_deliver_invoice",
-          { orderId, paymentId: razorpay_payment_id },
-          { idempotencyKey: invoiceJobKey(orderId, razorpay_payment_id), priority: 1 },
-        );
-        await triggerJobProcessor();
-      } catch (queueErr) {
-        invoiceError = queueErr instanceof Error ? queueErr.message : "Invoice queue failed";
-        console.error("[fulfill-payment] Invoice queue error:", queueErr);
-      }
-    } else {
-      try {
-        await processInvoiceJob(orderId, {
-          paymentId: razorpay_payment_id,
-        });
-      } catch (invoiceErr: unknown) {
-        invoiceError = invoiceErr instanceof Error ? invoiceErr.message : "Invoice generation failed";
-        console.error("[fulfill-payment] Invoice pipeline error:", invoiceErr);
-        try {
-          await enqueueJob(
-            "generate_and_deliver_invoice",
-            { orderId, paymentId: razorpay_payment_id },
-            { idempotencyKey: invoiceJobKey(orderId, razorpay_payment_id), priority: 1 },
-          );
-        } catch (queueErr) {
-          console.error("[fulfill-payment] Invoice queue fallback failed:", queueErr);
-        }
-      }
-    }
+  if (!hasInvoice) {
+    scheduleInvoiceGeneration(orderId, razorpay_payment_id);
   }
 
-  const { data: invoice } = await supabase
-    .from("invoices")
-    .select("invoice_number, pdf_storage_path, pdf_url")
-    .eq("order_id", orderId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  const invoiceReady = Boolean(invoice?.pdf_storage_path || invoice?.pdf_url);
+  let invoice_number: string | undefined;
+  if (hasInvoice) {
+    const { data: invoice } = await supabase
+      .from("invoices")
+      .select("invoice_number")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    invoice_number = invoice?.invoice_number;
+  }
 
   return {
     order_id: orderId,
-    invoice_number: invoice?.invoice_number,
-    invoice_ready: invoiceReady,
-    invoice_warning: invoiceError,
+    invoice_number,
+    invoice_ready: hasInvoice,
+    invoice_warning: hasInvoice ? undefined : "Invoice is being generated and will be emailed shortly.",
     already_paid: alreadyPaid,
   };
 }
