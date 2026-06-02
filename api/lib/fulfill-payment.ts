@@ -33,6 +33,20 @@ export function buildPaymentSignature(orderId: string, paymentId: string): strin
   return crypto.createHmac("sha256", keySecret).update(`${orderId}|${paymentId}`).digest("hex");
 }
 
+async function triggerJobProcessor(): Promise<void> {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) return;
+
+  const host = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  if (!host) return;
+
+  void fetch(`${host}/api/operations/process-jobs`, {
+    headers: { Authorization: `Bearer ${cronSecret}` },
+  }).catch((err) => console.warn("[fulfill-payment] Could not trigger job processor:", err));
+}
+
 export async function fulfillPayment(input: FulfillPaymentInput): Promise<FulfillPaymentResult> {
   const {
     razorpay_order_id,
@@ -117,18 +131,26 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
   if (!orderId) throw new Error("Could not resolve order");
 
   if (Object.keys(formData).length > 0) {
-    const { data: existingOrder } = await supabase.from("orders").select("metadata").eq("id", orderId).maybeSingle();
-    const metadata = mergeOrderMetadata(
-      existingOrder?.metadata as Record<string, unknown> | undefined,
-      formData,
-    );
-    await supabase.from("orders").update({ metadata }).eq("id", orderId);
+    try {
+      const { data: existingOrder } = await supabase.from("orders").select("metadata").eq("id", orderId).maybeSingle();
+      const metadata = mergeOrderMetadata(
+        existingOrder?.metadata as Record<string, unknown> | undefined,
+        formData,
+      );
+      await supabase.from("orders").update({ metadata }).eq("id", orderId);
+    } catch (metaErr) {
+      console.warn("[fulfill-payment] Could not save form metadata:", metaErr);
+    }
   }
 
   if (!alreadyPaid) {
-    await advanceWorkflow(orderId, "payment_received", "payment.captured", {
-      razorpay_payment_id,
-    });
+    try {
+      await advanceWorkflow(orderId, "payment_received", "payment.captured", {
+        razorpay_payment_id,
+      });
+    } catch (wfErr) {
+      console.warn("[fulfill-payment] Workflow advance failed:", wfErr);
+    }
   }
 
   let invoiceError: string | undefined;
@@ -139,19 +161,40 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
     (await paymentInvoiceGenerationActive(razorpay_payment_id)) ||
     (await orderInvoiceGenerationActive(orderId));
 
+  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
   if (!hasInvoice && !invoiceActive) {
-    try {
-      await processInvoiceJob(orderId, {
-        paymentId: razorpay_payment_id,
-      });
-    } catch (invoiceErr: unknown) {
-      invoiceError = invoiceErr instanceof Error ? invoiceErr.message : "Invoice generation failed";
-      console.error("[fulfill-payment] Invoice pipeline error:", invoiceErr);
-      await enqueueJob(
-        "generate_and_deliver_invoice",
-        { orderId, paymentId: razorpay_payment_id },
-        { idempotencyKey: invoiceJobKey(orderId, razorpay_payment_id), priority: 1 },
-      );
+    if (isServerless) {
+      // Never block payment confirmation on invoice PDF/email — queue and return quickly.
+      try {
+        await enqueueJob(
+          "generate_and_deliver_invoice",
+          { orderId, paymentId: razorpay_payment_id },
+          { idempotencyKey: invoiceJobKey(orderId, razorpay_payment_id), priority: 1 },
+        );
+        await triggerJobProcessor();
+      } catch (queueErr) {
+        invoiceError = queueErr instanceof Error ? queueErr.message : "Invoice queue failed";
+        console.error("[fulfill-payment] Invoice queue error:", queueErr);
+      }
+    } else {
+      try {
+        await processInvoiceJob(orderId, {
+          paymentId: razorpay_payment_id,
+        });
+      } catch (invoiceErr: unknown) {
+        invoiceError = invoiceErr instanceof Error ? invoiceErr.message : "Invoice generation failed";
+        console.error("[fulfill-payment] Invoice pipeline error:", invoiceErr);
+        try {
+          await enqueueJob(
+            "generate_and_deliver_invoice",
+            { orderId, paymentId: razorpay_payment_id },
+            { idempotencyKey: invoiceJobKey(orderId, razorpay_payment_id), priority: 1 },
+          );
+        } catch (queueErr) {
+          console.error("[fulfill-payment] Invoice queue fallback failed:", queueErr);
+        }
+      }
     }
   }
 

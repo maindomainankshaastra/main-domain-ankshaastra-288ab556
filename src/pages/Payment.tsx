@@ -702,7 +702,6 @@ const PaymentPage = () => {
     ) => {
       if (paymentCompletedRef.current || finalizingRef.current) return;
       finalizingRef.current = true;
-      setIsAwaitingPayment(false);
 
       try {
         const razorpay_order_id = String(response?.razorpay_order_id || "");
@@ -763,10 +762,11 @@ const PaymentPage = () => {
     [goToThankYou, serviceName, toast, user?.id],
   );
 
-  const reconcilePendingPayment = useCallback(async () => {
+  const reconcilePendingPayment = useCallback(async (force = false) => {
     if (paymentCompletedRef.current || finalizingRef.current) return false;
     const ctx = paymentCtxRef.current;
-    if (!ctx?.razorpayOrderId || !isAwaitingPayment) return false;
+    if (!ctx?.razorpayOrderId) return false;
+    if (!force && !isAwaitingPayment) return false;
 
     finalizingRef.current = true;
     try {
@@ -899,7 +899,37 @@ const PaymentPage = () => {
           await finalizePayment(response, ctx);
         } catch (e) {
           console.error("Verification failed", e);
-          const recovered = await reconcilePendingPayment();
+          try {
+            const synced = await syncPaymentStatus({
+              razorpay_order_id: String(response?.razorpay_order_id || ctx.razorpayOrderId),
+              dbOrderId: ctx.dbOrderId,
+              formData: { ...ctx.formData, userId: user?.id },
+              service: serviceName || undefined,
+              amount: ctx.amount,
+              pollAttempts: 8,
+            });
+            if (synced.paid && synced.razorpay_payment_id) {
+              paymentCompletedRef.current = true;
+              if (!synced.invoice_ready) {
+                toast({
+                  title: "Payment successful",
+                  description: "Your invoice is being prepared and will arrive by email shortly.",
+                });
+              }
+              goToThankYou(
+                ctx.formData,
+                ctx.amount,
+                synced.razorpay_payment_id,
+                synced.razorpay_order_id || ctx.razorpayOrderId,
+                String(synced.invoice_number || ""),
+              );
+              return;
+            }
+          } catch (syncErr) {
+            console.error("Sync fallback failed", syncErr);
+          }
+
+          const recovered = await reconcilePendingPayment(true);
           if (!recovered) {
             toast({
               title: "Confirming your payment",

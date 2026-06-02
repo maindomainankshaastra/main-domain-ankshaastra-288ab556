@@ -61,12 +61,20 @@ export async function generateInvoicePdf(
   let buffer: Buffer | null = null;
   let renderer = 'pdf-lib';
 
-  try {
-    buffer = await renderPdfFromHtml(html);
-    renderer = 'puppeteer';
-  } catch (puppeteerError) {
-    console.warn('[pdf-engine] Puppeteer failed, using pdf-lib fallback:', puppeteerError);
+  // On serverless (Vercel), Puppeteer cold start often exceeds payment verify timeout — prefer pdf-lib.
+  const preferPdfLib = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+  if (preferPdfLib) {
     buffer = await generateInvoicePdfWithPdfLib(data);
+    renderer = 'pdf-lib';
+  } else {
+    try {
+      buffer = await renderPdfFromHtml(html);
+      renderer = 'puppeteer';
+    } catch (puppeteerError) {
+      console.warn('[pdf-engine] Puppeteer failed, using pdf-lib fallback:', puppeteerError);
+      buffer = await generateInvoicePdfWithPdfLib(data);
+    }
   }
 
   if (!buffer || !isPdfBuffer(buffer)) {
