@@ -856,6 +856,7 @@ const PaymentPage = () => {
             serviceSlug: serviceName,
             serviceId: serviceInfo?.id,
             addons: selectedAddonObjects.map((a) => ({ id: a.id, label: a.label, price: a.price })),
+            formSnapshot: formData,
           },
         }),
       });

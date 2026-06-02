@@ -1,1 +1,0 @@
-import{t as e}from"./client-DLGJNczQ.js";async function t(t){let{data:n}=await e.auth.getSession(),r=n.session?.access_token;if(!r)return null;let i=await fetch(`/api/invoices/download?invoiceId=${encodeURIComponent(t)}`,{headers:{Authorization:`Bearer ${r}`}});return i.ok&&(await i.json()).url||null}export{t};

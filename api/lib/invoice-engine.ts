@@ -7,6 +7,7 @@ import { advanceWorkflow } from './workflow-engine.js';
 import { downloadInvoicePdfBuffer, invoiceStoragePath, uploadInvoicePdf } from './invoice-storage.js';
 
 import { wrapEmailLayout } from './templates/email-layout.js';
+import { buildOrderDetailsHtml } from './order-form-details.js';
 
 export type GenerateInvoiceInput = {
   orderId: string;
@@ -406,6 +407,9 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   const attachments = await getInvoiceAttachment(invoice);
   const force = opts?.force ?? false;
   const orderId = invoice.order_id as string | null;
+  const order = (invoice.orders as Record<string, unknown> | null) || {};
+  const orderDetailsHtml = buildOrderDetailsHtml(order);
+  const serviceTitle = String(invoice.service_title || order.service_title || 'Service');
 
   if (invoice.customer_email) {
     const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
@@ -418,8 +422,9 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
       const customerHtml = wrapEmailLayout(`
       <h2>Payment Successful</h2>
       <p>Dear ${invoice.customer_name},</p>
-      <p>Your payment has been received successfully.</p>
-      <p>Your invoice is attached with this email.</p>
+      <p>Thank you for your payment for <strong>${serviceTitle}</strong>.</p>
+      <p>Your invoice <strong>${invoice.invoice_number}</strong> is attached with this email.</p>
+      ${orderDetailsHtml}
       ${downloadLink}
       <br />
       <p>Thank you for choosing Ankshaastra.</p>
@@ -450,10 +455,11 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     if (!orderAdminSent && !adminAlreadySent) {
       const adminHtml = wrapEmailLayout(`
       <h2>New Order Received</h2>
-      <p><strong>Customer:</strong> ${invoice.customer_name}</p>
-      <p><strong>Email:</strong> ${invoice.customer_email}</p>
-      <p><strong>Amount:</strong> ₹${invoice.total_amount}</p>
+      <p><strong>Service:</strong> ${serviceTitle}</p>
       <p><strong>Invoice:</strong> ${invoice.invoice_number}</p>
+      <p><strong>Amount:</strong> ₹${invoice.total_amount}</p>
+      ${orderDetailsHtml}
+      <p style="margin-top:16px;">Invoice PDF is attached.</p>
     `);
 
       try {

@@ -6,6 +6,7 @@ import syncPayment from "../server/handlers/sync-payment.js";
 import invoicesGenerate from "../server/handlers/invoices-generate.js";
 import invoicesCompleteOrder from "../server/handlers/invoices-complete-order.js";
 import invoicesDownload from "../server/handlers/invoices-download.js";
+import invoicesBulkDownload from "../server/handlers/invoices-bulk-download.js";
 import webhooksRazorpay from "../server/handlers/webhooks-razorpay.js";
 import operationsProcessJobs from "../server/handlers/operations-process-jobs.js";
 import operationsRetryJob from "../server/handlers/operations-retry-job.js";
@@ -32,6 +33,7 @@ const routes: Record<string, ApiHandler> = {
   "invoices/generate": invoicesGenerate,
   "invoices/complete-order": invoicesCompleteOrder,
   "invoices/download": invoicesDownload,
+  "invoices/bulk-download": invoicesBulkDownload,
   "webhooks/razorpay": webhooksRazorpay,
   "operations/process-jobs": operationsProcessJobs,
   "operations/retry-job": operationsRetryJob,

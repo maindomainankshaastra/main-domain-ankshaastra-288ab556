@@ -7,6 +7,7 @@ import {
   resolveOrderAfterConflict,
   invoiceJobKey,
 } from "./payment-order-map.js";
+import { mergeOrderMetadata } from "./order-form-details.js";
 
 export type FulfillPaymentInput = {
   razorpay_order_id: string;
@@ -114,6 +115,15 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
   }
 
   if (!orderId) throw new Error("Could not resolve order");
+
+  if (Object.keys(formData).length > 0) {
+    const { data: existingOrder } = await supabase.from("orders").select("metadata").eq("id", orderId).maybeSingle();
+    const metadata = mergeOrderMetadata(
+      existingOrder?.metadata as Record<string, unknown> | undefined,
+      formData,
+    );
+    await supabase.from("orders").update({ metadata }).eq("id", orderId);
+  }
 
   if (!alreadyPaid) {
     await advanceWorkflow(orderId, "payment_received", "payment.captured", {
