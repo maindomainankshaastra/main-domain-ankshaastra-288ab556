@@ -115,8 +115,7 @@ export default async function handler(req: Req, res: Res) {
     zip.file('manifest.csv', manifestLines.join('\n'));
     const zipBuffer = await zip.generateAsync({
       type: 'nodebuffer',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 6 },
+      compression: 'STORE',
     });
 
     res.setHeader?.('Content-Type', 'application/zip');

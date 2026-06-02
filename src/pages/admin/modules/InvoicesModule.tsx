@@ -30,6 +30,7 @@ export default function InvoicesModule() {
   const { rows, loading } = useAdminTable<Invoice>("invoices", "invoice_date");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<string | null>(null);
 
   const now = new Date();
   const [bulkYear, setBulkYear] = useState(String(now.getFullYear()));
@@ -58,8 +59,17 @@ export default function InvoicesModule() {
 
   const downloadMonthlyBundle = async () => {
     setBulkLoading(true);
+    setBulkProgress("Preparing…");
     try {
-      const result = await downloadMonthlyInvoiceZip(Number(bulkYear), Number(bulkMonth));
+      const result = await downloadMonthlyInvoiceZip(Number(bulkYear), Number(bulkMonth), (p) => {
+        if (p.phase === "listing") {
+          setBulkProgress("Loading invoice list…");
+        } else if (p.phase === "downloading") {
+          setBulkProgress(`Downloading PDFs ${p.done}/${p.total}…`);
+        } else {
+          setBulkProgress("Creating ZIP file…");
+        }
+      });
       const monthLabel = MONTHS[Number(bulkMonth) - 1];
       toast.success(
         `Downloaded ${result.included} invoice${result.included === 1 ? "" : "s"} for ${monthLabel} ${bulkYear}` +
@@ -69,6 +79,7 @@ export default function InvoicesModule() {
       toast.error(e instanceof Error ? e.message : "Bulk download failed");
     } finally {
       setBulkLoading(false);
+      setBulkProgress(null);
     }
   };
 
@@ -104,7 +115,7 @@ export default function InvoicesModule() {
         ) : (
           <FileArchive className="w-4 h-4 mr-2" />
         )}
-        Download ZIP
+        {bulkProgress || "Download ZIP"}
       </Button>
     </div>
   );
