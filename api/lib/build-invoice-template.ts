@@ -7,6 +7,7 @@ import {
   stateCodeFromName,
   stateNameFromCode,
 } from './indian-states.js';
+import { resolveGstConfigExtras } from './gst-config-fields.js';
 import type { InvoiceTemplateData } from './templates/invoice-html.js';
 
 type GstConfigRow = Record<string, unknown>;
@@ -100,6 +101,7 @@ export function buildInvoiceTemplateData(input: {
   const serviceTitle = String(order.service_title || 'Service');
   const siteUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://ankshaastra.com').replace(/\/$/, '');
   const logoUrl = gstConfig?.logo_url ? String(gstConfig.logo_url).trim() : undefined;
+  const configExtras = resolveGstConfigExtras(gstConfig);
 
   const templateData: InvoiceTemplateData = {
     invoiceNumber,
@@ -107,10 +109,10 @@ export function buildInvoiceTemplateData(input: {
     dueDate: invoiceDate,
     businessName: String(gstConfig?.legal_name || gstConfig?.business_name || 'Ankshaastra Occult Experts LLP'),
     businessGstin: gstConfig?.gstin ? String(gstConfig.gstin) : undefined,
-    businessAddress: gstConfig?.address ? String(gstConfig.address) : undefined,
-    businessPhone: gstConfig?.business_phone ? String(gstConfig.business_phone) : process.env.BUSINESS_PHONE,
-    businessEmail: gstConfig?.business_email ? String(gstConfig.business_email) : process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL,
-    businessWebsite: gstConfig?.website_url ? String(gstConfig.website_url) : siteUrl.replace(/^https?:\/\//, ''),
+    businessAddress: configExtras.address || undefined,
+    businessPhone: configExtras.business_phone || process.env.BUSINESS_PHONE,
+    businessEmail: configExtras.business_email || process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL,
+    businessWebsite: configExtras.website_url || siteUrl.replace(/^https?:\/\//, ''),
     logoUrl,
     customerName: billing.name,
     customerEmail: billing.email || undefined,
@@ -144,7 +146,7 @@ export function buildInvoiceTemplateData(input: {
     bankAccountHolder: String(gstConfig?.legal_name || gstConfig?.business_name || 'Ankshaastra Occult Experts LLP'),
     bankAccountNumber: gstConfig?.bank_account ? String(gstConfig.bank_account) : undefined,
     bankIfsc: gstConfig?.bank_ifsc ? String(gstConfig.bank_ifsc) : undefined,
-    bankBranch: gstConfig?.bank_branch ? String(gstConfig.bank_branch) : undefined,
+    bankBranch: configExtras.bank_branch,
     termsFooter: gstConfig?.terms_footer ? String(gstConfig.terms_footer) : undefined,
   };
 

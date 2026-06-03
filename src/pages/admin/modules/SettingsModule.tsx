@@ -8,6 +8,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
+async function loadGstConfig(token: string) {
+  const res = await fetch("/api/admin/gst-config", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = (await res.json().catch(() => ({}))) as { config?: Record<string, unknown>; error?: string };
+  if (!res.ok) throw new Error(body.error || "Could not load GST settings");
+  return body.config || {};
+}
+
+async function saveGstConfig(token: string, form: Record<string, unknown>) {
+  const res = await fetch("/api/admin/gst-config", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(form),
+  });
+  const body = (await res.json().catch(() => ({}))) as { error?: string; used_optional_columns?: boolean };
+  if (!res.ok) throw new Error(body.error || "Could not save GST settings");
+  return body;
+}
+
 export default function SettingsModule() {
   const [form, setForm] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
@@ -15,46 +38,38 @@ export default function SettingsModule() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase as { from: (t: string) => ReturnType<typeof supabase.from> })
-        .from("gst_config")
-        .select("*")
-        .limit(1)
-        .single();
-      if (data) setForm(data as Record<string, unknown>);
-      setLoading(false);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) {
+          toast.error("Not signed in");
+          return;
+        }
+        setForm(await loadGstConfig(token));
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "Could not load GST settings");
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
   const save = async () => {
     if (!form.id) return;
     setSaving(true);
-    const { error } = await (supabase as { from: (t: string) => ReturnType<typeof supabase.from> })
-      .from("gst_config")
-      .update({
-        business_name: form.business_name,
-        legal_name: form.legal_name,
-        gstin: form.gstin,
-        pan: form.pan,
-        address: form.address,
-        state_code: form.state_code,
-        default_gst_rate: Number(form.default_gst_rate),
-        invoice_prefix: form.invoice_prefix,
-        is_gst_inclusive_default: form.is_gst_inclusive_default,
-        upi_id: form.upi_id,
-        terms_footer: form.terms_footer,
-        bank_name: form.bank_name,
-        bank_account: form.bank_account,
-        bank_ifsc: form.bank_ifsc,
-        bank_branch: form.bank_branch,
-        logo_url: form.logo_url,
-        business_phone: form.business_phone,
-        business_email: form.business_email,
-        website_url: form.website_url,
-      })
-      .eq("id", form.id);
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("GST settings saved");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not signed in");
+
+      await saveGstConfig(token, form);
+      setForm(await loadGstConfig(token));
+      toast.success("GST settings saved");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not save GST settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

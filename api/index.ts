@@ -17,6 +17,7 @@ import operationsOrderIngest from "../server/handlers/operations-order-ingest.js
 import operationsBackfillInvoices from "../server/handlers/operations-backfill-invoices.js";
 import servicePages from "../server/handlers/service-pages.js";
 import emailTest from "../server/handlers/email-test.js";
+import adminGstConfig from "../server/handlers/admin-gst-config.js";
 
 /** Single serverless function for all /api/* routes (Vercel Hobby: max 12 functions). */
 export const config = { api: { bodyParser: false } };
@@ -47,6 +48,7 @@ const routes: Record<string, ApiHandler> = {
   "operations/backfill-invoices": operationsBackfillInvoices,
   "service-pages": servicePages,
   "email/test": emailTest,
+  "admin/gst-config": adminGstConfig,
 };
 
 function resolveRoute(req: IncomingReq): string {
