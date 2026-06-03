@@ -33,10 +33,21 @@ vi.mock("@sparticuz/chromium", () => ({
 const invoiceData: InvoiceTemplateData = {
   invoiceNumber: "INV-TEST-00001",
   invoiceDate: "28/05/2026",
-  businessName: "Ankshaastra",
+  dueDate: "28/05/2026",
+  businessName: "Ankshaastra Occult Experts LLP",
   customerName: "Test Customer",
   serviceTitle: "Test Service",
-  items: [{ description: "Test Service", quantity: 1, unitPrice: 100, lineTotal: 100 }],
+  sacCode: "999799",
+  gstRate: 18,
+  items: [{
+    description: "Test Service",
+    quantity: 1,
+    unitPrice: 100,
+    hsnSac: "999799",
+    lineTotal: 118,
+    taxableValue: 100,
+    taxAmount: 18,
+  }],
   gst: {
     subtotal: 100,
     gstTotal: 18,

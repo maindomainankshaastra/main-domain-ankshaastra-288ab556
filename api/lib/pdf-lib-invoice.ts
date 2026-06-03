@@ -1,129 +1,168 @@
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont } from 'pdf-lib';
 import type { InvoiceTemplateData } from './templates/invoice-html.js';
 
 function fmt(n: number) {
   return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+async function embedLogo(pdfDoc: PDFDocument, logoUrl?: string) {
+  if (!logoUrl) return null;
+  try {
+    const res = await fetch(logoUrl);
+    if (!res.ok) return null;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('png')) return pdfDoc.embedPng(bytes);
+    return pdfDoc.embedJpg(bytes);
+  } catch {
+    return null;
+  }
+}
+
+function drawRightText(page: PDFPage, text: string, xRight: number, y: number, size: number, font: PDFFont, color = rgb(0, 0, 0)) {
+  const width = font.widthOfTextAtSize(text, size);
+  page.drawText(text, { x: xRight - width, y, size, font, color });
+}
+
 /** Serverless-safe PDF generation (no Chromium). */
 export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): Promise<Buffer> {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([595.28, 841.89]); // A4
+  const page = pdfDoc.addPage([595.28, 841.89]);
   const { width, height } = page.getSize();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const purple = rgb(0.18, 0.1, 0.28);
-  const gold = rgb(0.83, 0.69, 0.22);
-  const gray = rgb(0.4, 0.4, 0.4);
+  const blue = rgb(0.29, 0.47, 0.75);
+  const gray = rgb(0.35, 0.35, 0.35);
   const black = rgb(0, 0, 0);
-
-  const margin = 40;
+  const margin = 36;
   let y = height - margin;
 
-  page.drawRectangle({ x: 0, y: height - 72, width, height: 72, color: purple });
-  page.drawText(data.businessName || 'Ankshaastra', { x: margin, y: height - 36, size: 18, font: fontBold, color: gold });
-  page.drawText('TAX INVOICE', {
-    x: width - margin - fontBold.widthOfTextAtSize('TAX INVOICE', 14),
-    y: height - 36,
-    size: 14,
-    font: fontBold,
-    color: rgb(1, 1, 1),
-  });
-  if (data.businessGstin) {
-    page.drawText(`GSTIN: ${data.businessGstin}`, { x: margin, y: height - 54, size: 8, font, color: rgb(1, 1, 1) });
-  }
-
-  y = height - 96;
-  page.drawText(`Invoice No: ${data.invoiceNumber}`, { x: margin, y, size: 10, font: fontBold, color: black });
-  page.drawText(`Date: ${data.invoiceDate}`, {
-    x: width - margin - font.widthOfTextAtSize(`Date: ${data.invoiceDate}`, 10),
-    y,
-    size: 10,
-    font,
-    color: black,
-  });
-  page.drawText(`Status: ${data.status}`, { x: margin, y: y - 14, size: 9, font, color: gray });
-
-  y -= 40;
-  page.drawText('Bill To', { x: margin, y, size: 10, font: fontBold, color: black });
-  y -= 14;
-  page.drawText(data.customerName, { x: margin, y, size: 10, font, color: black });
-  if (data.customerEmail) {
-    y -= 12;
-    page.drawText(data.customerEmail, { x: margin, y, size: 9, font, color: gray });
-  }
-  if (data.customerPhone) {
-    y -= 12;
-    page.drawText(data.customerPhone, { x: margin, y, size: 9, font, color: gray });
-  }
-
+  page.drawText('TAX INVOICE', { x: margin, y, size: 20, font: fontBold, color: blue });
+  drawRightText(page, '1', width - margin, y + 4, 10, font, gray);
   y -= 28;
-  const colDesc = margin;
-  const colQty = width - margin - 180;
-  const colRate = width - margin - 110;
-  const colAmt = width - margin - 50;
 
-  page.drawText('Description', { x: colDesc, y, size: 9, font: fontBold, color: black });
-  page.drawText('Qty', { x: colQty, y, size: 9, font: fontBold, color: black });
-  page.drawText('Rate', { x: colRate, y, size: 9, font: fontBold, color: black });
-  page.drawText('Amount', { x: colAmt, y, size: 9, font: fontBold, color: black });
-  y -= 4;
-  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: gray });
-  y -= 16;
-
-  for (const item of data.items) {
-    page.drawText(item.description.slice(0, 48), { x: colDesc, y, size: 9, font, color: black });
-    page.drawText(String(item.quantity), { x: colQty, y, size: 9, font, color: black });
-    page.drawText(`Rs.${fmt(item.unitPrice)}`, { x: colRate, y, size: 9, font, color: black });
-    page.drawText(`Rs.${fmt(item.lineTotal)}`, { x: colAmt, y, size: 9, font, color: black });
-    y -= 16;
+  const logo = await embedLogo(pdfDoc, data.logoUrl);
+  const logoWidth = 72;
+  if (logo) {
+    const scale = logoWidth / logo.width;
+    page.drawImage(logo, {
+      x: width - margin - logoWidth,
+      y: y - logo.height * scale + 10,
+      width: logoWidth,
+      height: logo.height * scale,
+    });
   }
 
-  y -= 8;
-  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: gray });
-  y -= 18;
+  const companyWidth = width - margin * 2 - (logo ? logoWidth + 16 : 0);
+  page.drawText((data.businessName || 'Ankshaastra').slice(0, 48), { x: margin, y, size: 13, font: fontBold, color: black, maxWidth: companyWidth });
+  y -= 14;
+  const companyLines = [
+    data.businessGstin ? `GSTIN ${data.businessGstin}` : '',
+    data.businessAddress || '',
+    data.businessPhone ? `Mobile ${data.businessPhone}` : '',
+    data.businessEmail ? `Email ${data.businessEmail}` : '',
+    data.businessWebsite ? `Website ${data.businessWebsite}` : '',
+  ].filter(Boolean);
 
-  const totalsX = width - margin - 160;
-  const drawTotalRow = (label: string, value: string, bold = false) => {
-    const f = bold ? fontBold : font;
-    page.drawText(label, { x: totalsX, y, size: 9, font: f, color: black });
-    page.drawText(value, { x: colAmt, y, size: 9, font: f, color: black });
-    y -= 14;
-  };
-
-  drawTotalRow('Subtotal', `Rs.${fmt(data.gst.subtotal)}`);
-  if (data.gst.isIntraState) {
-    drawTotalRow('CGST', `Rs.${fmt(data.gst.cgst)}`);
-    drawTotalRow('SGST', `Rs.${fmt(data.gst.sgst)}`);
-  } else {
-    drawTotalRow('IGST', `Rs.${fmt(data.gst.igst)}`);
+  for (const line of companyLines) {
+    page.drawText(line.slice(0, 90), { x: margin, y, size: 8, font, color: gray, maxWidth: companyWidth });
+    y -= 11;
   }
-  drawTotalRow('Grand Total', `Rs.${fmt(data.gst.grandTotal)}`, true);
 
   y -= 10;
-  if (data.paymentMethod) {
-    page.drawText(`Payment: ${data.paymentMethod}`, { x: margin, y, size: 9, font, color: black });
-    y -= 12;
+  const metaY = y;
+  page.drawText('Invoice #', { x: margin, y: metaY, size: 8, font: fontBold, color: gray });
+  page.drawText(data.invoiceNumber, { x: margin, y: metaY - 12, size: 9, font, color: black });
+  page.drawText('Invoice Date', { x: margin + 170, y: metaY, size: 8, font: fontBold, color: gray });
+  page.drawText(data.invoiceDate, { x: margin + 170, y: metaY - 12, size: 9, font, color: black });
+  page.drawText('Due Date', { x: margin + 340, y: metaY, size: 8, font: fontBold, color: gray });
+  page.drawText(data.dueDate, { x: margin + 340, y: metaY - 12, size: 9, font, color: black });
+  y = metaY - 34;
+
+  page.drawText('Customer Details', { x: margin, y, size: 9, font: fontBold, color: black });
+  page.drawText('Billing Address', { x: margin + 250, y, size: 9, font: fontBold, color: black });
+  y -= 14;
+  page.drawText(`Name ${data.customerName}`.slice(0, 42), { x: margin, y, size: 8, font, color: black });
+  const billing = [data.customerCity, data.customerState, data.customerPincode ? `Pincode ${data.customerPincode}` : ''].filter(Boolean).join(', ');
+  page.drawText((billing || data.customerBillingAddress || '—').slice(0, 48), { x: margin + 250, y, size: 8, font, color: black });
+  y -= 11;
+  if (data.customerPhone) {
+    page.drawText(`Phone ${data.customerPhone}`.slice(0, 42), { x: margin, y, size: 8, font, color: black });
+    y -= 11;
   }
-  if (data.transactionId) {
-    page.drawText(`Transaction ID: ${data.transactionId}`, { x: margin, y, size: 8, font, color: gray });
-    y -= 12;
+  if (data.placeOfSupply) {
+    y -= 4;
+    page.drawText(`Place of Supply: ${data.placeOfSupply}`.slice(0, 80), { x: margin, y, size: 8, font, color: black });
+    y -= 14;
   }
+
+  const item = data.items[0];
+  const tableTop = y;
+  const cols = [margin, margin + 18, margin + 210, margin + 285, margin + 330, margin + 405, margin + 470];
+  const headers = ['#', 'Item', 'Rate', 'Qty', 'Taxable', 'Tax', 'Amount'];
+  page.drawRectangle({ x: margin, y: tableTop - 14, width: width - margin * 2, height: 16, color: rgb(0.95, 0.96, 0.98) });
+  headers.forEach((header, index) => {
+    page.drawText(header, { x: cols[index], y: tableTop - 10, size: 7, font: fontBold, color: black });
+  });
+  y = tableTop - 28;
+  page.drawText('1', { x: cols[0], y, size: 8, font, color: black });
+  page.drawText(item.description.slice(0, 34), { x: cols[1], y: y + 8, size: 8, font: fontBold, color: black });
+  page.drawText(`SAC: ${item.hsnSac || data.sacCode}`, { x: cols[1], y: y - 4, size: 7, font, color: gray });
+  drawRightText(page, fmt(item.unitPrice), cols[2] + 40, y, 8, font);
+  drawRightText(page, `${item.quantity} QTY`, cols[3] + 30, y, 8, font);
+  drawRightText(page, fmt(item.taxableValue), cols[4] + 45, y, 8, font);
+  drawRightText(page, `${fmt(item.taxAmount)} (${data.gstRate}%)`, cols[5] + 50, y, 8, font);
+  drawRightText(page, fmt(item.lineTotal), width - margin, y, 8, font);
+  y -= 24;
+  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: rgb(0.85, 0.87, 0.9) });
+  y -= 18;
+
+  const totalsX = width - margin - 170;
+  const drawTotal = (label: string, value: string, bold = false) => {
+    const f = bold ? fontBold : font;
+    page.drawText(label, { x: totalsX, y, size: 8, font: f, color: black });
+    drawRightText(page, value, width - margin, y, 8, f);
+    y -= 13;
+  };
+
+  drawTotal('Taxable Amount', fmt(data.gst.subtotal));
+  if (data.gst.isIntraState) {
+    drawTotal(`CGST @ ${data.gstRate / 2}%`, fmt(data.gst.cgst));
+    drawTotal(`SGST @ ${data.gstRate / 2}%`, fmt(data.gst.sgst));
+  } else {
+    drawTotal(`IGST @ ${data.gstRate}%`, fmt(data.gst.igst));
+  }
+  drawTotal('Total', fmt(data.gst.grandTotal), true);
+
+  if (data.amountInWords) {
+    y -= 4;
+    page.drawText(`Total amount (in words): ${data.amountInWords}`.slice(0, 95), { x: totalsX - 40, y, size: 7, font, color: gray, maxWidth: 250 });
+    y -= 14;
+  }
+  page.drawText('Amount Paid', { x: totalsX, y, size: 9, font: fontBold, color: rgb(0.12, 0.48, 0.12) });
+
+  y = 120;
+  page.drawText('Bank Details', { x: margin, y, size: 9, font: fontBold, color: black });
+  y -= 14;
+  const bankLines = [
+    data.bankName ? `Bank Name: ${data.bankName}` : '',
+    data.bankAccountHolder ? `Account Holder Name: ${data.bankAccountHolder}` : '',
+    data.bankAccountNumber ? `Account #: ${data.bankAccountNumber}` : '',
+    data.bankIfsc ? `IFSC Code: ${data.bankIfsc}` : '',
+    data.bankBranch ? `Branch: ${data.bankBranch}` : '',
+  ].filter(Boolean);
+  for (const line of bankLines) {
+    page.drawText(line.slice(0, 70), { x: margin, y, size: 8, font, color: black });
+    y -= 11;
+  }
+
+  page.drawText(`For ${data.businessName}`.slice(0, 50), { x: width - margin - 150, y: 90, size: 8, font, color: black });
+  page.drawText('Authorized Signatory', { x: width - margin - 120, y: 56, size: 8, font: fontBold, color: black });
 
   if (data.termsFooter) {
-    y -= 8;
-    page.drawText(data.termsFooter.slice(0, 120), { x: margin, y, size: 8, font, color: gray });
+    page.drawText(data.termsFooter.slice(0, 120), { x: margin, y: 36, size: 7, font, color: gray });
   }
 
-  page.drawText('Thank you for your business.', {
-    x: margin,
-    y: margin,
-    size: 9,
-    font,
-    color: gray,
-  });
-
-  const bytes = await pdfDoc.save();
-  return Buffer.from(bytes);
+  return Buffer.from(await pdfDoc.save());
 }

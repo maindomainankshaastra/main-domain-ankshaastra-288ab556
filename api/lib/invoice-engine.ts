@@ -1,12 +1,15 @@
 import { getSupabaseAdmin } from './supabase-admin.js';
-import { calculateGst, nextInvoiceNumber } from './gst.js';
+import { nextInvoiceNumber } from './gst.js';
 import { type InvoiceTemplateData } from './templates/invoice-html.js';
+import { buildInvoiceTemplateData, resolveCustomerBilling } from './build-invoice-template.js';
+import { DEFAULT_SAC_CODE } from './invoice-constants.js';
 import { generateInvoicePdf } from './pdf-engine.js';
 import { sendEmail, type SendEmailInput } from './email-engine.js';
 import { advanceWorkflow } from './workflow-engine.js';
 import { downloadInvoicePdfBuffer, invoiceStoragePath, uploadInvoicePdf } from './invoice-storage.js';
 
 import { wrapEmailLayout } from './templates/email-layout.js';
+import { buildInvoicePaymentEmailHtml } from './templates/invoice-email.js';
 import { buildOrderDetailsHtml } from './order-form-details.js';
 import { buildInvoiceEmailSubject } from './schedule-invoice.js';
 
@@ -245,13 +248,6 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
 
   const customerId = await upsertCustomerFromOrder(order);
   const { data: gstConfig } = await supabase.from('gst_config').select('*').limit(1).single();
-  const gst = calculateGst({
-    amount: Number(order.total_amount),
-    gstRate: 18,
-    isGstInclusive: gstConfig?.is_gst_inclusive_default ?? true,
-    businessStateCode: gstConfig?.state_code || '27',
-    customerStateCode: order.metadata?.state_code,
-  });
 
   const invoiceNumber = await nextInvoiceNumber(supabase);
   const invoiceUserId = await resolveInvoiceUserId(order, customerId);
@@ -259,6 +255,14 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   if (invoiceUserId && !order.user_id) {
     await supabase.from('orders').update({ user_id: invoiceUserId }).eq('id', order.id);
   }
+
+  const { templateData, gst } = buildInvoiceTemplateData({
+    order,
+    gstConfig,
+    invoiceNumber,
+    paymentId,
+    paymentMethod: input.paymentMethod || (order.payment_method as string | undefined),
+  });
 
   // Reserve invoice row BEFORE PDF generation so concurrent requests hit unique constraint.
   const { data: reserved, error: reserveErr } = await supabase
@@ -275,11 +279,11 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
       base_amount: gst.subtotal,
       subtotal: gst.subtotal,
       gst_total: gst.gstTotal,
-      cgst_rate: gst.isIntraState ? 9 : 0,
+      cgst_rate: gst.isIntraState ? templateData.gstRate / 2 : 0,
       cgst_amount: gst.cgst,
-      sgst_rate: gst.isIntraState ? 9 : 0,
+      sgst_rate: gst.isIntraState ? templateData.gstRate / 2 : 0,
       sgst_amount: gst.sgst,
-      igst_rate: gst.isIntraState ? 0 : 18,
+      igst_rate: gst.isIntraState ? 0 : templateData.gstRate,
       igst_amount: gst.igst,
       total_amount: gst.grandTotal,
       gst_inclusive: true,
@@ -321,33 +325,19 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
     qrCodeDataUrl = await QRCode.toDataURL(qrPayload, {
       margin: 1,
       width: 120,
-      color: { dark: '#d4af37', light: '#0a0a0a' },
+      color: { dark: '#4b77be', light: '#ffffff' },
     });
   } catch {
     /* optional */
   }
 
-  const templateData: InvoiceTemplateData = {
-    invoiceNumber,
-    invoiceDate: new Date().toLocaleDateString('en-IN'),
-    businessName: gstConfig?.business_name || 'Ankshaastra',
-    businessGstin: gstConfig?.gstin,
-    businessAddress: gstConfig?.address,
-    customerName: order.customer_name || 'Customer',
-    customerEmail: order.customer_email,
-    customerPhone: order.customer_phone,
-    serviceTitle: order.service_title,
-    items: [{ description: order.service_title, quantity: 1, unitPrice: gst.subtotal, lineTotal: gst.subtotal }],
-    gst,
-    paymentMethod: input.paymentMethod || order.payment_method || 'Razorpay',
-    transactionId: input.paymentId || order.razorpay_payment_id,
+  const finalTemplateData: InvoiceTemplateData = {
+    ...templateData,
     qrCodeDataUrl,
-    status: 'PAID',
-    termsFooter: gstConfig?.terms_footer,
   };
 
   try {
-    const { buffer, mimeType } = await generateInvoicePdf(templateData);
+    const { buffer, mimeType } = await generateInvoicePdf(finalTemplateData);
     const storagePath = invoiceStoragePath(invoiceNumber);
     const pdfUrl = await uploadInvoicePdf(storagePath, buffer, mimeType);
 
@@ -370,8 +360,9 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
       description: order.service_title,
       quantity: 1,
       unit_price: gst.subtotal,
+      hsn_sac_code: DEFAULT_SAC_CODE,
       taxable_amount: gst.subtotal,
-      gst_rate: 18,
+      gst_rate: templateData.gstRate,
       cgst_amount: gst.cgst,
       sgst_amount: gst.sgst,
       igst_amount: gst.igst,
@@ -410,27 +401,40 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   const orderId = invoice.order_id as string | null;
   const order = (invoice.orders as Record<string, unknown> | null) || {};
   const orderDetailsHtml = buildOrderDetailsHtml(order);
+  const billing = resolveCustomerBilling(order);
   const serviceTitle = String(invoice.service_title || order.service_title || 'Service');
   const emailSubject = buildInvoiceEmailSubject(serviceTitle, String(invoice.invoice_number));
+  const gstRate = Number(invoice.cgst_rate || 0) + Number(invoice.sgst_rate || 0) + Number(invoice.igst_rate || 0) || 18;
+  const gst = {
+    subtotal: Number(invoice.subtotal || 0),
+    gstTotal: Number(invoice.gst_total || 0),
+    cgst: Number(invoice.cgst_amount || 0),
+    sgst: Number(invoice.sgst_amount || 0),
+    igst: Number(invoice.igst_amount || 0),
+    grandTotal: Number(invoice.total_amount || 0),
+    isIntraState: Number(invoice.igst_amount || 0) === 0,
+  };
+  const downloadLink = invoice.pdf_url
+    ? `<p style="margin-top:16px;">You can also <a href="${invoice.pdf_url}" style="color:#4b77be;font-weight:600;">download your invoice PDF</a>.</p>`
+    : '';
 
   if (invoice.customer_email) {
     const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
     const invoiceAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
     if (!orderAlreadySent && !invoiceAlreadySent) {
-      const downloadLink = invoice.pdf_url
-        ? `<p style="margin-top:16px;">You can also <a href="${invoice.pdf_url}" style="color:#8B5CF6;">download your invoice PDF</a>.</p>`
-        : '';
-
       const customerHtml = wrapEmailLayout(
-        `
-      <p style="margin:0 0 16px;font-size:16px;color:#8B5CF6;font-weight:600;">Payment Successful</p>
-      <p>Dear ${invoice.customer_name},</p>
-      <p>Thank you for your payment for <strong>${serviceTitle}</strong>.</p>
-      <p>Your invoice <strong>${invoice.invoice_number}</strong> is attached with this email.</p>
-      ${orderDetailsHtml}
-      ${downloadLink}
-      <p style="margin-top:20px;">Thank you for choosing Ankshaastra Occult Experts LLP.</p>
-    `,
+        buildInvoicePaymentEmailHtml({
+          customerName: String(invoice.customer_name || 'Customer'),
+          serviceTitle,
+          invoiceNumber: String(invoice.invoice_number),
+          gst,
+          gstRate,
+          placeOfSupply: billing.placeOfSupply,
+          paymentMethod: String(invoice.payment_method || order.payment_method || 'Razorpay'),
+          transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
+          orderDetailsHtml,
+          downloadLinkHtml: downloadLink,
+        }),
         emailSubject,
       );
 
@@ -459,11 +463,17 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     if (!orderAdminSent && !adminAlreadySent) {
       const adminHtml = wrapEmailLayout(
         `
-      <p style="margin:0 0 16px;font-size:16px;color:#8B5CF6;font-weight:600;">New Order Received</p>
-      <p><strong>Service:</strong> ${serviceTitle}</p>
-      <p><strong>Invoice:</strong> ${invoice.invoice_number}</p>
-      <p><strong>Amount:</strong> ₹${invoice.total_amount}</p>
-      ${orderDetailsHtml}
+      <p style="margin:0 0 16px;font-size:16px;color:#4b77be;font-weight:700;">New Order Received</p>
+      ${buildInvoicePaymentEmailHtml({
+        customerName: String(invoice.customer_name || 'Customer'),
+        serviceTitle,
+        invoiceNumber: String(invoice.invoice_number),
+        gst,
+        gstRate,
+        paymentMethod: String(invoice.payment_method || order.payment_method || 'Razorpay'),
+        transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
+        orderDetailsHtml,
+      })}
       <p style="margin-top:16px;">Invoice PDF is attached.</p>
     `,
         `New order: ${serviceTitle}`,
