@@ -53,7 +53,7 @@ export default function SettingsModule() {
         <div><Label>GSTIN</Label><Input value={String(form.gstin || "")} onChange={(e) => setForm({ ...form, gstin: e.target.value })} /></div>
         <div><Label>Address</Label><Textarea value={String(form.address || "")} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
         <div><Label>Default GST %</Label><Input type="number" value={String(form.default_gst_rate ?? 18)} onChange={(e) => setForm({ ...form, default_gst_rate: e.target.value })} /></div>
-        <div><Label>Invoice Prefix</Label><Input value={String(form.invoice_prefix || "INV")} onChange={(e) => setForm({ ...form, invoice_prefix: e.target.value })} /></div>
+        <div><Label>Invoice Prefix</Label><Input value={String(form.invoice_prefix || "INV")} onChange={(e) => setForm({ ...form, invoice_prefix: e.target.value })} placeholder="e.g. EYN26-27K-7000" /><p className="text-xs text-muted-foreground mt-1">Invoice numbers are generated as prefix + sequence (e.g. EYN26-27K-70001, EYN26-27K-70002).</p></div>
         <div><Label>UPI ID</Label><Input value={String(form.upi_id || "")} onChange={(e) => setForm({ ...form, upi_id: e.target.value })} /></div>
         <div className="flex items-center gap-2"><Switch checked={!!form.is_gst_inclusive_default} onCheckedChange={(v) => setForm({ ...form, is_gst_inclusive_default: v })} /><Label>GST-inclusive pricing</Label></div>
         <div><Label>Invoice Footer</Label><Textarea value={String(form.terms_footer || "")} onChange={(e) => setForm({ ...form, terms_footer: e.target.value })} /></div>

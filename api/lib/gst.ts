@@ -54,6 +54,12 @@ export function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+/** Normalize admin prefix and append the sequence counter only (no date or extra padding). */
+export function formatInvoiceNumber(rawPrefix: string, sequence: number): string {
+  const prefix = rawPrefix.trim().replace(/[/\\]+$/g, "").replace(/[/\\]/g, "-") || "INV";
+  return `${prefix}${sequence}`;
+}
+
 export async function nextInvoiceNumber(
   supabase: ReturnType<typeof import("./supabase-admin").getSupabaseAdmin>
 ): Promise<string> {
@@ -61,11 +67,8 @@ export async function nextInvoiceNumber(
   if (!error && data) return String(data);
 
   const { data: config } = await supabase.from("gst_config").select("*").limit(1).single();
-  const rawPrefix = String(config?.invoice_prefix ?? "INV").trim();
-  const prefix = rawPrefix.replace(/[/\\]+$/g, "").replace(/[/\\]/g, "-") || "INV";
   const seq = (config?.invoice_sequence ?? 1) as number;
-  const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const invoiceNumber = `${prefix}-${datePart}-${String(seq).padStart(5, "0")}`;
+  const invoiceNumber = formatInvoiceNumber(String(config?.invoice_prefix ?? "INV"), seq);
 
   if (config?.id) {
     await supabase.from("gst_config").update({ invoice_sequence: seq + 1 }).eq("id", config.id);
