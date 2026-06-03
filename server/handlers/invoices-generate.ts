@@ -26,6 +26,14 @@ export default async function handler(req: Req, res: Res) {
 
   try {
     const result = await processInvoiceJob(orderId, { forceDeliver: true });
+
+    if (result.skipped) {
+      throw new Error('Invoice generation is still in progress. Please try again in a few seconds.');
+    }
+    if (!result.invoiceId || !result.invoiceNumber) {
+      throw new Error('Invoice could not be generated for this order.');
+    }
+
     return res.status(200).json({
       ok: true,
       invoice_number: result.invoiceNumber,

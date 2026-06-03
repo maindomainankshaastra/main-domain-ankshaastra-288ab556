@@ -5,16 +5,27 @@ function fmt(n: number) {
   return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/** pdf-lib StandardFonts only support WinAnsi — strip unsupported characters. */
+function sanitizePdfText(value: string): string {
+  return value.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 async function embedLogo(pdfDoc: PDFDocument, logoUrl?: string) {
   if (!logoUrl) return null;
   try {
     const res = await fetch(logoUrl);
     if (!res.ok) return null;
     const bytes = new Uint8Array(await res.arrayBuffer());
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('png')) return pdfDoc.embedPng(bytes);
-    return pdfDoc.embedJpg(bytes);
-  } catch {
+    if (bytes.length < 4) return null;
+
+    const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+    const isJpg = bytes[0] === 0xff && bytes[1] === 0xd8;
+
+    if (isPng) return await pdfDoc.embedPng(bytes);
+    if (isJpg) return await pdfDoc.embedJpg(bytes);
+    return null;
+  } catch (err) {
+    console.warn('[invoice-pdf] Logo embed skipped:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -55,7 +66,7 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   }
 
   const companyWidth = width - margin * 2 - (logo ? logoWidth + 16 : 0);
-  page.drawText((data.businessName || 'Ankshaastra').slice(0, 48), { x: margin, y, size: 13, font: fontBold, color: black, maxWidth: companyWidth });
+  page.drawText((data.businessName || 'Ankshaastra').slice(0, 48), { x: margin, y, size: 13, font: fontBold, color: black });
   y -= 14;
   const companyLines = [
     data.businessGstin ? `GSTIN ${data.businessGstin}` : '',
@@ -66,34 +77,34 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   ].filter(Boolean);
 
   for (const line of companyLines) {
-    page.drawText(line.slice(0, 90), { x: margin, y, size: 8, font, color: gray, maxWidth: companyWidth });
+    page.drawText(sanitizePdfText(line).slice(0, 90), { x: margin, y, size: 8, font, color: gray });
     y -= 11;
   }
 
   y -= 10;
   const metaY = y;
   page.drawText('Invoice #', { x: margin, y: metaY, size: 8, font: fontBold, color: gray });
-  page.drawText(data.invoiceNumber, { x: margin, y: metaY - 12, size: 9, font, color: black });
+  page.drawText(sanitizePdfText(data.invoiceNumber), { x: margin, y: metaY - 12, size: 9, font, color: black });
   page.drawText('Invoice Date', { x: margin + 170, y: metaY, size: 8, font: fontBold, color: gray });
-  page.drawText(data.invoiceDate, { x: margin + 170, y: metaY - 12, size: 9, font, color: black });
+  page.drawText(sanitizePdfText(data.invoiceDate), { x: margin + 170, y: metaY - 12, size: 9, font, color: black });
   page.drawText('Due Date', { x: margin + 340, y: metaY, size: 8, font: fontBold, color: gray });
-  page.drawText(data.dueDate, { x: margin + 340, y: metaY - 12, size: 9, font, color: black });
+  page.drawText(sanitizePdfText(data.dueDate), { x: margin + 340, y: metaY - 12, size: 9, font, color: black });
   y = metaY - 34;
 
   page.drawText('Customer Details', { x: margin, y, size: 9, font: fontBold, color: black });
   page.drawText('Billing Address', { x: margin + 250, y, size: 9, font: fontBold, color: black });
   y -= 14;
-  page.drawText(`Name ${data.customerName}`.slice(0, 42), { x: margin, y, size: 8, font, color: black });
+  page.drawText(`Name ${sanitizePdfText(data.customerName)}`.slice(0, 42), { x: margin, y, size: 8, font, color: black });
   const billing = [data.customerCity, data.customerState, data.customerPincode ? `Pincode ${data.customerPincode}` : ''].filter(Boolean).join(', ');
-  page.drawText((billing || data.customerBillingAddress || '—').slice(0, 48), { x: margin + 250, y, size: 8, font, color: black });
+  page.drawText(sanitizePdfText(billing || data.customerBillingAddress || '-').slice(0, 48), { x: margin + 250, y, size: 8, font, color: black });
   y -= 11;
   if (data.customerPhone) {
-    page.drawText(`Phone ${data.customerPhone}`.slice(0, 42), { x: margin, y, size: 8, font, color: black });
+    page.drawText(`Phone ${sanitizePdfText(data.customerPhone)}`.slice(0, 42), { x: margin, y, size: 8, font, color: black });
     y -= 11;
   }
   if (data.placeOfSupply) {
     y -= 4;
-    page.drawText(`Place of Supply: ${data.placeOfSupply}`.slice(0, 80), { x: margin, y, size: 8, font, color: black });
+    page.drawText(`Place of Supply: ${sanitizePdfText(data.placeOfSupply)}`.slice(0, 80), { x: margin, y, size: 8, font, color: black });
     y -= 14;
   }
 
@@ -107,7 +118,7 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   });
   y = tableTop - 28;
   page.drawText('1', { x: cols[0], y, size: 8, font, color: black });
-  page.drawText(item.description.slice(0, 34), { x: cols[1], y: y + 8, size: 8, font: fontBold, color: black });
+  page.drawText(sanitizePdfText(item.description).slice(0, 34), { x: cols[1], y: y + 8, size: 8, font: fontBold, color: black });
   page.drawText(`SAC: ${item.hsnSac || data.sacCode}`, { x: cols[1], y: y - 4, size: 7, font, color: gray });
   drawRightText(page, fmt(item.unitPrice), cols[2] + 40, y, 8, font);
   drawRightText(page, `${item.quantity} QTY`, cols[3] + 30, y, 8, font);
@@ -137,7 +148,7 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
 
   if (data.amountInWords) {
     y -= 4;
-    page.drawText(`Total amount (in words): ${data.amountInWords}`.slice(0, 95), { x: totalsX - 40, y, size: 7, font, color: gray, maxWidth: 250 });
+    page.drawText(sanitizePdfText(`Total amount (in words): ${data.amountInWords}`).slice(0, 95), { x: totalsX - 40, y, size: 7, font, color: gray });
     y -= 14;
   }
   page.drawText('Amount Paid', { x: totalsX, y, size: 9, font: fontBold, color: rgb(0.12, 0.48, 0.12) });
@@ -153,7 +164,7 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     data.bankBranch ? `Branch: ${data.bankBranch}` : '',
   ].filter(Boolean);
   for (const line of bankLines) {
-    page.drawText(line.slice(0, 70), { x: margin, y, size: 8, font, color: black });
+    page.drawText(sanitizePdfText(line).slice(0, 70), { x: margin, y, size: 8, font, color: black });
     y -= 11;
   }
 

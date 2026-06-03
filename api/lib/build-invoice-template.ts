@@ -84,7 +84,7 @@ export function buildInvoiceTemplateData(input: {
   const gstRate = Number(gstConfig?.default_gst_rate ?? 18);
 
   const gst = calculateGst({
-    amount: Number(order.total_amount),
+    amount: Number(order.total_amount || order.amount || 0),
     gstRate,
     isGstInclusive: gstConfig?.is_gst_inclusive_default ?? true,
     businessStateCode,
@@ -99,9 +99,7 @@ export function buildInvoiceTemplateData(input: {
 
   const serviceTitle = String(order.service_title || 'Service');
   const siteUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://ankshaastra.com').replace(/\/$/, '');
-  const logoUrl =
-    (gstConfig?.logo_url ? String(gstConfig.logo_url) : '') ||
-    `${siteUrl}/logo.jpg`;
+  const logoUrl = gstConfig?.logo_url ? String(gstConfig.logo_url).trim() : undefined;
 
   const templateData: InvoiceTemplateData = {
     invoiceNumber,

@@ -151,6 +151,24 @@ async function waitForExistingInvoice(orderId: string, attempts = 8) {
   return null;
 }
 
+function hasDeliverablePdf(invoice: { pdf_storage_path?: string | null; pdf_url?: string | null } | null | undefined) {
+  return Boolean(invoice?.pdf_storage_path || invoice?.pdf_url);
+}
+
+async function removeIncompleteInvoice(invoiceId: string): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  await supabase.from('invoice_items').delete().eq('invoice_id', invoiceId);
+  await supabase.from('invoices').delete().eq('id', invoiceId);
+}
+
+async function clearIncompleteInvoiceIfNeeded(
+  invoice: { id: string; pdf_storage_path?: string | null; pdf_url?: string | null } | null | undefined,
+): Promise<boolean> {
+  if (!invoice?.id || hasDeliverablePdf(invoice)) return false;
+  await removeIncompleteInvoice(invoice.id);
+  return true;
+}
+
 async function wasOrderInvoiceEmailSent(orderId: string, templateSlug: string): Promise<boolean> {
   if (!orderId) return false;
   const supabase = getSupabaseAdmin();
@@ -187,49 +205,25 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
 
   if (paymentId) {
     const byPayment = await getExistingInvoiceByPaymentId(paymentId);
-    if (byPayment?.pdf_storage_path || byPayment?.pdf_url) {
+    if (hasDeliverablePdf(byPayment)) {
       return {
-        invoiceId: byPayment.id,
-        invoiceNumber: byPayment.invoice_number,
+        invoiceId: byPayment!.id,
+        invoiceNumber: byPayment!.invoice_number,
         duplicate: true,
-        orderId: byPayment.order_id,
+        orderId: byPayment!.order_id,
       };
     }
     if (byPayment?.id) {
-      const waited = await waitForExistingInvoice(byPayment.order_id as string);
-      if (waited?.id) {
-        return {
-          invoiceId: waited.id,
-          invoiceNumber: waited.invoice_number,
-          duplicate: true,
-          orderId: waited.order_id,
-        };
-      }
-      return {
-        invoiceId: byPayment.id,
-        invoiceNumber: byPayment.invoice_number,
-        duplicate: true,
-        skipped: true,
-        orderId: byPayment.order_id,
-      };
+      await clearIncompleteInvoiceIfNeeded(byPayment);
     }
   }
 
   const existing = await getExistingInvoiceForOrder(order.id);
-  if (existing?.pdf_storage_path || existing?.pdf_url) {
-    return { invoiceId: existing.id, invoiceNumber: existing.invoice_number, duplicate: true };
+  if (hasDeliverablePdf(existing)) {
+    return { invoiceId: existing!.id, invoiceNumber: existing!.invoice_number, duplicate: true };
   }
   if (existing?.id) {
-    const waited = await waitForExistingInvoice(order.id);
-    if (waited?.id) {
-      return { invoiceId: waited.id, invoiceNumber: waited.invoice_number, duplicate: true };
-    }
-    return {
-      invoiceId: existing.id,
-      invoiceNumber: existing.invoice_number,
-      duplicate: true,
-      skipped: true,
-    };
+    await clearIncompleteInvoiceIfNeeded(existing);
   }
 
   const lockAcquired = await tryAcquireInvoiceLock(order.id);
