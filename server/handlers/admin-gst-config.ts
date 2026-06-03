@@ -1,7 +1,9 @@
 import {
+  encodeBillingTextsFallback,
   encodeGstConfigAddress,
   GST_CONFIG_OPTIONAL_COLUMNS,
   isMissingOptionalColumnError,
+  resolveGstConfigBillingTexts,
   resolveGstConfigExtras,
 } from '../../api/lib/gst-config-fields.js';
 import { getUserFromAuthHeader, isAdminUser } from '../../api/lib/auth-api.js';
@@ -36,11 +38,15 @@ function buildPayload(body: Record<string, unknown>, includeOptionalColumns: boo
     invoice_prefix: body.invoice_prefix,
     is_gst_inclusive_default: body.is_gst_inclusive_default,
     upi_id: body.upi_id,
-    terms_footer: body.terms_footer,
     bank_name: body.bank_name,
     bank_account: body.bank_account,
     bank_ifsc: body.bank_ifsc,
-    logo_url: body.logo_url,
+  };
+
+  const billingTexts = {
+    thank_you_message: String(body.thank_you_message || ''),
+    invoice_footer: String(body.invoice_footer || ''),
+    terms_conditions: String(body.terms_conditions || ''),
   };
 
   if (includeOptionalColumns) {
@@ -48,6 +54,9 @@ function buildPayload(body: Record<string, unknown>, includeOptionalColumns: boo
       payload[column] = body[column] ?? null;
     }
     payload.address = String(body.address || '');
+    payload.terms_footer = billingTexts.invoice_footer || null;
+  } else {
+    payload.terms_footer = encodeBillingTextsFallback(billingTexts);
   }
 
   return payload;
@@ -67,7 +76,9 @@ export default async function handler(req: Req, res: Res) {
     const { data, error } = await supabase.from('gst_config').select('*').limit(1).single();
     if (error) return res.status(500).json({ error: error.message });
 
-    const extras = resolveGstConfigExtras(data as Record<string, unknown>);
+    const row = data as Record<string, unknown>;
+    const extras = resolveGstConfigExtras(row);
+    const billingTexts = resolveGstConfigBillingTexts(row);
     return res.status(200).json({
       config: {
         ...data,
@@ -76,6 +87,9 @@ export default async function handler(req: Req, res: Res) {
         business_phone: extras.business_phone || '',
         business_email: extras.business_email || '',
         website_url: extras.website_url || '',
+        thank_you_message: billingTexts.thank_you_message,
+        invoice_footer: billingTexts.invoice_footer,
+        terms_conditions: billingTexts.terms_conditions,
       },
     });
   }

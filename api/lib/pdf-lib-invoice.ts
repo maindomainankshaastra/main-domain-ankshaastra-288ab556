@@ -1,4 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont } from 'pdf-lib';
+import { loadInvoiceLogoBytes } from './invoice-logo.js';
 import type { InvoiceTemplateData } from './templates/invoice-html.js';
 
 function fmt(n: number) {
@@ -10,13 +11,10 @@ function sanitizePdfText(value: string): string {
   return value.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-async function embedLogo(pdfDoc: PDFDocument, logoUrl?: string) {
-  if (!logoUrl) return null;
+async function embedLogo(pdfDoc: PDFDocument) {
   try {
-    const res = await fetch(logoUrl);
-    if (!res.ok) return null;
-    const bytes = new Uint8Array(await res.arrayBuffer());
-    if (bytes.length < 4) return null;
+    const bytes = await loadInvoiceLogoBytes();
+    if (!bytes || bytes.length < 4) return null;
 
     const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
     const isJpg = bytes[0] === 0xff && bytes[1] === 0xd8;
@@ -28,6 +26,46 @@ async function embedLogo(pdfDoc: PDFDocument, logoUrl?: string) {
     console.warn('[invoice-pdf] Logo embed skipped:', err instanceof Error ? err.message : err);
     return null;
   }
+}
+
+function drawWrappedText(
+  page: PDFPage,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  font: PDFFont,
+  color: ReturnType<typeof rgb>,
+  maxChars: number,
+  lineHeight: number,
+  maxLines: number,
+) {
+  const lines = sanitizePdfText(text)
+    .split(/\r?\n/)
+    .flatMap((paragraph) => {
+      const words = paragraph.split(' ').filter(Boolean);
+      if (words.length === 0) return [''];
+      const wrapped: string[] = [];
+      let current = words[0];
+      for (let i = 1; i < words.length; i += 1) {
+        const next = `${current} ${words[i]}`;
+        if (next.length <= maxChars) current = next;
+        else {
+          wrapped.push(current);
+          current = words[i];
+        }
+      }
+      wrapped.push(current);
+      return wrapped;
+    })
+    .slice(0, maxLines);
+
+  let cursorY = y;
+  for (const line of lines) {
+    page.drawText(line.slice(0, maxChars), { x, y: cursorY, size, font, color });
+    cursorY -= lineHeight;
+  }
+  return cursorY;
 }
 
 function drawRightText(page: PDFPage, text: string, xRight: number, y: number, size: number, font: PDFFont, color = rgb(0, 0, 0)) {
@@ -53,7 +91,7 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   drawRightText(page, '1', width - margin, y + 4, 10, font, gray);
   y -= 28;
 
-  const logo = await embedLogo(pdfDoc, data.logoUrl);
+  const logo = await embedLogo(pdfDoc);
   const logoWidth = 72;
   if (logo) {
     const scale = logoWidth / logo.width;
@@ -171,8 +209,18 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   page.drawText(`For ${data.businessName}`.slice(0, 50), { x: width - margin - 150, y: 90, size: 8, font, color: black });
   page.drawText('Authorized Signatory', { x: width - margin - 120, y: 56, size: 8, font: fontBold, color: black });
 
-  if (data.termsFooter) {
-    page.drawText(data.termsFooter.slice(0, 120), { x: margin, y: 36, size: 7, font, color: gray });
+  let footerY = 48;
+  if (data.thankYouMessage) {
+    page.drawText('Thank You', { x: margin, y: footerY, size: 8, font: fontBold, color: black });
+    footerY = drawWrappedText(page, data.thankYouMessage, margin, footerY - 12, 7, font, gray, 95, 9, 3);
+  }
+  if (data.invoiceFooter) {
+    page.drawText('Invoice Footer', { x: margin, y: footerY - 4, size: 8, font: fontBold, color: black });
+    footerY = drawWrappedText(page, data.invoiceFooter, margin, footerY - 16, 7, font, gray, 95, 9, 4);
+  }
+  if (data.termsConditions) {
+    page.drawText('Terms & Conditions', { x: margin, y: footerY - 4, size: 8, font: fontBold, color: black });
+    drawWrappedText(page, data.termsConditions, margin, footerY - 16, 7, font, gray, 95, 9, 6);
   }
 
   return Buffer.from(await pdfDoc.save());

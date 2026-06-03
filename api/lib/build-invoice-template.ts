@@ -7,7 +7,8 @@ import {
   stateCodeFromName,
   stateNameFromCode,
 } from './indian-states.js';
-import { resolveGstConfigExtras } from './gst-config-fields.js';
+import { resolveGstConfigBillingTexts, resolveGstConfigExtras } from './gst-config-fields.js';
+import { getInvoiceLogoUrl } from './invoice-logo.js';
 import type { InvoiceTemplateData } from './templates/invoice-html.js';
 
 type GstConfigRow = Record<string, unknown>;
@@ -100,8 +101,8 @@ export function buildInvoiceTemplateData(input: {
 
   const serviceTitle = String(order.service_title || 'Service');
   const siteUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://ankshaastra.com').replace(/\/$/, '');
-  const logoUrl = gstConfig?.logo_url ? String(gstConfig.logo_url).trim() : undefined;
   const configExtras = resolveGstConfigExtras(gstConfig);
+  const billingTexts = resolveGstConfigBillingTexts(gstConfig);
 
   const templateData: InvoiceTemplateData = {
     invoiceNumber,
@@ -113,7 +114,7 @@ export function buildInvoiceTemplateData(input: {
     businessPhone: configExtras.business_phone || process.env.BUSINESS_PHONE,
     businessEmail: configExtras.business_email || process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL,
     businessWebsite: configExtras.website_url || siteUrl.replace(/^https?:\/\//, ''),
-    logoUrl,
+    logoUrl: getInvoiceLogoUrl(),
     customerName: billing.name,
     customerEmail: billing.email || undefined,
     customerPhone: billing.phone || undefined,
@@ -147,7 +148,9 @@ export function buildInvoiceTemplateData(input: {
     bankAccountNumber: gstConfig?.bank_account ? String(gstConfig.bank_account) : undefined,
     bankIfsc: gstConfig?.bank_ifsc ? String(gstConfig.bank_ifsc) : undefined,
     bankBranch: configExtras.bank_branch,
-    termsFooter: gstConfig?.terms_footer ? String(gstConfig.terms_footer) : undefined,
+    thankYouMessage: billingTexts.thank_you_message || undefined,
+    invoiceFooter: billingTexts.invoice_footer || undefined,
+    termsConditions: billingTexts.terms_conditions || undefined,
   };
 
   return { templateData, gst };

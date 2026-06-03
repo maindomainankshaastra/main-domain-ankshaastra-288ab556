@@ -43,7 +43,9 @@ export type InvoiceTemplateData = {
   bankAccountNumber?: string;
   bankIfsc?: string;
   bankBranch?: string;
-  termsFooter?: string;
+  thankYouMessage?: string;
+  invoiceFooter?: string;
+  termsConditions?: string;
 };
 
 export function renderInvoiceHtml(data: InvoiceTemplateData): string {
@@ -179,6 +181,7 @@ export function renderInvoiceHtml(data: InvoiceTemplateData): string {
       </table>
       ${data.amountInWords ? `<div style="margin-top:12px;font-size:11px;color:#555;">Total amount (in words): ${escape(data.amountInWords)}</div>` : ''}
       <div class="paid">✓ Amount Paid</div>
+      ${data.thankYouMessage ? `<div style="margin-top:12px;font-size:12px;color:#333;line-height:1.5;">${formatMultiline(data.thankYouMessage)}</div>` : ''}
     </div>
   </div>
 
@@ -197,7 +200,8 @@ export function renderInvoiceHtml(data: InvoiceTemplateData): string {
     </div>
   </div>
 
-  ${data.termsFooter ? `<div class="terms">${escape(data.termsFooter)}</div>` : ''}
+  ${data.invoiceFooter ? `<div class="terms"><div class="section-title">Invoice Footer</div>${formatMultiline(data.invoiceFooter)}</div>` : ''}
+  ${data.termsConditions ? `<div class="terms"><div class="section-title">Terms &amp; Conditions</div>${formatMultiline(data.termsConditions)}</div>` : ''}
 </div>
 </body>
 </html>`;
@@ -214,6 +218,10 @@ function escape(value: string) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function formatMultiline(value: string) {
+  return escape(value).replace(/\r?\n/g, '<br/>');
 }
 
 function escapeAttr(value: string) {

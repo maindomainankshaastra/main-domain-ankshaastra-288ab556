@@ -12,6 +12,7 @@ import { wrapEmailLayout } from './templates/email-layout.js';
 import { buildInvoicePaymentEmailHtml } from './templates/invoice-email.js';
 import { buildOrderDetailsHtml } from './order-form-details.js';
 import { buildInvoiceEmailSubject } from './schedule-invoice.js';
+import { resolveGstConfigBillingTexts } from './gst-config-fields.js';
 
 export type GenerateInvoiceInput = {
   orderId: string;
@@ -412,6 +413,10 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     ? `<p style="margin-top:16px;">You can also <a href="${invoice.pdf_url}" style="color:#4b77be;font-weight:600;">download your invoice PDF</a>.</p>`
     : '';
 
+  const { data: gstConfigRow } = await supabase.from('gst_config').select('*').limit(1).maybeSingle();
+  const billingTexts = resolveGstConfigBillingTexts(gstConfigRow as Record<string, unknown> | null);
+  const thankYouMessage = billingTexts.thank_you_message || undefined;
+
   if (invoice.customer_email) {
     const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
     const invoiceAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
@@ -428,6 +433,7 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
           transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
           orderDetailsHtml,
           downloadLinkHtml: downloadLink,
+          thankYouMessage,
         }),
         emailSubject,
       );

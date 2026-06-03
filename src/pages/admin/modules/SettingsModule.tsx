@@ -73,7 +73,7 @@ export default function SettingsModule() {
   };
 
   return (
-    <AdminPage title="GST & Billing Settings" description="Manage GST settings, invoice numbering, bank details, logo, and billing footer terms." loading={loading}>
+    <AdminPage title="GST & Billing Settings" description="Manage GST settings, invoice numbering, bank details, and invoice/email billing copy." loading={loading}>
       <div className="grid gap-4 max-w-lg">
         <div><Label>Business Name</Label><Input value={String(form.business_name || "")} onChange={(e) => setForm({ ...form, business_name: e.target.value })} /></div>
         <div><Label>Legal Name</Label><Input value={String(form.legal_name || "")} onChange={(e) => setForm({ ...form, legal_name: e.target.value })} placeholder="As printed on invoice" /></div>
@@ -84,7 +84,6 @@ export default function SettingsModule() {
         <div><Label>Business Phone</Label><Input value={String(form.business_phone || "")} onChange={(e) => setForm({ ...form, business_phone: e.target.value })} placeholder="+91 9667305577" /></div>
         <div><Label>Business Email</Label><Input value={String(form.business_email || "")} onChange={(e) => setForm({ ...form, business_email: e.target.value })} placeholder="social@ankshaastra.com" /></div>
         <div><Label>Website</Label><Input value={String(form.website_url || "")} onChange={(e) => setForm({ ...form, website_url: e.target.value })} placeholder="www.ankshaastra.com" /></div>
-        <div><Label>Logo URL</Label><Input value={String(form.logo_url || "")} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder="https://ankshaastra.com/logo.jpg" /></div>
         <div><Label>Default GST %</Label><Input type="number" value={String(form.default_gst_rate ?? 18)} onChange={(e) => setForm({ ...form, default_gst_rate: e.target.value })} /></div>
         <div><Label>Invoice Prefix</Label><Input value={String(form.invoice_prefix || "INV")} onChange={(e) => setForm({ ...form, invoice_prefix: e.target.value })} placeholder="e.g. EYN26-27K-7000" /><p className="text-xs text-muted-foreground mt-1">Invoice numbers are generated as prefix + sequence (e.g. EYN26-27K-70001, EYN26-27K-70002).</p></div>
         <div><Label>Bank Name</Label><Input value={String(form.bank_name || "")} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} /></div>
@@ -93,7 +92,33 @@ export default function SettingsModule() {
         <div><Label>Bank Branch</Label><Input value={String(form.bank_branch || "")} onChange={(e) => setForm({ ...form, bank_branch: e.target.value })} placeholder="ALIGARH" /></div>
         <div><Label>UPI ID</Label><Input value={String(form.upi_id || "")} onChange={(e) => setForm({ ...form, upi_id: e.target.value })} /></div>
         <div className="flex items-center gap-2"><Switch checked={!!form.is_gst_inclusive_default} onCheckedChange={(v) => setForm({ ...form, is_gst_inclusive_default: v })} /><Label>GST-inclusive pricing</Label></div>
-        <div><Label>Invoice Footer</Label><Textarea value={String(form.terms_footer || "")} onChange={(e) => setForm({ ...form, terms_footer: e.target.value })} /></div>
+        <div>
+          <Label>Thank You Message (Email &amp; Invoice)</Label>
+          <Textarea
+            value={String(form.thank_you_message || "")}
+            onChange={(e) => setForm({ ...form, thank_you_message: e.target.value })}
+            placeholder="Shown on payment confirmation emails and tax invoices after payment."
+            rows={4}
+          />
+        </div>
+        <div>
+          <Label>Invoice Footer</Label>
+          <Textarea
+            value={String(form.invoice_footer || "")}
+            onChange={(e) => setForm({ ...form, invoice_footer: e.target.value })}
+            placeholder="Footer note printed on the invoice (e.g. thank you or support contact)."
+            rows={4}
+          />
+        </div>
+        <div>
+          <Label>Terms &amp; Conditions (Professional Version)</Label>
+          <Textarea
+            value={String(form.terms_conditions || "")}
+            onChange={(e) => setForm({ ...form, terms_conditions: e.target.value })}
+            placeholder="Professional terms and conditions displayed at the bottom of the invoice."
+            rows={6}
+          />
+        </div>
         <Button onClick={save} disabled={saving}>Save Settings</Button>
       </div>
     </AdminPage>

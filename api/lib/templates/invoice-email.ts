@@ -25,6 +25,7 @@ export function buildInvoicePaymentEmailHtml(input: {
   transactionId?: string;
   orderDetailsHtml?: string;
   downloadLinkHtml?: string;
+  thankYouMessage?: string;
 }): string {
   const sac = input.sacCode || DEFAULT_SAC_CODE;
   const taxRows = input.gst.isIntraState
@@ -56,6 +57,6 @@ export function buildInvoicePaymentEmailHtml(input: {
     <p style="margin:0 0 16px;padding:10px 14px;background:#ecfdf3;border:1px solid #bbf7d0;border-radius:8px;color:#166534;font-weight:700;">✓ Amount Paid</p>
     ${input.orderDetailsHtml || ''}
     ${input.downloadLinkHtml || ''}
-    <p style="margin-top:20px;">Thank you for choosing Ankshaastra Occult Experts LLP.</p>
+    <p style="margin-top:20px;">${input.thankYouMessage ? escapeHtml(input.thankYouMessage).replace(/\r?\n/g, '<br/>') : 'Thank you for choosing Ankshaastra Occult Experts LLP.'}</p>
   `;
 }
