@@ -97,7 +97,7 @@ export default async function handler(req: any, res: any) {
           return res.status(200).json({ ok: true, invoice_exists: true });
         }
 
-        scheduleInvoiceGeneration(order.id, entity.id);
+        await scheduleInvoiceGeneration(order.id, entity.id);
       }
     }
 

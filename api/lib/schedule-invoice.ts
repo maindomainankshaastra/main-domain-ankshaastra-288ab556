@@ -14,39 +14,50 @@ function getInternalSecret(): string | null {
 }
 
 /**
- * Kick off invoice PDF + email without blocking the payment response.
- * Uses a dedicated API route on Vercel; falls back to inline processing locally.
+ * Kick off invoice PDF + email without blocking the payment response for long.
+ * Always enqueues a durable job first, then tries the async API route for faster delivery.
  */
-export function scheduleInvoiceGeneration(orderId: string, paymentId?: string | null): void {
+export async function scheduleInvoiceGeneration(orderId: string, paymentId?: string | null): Promise<void> {
+  const idempotencyKey = invoiceJobKey(orderId, paymentId);
+
+  try {
+    await enqueueJob(
+      "generate_and_deliver_invoice",
+      { orderId, ...(paymentId ? { paymentId } : {}) },
+      { idempotencyKey, priority: 1 },
+    );
+  } catch (err) {
+    console.error("[schedule-invoice] Failed to enqueue job:", err);
+  }
+
   const secret = getInternalSecret();
   const host = getPublicApiHost();
 
   if (host && secret) {
-    void fetch(`${host}/api/invoices/generate-async`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secret}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ orderId, paymentId: paymentId || undefined }),
-    }).catch(async (err) => {
-      console.warn("[schedule-invoice] Async trigger failed, enqueueing job:", err);
-      try {
-        await enqueueJob(
-          "generate_and_deliver_invoice",
-          { orderId, ...(paymentId ? { paymentId } : {}) },
-          { idempotencyKey: invoiceJobKey(orderId, paymentId), priority: 1 },
-        );
-      } catch (queueErr) {
-        console.error("[schedule-invoice] Queue fallback failed:", queueErr);
-      }
-    });
-    return;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      await fetch(`${host}/api/invoices/generate-async`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId, paymentId: paymentId || undefined }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeout));
+      return;
+    } catch (err) {
+      console.warn("[schedule-invoice] Async trigger failed, queued job will retry:", err);
+      return;
+    }
   }
 
-  void processInvoiceJob(orderId, { paymentId: paymentId || undefined }).catch((err) => {
+  try {
+    await processInvoiceJob(orderId, { paymentId: paymentId || undefined });
+  } catch (err) {
     console.error("[schedule-invoice] Inline invoice generation failed:", err);
-  });
+  }
 }
 
 export function buildInvoiceEmailSubject(serviceTitle: string, invoiceNumber: string): string {

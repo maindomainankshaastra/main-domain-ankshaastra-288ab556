@@ -1,0 +1,1 @@
+async function e(e){let t=await fetch(`/api/sync-payment`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify(e)}),n=await t.json().catch(()=>({}));return t.ok?n:{paid:!1,error:n.error||`Could not sync payment status`}}export{e as syncPaymentStatus};

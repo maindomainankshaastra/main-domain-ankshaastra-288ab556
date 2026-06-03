@@ -1,20 +1,27 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
-import { CheckCircle2, Mail, ArrowRight, Sparkles, FileText } from "lucide-react";
+import { CheckCircle2, Mail, ArrowRight, Sparkles, FileText, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
 import { formatINR } from "@/config/pricing";
+import {
+  consumePendingPaymentVerification,
+  verifyPaymentAndInvoice,
+} from "@/lib/payment-verification";
 
 const ThankYou = () => {
   const [params] = useSearchParams();
   const service = params.get("service") || "Your Order";
   const amount = Number(params.get("amount") || 0);
   const paymentId = params.get("payment_id") || "";
-  const invoice = params.get("invoice") || "";
+  const invoiceFromUrl = params.get("invoice") || "";
   const name = params.get("name") || "";
   const email = params.get("email") || "";
+
+  const [pendingVerification] = useState(() => consumePendingPaymentVerification());
+  const [invoice, setInvoice] = useState(invoiceFromUrl);
+  const [confirming, setConfirming] = useState(() => Boolean(pendingVerification));
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -37,8 +44,32 @@ const ThankYou = () => {
     );
   }, [paymentId, amount]);
 
+  useEffect(() => {
+    if (!pendingVerification) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const result = await verifyPaymentAndInvoice(pendingVerification);
+        if (cancelled) return;
+        if (result.invoice_number) {
+          setInvoice(result.invoice_number);
+        }
+      } catch {
+        // Payment was captured; invoice will arrive via email/webhook retry.
+      } finally {
+        if (!cancelled) setConfirming(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingVerification]);
+
   return (
-    <Layout>
+    <Layout minimal>
       <SEOHead
         title="Thank You — Payment Successful | Ankshaastra"
         description="Your payment was successful. Our team will reach out to you shortly with the next steps."
@@ -47,21 +78,11 @@ const ThankYou = () => {
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />
         <div className="section-container relative z-10 py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto"
-          >
+          <div className="max-w-3xl mx-auto">
             <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/15 p-8 md:p-12 text-center">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 border border-green-400/40 flex items-center justify-center"
-              >
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 border border-green-400/40 flex items-center justify-center">
                 <CheckCircle2 className="w-12 h-12 text-green-300" />
-              </motion.div>
+              </div>
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-300/10 border border-amber-200/20 mb-4">
                 <Sparkles className="w-4 h-4 text-amber-200" />
                 <span className="text-amber-100 text-sm font-medium">Payment Successful</span>
@@ -72,6 +93,13 @@ const ThankYou = () => {
               <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
                 We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{service}</span>. Our team will connect with you shortly to begin your consultation.
               </p>
+
+              {confirming && (
+                <div className="flex items-center justify-center gap-2 text-white/70 text-sm mb-6">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Confirming your order and preparing invoice…
+                </div>
+              )}
 
               <div className="grid sm:grid-cols-2 gap-4 mb-8 text-left">
                 {invoice && (
@@ -125,7 +153,7 @@ const ThankYou = () => {
                 Need help? Email {business.supportEmail}
               </p>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
     </Layout>

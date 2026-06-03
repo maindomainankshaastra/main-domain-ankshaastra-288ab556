@@ -141,7 +141,7 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
     (await orderHasDeliverableInvoice(orderId));
 
   if (!hasInvoice) {
-    scheduleInvoiceGeneration(orderId, razorpay_payment_id);
+    await scheduleInvoiceGeneration(orderId, razorpay_payment_id);
   }
 
   let invoice_number: string | undefined;

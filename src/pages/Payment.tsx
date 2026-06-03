@@ -31,6 +31,7 @@ import CountryCodeSelect from "@/components/ui/CountryCodeSelect";
 import { pricing } from "@/config/pricing";
 import { useAuth } from "@/hooks/useAuth";
 import { syncPaymentStatus } from "@/lib/sync-payment";
+import { storePendingPaymentVerification } from "@/lib/payment-verification";
 import {
   EXTENDED_FORM_TYPES,
   getExtendedDefaultValues,
@@ -487,6 +488,10 @@ const PaymentPage = () => {
   const selectedOption = currentPackage?.options.find((opt) => opt.id === selectedPackage);
 
   useEffect(() => {
+    void import("./ThankYou");
+  }, []);
+
+  useEffect(() => {
     if (currentPackage && currentPackage.options.length > 0 && !selectedPackage) {
       setSelectedPackage(currentPackage.options[0].id);
     }
@@ -708,73 +713,25 @@ const PaymentPage = () => {
         const razorpay_payment_id = String(response?.razorpay_payment_id || "");
         const razorpay_signature = String(response?.razorpay_signature || "");
 
-        let invoiceNumber = "";
-        let invoiceReady = false;
+        paymentCompletedRef.current = true;
 
-        const verifyRes = await fetch("/api/verify-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-            dbOrderId: ctx.dbOrderId,
-            formData: { ...ctx.formData, userId: user?.id },
-            service: serviceName,
-            amount: ctx.amount,
-          }),
-        });
-        const verifyData = await verifyRes.json().catch(() => ({}));
-
-        if (verifyRes.ok && verifyData?.success !== false) {
-          paymentCompletedRef.current = true;
-          invoiceNumber = String(verifyData?.invoice_number || "");
-          invoiceReady = Boolean(verifyData?.invoice_ready);
-          if (!invoiceReady) {
-            toast({
-              title: "Payment successful",
-              description: "Your invoice is being prepared and will arrive by email shortly.",
-            });
-          }
-          goToThankYou(ctx.formData, ctx.amount, razorpay_payment_id, razorpay_order_id, invoiceNumber);
-          return;
-        }
-
-        const synced = await syncPaymentStatus({
+        storePendingPaymentVerification({
           razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
           dbOrderId: ctx.dbOrderId,
-          formData: { ...ctx.formData, userId: user?.id },
+          formData: ctx.formData,
           service: serviceName || undefined,
           amount: ctx.amount,
+          userId: user?.id,
         });
 
-        if (!synced.paid) {
-          throw new Error(
-            (verifyData as { error?: string })?.error || synced.error || "Payment verification failed",
-          );
-        }
-
-        paymentCompletedRef.current = true;
-        invoiceNumber = String(synced.invoice_number || "");
-        invoiceReady = Boolean(synced.invoice_ready);
-        if (!invoiceReady) {
-          toast({
-            title: "Payment successful",
-            description: "Your invoice is being prepared and will arrive by email shortly.",
-          });
-        }
-        goToThankYou(
-          ctx.formData,
-          ctx.amount,
-          synced.razorpay_payment_id || razorpay_payment_id,
-          synced.razorpay_order_id || razorpay_order_id,
-          invoiceNumber,
-        );
+        goToThankYou(ctx.formData, ctx.amount, razorpay_payment_id, razorpay_order_id, "");
       } finally {
         finalizingRef.current = false;
       }
     },
-    [goToThankYou, serviceName, toast, user?.id],
+    [goToThankYou, serviceName, user?.id],
   );
 
   const reconcilePendingPayment = useCallback(async (force = false) => {

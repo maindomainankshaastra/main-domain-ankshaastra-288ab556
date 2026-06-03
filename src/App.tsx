@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
+import ThankYou from "./pages/ThankYou";
 const Services = lazy(() => import("./pages/Services"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Calculator = lazy(() => import("./pages/Calculator"));
@@ -51,9 +52,14 @@ const DynamicServicePage = lazy(() => import("./pages/DynamicServicePage"));
 const CallConsultation = lazy(() => import("./pages/CallConsultation"));
 const LuckyNumerology = lazy(() => import("./pages/LuckyNumerology"));
 const BusinessNumerology = lazy(() => import("./pages/BusinessNumerology"));
-const ThankYou = lazy(() => import("./pages/ThankYou"));
 
 const queryClient = new QueryClient();
+
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -62,7 +68,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Suspense fallback={<div className="min-h-screen bg-background" />}>
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/services" element={<Services />} />

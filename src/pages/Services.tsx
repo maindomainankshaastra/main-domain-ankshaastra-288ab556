@@ -198,10 +198,22 @@ const ServiceCard = ({ service, index }: { service: any; index: number }) => {
   return <Link to={paymentLink} className="block h-full">{inner}</Link>;
 };
 
+const staticServicesFromPages = (): ServiceWithPageRoute[] =>
+  existingServicePages.map((page) => ({
+    id: `page-${page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    title: page.title,
+    description: page.description,
+    category: page.category,
+    price: page.price,
+    gst_rate: page.gst_rate,
+    is_active: true,
+    _pageRoute: page.route,
+  }));
+
 /* ─────────────── Main Page ─────────────── */
 const ServicesPage = () => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState<ServiceWithPageRoute[]>(staticServicesFromPages);
+  const [refreshing, setRefreshing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -210,7 +222,7 @@ const ServicesPage = () => {
     const controller = new AbortController();
 
     const loadServices = async () => {
-      setLoading(true);
+      setRefreshing(true);
       setError(null);
 
       try {
@@ -260,7 +272,7 @@ const ServicesPage = () => {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Unable to load services");
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) setRefreshing(false);
       }
     };
 
@@ -426,17 +438,16 @@ const ServicesPage = () => {
           </div>
 
           {/* Cards grid */}
-          {loading ? (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground text-lg">Loading available services...</p>
-            </div>
-          ) : error ? (
+          {error && services.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-destructive text-lg">{error}</p>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {refreshing && (
+                <p className="text-center text-sm text-muted-foreground mb-6">Updating service catalog…</p>
+              )}
+              <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 transition-opacity ${refreshing ? "opacity-90" : "opacity-100"}`}>
                 {visibleServices.map((service, i) => (
                   <ServiceCard key={`${service._categoryId}-${service.title}`} service={service} index={i} />
                 ))}

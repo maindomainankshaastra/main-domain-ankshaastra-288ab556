@@ -45,16 +45,51 @@ const buildPaymentUrl = (page: ServicePageData, pkg: ServicePackageData) => {
   return `/payment?${params.toString()}`;
 };
 
+function ServicePageSkeleton({ slug }: { slug: string }) {
+  const title = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  return (
+    <Layout>
+      <SEOHead title={title} description={`${title} — Ankshaastra numerology services`} />
+      <section className="relative py-16 md:py-24 bg-gradient-to-b from-primary/10 via-background to-background">
+        <div className="container mx-auto px-4 text-center max-w-3xl animate-pulse">
+          <div className="h-4 w-24 bg-muted rounded mx-auto mb-4" />
+          <div className="h-10 w-3/4 max-w-md bg-muted rounded mx-auto mb-4" />
+          <div className="h-4 w-full max-w-xl bg-muted/70 rounded mx-auto mb-2" />
+          <div className="h-4 w-5/6 max-w-lg bg-muted/70 rounded mx-auto" />
+        </div>
+      </section>
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="h-8 w-48 bg-muted rounded mx-auto mb-10 animate-pulse" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-2xl border border-border p-6 bg-card animate-pulse">
+                <div className="h-4 w-16 bg-muted rounded mb-3" />
+                <div className="h-6 w-2/3 bg-muted rounded mb-4" />
+                <div className="h-8 w-24 bg-muted rounded mb-6" />
+                <div className="h-10 w-full bg-muted rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </Layout>
+  );
+}
+
 export default function DynamicServicePage() {
   const { slug = "" } = useParams();
   const [page, setPage] = useState<ServicePageData | null>(null);
   const [packages, setPackages] = useState<ServicePackageData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setNotFound(false);
 
     fetch(`/api/service-pages?slug=${encodeURIComponent(slug)}`)
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Not found"))))
@@ -67,6 +102,7 @@ export default function DynamicServicePage() {
         if (!cancelled) {
           setPage(null);
           setPackages([]);
+          setNotFound(true);
         }
       })
       .finally(() => {
@@ -79,14 +115,10 @@ export default function DynamicServicePage() {
   }, [slug]);
 
   if (loading) {
-    return (
-      <Layout>
-        <div className="min-h-[50vh] flex items-center justify-center text-muted-foreground">Loading…</div>
-      </Layout>
-    );
+    return <ServicePageSkeleton slug={slug} />;
   }
 
-  if (!page) {
+  if (notFound || !page) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-24 text-center">
