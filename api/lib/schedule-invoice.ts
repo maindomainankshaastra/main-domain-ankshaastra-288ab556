@@ -14,20 +14,16 @@ function getInternalSecret(): string | null {
 }
 
 /**
- * Kick off invoice PDF + email without blocking the payment response for long.
- * Always enqueues a durable job first, then tries the async API route for faster delivery.
+ * Generate invoice PDF + email after payment.
+ * Runs inline first (works on Vercel Hobby without frequent cron).
+ * Falls back to async route + daily job queue only if inline fails.
  */
 export async function scheduleInvoiceGeneration(orderId: string, paymentId?: string | null): Promise<void> {
-  const idempotencyKey = invoiceJobKey(orderId, paymentId);
-
   try {
-    await enqueueJob(
-      "generate_and_deliver_invoice",
-      { orderId, ...(paymentId ? { paymentId } : {}) },
-      { idempotencyKey, priority: 1 },
-    );
+    await processInvoiceJob(orderId, { paymentId: paymentId || undefined });
+    return;
   } catch (err) {
-    console.error("[schedule-invoice] Failed to enqueue job:", err);
+    console.error("[schedule-invoice] Inline generation failed:", err);
   }
 
   const secret = getInternalSecret();
@@ -36,7 +32,7 @@ export async function scheduleInvoiceGeneration(orderId: string, paymentId?: str
   if (host && secret) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort(), 15000);
       await fetch(`${host}/api/invoices/generate-async`, {
         method: "POST",
         headers: {
@@ -48,15 +44,18 @@ export async function scheduleInvoiceGeneration(orderId: string, paymentId?: str
       }).finally(() => clearTimeout(timeout));
       return;
     } catch (err) {
-      console.warn("[schedule-invoice] Async trigger failed, queued job will retry:", err);
-      return;
+      console.warn("[schedule-invoice] Async route fallback failed:", err);
     }
   }
 
   try {
-    await processInvoiceJob(orderId, { paymentId: paymentId || undefined });
+    await enqueueJob(
+      "generate_and_deliver_invoice",
+      { orderId, ...(paymentId ? { paymentId } : {}) },
+      { idempotencyKey: invoiceJobKey(orderId, paymentId), priority: 1 },
+    );
   } catch (err) {
-    console.error("[schedule-invoice] Inline invoice generation failed:", err);
+    console.error("[schedule-invoice] Could not enqueue daily retry job:", err);
   }
 }
 
