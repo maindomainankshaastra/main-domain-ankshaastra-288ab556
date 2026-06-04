@@ -21,7 +21,7 @@ const columns = [
     links: [
       { name: "Office Vastu", to: "/services/office-vastu" },
       { name: "C-Section Dates", to: "https://miraclebaby.ankshaastra.com", external: true },
-      { name: "Mobile Numerology", to: "/services/mobile-numerology" },
+      { name: "Lucky Numerology", to: "/services/lucky-numerology" },
       { name: "All Services", to: "/services" },
     ],
   },

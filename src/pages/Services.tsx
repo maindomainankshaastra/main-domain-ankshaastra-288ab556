@@ -5,7 +5,6 @@ import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import { formatINR, pricing } from "@/config/pricing";
 import { whatsappHref } from "@/config/business";
-import { existingServicePages } from "@/data/servicePages";
 import { 
   Phone, Video, MessageSquare, User, Baby, Building2, Calendar,
   Armchair, Building, ArrowRight, Sparkles, ExternalLink,
@@ -100,11 +99,14 @@ const getServiceLink = (service: Service & { _pageRoute?: string }): string => {
     case "Relationship Analysis":
       return `/payment?service=${encodeURIComponent("Relationship Analysis")}&amount=${pricing.relationship.analysis}&formType=relationship-analysis`;
     case "Personalized Kundali":
+    case "Premium Personalised Kundli 2.0":
       return "/reports/personalized-kundali";
     case "Varshphal Report 2026":
       return "/services/varshphal-report";
-    case "Mobile Numerology":
-      return "/services/mobile-numerology";
+    case "Lucky Numerology":
+      return "/services/lucky-numerology";
+    case "Business Partner Compatibility":
+      return `/payment?service=${encodeURIComponent("Business Partner Compatibility")}&amount=${pricing.business.partnerCompat}&formType=business-partner`;
     case "Office Vastu":
       return "/services/office-vastu";
     default:
@@ -198,21 +200,9 @@ const ServiceCard = ({ service, index }: { service: any; index: number }) => {
   return <Link to={paymentLink} className="block h-full">{inner}</Link>;
 };
 
-const staticServicesFromPages = (): ServiceWithPageRoute[] =>
-  existingServicePages.map((page) => ({
-    id: `page-${page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-    title: page.title,
-    description: page.description,
-    category: page.category,
-    price: page.price,
-    gst_rate: page.gst_rate,
-    is_active: true,
-    _pageRoute: page.route,
-  }));
-
 /* ─────────────── Main Page ─────────────── */
 const ServicesPage = () => {
-  const [services, setServices] = useState<ServiceWithPageRoute[]>(staticServicesFromPages);
+  const [services, setServices] = useState<ServiceWithPageRoute[]>([]);
   const [refreshing, setRefreshing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -280,28 +270,10 @@ const ServicesPage = () => {
     return () => controller.abort();
   }, []);
 
-  const staticServicePages: ServiceWithPageRoute[] = useMemo(
-    () =>
-      existingServicePages.map((page) => ({
-        id: `page-${page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-        title: page.title,
-        description: page.description,
-        category: page.category,
-        price: page.price,
-        gst_rate: page.gst_rate,
-        is_active: true,
-        _pageRoute: page.route,
-      })),
-    []
+  const mergedServices = useMemo(
+    () => services.filter((service) => service.is_active),
+    [services]
   );
-
-  const mergedServices = useMemo(() => {
-    const activeServices = services.filter((service) => service.is_active);
-    const pageServices = staticServicePages.filter(
-      (page) => !activeServices.some((service) => service.title === page.title)
-    );
-    return [...activeServices, ...pageServices];
-  }, [services, staticServicePages]);
 
   const categories = useMemo(() => createCategories(mergedServices), [mergedServices]);
   const totalServices = mergedServices.length;
@@ -322,7 +294,7 @@ const ServicesPage = () => {
 
   return (
     <Layout>
-      <SEOHead title="Numerology Services" description="Explore our numerology services including name correction, baby name selection, C-section date analysis, mobile numerology, and office vastu by Himansshu Agarwal Ji." canonical="/services" />
+      <SEOHead title="Numerology Services" description="Explore our numerology services including name correction, baby name selection, C-section dates, lucky numerology, business numerology, and office vastu by Himansshu Agarwal Ji." canonical="/services" />
 
       {/* ── Hero Section ── */}
       <section className="relative overflow-hidden py-20 md:py-28">

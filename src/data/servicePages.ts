@@ -9,6 +9,7 @@ export type ServicePage = {
   route: string;
 };
 
+/** Canonical service pages aligned with Service_Update_Doc.md */
 export const existingServicePages: ServicePage[] = [
   {
     title: "1:1 Call Consultation",
@@ -17,6 +18,30 @@ export const existingServicePages: ServicePage[] = [
     price: pricing.audioCall.min45,
     gst_rate: 18,
     route: "/services/call-consultation",
+  },
+  {
+    title: "Varshphal Report 2026",
+    description: "A complete year-ahead numerology forecast to help you prepare for 2026 with confidence.",
+    category: "Reports",
+    price: pricing.reports.varshphal,
+    gst_rate: 18,
+    route: "/services/varshphal-report",
+  },
+  {
+    title: "Pyaar Shaastra Report",
+    description: "Unlock relationship insights with a numerology report designed for love and compatibility.",
+    category: "Reports",
+    price: pricing.pyaarShastra.price,
+    gst_rate: 18,
+    route: "/reports/pyaar-shastra",
+  },
+  {
+    title: "Premium Personalised Kundli 2.0",
+    description: "Get a personalized kundali report for compatibility, career, wealth and relationships.",
+    category: "Reports",
+    price: pricing.reports.kundaliSingle,
+    gst_rate: 18,
+    route: "/reports/personalized-kundali",
   },
   {
     title: "Name Correction",
@@ -43,14 +68,6 @@ export const existingServicePages: ServicePage[] = [
     route: "https://miraclebaby.ankshaastra.com",
   },
   {
-    title: "Varshphal Report 2026",
-    description: "A complete year-ahead numerology forecast to help you prepare for 2026 with confidence.",
-    category: "Reports",
-    price: pricing.reports.varshphal,
-    gst_rate: 18,
-    route: "/services/varshphal-report",
-  },
-  {
     title: "Lucky Numerology",
     description: "Lucky vehicle, mobile, flat numbers and auspicious dates through numerology.",
     category: "Personal Numerology",
@@ -59,12 +76,28 @@ export const existingServicePages: ServicePage[] = [
     route: "/services/lucky-numerology",
   },
   {
-    title: "Mobile Numerology",
-    description: "Audit your mobile number for vibration, luck, and compatibility with your numerology profile.",
-    category: "Numerology",
-    price: pricing.mobile.audit,
+    title: "Relationship Analysis",
+    description: "Understand compatibility and relationship dynamics through numerology.",
+    category: "Relationships",
+    price: pricing.relationship.analysis,
     gst_rate: 18,
-    route: "/services/mobile-numerology",
+    route: `/payment?service=Relationship%20Analysis&amount=${pricing.relationship.analysis}&formType=relationship-analysis`,
+  },
+  {
+    title: "Business & Brand Numerology",
+    description: "Business name, tagline, dates, and property analysis through numerology.",
+    category: "Business",
+    price: pricing.business.nameCorrection,
+    gst_rate: 18,
+    route: "/services/business-numerology",
+  },
+  {
+    title: "Business Partner Compatibility",
+    description: "Analyze business partner compatibility through numerology.",
+    category: "Business",
+    price: pricing.business.partnerCompat,
+    gst_rate: 18,
+    route: `/payment?service=Business%20Partner%20Compatibility&amount=${pricing.business.partnerCompat}&formType=business-partner`,
   },
   {
     title: "Office Vastu",
@@ -73,45 +106,5 @@ export const existingServicePages: ServicePage[] = [
     price: pricing.vastu.officeRemote,
     gst_rate: 18,
     route: "/services/office-vastu",
-  },
-  {
-    title: "Business & Brand Numerology",
-    description: "Business name, tagline, dates, and partner compatibility through numerology.",
-    category: "Business",
-    price: pricing.business.nameCorrection,
-    gst_rate: 18,
-    route: "/services/business-numerology",
-  },
-  {
-    title: "Name Correction Blueprint",
-    description: "A practical blueprint to help you implement your numerology-based name correction plan.",
-    category: "Reports",
-    price: pricing.nameCorrection.withBlueprint,
-    gst_rate: 18,
-    route: "/reports/name-correction-blueprint",
-  },
-  {
-    title: "Premium Personalised Kundli 2.0",
-    description: "Get a personalized kundali report for compatibility, career, wealth and relationships.",
-    category: "Reports",
-    price: pricing.reports.kundaliSingle,
-    gst_rate: 18,
-    route: "/reports/personalized-kundali",
-  },
-  {
-    title: "Pyaar Shaastra Report",
-    description: "Unlock relationship insights with a numerology report designed for love and compatibility.",
-    category: "Reports",
-    price: pricing.pyaarShastra.price,
-    gst_rate: 18,
-    route: "/reports/pyaar-shastra",
-  },
-  {
-    title: "Relationship Analysis",
-    description: "Understand compatibility and relationship dynamics through numerology.",
-    category: "Relationships",
-    price: pricing.relationship.analysis,
-    gst_rate: 18,
-    route: `/payment?service=Relationship%20Analysis&amount=${pricing.relationship.analysis}&formType=relationship-analysis`,
   },
 ];

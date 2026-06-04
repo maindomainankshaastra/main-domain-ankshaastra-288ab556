@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
@@ -23,7 +23,6 @@ const About = lazy(() => import("./pages/About"));
 const CSectionDates = lazy(() => import("./pages/CSectionDates"));
 const BabyName = lazy(() => import("./pages/BabyName"));
 const VarshphalReport = lazy(() => import("./pages/VarshphalReport"));
-const MobileNumerology = lazy(() => import("./pages/MobileNumerology"));
 const OfficeVastu = lazy(() => import("./pages/OfficeVastu"));
 const Podcast = lazy(() => import("./pages/Podcast"));
 const Blog = lazy(() => import("./pages/Blog"));
@@ -76,7 +75,7 @@ const App = () => (
             <Route path="/services/csection-dates" element={<CSectionDates />} />
             <Route path="/services/baby-name" element={<BabyName />} />
             <Route path="/services/varshphal-report" element={<VarshphalReport />} />
-            <Route path="/services/mobile-numerology" element={<MobileNumerology />} />
+            <Route path="/services/mobile-numerology" element={<Navigate to="/services/lucky-numerology" replace />} />
             <Route path="/services/office-vastu" element={<OfficeVastu />} />
             <Route path="/services/call-consultation" element={<CallConsultation />} />
             <Route path="/services/lucky-numerology" element={<LuckyNumerology />} />

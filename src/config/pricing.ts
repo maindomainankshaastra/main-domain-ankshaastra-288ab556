@@ -1,11 +1,13 @@
 /**
  * Centralized pricing configuration.
  * Admin catalog in Supabase should mirror these values.
+ * Source of truth: Service_Update_Doc.md
  */
 
 export const pricing = {
   audioCall: { min45: 3977, min60: 4967, min75: 5957 },
   videoCall: { min45: 5957, min60: 7397, min75: 8927 },
+  /** Legacy consultation channel — not in public service catalog */
   whatsapp: { q3: 497, q6: 777, q10: 1111 },
   addons: {
     kundli20: 299,
@@ -46,20 +48,17 @@ export const pricing = {
   reports: {
     kundaliSingle: 299,
     kundaliSingleOriginal: 699,
-    kundaliDouble: 547,
-    kundaliDoubleOriginal: 1398,
-    kundaliTriple: 737,
-    kundaliTripleOriginal: 2097,
+    kundaliDouble: 497,
+    kundaliDoubleOriginal: 1200,
+    kundaliTriple: 597,
+    kundaliTripleOriginal: 1800,
     varshphal: 699,
-    numerology: 1999,
-    numerologyOriginal: 2499,
   },
   business: {
     nameCorrection: 4967,
     phoneNumber: 1457,
     tagline: 1457,
     partnerCompat: 1997,
-    directorCompat: 1997,
     companyRegistration: 1997,
     bankAccount: 1997,
     landPurchase: 1997,
@@ -76,7 +75,6 @@ export const pricing = {
     officeRemote: 3977,
     officeOnsite: 9987,
   },
-  mobile: { audit: 1097, auditOriginal: 2500, premium: 1999, premiumOriginal: 4500 },
   shop: {
     blueSapphire: 15999,
     blueSapphireOriginal: 19999,

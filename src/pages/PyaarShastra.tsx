@@ -7,10 +7,8 @@ import {
   Heart, Check, ChevronDown, Sparkles, Clock, Shield, Star, Users,
   HeartCrack, HeartHandshake, Brain, Wallet, HandHeart, Home, Sprout, Mail, ArrowRight,
 } from "lucide-react";
-import { pricing, formatINR } from "@/config/pricing";
-
-const reportName = "Pyaar Shaastra Report";
-const payLink = `/payment?service=${encodeURIComponent(reportName)}&amount=${pricing.pyaarShastra.price}&formType=pyaar-shastra`;
+import { pricing, formatINR, payLink } from "@/config/pricing";
+import { pyaarShastraPackages } from "@/data/serviceCatalog";
 
 const audiences = [
   { Icon: HeartHandshake, title: "Life Mein Kya Expectations Honi Chahiye", text: "Pyaar Shaastra Report yahi batati hai. Jo sirf accurate compatibility check karta hai — judgement nahi karta. Aapko clarity deta hai ki aage ka safar kaisa hoga." },
@@ -91,7 +89,7 @@ const PyaarShastra = () => {
             <p className="text-base md:text-lg text-white/70 mb-10 leading-relaxed">
               Kitna sukoon hoga? Kitni samajh hogi? Financial life kaisi hogi? Emotional bonding kitni gehri hogi?
             </p>
-            <Link to={payLink} className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
+            <Link to={payLink(pyaarShastraPackages[0].serviceTitle, pyaarShastraPackages[0].price, pyaarShastraPackages[0].formType)} className="inline-flex items-center gap-3 bg-white text-primary font-bold px-10 py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
               Get Clarity Now <ArrowRight className="w-5 h-5" />
             </Link>
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-8 text-white/75 text-sm">
@@ -171,38 +169,53 @@ const PyaarShastra = () => {
         </div>
       </section>
 
-      {/* PACKAGE */}
+      {/* PACKAGES */}
       <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-3xl">
+        <div className="container mx-auto px-4 max-w-4xl">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-10 leading-tight text-foreground">
             Ek Sahi Samajh — <span className="text-gradient-gold">Poori Zindagi Ka Sukoon</span>
           </h2>
-          <div className="p-8 md:p-10 relative rounded-2xl border-2 border-primary bg-card shadow-2xl shadow-primary/10">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-widest bg-primary text-primary-foreground">
-              Most Trusted
-            </div>
-            <h3 className="font-display text-2xl md:text-3xl font-semibold text-center mb-4 text-foreground">Pyaar Shaastra Report</h3>
-            <div className="flex items-baseline justify-center gap-3 mb-6">
-              <span className="text-xl line-through text-muted-foreground">{formatINR(pricing.pyaarShastra.originalPrice)}</span>
-              <span className="font-display text-5xl md:text-6xl font-bold text-gradient-gold">{formatINR(pricing.pyaarShastra.price)}</span>
-              <span className="text-sm font-semibold text-primary">Only</span>
-            </div>
-            <ul className="space-y-3 mb-8 max-w-md mx-auto">
-              {inclusions.map((f) => (
-                <li key={f} className="flex items-start gap-2 text-foreground">
-                  <Check className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <Link to={payLink} className="block w-full text-center py-4 text-lg font-semibold rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all duration-300">
-              Apna Report Book Karo — {formatINR(pricing.pyaarShastra.price)}
-            </Link>
-            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 9 Hours</span>
-              <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> 100% Confidential</span>
-              <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> Email Delivery</span>
-            </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {pyaarShastraPackages.map((pkg) => (
+              <div
+                key={pkg.name}
+                className={`p-8 md:p-10 relative rounded-2xl border-2 bg-card shadow-xl ${
+                  pkg.popular ? "border-primary shadow-primary/10" : "border-border"
+                }`}
+              >
+                {pkg.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-widest bg-primary text-primary-foreground">
+                    Most Trusted
+                  </div>
+                )}
+                <h3 className="font-display text-2xl font-semibold text-center mb-4 text-foreground">{pkg.name}</h3>
+                <div className="flex items-baseline justify-center gap-3 mb-6">
+                  {pkg.originalPrice && pkg.price < pkg.originalPrice && (
+                    <span className="text-xl line-through text-muted-foreground">{formatINR(pkg.originalPrice)}</span>
+                  )}
+                  <span className="font-display text-4xl md:text-5xl font-bold text-gradient-gold">{formatINR(pkg.price)}</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {inclusions.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-foreground text-sm">
+                      <Check className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to={payLink(pkg.serviceTitle, pkg.price, pkg.formType)}
+                  className="block w-full text-center py-4 text-lg font-semibold rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all duration-300"
+                >
+                  Apna Report Book Karo — {formatINR(pkg.price)}
+                </Link>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-4 mt-8 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 9 Hours</span>
+            <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> 100% Confidential</span>
+            <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> Email Delivery</span>
           </div>
         </div>
       </section>

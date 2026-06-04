@@ -9,9 +9,9 @@ const reports = [
   {
     id: 1,
     title: "Pyaar Shaastra Report",
-    description: "India's first love & life quality compatibility report. Ashtakoot, KP System, Manglik & Dasa analysis — delivered on WhatsApp in 24 hours.",
+    description: "India's first love & life quality compatibility report. Ashtakoot, KP System, Manglik & Dasa analysis — delivered on email in 9 hours.",
     pages: "Detailed PDF",
-    delivery: "24 Hours",
+    delivery: "9 Hours",
     price: formatINR(pricing.pyaarShastra.price),
     originalPrice: formatINR(pricing.pyaarShastra.originalPrice),
     amount: pricing.pyaarShastra.price,
@@ -19,35 +19,34 @@ const reports = [
     features: ["Love & Life Compatibility", "Emotional + Financial Harmony", "Marriage Stability Insights", "Compatibility Timing Guidance"],
   },
   {
-    id: 3,
-    title: "Marriage Compatibility",
-    description: "Detailed Kundli matching with Guna Milan and compatibility analysis for couples.",
-    pages: "30+ Pages",
-    delivery: "48 Hours",
-    price: formatINR(pricing.reports.numerology),
-    originalPrice: formatINR(pricing.reports.numerologyOriginal),
-    amount: pricing.reports.numerology,
-    link: `/payment?service=Marriage%20Compatibility&amount=${pricing.reports.numerology}`,
-    features: ["Guna Milan (36 points)", "Mangal Dosha check", "Relationship dynamics", "Remedies if needed"],
+    id: 2,
+    title: "Premium Personalised Kundli 2.0",
+    description: "Single, double, or triple personalized kundli reports covering career, marriage, wealth, and remedies.",
+    pages: "Detailed PDF",
+    delivery: "9 Hours",
+    price: formatINR(pricing.reports.kundaliSingle),
+    originalPrice: formatINR(pricing.reports.kundaliSingleOriginal),
+    amount: pricing.reports.kundaliSingle,
+    link: "/reports/personalized-kundali",
+    features: ["Birth chart analysis", "Dasha predictions", "Career & marriage insights", "Personalized remedies"],
   },
   {
-    id: 4,
-    title: "Yearly Predictions",
-    description: "Month-by-month predictions for the coming year covering all aspects of life.",
+    id: 3,
+    title: "Varshphal Report 2026",
+    description: "Month-by-month predictions for 2026 covering career, health, relationships, and finances.",
     pages: "40+ Pages",
     delivery: "48 Hours",
     price: formatINR(pricing.reports.varshphal),
-    originalPrice: formatINR(pricing.reports.kundaliSingleOriginal),
     amount: pricing.reports.varshphal,
     link: "/services/varshphal-report",
-    features: ["Monthly predictions", "Transit effects", "Lucky periods", "Precautionary months"],
+    features: ["Monthly predictions", "Lucky numbers & colors", "Career & business timing", "Remedial suggestions"],
   },
 ];
 
 const ReportsPage = () => {
   return (
     <Layout>
-      <SEOHead title="Astrology Reports" description="Detailed Vedic astrology reports including birth chart, career, marriage compatibility, and yearly predictions by Himansshu Agarwal Ji." canonical="/reports" />
+      <SEOHead title="Astrology Reports" description="Detailed Vedic astrology reports including personalized kundli, Pyaar Shaastra, and Varshphal by Himansshu Agarwal Ji." canonical="/reports" />
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-16 pb-20 gradient-hero">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,hsl(var(--amber)/0.18),transparent_70%)]" />
@@ -85,89 +84,43 @@ const ReportsPage = () => {
       </section>
 
       {/* Reports Grid */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {reports.map((report, index) => (
+      <section className="section-padding">
+        <div className="section-container">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {reports.map((report, i) => (
               <motion.div
                 key={report.id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="card-warm p-8 group"
+                transition={{ delay: i * 0.1 }}
+                className="bg-card border border-border rounded-2xl p-8 hover:shadow-lg hover:border-primary/30 transition-all flex flex-col"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-md">
-                    <ScrollText className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-gradient-primary">{report.price}</span>
-                    <span className="block text-sm text-muted-foreground line-through">{report.originalPrice}</span>
-                  </div>
-                </div>
-
-                <h3 className="font-display text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
-                  {report.title}
-                </h3>
-                <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
-                  {report.description}
-                </p>
-
-                <div className="flex gap-4 mb-6 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <ScrollText className="w-4 h-4" />
-                    {report.pages}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Download className="w-4 h-4" />
-                    {report.delivery}
-                  </span>
-                </div>
-
+                <h3 className="font-display text-2xl font-bold text-foreground mb-3">{report.title}</h3>
+                <p className="text-muted-foreground text-sm mb-6 flex-grow">{report.description}</p>
                 <ul className="space-y-2 mb-6">
-                  {report.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Check className="w-4 h-4 text-primary" />
-                      {feature}
+                  {report.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-foreground">
+                      <Check className="w-4 h-4 text-primary shrink-0" />
+                      {f}
                     </li>
                   ))}
                 </ul>
-
+                <div className="flex items-baseline gap-2 mb-6">
+                  <span className="font-display text-3xl font-bold text-primary">{report.price}</span>
+                  {report.originalPrice && (
+                    <span className="text-sm text-muted-foreground line-through">{report.originalPrice}</span>
+                  )}
+                </div>
                 <Link
                   to={report.link}
-                  className="flex items-center justify-center gap-2 w-full btn-primary"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
                 >
-                  Order Now
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  View Report <ArrowRight className="w-4 h-4" />
                 </Link>
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Sample Report CTA */}
-      <section className="relative overflow-hidden py-20 gradient-hero">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[radial-gradient(ellipse,hsl(var(--amber)/0.15),transparent_70%)]" />
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="relative max-w-2xl mx-auto"
-          >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-              Want to See a Sample Report?
-            </h2>
-            <p className="text-primary-foreground/80 mb-8">
-              Download our free sample report to understand the depth and quality of our astrological analysis.
-            </p>
-            <button className="btn-primary inline-flex items-center">
-              <Download className="w-5 h-5 inline-block mr-2" />
-              Download Sample Report
-            </button>
-          </motion.div>
         </div>
       </section>
     </Layout>

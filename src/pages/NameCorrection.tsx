@@ -14,6 +14,7 @@ import {
   Clock
 } from "lucide-react";
 import { pricing, formatINR } from "@/config/pricing";
+import { nameCorrectionPackages } from "@/data/serviceCatalog";
 import bookMockup from "@/assets/name-blueprint-book.png";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
 import heroDesktop from "@/assets/name-correction-hero.webp";
@@ -101,9 +102,8 @@ const NameCorrection = () => {
   const [activeT, setActiveT] = useState(0);
   const [nameQty, setNameQty] = useState<1 | 2 | 3>(1);
 
-  // Card 1 dynamic price
-  const card1Base = 293;
-  const card1Price = nameQty === 1 ? card1Base : nameQty === 2 ? Math.round(card1Base * nameQty * 0.9) : Math.round(card1Base * nameQty * 0.85);
+  const nameCheckPackages = nameCorrectionPackages.filter((p) => p.formType === "name-check");
+  const activeNameCheck = nameCheckPackages[nameQty - 1] ?? nameCheckPackages[0];
 
   return (
     <Layout>
@@ -247,20 +247,25 @@ const NameCorrection = () => {
                       color: nameQty === q ? COLORS.white : COLORS.brown,
                       border: `1px solid ${nameQty === q ? COLORS.amber : COLORS.cardBorder}`,
                     }}>
-                    {q} Name{q > 1 ? "s" : ""}{q === 2 ? " — 10% OFF" : q === 3 ? " — 15% OFF" : ""}
+                    {nameCheckPackages[q - 1]?.name ?? `${q} Name${q > 1 ? "s" : ""}`}
                   </button>
                 ))}
               </div>
-              <div style={{ ...heading, color: COLORS.brown }} className="text-5xl font-bold mb-5">₹{card1Price}</div>
+              <div className="flex items-baseline gap-2 mb-5">
+                {activeNameCheck.originalPrice && (
+                  <span className="line-through text-lg" style={{ color: "#987" }}>{formatINR(activeNameCheck.originalPrice)}</span>
+                )}
+                <span style={{ ...heading, color: COLORS.brown }} className="text-5xl font-bold">{formatINR(activeNameCheck.price)}</span>
+              </div>
               <ul className="space-y-3 mb-6 flex-1">
                 {["Quick Name Compatibility Check", "Mulank & Bhagyank Overview", "Clear Yes/No Recommendation", "Expert Analysis Summary"].map((f, i) => (
                   <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
                 ))}
               </ul>
-              <Link to={payLink(`Name Check (${nameQty} name${nameQty > 1 ? "s" : ""})`, card1Price, "name-check")}
+              <Link to={payLink(activeNameCheck.serviceTitle, activeNameCheck.price, activeNameCheck.formType)}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
-                Get Name Check for {nameQty} Name{nameQty > 1 ? "s" : ""}
+                Get {activeNameCheck.name}
               </Link>
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
                 <span className="font-semibold"><Clock className="inline w-3 h-3 mr-1" />Delivered within 24 hours</span>
@@ -284,7 +289,7 @@ const NameCorrection = () => {
                   <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
                 ))}
               </ul>
-              <Link to={payLink("Name Correction Report", pricing.nameCorrection.standard)}
+              <Link to={payLink("Name Correction", pricing.nameCorrection.standard, "name-correction")}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
                 style={{ background: COLORS.gold, color: COLORS.white }}>
                 Get Name Correction Report
@@ -319,7 +324,7 @@ const NameCorrection = () => {
                   "Everything in Name Correction Report",
                   "Lucky Color Analysis",
                   "Lucky Number Analysis",
-                  "Mobile Numerology",
+                  "Lucky Mobile Number",
                   "Missing Number Remedy",
                   "Repeating Number Remedy",
                   "Covers 2 People",
@@ -327,7 +332,7 @@ const NameCorrection = () => {
                   <li key={i} className="flex items-start text-[14px]" style={{ color: COLORS.brown }}><Diamond color={COLORS.amber} />{f}</li>
                 ))}
               </ul>
-              <Link to={payLink("Name Correction + Complete Numerology Blueprint", 7397, "name-correction-couple")}
+              <Link to={payLink("Name Correction + Complete Blueprint", pricing.nameCorrection.withBlueprint, "name-correction")}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90 mt-auto"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
                 Get Complete Blueprint
