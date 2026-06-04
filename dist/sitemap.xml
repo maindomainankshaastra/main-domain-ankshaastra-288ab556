@@ -2,23 +2,29 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://ankshaastra.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>https://ankshaastra.com/services</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://ankshaastra.com/services/name-correction</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://ankshaastra.com/reports</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://ankshaastra.com/services/call-consultation</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://ankshaastra.com/services/lucky-numerology</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://ankshaastra.com/services/business-numerology</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://ankshaastra.com/services/varshphal-report</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://ankshaastra.com/services/office-vastu</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://ankshaastra.com/reports</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/name-correction</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://ankshaastra.com/reports/personalized-kundali</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/reports/varshphal-report</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://ankshaastra.com/reports/pyaar-shastra</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/lucky-vehicle-number</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/lucky-vehicle-color</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/lucky-vehicle-purchase-date</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/lucky-mobile-number</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/lucky-flat-number</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/relationship-analysis</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/business-name-correction</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/business-mobile-number</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/business-tagline-analysis</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/company-registration-date</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/company-bank-account-opening-date</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/land-purchase-date</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/plot-number-analysis</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/exhibition-stall-number</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/commercial-space-analysis</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/business-partner-compatibility</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ankshaastra.com/services/office-vastu</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://ankshaastra.com/consultation</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://ankshaastra.com/calculator</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://ankshaastra.com/courses</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://ankshaastra.com/about</loc><changefreq>yearly</changefreq><priority>0.6</priority></url>
   <url><loc>https://ankshaastra.com/contact</loc><changefreq>yearly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://ankshaastra.com/podcast</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://ankshaastra.com/blog</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://ankshaastra.com/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://ankshaastra.com/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://ankshaastra.com/refund</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>

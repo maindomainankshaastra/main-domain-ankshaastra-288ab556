@@ -3,8 +3,9 @@ import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
-import { formatINR, pricing } from "@/config/pricing";
+import { formatINR } from "@/config/pricing";
 import { whatsappHref } from "@/config/business";
+import { servicesCatalogListings, getListingRoute } from "@/data/serviceRegistry";
 import { 
   Phone, Video, MessageSquare, User, Baby, Building2, Calendar,
   Armchair, Building, ArrowRight, Sparkles, ExternalLink,
@@ -21,7 +22,15 @@ const serviceIconMap: Record<string, LucideIcon> = {
   "Lucky Vehicle Number": Car,
   "Lucky Mobile Number": Smartphone,
   "Lucky Flat / Plot Number": HomeIcon,
+  "Lucky Flat Number": HomeIcon,
+  "Lucky Vehicle Color": Car,
+  "Lucky Vehicle Purchase Date": Calendar,
+  "Business Mobile Number": Phone,
+  "Business Tagline Analysis": Tag,
+  "Company Bank Account Opening Date": Calendar,
   "C-Section Baby Dates": Calendar,
+  "C-Section Dates": Calendar,
+  "Premium Personalised Kundli 2.0": Sparkles,
   "Perfect Baby Name": Baby,
   "Relationship Analysis": Heart,
   "Pyaar Shaastra Report": Heart,
@@ -65,53 +74,34 @@ const badgeText = (title: string): string => {
   return "Book";
 };
 
+const DEPRECATED_GROUP_TITLES = new Set([
+  "lucky numerology",
+  "business & brand numerology",
+  "mobile numerology",
+  "name correction blueprint",
+]);
+
+const REPORT_ONLY_TITLES = new Set([
+  "varshphal report",
+  "varshphal report 2026",
+  "pyaar shaastra report",
+  "pyaar shaastra report original",
+]);
+
+const catalogBaseline: ServiceWithPageRoute[] = servicesCatalogListings.map((item) => ({
+  id: `catalog-${item.id}`,
+  title: item.title,
+  description: item.description,
+  category: item.category,
+  price: item.price,
+  gst_rate: 18,
+  is_active: true,
+  _pageRoute: item.route,
+}));
+
 const getServiceLink = (service: Service & { _pageRoute?: string }): string => {
   if (service._pageRoute) return service._pageRoute;
-
-  switch (service.title) {
-    case "Name Correction":
-      return "/services/name-correction";
-    case "Pyaar Shaastra Report":
-      return "/reports/pyaar-shastra";
-    case "Perfect Baby Name":
-      return "https://empower.ankshaastra.com";
-    case "C-Section Baby Dates":
-      return "https://miraclebaby.ankshaastra.com";
-    case "1:1 Audio Call":
-    case "1:1 Video Call":
-    case "1:1 Call Consultation":
-      return "/services/call-consultation";
-    case "Lucky Vehicle Number":
-    case "Lucky Mobile Number":
-    case "Lucky Flat / Plot Number":
-      return "/services/lucky-numerology";
-    case "Business Name Correction":
-    case "Business Phone Number":
-    case "Brand Tagline Correction":
-    case "Business Partner Compatibility":
-    case "Company Registration Date":
-    case "Bank Account Opening Date":
-    case "Land Purchase Date":
-    case "Plot Number Analysis":
-    case "Exhibition Stall Number":
-    case "Commercial Space Analysis":
-      return "/services/business-numerology";
-    case "Relationship Analysis":
-      return `/payment?service=${encodeURIComponent("Relationship Analysis")}&amount=${pricing.relationship.analysis}&formType=relationship-analysis`;
-    case "Personalized Kundali":
-    case "Premium Personalised Kundli 2.0":
-      return "/reports/personalized-kundali";
-    case "Varshphal Report 2026":
-      return "/services/varshphal-report";
-    case "Lucky Numerology":
-      return "/services/lucky-numerology";
-    case "Business Partner Compatibility":
-      return `/payment?service=${encodeURIComponent("Business Partner Compatibility")}&amount=${pricing.business.partnerCompat}&formType=business-partner`;
-    case "Office Vastu":
-      return "/services/office-vastu";
-    default:
-      return `/payment?service=${encodeURIComponent(service.title)}&amount=${service.price}`;
-  }
+  return getListingRoute(service.title) || `/payment?service=${encodeURIComponent(service.title)}&amount=${service.price}`;
 };
 
 const getServiceTarget = (link: string): "_blank" | "_self" =>
@@ -250,16 +240,31 @@ const ServicesPage = () => {
           _pageRoute: page.route,
         }));
 
-        const titles = new Set(dbServices.map((s) => s.title.toLowerCase()));
-        const uniqueCms = cmsAsServices.filter((p) => !titles.has(p.title.toLowerCase()));
+        const filterForServicesPage = (s: Service) => {
+          const t = s.title.toLowerCase();
+          return !REPORT_ONLY_TITLES.has(t) && !DEPRECATED_GROUP_TITLES.has(t);
+        };
 
-        setServices([...dbServices, ...uniqueCms]);
+        const filteredDb = dbServices.filter(filterForServicesPage);
+        const filteredCms = cmsAsServices.filter(
+          (p) =>
+            filterForServicesPage(p) &&
+            !filteredDb.some((s) => s.title.toLowerCase() === p.title.toLowerCase()),
+        );
 
-        if (!servicesRes.ok && !pagesRes.ok) {
+        const catalogTitles = new Set(catalogBaseline.map((s) => s.title.toLowerCase()));
+        const extraFromApi = [...filteredDb, ...filteredCms].filter(
+          (s) => !catalogTitles.has(s.title.toLowerCase()),
+        );
+
+        setServices([...catalogBaseline, ...extraFromApi]);
+
+        if (!servicesRes.ok && !pagesRes.ok && extraFromApi.length === 0) {
           throw new Error(`Server error: ${servicesRes.statusText}`);
         }
       } catch (err) {
         if (controller.signal.aborted) return;
+        setServices(catalogBaseline);
         setError(err instanceof Error ? err.message : "Unable to load services");
       } finally {
         if (!controller.signal.aborted) setRefreshing(false);
@@ -410,7 +415,7 @@ const ServicesPage = () => {
           </div>
 
           {/* Cards grid */}
-          {error && services.length === 0 ? (
+          {error && visibleServices.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-destructive text-lg">{error}</p>
             </div>

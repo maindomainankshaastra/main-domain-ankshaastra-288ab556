@@ -1,24 +1,43 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, ScrollText, Baby, Star, Calendar, User, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { Menu, X, ChevronDown, User, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { servicesNavItems, reportsNavItems } from "@/data/navMenu";
 
-const reportsDropdown = [
-  { name: "Name Correction", path: "/services/name-correction", icon: ScrollText, description: "Align your name's vibration for success" },
-  { name: "Pyaar Shaastra Report", path: "/reports/pyaar-shastra", icon: ScrollText, description: "Love & life compatibility report in 24 hours" },
-  { name: "Perfect Baby Name Report", path: "https://empower.ankshaastra.com", icon: Baby, description: "Numerology-based baby name selection", external: true },
-  { name: "Personalized Kundali", path: "/reports/personalized-kundali", icon: Star, description: "Complete birth chart & life predictions" },
-  { name: "Varshphal Report 2026", path: "/services/varshphal-report", icon: Calendar, description: "Your complete yearly numerology guide" },
-];
+type DropdownMenuConfig = {
+  name: string;
+  pathPrefix: string;
+  items: typeof servicesNavItems;
+};
 
-const navLinks = [
+const navLinks: Array<
+  | { name: string; path: string; external?: boolean }
+  | { name: string; path: string; hasDropdown: true; dropdown: DropdownMenuConfig }
+> = [
   { name: "Home", path: "/" },
-  { name: "Reports", path: "/reports", hasDropdown: true },
-  { name: "Services", path: "/services" },
+  {
+    name: "Services",
+    path: "/services",
+    hasDropdown: true,
+    dropdown: { name: "Services", pathPrefix: "/services", items: servicesNavItems },
+  },
+  {
+    name: "Reports",
+    path: "/reports",
+    hasDropdown: true,
+    dropdown: { name: "Reports", pathPrefix: "/reports", items: reportsNavItems },
+  },
   { name: "About", path: "/about" },
   { name: "Podcasts", path: "/podcast" },
   { name: "Courses", path: "/courses" },
@@ -28,103 +47,136 @@ const navLinks = [
   { name: "Consultation", path: "/consultation" },
 ];
 
+function NavDropdown({
+  config,
+  isOpen,
+  onOpen,
+  onClose,
+  isActive,
+}: {
+  config: DropdownMenuConfig;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  isActive: boolean;
+}) {
+  return (
+    <div className="relative" onMouseEnter={onOpen} onMouseLeave={onClose}>
+      <button
+        type="button"
+        onClick={() => (isOpen ? onClose() : onOpen())}
+        className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+          isActive ? "bg-amber/20 text-cream-light" : "text-cream-light/85 hover:text-cream-light hover:bg-amber/15"
+        }`}
+      >
+        {config.name}
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.18 }}
+            className="absolute top-full left-0 mt-2 w-80 max-h-[70vh] overflow-y-auto bg-card border border-border rounded-2xl shadow-xl z-[100]"
+          >
+            <div className="p-2">
+              {config.items.map((item) => {
+                const Icon = item.icon;
+                if (item.external) {
+                  return (
+                    <a
+                      key={item.name}
+                      href={item.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors group"
+                    >
+                      {Icon && (
+                        <div className="w-9 h-9 rounded-lg bg-primary/10 border border-accent/30 flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-4 h-4 text-primary" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-foreground group-hover:text-primary">{item.name}</p>
+                        {item.description && <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>}
+                      </div>
+                    </a>
+                  );
+                }
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className="flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors group"
+                  >
+                    {Icon && (
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 border border-accent/30 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-primary" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-semibold text-foreground group-hover:text-primary">{item.name}</p>
+                      {item.description && <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [reportsOpen, setReportsOpen] = useState(false);
-  const [mobileReportsOpen, setMobileReportsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileDropdown, setMobileDropdown] = useState<string | null>(null);
   const location = useLocation();
   const { user, role, signOut } = useAuth();
+  const desktopNavRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsOpen(false);
-    setReportsOpen(false);
+    setOpenDropdown(null);
+    setMobileDropdown(null);
   }, [location]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setReportsOpen(false);
+      if (desktopNavRef.current && !desktopNavRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isDropdownActive = (prefix: string) => location.pathname.startsWith(prefix);
+
   return (
-    <header
-      className="fixed top-0 left-0 right-0 z-50 w-full bg-secondary border-b border-amber/20 shadow-sm"
-      style={{ isolation: "isolate" }}
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-secondary border-b border-amber/20 shadow-sm" style={{ isolation: "isolate" }}>
       <nav className="w-full px-4 lg:px-6">
         <div className="flex items-center justify-between h-16 lg:h-[4.25rem] max-w-[1920px] mx-auto gap-4">
-          {/* Logo */}
           <Link to="/" className="flex-shrink-0 flex items-center">
-            <img
-              src={logo}
-              alt="Ankshaastra"
-              className="h-9 sm:h-10 lg:h-11 w-auto max-w-[140px] sm:max-w-[160px] object-contain object-left"
-            />
+            <img src={logo} alt="Ankshaastra" className="h-9 sm:h-10 lg:h-11 w-auto max-w-[140px] sm:max-w-[160px] object-contain object-left" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden xl:flex items-center gap-0.5">
+          <div ref={desktopNavRef} className="hidden xl:flex items-center gap-0.5">
             {navLinks.map((link) => {
-              if (link.hasDropdown) {
+              if ("hasDropdown" in link && link.hasDropdown) {
                 return (
-                  <div key={link.path} className="relative" ref={dropdownRef}>
-                    <button
-                      onClick={() => setReportsOpen(!reportsOpen)}
-                      onMouseEnter={() => setReportsOpen(true)}
-                      className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
-                        location.pathname.startsWith("/reports")
-                          ? "bg-amber/20 text-cream-light"
-                          : "text-cream-light/85 hover:text-cream-light hover:bg-amber/15"
-                      }`}
-                    >
-                      {link.name}
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${reportsOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    <AnimatePresence>
-                      {reportsOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          transition={{ duration: 0.18 }}
-                          onMouseLeave={() => setReportsOpen(false)}
-                          className="absolute top-full left-0 mt-2 w-72 bg-card border border-border rounded-2xl shadow-xl overflow-hidden z-[100]"
-                        >
-                          <div className="p-2">
-                            {reportsDropdown.map((item) => {
-                              const Icon = item.icon;
-                              const Comp: any = item.external ? "a" : Link;
-                              const props: any = item.external
-                                ? { href: item.path, target: "_blank", rel: "noopener noreferrer" }
-                                : { to: item.path };
-                              return (
-                                <Comp
-                                  key={item.name}
-                                  {...props}
-                                  className="flex items-start gap-3 px-3 py-3 rounded-xl hover:bg-muted transition-colors group"
-                                >
-                                  <div className="w-9 h-9 rounded-lg bg-primary/10 border border-accent/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <Icon className="w-4 h-4 text-primary" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                                      {item.name}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
-                                  </div>
-                                </Comp>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                  <NavDropdown
+                    key={link.name}
+                    config={link.dropdown}
+                    isOpen={openDropdown === link.name}
+                    onOpen={() => setOpenDropdown(link.name)}
+                    onClose={() => setOpenDropdown(null)}
+                    isActive={isDropdownActive(link.dropdown.pathPrefix)}
+                  />
                 );
               }
 
@@ -147,9 +199,7 @@ const Navbar = () => {
                   key={link.path}
                   to={link.path}
                   className={`px-3 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
-                    location.pathname === link.path
-                      ? "bg-amber/20 text-cream-light"
-                      : "text-cream-light/85 hover:text-cream-light hover:bg-amber/15"
+                    location.pathname === link.path ? "bg-amber/20 text-cream-light" : "text-cream-light/85 hover:text-cream-light hover:bg-amber/15"
                   }`}
                 >
                   {link.name}
@@ -158,7 +208,6 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* Right: Language + Auth + mobile toggle */}
           <div className="flex items-center gap-2">
             {user ? (
               <DropdownMenu>
@@ -202,63 +251,53 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
               className="xl:hidden overflow-hidden bg-card border-t border-border rounded-b-2xl"
             >
               <div className="py-4 space-y-1 max-h-[70vh] overflow-y-auto">
                 {navLinks.map((link) => {
-                  if (link.hasDropdown) {
+                  if ("hasDropdown" in link && link.hasDropdown) {
+                    const expanded = mobileDropdown === link.name;
                     return (
-                      <div key={link.path}>
+                      <div key={link.name}>
                         <button
-                          onClick={() => setMobileReportsOpen(!mobileReportsOpen)}
+                          type="button"
+                          onClick={() => setMobileDropdown(expanded ? null : link.name)}
                           className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg"
                         >
                           {link.name}
-                          <ChevronDown className={`w-4 h-4 transition-transform ${mobileReportsOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
                         </button>
                         <AnimatePresence>
-                          {mobileReportsOpen && (
+                          {expanded && (
                             <motion.div
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: "auto" }}
                               exit={{ opacity: 0, height: 0 }}
-                              className="ml-4 border-l-2 border-accent pl-4 overflow-hidden"
+                              className="ml-4 border-l-2 border-accent pl-3 overflow-hidden"
                             >
-                              {reportsDropdown.map((item) => {
-                                const Icon = item.icon;
-                                if (item.external) {
-                                  return (
-                                    <a
-                                      key={item.name}
-                                      href={item.path}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-primary rounded-lg hover:bg-muted"
-                                    >
-                                      <Icon className="w-4 h-4 flex-shrink-0" />
-                                      {item.name}
-                                    </a>
-                                  );
-                                }
-                                return (
-                                  <Link
+                              {link.dropdown.items.map((item) =>
+                                item.external ? (
+                                  <a
                                     key={item.name}
-                                    to={item.path}
-                                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-primary rounded-lg hover:bg-muted"
+                                    href={item.path}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block px-3 py-2 text-sm text-muted-foreground hover:text-primary"
                                   >
-                                    <Icon className="w-4 h-4 flex-shrink-0" />
+                                    {item.name}
+                                  </a>
+                                ) : (
+                                  <Link key={item.name} to={item.path} className="block px-3 py-2 text-sm text-muted-foreground hover:text-primary">
                                     {item.name}
                                   </Link>
-                                );
-                              })}
+                                ),
+                              )}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -268,13 +307,7 @@ const Navbar = () => {
 
                   if (link.external) {
                     return (
-                      <a
-                        key={link.path}
-                        href={link.path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg"
-                      >
+                      <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg">
                         {link.name}
                       </a>
                     );
@@ -285,9 +318,7 @@ const Navbar = () => {
                       key={link.path}
                       to={link.path}
                       className={`block px-4 py-3 text-sm font-medium rounded-lg ${
-                        location.pathname === link.path
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-muted"
+                        location.pathname === link.path ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
                       }`}
                     >
                       {link.name}
@@ -296,16 +327,12 @@ const Navbar = () => {
                 })}
                 {user ? (
                   <>
-                    <Link to="/dashboard" className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg">
-                      <LayoutDashboard className="w-4 h-4 inline mr-2" />My Dashboard
-                    </Link>
+                    <Link to="/dashboard" className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg">My Dashboard</Link>
                     {role === "admin" && (
-                      <Link to="/admin" className="block px-4 py-3 text-sm font-medium text-primary hover:bg-muted rounded-lg">
-                        <ShieldCheck className="w-4 h-4 inline mr-2" />Admin Panel
-                      </Link>
+                      <Link to="/admin" className="block px-4 py-3 text-sm font-medium text-primary hover:bg-muted rounded-lg">Admin Panel</Link>
                     )}
-                    <button onClick={signOut} className="w-full text-left block px-4 py-3 text-sm font-medium text-destructive hover:bg-muted rounded-lg">
-                      <LogOut className="w-4 h-4 inline mr-2" />Sign Out
+                    <button type="button" onClick={signOut} className="w-full text-left block px-4 py-3 text-sm font-medium text-destructive hover:bg-muted rounded-lg">
+                      Sign Out
                     </button>
                   </>
                 ) : (

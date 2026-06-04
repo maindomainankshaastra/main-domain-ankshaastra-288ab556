@@ -18,11 +18,10 @@ const services: Array<{
   { icon: Sparkles, title: "Call Consultation", description: "1-on-1 personal guidance with Himansshu Ji on call", link: "/consultation", badge: "1-on-1", cta: "Book Now", category: "Consultations" },
   { icon: ScrollText, title: "Name Correction", description: "Align your name's vibration for lasting success", link: "/services/name-correction", badge: "India's No.1", cta: "Order Now", category: "Reports" },
   { icon: Heart, title: "Perfect Baby Name", description: "Numerology-based auspicious baby naming", link: "https://empower.ankshaastra.com", external: true, badge: "Bestseller", cta: "Order Now", category: "Reports" },
-  { icon: Gem, title: "Business Numerology", description: "Brand & business name alignment for growth", link: "/services/business-numerology", badge: "For Owners", cta: "Check Now", category: "Consultations" },
+  { icon: Gem, title: "Business Name Correction", description: "Brand & business name alignment for growth", link: "/services/business-name-correction", badge: "For Owners", cta: "Check Now", category: "Consultations" },
   { icon: Star, title: "C-Section Dates", description: "Auspicious birth dates for your newborn", link: "https://miraclebaby.ankshaastra.com", external: true, badge: "Specialist", cta: "Book Now", category: "Kundli" },
-  { icon: Crown, title: "Varshphal 2026", description: "Your complete annual numerology forecast", link: "/services/varshphal-report", badge: "New", cta: "Order Now", category: "Reports" },
   { icon: Building, title: "Office Vastu", description: "Workplace alignment for prosperity & harmony", link: "/services/office-vastu", badge: "Vastu", cta: "Check Now", category: "Online Puja" },
-  { icon: Smartphone, title: "Lucky Numerology", description: "Lucky mobile, vehicle, and flat numbers", link: "/services/lucky-numerology", badge: "Quick", cta: "Check Now", category: "Reports" },
+  { icon: Smartphone, title: "Lucky Mobile Number", description: "Find your numerologically aligned mobile number", link: "/services/lucky-mobile-number", badge: "Quick", cta: "Check Now", category: "Reports" },
 ];
 
 const tabs: Category[] = ["All", "Consultations", "Reports", "Kundli", "Online Puja"];

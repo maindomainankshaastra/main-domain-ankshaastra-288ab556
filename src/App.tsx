@@ -49,8 +49,8 @@ const PricingModule = lazy(() => import("./pages/admin/modules/PricingModule"));
 const ServicePagesModule = lazy(() => import("./pages/admin/modules/ServicePagesModule"));
 const DynamicServicePage = lazy(() => import("./pages/DynamicServicePage"));
 const CallConsultation = lazy(() => import("./pages/CallConsultation"));
-const LuckyNumerology = lazy(() => import("./pages/LuckyNumerology"));
 const BusinessNumerology = lazy(() => import("./pages/BusinessNumerology"));
+const ServiceSlugPage = lazy(() => import("./pages/ServiceSlugPage"));
 
 const queryClient = new QueryClient();
 
@@ -74,17 +74,18 @@ const App = () => (
             <Route path="/services/name-correction" element={<NameCorrection />} />
             <Route path="/services/csection-dates" element={<CSectionDates />} />
             <Route path="/services/baby-name" element={<BabyName />} />
-            <Route path="/services/varshphal-report" element={<VarshphalReport />} />
-            <Route path="/services/mobile-numerology" element={<Navigate to="/services/lucky-numerology" replace />} />
+            <Route path="/services/varshphal-report" element={<Navigate to="/reports/varshphal-report" replace />} />
+            <Route path="/services/mobile-numerology" element={<Navigate to="/services/lucky-mobile-number" replace />} />
+            <Route path="/services/lucky-numerology" element={<Navigate to="/services/lucky-vehicle-number" replace />} />
+            <Route path="/services/business-numerology" element={<Navigate to="/services/business-name-correction" replace />} />
             <Route path="/services/office-vastu" element={<OfficeVastu />} />
             <Route path="/services/call-consultation" element={<CallConsultation />} />
-            <Route path="/services/lucky-numerology" element={<LuckyNumerology />} />
-            <Route path="/services/business-numerology" element={<BusinessNumerology />} />
-            <Route path="/services/:slug" element={<DynamicServicePage />} />
+            <Route path="/services/:slug" element={<ServiceSlugPage />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/calculator" element={<Calculator />} />
             <Route path="/consultation" element={<Consultation />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/reports/varshphal-report" element={<VarshphalReport />} />
             <Route path="/reports/personalized-kundali" element={<PersonalizedKundali />} />
             <Route path="/reports/pyaar-shastra" element={<PyaarShastra />} />
             <Route path="/reports/:slug" element={<DynamicServicePage />} />

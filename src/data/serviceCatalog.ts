@@ -127,6 +127,7 @@ export const nameCorrectionHubAddons = [
   { label: "Missing Number & Repeating Number Remedy", price: pricing.addons.missingNumberRemedy },
 ];
 
-export const serviceHubs = [callConsultationHub, luckyNumerologyHub, businessNumerologyHub];
+/** Hub pages with multiple packages (lucky/business items are standalone pages). */
+export const serviceHubs = [callConsultationHub];
 
 export { payLink };

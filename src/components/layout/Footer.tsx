@@ -12,7 +12,8 @@ const columns = [
     links: [
       { name: "Name Correction", to: "/services/name-correction" },
       { name: "Personalized Kundali", to: "/reports/personalized-kundali" },
-      { name: "Varshphal 2026", to: "/services/varshphal-report" },
+      { name: "Varshphal 2026", to: "/reports/varshphal-report" },
+      { name: "Pyaar Shaastra", to: "/reports/pyaar-shastra" },
       { name: "Baby Name", to: "https://empower.ankshaastra.com", external: true },
     ],
   },
@@ -21,7 +22,7 @@ const columns = [
     links: [
       { name: "Office Vastu", to: "/services/office-vastu" },
       { name: "C-Section Dates", to: "https://miraclebaby.ankshaastra.com", external: true },
-      { name: "Lucky Numerology", to: "/services/lucky-numerology" },
+      { name: "Lucky Mobile Number", to: "/services/lucky-mobile-number" },
       { name: "All Services", to: "/services" },
     ],
   },

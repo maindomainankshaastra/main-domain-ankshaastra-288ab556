@@ -59,7 +59,7 @@ const BusinessNumerologyModal = ({ isOpen, onClose }: Props) => {
               </div>
 
               <div className="p-6 pt-0">
-                <Link to="/services/business-numerology" onClick={onClose}
+                <Link to="/services/business-name-correction" onClick={onClose}
                   className="btn-primary w-full inline-flex items-center justify-center gap-2 py-3.5">
                   View All Packages <ArrowRight className="w-4 h-4" />
                 </Link>
