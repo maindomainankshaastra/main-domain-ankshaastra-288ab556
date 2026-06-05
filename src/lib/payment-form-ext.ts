@@ -58,7 +58,7 @@ export const luckyMobileSchema = z.object({
   gender: genderField,
   currentMobile: z.string().trim().max(20).optional().or(z.literal("")),
   preferredSeries: z.string().trim().max(100).optional().or(z.literal("")),
-  preferredDigits: z.string().trim().max(100).optional().or(z.literal("")),
+  preferredDigits: z.string().trim().min(1, "Preferred digits required").max(100),
   avoidDigits: z.string().trim().max(100).optional().or(z.literal("")),
   purpose: z.enum(["personal", "business", "professional", "financial"], { required_error: "Select purpose" }),
   ...contactFields,
@@ -70,8 +70,8 @@ export const luckyFlatSchema = z.object({
   currentCity: z.string().trim().min(2, "City required").max(80),
   currentState: z.string().trim().min(2, "State required").max(80),
   gender: genderField,
-  towerBlock: z.string().trim().max(80).optional().or(z.literal("")),
-  floorNumber: z.string().trim().max(20).optional().or(z.literal("")),
+  towerBlock: z.string().trim().min(1, "Tower / wing / block required").max(80),
+  floorNumber: z.string().trim().min(1, "Floor number required").max(20),
   propertyPurpose: z.enum(["self", "investment", "rental", "business"], { required_error: "Select purpose" }),
   facingDirection: z.string().trim().max(80).optional().or(z.literal("")),
   connectedNumber: z.string().trim().max(80).optional().or(z.literal("")),
@@ -184,17 +184,42 @@ export const EXTENDED_FORM_TYPES: ExtendedFormType[] = [
 export function inferExtendedFormType(service: string | null): ExtendedFormType | null {
   if (!service) return null;
   const s = service.toLowerCase();
-  if (s.includes("lucky vehicle color") || s.includes("vehicle color")) return "lucky-vehicle-color";
-  if (s.includes("vehicle purchase date") || s.includes("purchase date")) return "lucky-vehicle-date";
-  if (s.includes("lucky vehicle") || s.includes("vehicle number")) return "lucky-vehicle";
-  if (s.includes("lucky mobile") || s.includes("mobile number")) return "lucky-mobile";
-  if (s.includes("lucky flat") || s.includes("flat number") || s.includes("plot number")) return "lucky-flat";
-  if (s.includes("relationship analysis")) return "relationship-analysis";
+  if (
+    s.includes("office vastu") ||
+    s.includes("departmental") ||
+    s.includes("ceo") ||
+    s.includes("cash counter") ||
+    s.includes("management sitting") ||
+    s.includes("interior color")
+  ) {
+    return "office-vastu";
+  }
   if (s.includes("business partner")) return "business-partner";
-  if (s.includes("company registration") || s.includes("bank account") || s.includes("land purchase")) return "business-dates";
-  if (s.includes("plot") || s.includes("exhibition stall") || s.includes("commercial space")) return "business-property";
-  if (s.includes("business name") || s.includes("business tagline") || s.includes("brand tagline") || s.includes("business phone") || s.includes("business mobile")) return "business-brand";
-  if (s.includes("office vastu") || s.includes("ceo") || s.includes("departmental") || s.includes("cash counter") || s.includes("management sitting") || s.includes("interior color")) return "office-vastu";
+  if (s.includes("relationship analysis")) return "relationship-analysis";
+  if (s.includes("company registration") || s.includes("bank account") || s.includes("land purchase")) {
+    return "business-dates";
+  }
+  if (s.includes("plot number") || s.includes("exhibition stall") || s.includes("commercial space")) {
+    return "business-property";
+  }
+  if (
+    s.includes("business name") ||
+    s.includes("business tagline") ||
+    s.includes("brand tagline") ||
+    s.includes("business phone") ||
+    s.includes("business mobile")
+  ) {
+    return "business-brand";
+  }
+  if (s.includes("lucky vehicle color") || s.includes("vehicle color")) return "lucky-vehicle-color";
+  if (s.includes("vehicle purchase date") || (s.includes("lucky vehicle") && s.includes("purchase"))) {
+    return "lucky-vehicle-date";
+  }
+  if (s.includes("lucky vehicle") || s.includes("vehicle number")) return "lucky-vehicle";
+  if (s.includes("lucky mobile") || (s.includes("mobile number") && !s.includes("business"))) {
+    return "lucky-mobile";
+  }
+  if (s.includes("lucky flat") || s.includes("flat number")) return "lucky-flat";
   return null;
 }
 

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import ExternalRedirect from "@/components/ExternalRedirect";
 import Index from "./pages/Index";
 import ThankYou from "./pages/ThankYou";
 const Services = lazy(() => import("./pages/Services"));
@@ -20,8 +21,6 @@ const Shop = lazy(() => import("./pages/Shop"));
 const NameCorrection = lazy(() => import("./pages/NameCorrection"));
 const Payment = lazy(() => import("./pages/Payment"));
 const About = lazy(() => import("./pages/About"));
-const CSectionDates = lazy(() => import("./pages/CSectionDates"));
-const BabyName = lazy(() => import("./pages/BabyName"));
 const VarshphalReport = lazy(() => import("./pages/VarshphalReport"));
 const OfficeVastu = lazy(() => import("./pages/OfficeVastu"));
 const Podcast = lazy(() => import("./pages/Podcast"));
@@ -72,12 +71,12 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/services" element={<Services />} />
             <Route path="/services/name-correction" element={<NameCorrection />} />
-            <Route path="/services/csection-dates" element={<CSectionDates />} />
-            <Route path="/services/baby-name" element={<BabyName />} />
+            <Route path="/services/csection-dates" element={<ExternalRedirect url="https://miraclebaby.ankshaastra.com" />} />
+            <Route path="/services/baby-name" element={<ExternalRedirect url="https://empower.ankshaastra.com" />} />
             <Route path="/services/varshphal-report" element={<Navigate to="/reports/varshphal-report" replace />} />
             <Route path="/services/mobile-numerology" element={<Navigate to="/services/lucky-mobile-number" replace />} />
             <Route path="/services/lucky-numerology" element={<Navigate to="/services/lucky-vehicle-number" replace />} />
-            <Route path="/services/business-numerology" element={<Navigate to="/services/business-name-correction" replace />} />
+            <Route path="/services/business-numerology" element={<BusinessNumerology />} />
             <Route path="/services/office-vastu" element={<OfficeVastu />} />
             <Route path="/services/call-consultation" element={<CallConsultation />} />
             <Route path="/services/:slug" element={<ServiceSlugPage />} />

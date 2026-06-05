@@ -20,6 +20,7 @@ import type { ExtendedFormType } from "@/lib/payment-form-ext";
 
 type Props = {
   formType: ExtendedFormType;
+  serviceName?: string;
   control: any;
   DOBPicker: React.ComponentType<{ control: any; name?: string }>;
   TOBPicker: React.ComponentType<{ control: any; name?: string }>;
@@ -37,6 +38,7 @@ const ContactBlock = ({ EmailField, WhatsappField, control }: Pick<Props, "Email
 
 export function ExtendedPaymentFields({
   formType,
+  serviceName,
   control,
   DOBPicker,
   TOBPicker,
@@ -90,7 +92,7 @@ export function ExtendedPaymentFields({
           )} />
         </div>
         <FormField control={control} name="numberOptions" render={({ field }) => (
-          <FormItem><FormLabel>Main Vehicle Number Options (if any)</FormLabel><FormControl><Input placeholder="e.g. 8778" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Preferred Vehicle Number Options</FormLabel><FormControl><Input placeholder="e.g. 8778" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <ContactBlock control={control} EmailField={EmailField} WhatsappField={WhatsappField} />
       </>
@@ -140,18 +142,18 @@ export function ExtendedPaymentFields({
         </div>
         <GenderRadio control={control} />
         <FormField control={control} name="currentMobile" render={({ field }) => (
-          <FormItem><FormLabel>Current Mobile Number (if any)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Current Mobile Number (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField control={control} name="preferredSeries" render={({ field }) => (
-            <FormItem><FormLabel>Preferred Series</FormLabel><FormControl><Input placeholder="98, 99, 88" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Preferred Series</FormLabel><FormControl><Input placeholder="98 / 99 / 88" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="preferredDigits" render={({ field }) => (
-            <FormItem><FormLabel>Preferred Digits</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Preferred Digits *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <FormField control={control} name="avoidDigits" render={({ field }) => (
-          <FormItem><FormLabel>Numbers to Avoid</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Numbers To Avoid (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={control} name="purpose" render={({ field }) => (
           <FormItem><FormLabel>Purpose *</FormLabel>
@@ -187,10 +189,10 @@ export function ExtendedPaymentFields({
         <GenderRadio control={control} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField control={control} name="towerBlock" render={({ field }) => (
-            <FormItem><FormLabel>Tower / Wing / Block</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Tower / Wing / Block Name *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="floorNumber" render={({ field }) => (
-            <FormItem><FormLabel>Floor Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Floor Number *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <FormField control={control} name="propertyPurpose" render={({ field }) => (
@@ -271,6 +273,7 @@ export function ExtendedPaymentFields({
   }
 
   if (formType === "business-brand") {
+    const isBusinessMobile = serviceName?.toLowerCase().includes("business mobile") ?? false;
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -326,7 +329,7 @@ export function ExtendedPaymentFields({
             <FormItem><FormLabel>Date of Incorporation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="mobileNumber" render={({ field }) => (
-            <FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>{isBusinessMobile ? "Business Mobile Number" : "Contact Number"}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <FormField control={control} name="reason" render={({ field }) => (
@@ -398,20 +401,20 @@ export function ExtendedPaymentFields({
             <FormItem><FormLabel>Office Location Pincode *</FormLabel><FormControl><Input maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="officeCity" render={({ field }) => (
-            <FormItem><FormLabel>Office City *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Office City (Auto-Fetched) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="officeState" render={({ field }) => (
-            <FormItem><FormLabel>Office State *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Office State (Auto-Fetched) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <FormField control={control} name="layoutAvailable" render={({ field }) => (
-          <FormItem><FormLabel>Office Map / Layout Available *</FormLabel>
+          <FormItem><FormLabel>Office Layout Availability *</FormLabel>
             <Select value={field.value} onValueChange={field.onChange}>
               <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
               <SelectContent>
                 <SelectItem value="yes">Yes</SelectItem>
                 <SelectItem value="no">No</SelectItem>
-                <SelectItem value="optional">Optional / Will share later</SelectItem>
+                <SelectItem value="optional">Optional Upload</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage /></FormItem>
@@ -421,7 +424,7 @@ export function ExtendedPaymentFields({
             <FormItem><FormLabel>Business Industry *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="companyLegalName" render={({ field }) => (
-            <FormItem><FormLabel>Company Full Legal Name *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Company Full Legal Name (as per PAN / GST / MSME / COI) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <ContactBlock control={control} EmailField={EmailField} WhatsappField={WhatsappField} />

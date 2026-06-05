@@ -103,7 +103,7 @@ const inferFormType = (service: string | null, hasConsultationType: boolean): Ba
   if (s.includes("name correction")) return "name-correction";
   if ((s.includes("kundali") || s.includes("kundli")) && (s.includes("triple") || s.includes("family") || s.includes("for 3") || s.includes("double") || s.includes("for 2") || s.includes("2 kundli") || s.includes("3 kundli"))) return "kundali-multi";
   if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
-  if (s.includes("relationship analysis")) return "couple";
+  if (s.includes("relationship analysis")) return "relationship-analysis";
   return "default";
 };
 
@@ -612,38 +612,54 @@ const PaymentPage = () => {
     defaultValues: defaults,
   });
 
-  // Auto-fetch Place of Birth from the entered 6-digit Indian pincode.
+  // Auto-fetch place/city/state from 6-digit Indian pincodes.
   useEffect(() => {
-    const cache: Record<string, string> = {};
-    const lookup = async (pin: string): Promise<string | null> => {
+    type PoData = { district: string; state: string; place: string };
+    const cache: Record<string, PoData> = {};
+    const lookup = async (pin: string): Promise<PoData | null> => {
       if (cache[pin]) return cache[pin];
       try {
         const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
         const data = await res.json();
         const po = data?.[0]?.PostOffice?.[0];
         if (!po) return null;
-        const place = [po.District, po.State, "India"].filter(Boolean).join(", ");
-        cache[pin] = place;
-        return place;
+        const district = String(po.District || "").trim();
+        const state = String(po.State || "").trim();
+        const place = [district, state, "India"].filter(Boolean).join(", ");
+        const result = { district, state, place };
+        cache[pin] = result;
+        return result;
       } catch {
         return null;
       }
     };
-    const fill = async (pobPath: string, pin: string) => {
+    const fillIfEmpty = (path: string, next: string) => {
+      const current = (form.getValues(path) as string | undefined) || "";
+      if (current.trim() === "") form.setValue(path, next, { shouldValidate: true, shouldDirty: true });
+    };
+    const fillPob = async (pobPath: string, pin: string) => {
       if (!/^\d{6}$/.test(pin)) return;
-      const place = await lookup(pin);
-      if (!place) return;
-      const current = (form.getValues(pobPath) as string | undefined) || "";
-      if (current.trim() === "") form.setValue(pobPath, place, { shouldValidate: true, shouldDirty: true });
+      const po = await lookup(pin);
+      if (!po) return;
+      fillIfEmpty(pobPath, po.place);
+    };
+    const fillOffice = async (pin: string) => {
+      if (!/^\d{6}$/.test(pin)) return;
+      const po = await lookup(pin);
+      if (!po) return;
+      if (po.district) fillIfEmpty("officeCity", po.district);
+      if (po.state) fillIfEmpty("officeState", po.state);
     };
     const sub = form.watch((value, { name }) => {
       if (!name) return;
       const multi = name.match(/^(person[123])\.pincode$/);
       if (multi) {
         const pin = (value as any)?.[multi[1]]?.pincode || "";
-        fill(`${multi[1]}.pob`, pin);
+        fillPob(`${multi[1]}.pob`, pin);
       } else if (name === "pincode") {
-        fill("pob", (value as any)?.pincode || "");
+        fillPob("pob", (value as any)?.pincode || "");
+      } else if (name === "officePincode") {
+        fillOffice((value as any)?.officePincode || "");
       }
     });
     return () => sub.unsubscribe();
@@ -1413,6 +1429,7 @@ const PaymentPage = () => {
       return (
         <ExtendedPaymentFields
           formType={formType as ExtendedFormType}
+          serviceName={serviceName ?? undefined}
           control={c}
           DOBPicker={DOBPicker}
           TOBPicker={TOBPicker}

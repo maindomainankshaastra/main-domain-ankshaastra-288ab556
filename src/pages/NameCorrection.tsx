@@ -153,7 +153,7 @@ const NameCorrection = () => {
       {/* SECTION 1.5 — Name Alignment Blueprint banner */}
       <section className="relative overflow-hidden isolate" style={body}>
         <Link
-          to={payLink("Name Correction Report", pricing.nameCorrection.standard)}
+          to={payLink("Name Correction", pricing.nameCorrection.standard, "name-correction")}
           aria-label="What is a Name Alignment Blueprint? Order Now"
           className="block w-full"
         >
@@ -332,7 +332,7 @@ const NameCorrection = () => {
                   <li key={i} className="flex items-start text-[14px]" style={{ color: COLORS.brown }}><Diamond color={COLORS.amber} />{f}</li>
                 ))}
               </ul>
-              <Link to={payLink("Name Correction + Complete Blueprint", pricing.nameCorrection.withBlueprint, "name-correction")}
+              <Link to={payLink("Name Correction + Complete Blueprint", pricing.nameCorrection.withBlueprint, "name-correction-couple")}
                 className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90 mt-auto"
                 style={{ background: COLORS.brown, color: COLORS.white }}>
                 Get Complete Blueprint
@@ -527,7 +527,7 @@ const NameCorrection = () => {
       </section>
 
       {/* Sticky bottom bar mobile */}
-      <Link to={payLink("Name Correction Report", 2447)}
+      <Link to={payLink("Name Correction", pricing.nameCorrection.standard, "name-correction")}
         className="lg:hidden fixed left-0 right-0 bottom-16 z-40 block text-center py-3.5 font-medium"
         style={{ background: COLORS.gold, color: COLORS.white, ...body }}>
         Get My Report →
