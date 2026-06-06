@@ -1650,9 +1650,11 @@ const PaymentPage = () => {
                 </div>
               )}
 
-              {/* Order Summary on top, add-ons below */}
-              {renderOrderSummary(true)}
-              {renderAddons()}
+              {/* Order Summary + add-ons stick together while scrolling */}
+              <div className="lg:sticky lg:top-24 space-y-6">
+                {renderOrderSummary(false)}
+                {renderAddons()}
+              </div>
             </motion.div>
           </div>
         </div>
