@@ -26,7 +26,7 @@ WHERE NOT EXISTS (SELECT 1 FROM public.services s WHERE lower(s.title) = lower(v
 -- CMS pages (published)
 INSERT INTO public.service_pages (slug, route, page_type, title, subtitle, description, category, form_type, status, sort_order, published_at, content)
 VALUES
-  ('call-consultation', '/services/call-consultation', 'service', '1:1 Call Consultation', 'Personal guidance from Himansshu Agarwal Ji', 'Structured 3-call consultation over audio or video.', 'Consultation', 'consultation', 'published', 1, now(), '{"features":["3-step structured consultation","Written remedies via Email/WhatsApp","Highly confidential"]}'),
+  ('call-consultation', '/consultation', 'service', '1:1 Call Consultation', 'Personal guidance from Himansshu Agarwal Ji', 'Structured 3-call consultation over audio or video.', 'Consultation', 'consultation', 'published', 1, now(), '{"features":["3-step structured consultation","Written remedies via Email/WhatsApp","Highly confidential"]}'),
   ('lucky-numerology', '/services/lucky-numerology', 'service', 'Lucky Numerology', 'Aligned numbers for vehicle, mobile, flat and more', 'Expert numerology for lucky numbers and dates.', 'Personal Numerology', 'lucky-mobile', 'published', 2, now(), '{}'),
   ('business-numerology', '/services/business-numerology', 'service', 'Business & Brand Numerology', 'Grow your business with aligned names and numbers', 'Business name, tagline, dates, and partner compatibility.', 'Business', 'business-brand', 'published', 3, now(), '{}'),
   ('varshphal-report', '/services/varshphal-report', 'service', 'Varshphal Report 2026', 'Your complete yearly guide', 'Month-by-month predictions for 2026.', 'Reports', 'kundali', 'published', 4, now(), '{}'),
@@ -41,12 +41,12 @@ INSERT INTO public.service_packages (page_id, name, price, form_type, payment_se
 SELECT sp.id, pkg.name, pkg.price, pkg.form_type, pkg.service_title, pkg.sort_order, true
 FROM public.service_pages sp
 CROSS JOIN (VALUES
-  ('Audio — 45 Minutes', 3977, 'consultation', '1:1 Call Consultation Audio 45', 1),
-  ('Audio — 60 Minutes', 4967, 'consultation', '1:1 Call Consultation Audio 60', 2),
-  ('Audio — 75 Minutes', 5957, 'consultation', '1:1 Call Consultation Audio 75', 3),
-  ('Video — 45 Minutes', 5957, 'consultation', '1:1 Call Consultation Video 45', 4),
-  ('Video — 60 Minutes', 7397, 'consultation', '1:1 Call Consultation Video 60', 5),
-  ('Video — 75 Minutes', 8927, 'consultation', '1:1 Call Consultation Video 75', 6)
+  ('Audio Consultation 45 Minutes', 3977, 'consultation', '1:1 Call Consultation Audio 45', 1),
+  ('Audio Consultation 60 Minutes', 4967, 'consultation', '1:1 Call Consultation Audio 60', 2),
+  ('Audio Consultation 75 Minutes', 5957, 'consultation', '1:1 Call Consultation Audio 75', 3),
+  ('Video Consultation 45 Minutes', 5957, 'consultation', '1:1 Call Consultation Video 45', 4),
+  ('Video Consultation 60 Minutes', 7397, 'consultation', '1:1 Call Consultation Video 60', 5),
+  ('Video Consultation 75 Minutes', 8927, 'consultation', '1:1 Call Consultation Video 75', 6)
 ) AS pkg(name, price, form_type, service_title, sort_order)
 WHERE sp.slug = 'call-consultation'
   AND NOT EXISTS (SELECT 1 FROM public.service_packages p WHERE p.page_id = sp.id AND p.name = pkg.name);

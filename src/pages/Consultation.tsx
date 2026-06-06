@@ -61,19 +61,20 @@ const callSteps = [
   },
 ];
 
-import { pricing, formatINR } from "@/config/pricing";
+import { pricing, formatINR, payLink } from "@/config/pricing";
+import { callConsultationHub } from "@/data/serviceCatalog";
 
-const audioPricing = [
-  { duration: "45 Minutes", price: formatINR(pricing.audioCall.min45) },
-  { duration: "60 Minutes", price: formatINR(pricing.audioCall.min60) },
-  { duration: "75 Minutes", price: formatINR(pricing.audioCall.min75) },
-];
+const audioPackages = callConsultationHub.packages.filter((p) =>
+  p.name.toLowerCase().includes("audio"),
+);
+const videoPackages = callConsultationHub.packages.filter((p) =>
+  p.name.toLowerCase().includes("video"),
+);
 
-const videoPricing = [
-  { duration: "45 Minutes", price: formatINR(pricing.videoCall.min45) },
-  { duration: "60 Minutes", price: formatINR(pricing.videoCall.min60) },
-  { duration: "75 Minutes", price: formatINR(pricing.videoCall.min75) },
-];
+const packageDurationLabel = (name: string) => {
+  const match = name.match(/(\d+)\s*Minutes/i);
+  return match ? `${match[1]} Minutes` : name;
+};
 
 const importantNotes = [
   "Once your consultation is booked, you will be allotted the next available slot.",
@@ -311,10 +312,10 @@ const ConsultationPage = () => {
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {(mode === "audio" ? audioPricing : videoPricing).map((tier, i) => (
-              <motion.div key={`${mode}-${i}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                className={`relative bg-card rounded-2xl border p-8 text-center transition-all hover:shadow-xl ${i === 1 ? "border-primary shadow-lg shadow-primary/10 scale-[1.03]" : "border-border"}`}>
-                {i === 1 && (
+            {(mode === "audio" ? audioPackages : videoPackages).map((pkg, i) => (
+              <motion.div key={pkg.serviceTitle} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                className={`relative bg-card rounded-2xl border p-8 text-center transition-all hover:shadow-xl ${pkg.popular ? "border-primary shadow-lg shadow-primary/10 scale-[1.03]" : "border-border"}`}>
+                {pkg.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold">
                     POPULAR
                   </div>
@@ -322,16 +323,16 @@ const ConsultationPage = () => {
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   {mode === "audio" ? <Phone className="w-6 h-6 text-primary" /> : <Video className="w-6 h-6 text-primary" />}
                 </div>
-                <h3 className="font-display text-lg font-bold text-foreground mb-1">{mode === "audio" ? "Audio" : "Video"} Call</h3>
-                <p className="text-sm text-muted-foreground mb-4">{tier.duration}</p>
-                <p className="text-3xl font-bold text-primary mb-6">{tier.price}</p>
+                <h3 className="font-display text-lg font-bold text-foreground mb-1">{pkg.name}</h3>
+                <p className="text-sm text-muted-foreground mb-4">{packageDurationLabel(pkg.name)}</p>
+                <p className="text-3xl font-bold text-primary mb-6">{formatINR(pkg.price)}</p>
                 <ul className="space-y-2.5 text-left mb-6">
                   <li className="flex items-start gap-2 text-sm"><CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /><span className="text-foreground">Personal session with Himansshu Ji</span></li>
                   <li className="flex items-start gap-2 text-sm"><CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /><span className="text-foreground">3-Call structured process</span></li>
                   <li className="flex items-start gap-2 text-sm"><CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /><span className="text-foreground">Written remedies via Email/WhatsApp</span></li>
                   <li className="flex items-start gap-2 text-sm"><CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" /><span className="text-foreground">Lal Kitab remedies included</span></li>
                 </ul>
-                <Link to={`/payment?type=${mode}`} className="btn-primary w-full inline-flex items-center justify-center gap-2 py-3.5">
+                <Link to={payLink(pkg.serviceTitle, pkg.price, pkg.formType)} className="btn-primary w-full inline-flex items-center justify-center gap-2 py-3.5">
                   Book Now <ArrowRight className="w-4 h-4" />
                 </Link>
               </motion.div>

@@ -19,7 +19,7 @@ const hubListings: CatalogListingItem[] = [
     description: "Structured personal consultation with Himansshu Agarwal Ji over audio or video call.",
     category: "Consultation",
     price: pricing.audioCall.min45,
-    route: "/services/call-consultation",
+    route: "/consultation",
     listingType: "service",
   },
   {

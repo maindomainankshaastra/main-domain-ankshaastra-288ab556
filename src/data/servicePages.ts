@@ -17,7 +17,7 @@ const hubPages: ServicePage[] = [
     category: "Consultation",
     price: pricing.audioCall.min45,
     gst_rate: 18,
-    route: "/services/call-consultation",
+    route: "/consultation",
   },
   {
     title: "Premium Personalised Kundli 2.0",

@@ -27,6 +27,10 @@ import {
 import { toast } from "sonner";
 import { Loader2, Plus, Pencil, Trash2, Globe, FileText, Package } from "lucide-react";
 import { formatINR } from "@/config/pricing";
+import {
+  catalogPackageToAdminPayload,
+  getCatalogSyncForSlug,
+} from "@/data/adminCatalogSync";
 
 type ServicePage = {
   id: string;
@@ -204,7 +208,11 @@ export default function ServicePagesModule() {
     const slug = pageForm.slug || slugify(pageForm.title);
     const route =
       pageForm.route ||
-      (pageForm.page_type === "report" ? `/reports/${slug}` : `/services/${slug}`);
+      (slug === "call-consultation"
+        ? "/consultation"
+        : pageForm.page_type === "report"
+          ? `/reports/${slug}`
+          : `/services/${slug}`);
 
     const faqs = faqsText
       .split("\n")
@@ -287,6 +295,70 @@ export default function ServicePagesModule() {
       setPkgOpen(false);
       reloadPackages();
     }
+  };
+
+  const syncCatalogForPage = async (page: ServicePage) => {
+    const catalog = getCatalogSyncForSlug(page.slug);
+    if (!catalog) {
+      toast.error("No code catalog defined for this page slug");
+      return;
+    }
+
+    setSaving(true);
+    const { hub } = catalog;
+
+    const { error: pageError } = await supabase
+      .from("service_pages")
+      .update({
+        route: hub.route,
+        title: hub.title,
+        subtitle: hub.subtitle,
+        description: hub.subtitle,
+        category: hub.category,
+        form_type: hub.packages[0]?.formType || page.form_type,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", page.id);
+
+    if (pageError) {
+      setSaving(false);
+      toast.error(pageError.message);
+      return;
+    }
+
+    const pagePackages = packagesByPage.get(page.id) || [];
+    let synced = 0;
+
+    for (let i = 0; i < hub.packages.length; i++) {
+      const pkg = hub.packages[i];
+      const payload = catalogPackageToAdminPayload(page.id, pkg, i + 1);
+      const existing = pagePackages.find(
+        (p) =>
+          (p.payment_service_title || "").toLowerCase() === pkg.serviceTitle.toLowerCase() ||
+          p.name.toLowerCase() === pkg.name.toLowerCase(),
+      );
+
+      const { error } = existing
+        ? await supabase.from("service_packages").update(payload).eq("id", existing.id)
+        : await supabase.from("service_packages").insert(payload);
+
+      if (error) {
+        setSaving(false);
+        toast.error(error.message);
+        return;
+      }
+      synced += 1;
+
+      await supabase
+        .from("services")
+        .update({ price: pkg.price, is_active: true, category: hub.category })
+        .ilike("title", pkg.serviceTitle);
+    }
+
+    setSaving(false);
+    toast.success(`Synced ${hub.title}: route, ${synced} package(s), and service catalog prices`);
+    reloadPages();
+    reloadPackages();
   };
 
   const togglePublish = async (page: ServicePage) => {
@@ -626,6 +698,12 @@ export default function ServicePagesModule() {
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                {getCatalogSyncForSlug(page.slug) && (
+                  <Button size="sm" variant="secondary" disabled={saving} onClick={() => syncCatalogForPage(page)}>
+                    <Package className="w-4 h-4 mr-1" />
+                    Sync Catalog
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" onClick={() => togglePublish(page)}>
                   <Globe className="w-4 h-4 mr-1" />
                   {page.status === "published" ? "Unpublish" : "Publish"}

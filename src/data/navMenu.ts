@@ -28,7 +28,7 @@ export const reportsNavItems: NavItem[] = [
 ];
 
 export const servicesNavItems: NavItem[] = [
-  { name: "1:1 Call Consultation", path: "/services/call-consultation", icon: Phone, description: "Audio or video consultation" },
+  { name: "1:1 Call Consultation", path: "/consultation", icon: Phone, description: "Audio or video consultation" },
   { name: "Premium Personalised Kundli 2.0", path: "/reports/personalized-kundali", icon: Star, description: "Personalized kundli report" },
   { name: "Name Correction", path: "/services/name-correction", icon: ScrollText, description: "Align your name vibration" },
   { name: "Perfect Baby Name", path: "https://empower.ankshaastra.com", icon: Baby, description: "Auspicious baby naming", external: true },

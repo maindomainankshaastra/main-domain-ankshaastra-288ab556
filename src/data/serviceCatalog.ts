@@ -28,8 +28,8 @@ export const callConsultationHub: ServiceHub = {
   title: "1:1 Call Consultation",
   subtitle: "Personal guidance from Himansshu Agarwal Ji over audio or video call.",
   category: "Consultation",
-  route: "/services/call-consultation",
-  canonical: "/services/call-consultation",
+  route: "/consultation",
+  canonical: "/consultation",
   hubAddons: [{ label: "Personalised Premium Kundli 2.0", price: pricing.addons.kundli20 }],
   packages: [
     { name: "Audio Consultation 45 Minutes", serviceTitle: "1:1 Call Consultation Audio 45", price: pricing.audioCall.min45, formType: "consultation" },

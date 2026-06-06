@@ -48,7 +48,6 @@ const SettingsModule = lazy(() => import("./pages/admin/modules/SettingsModule")
 const PricingModule = lazy(() => import("./pages/admin/modules/PricingModule"));
 const ServicePagesModule = lazy(() => import("./pages/admin/modules/ServicePagesModule"));
 const DynamicServicePage = lazy(() => import("./pages/DynamicServicePage"));
-const CallConsultation = lazy(() => import("./pages/CallConsultation"));
 const BusinessNumerology = lazy(() => import("./pages/BusinessNumerology"));
 const ServiceSlugPage = lazy(() => import("./pages/ServiceSlugPage"));
 
@@ -80,7 +79,7 @@ const App = () => (
             <Route path="/services/lucky-numerology" element={<Navigate to="/services/lucky-vehicle-number" replace />} />
             <Route path="/services/business-numerology" element={<BusinessNumerology />} />
             <Route path="/services/office-vastu" element={<OfficeVastu />} />
-            <Route path="/services/call-consultation" element={<CallConsultation />} />
+            <Route path="/services/call-consultation" element={<Navigate to="/consultation" replace />} />
             <Route path="/services/:slug" element={<ServiceSlugPage />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/calculator" element={<Calculator />} />

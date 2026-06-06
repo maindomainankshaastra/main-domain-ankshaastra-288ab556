@@ -19,11 +19,11 @@ export type ServiceRouteEntry = {
 export const packagedServiceRoutes: ServiceRouteEntry[] = [
   {
     slug: "call-consultation",
-    path: "/services/call-consultation",
+    path: "/consultation",
     title: "1:1 Call Consultation",
     kind: "packaged",
     packagesSource: "callConsultationHub",
-    notes: "6 audio/video packages → formType: consultation",
+    notes: "Consultation page — 6 audio/video packages → formType: consultation",
   },
   {
     slug: "name-correction",
@@ -99,6 +99,7 @@ export const quickServiceSlugs = [
 ] as const;
 
 export const legacyRedirects: ServiceRouteEntry[] = [
+  { slug: "call-consultation-legacy", path: "/services/call-consultation", title: "1:1 Call Consultation (legacy)", kind: "redirect", redirectTo: "/consultation" },
   { slug: "lucky-numerology", path: "/services/lucky-numerology", title: "Lucky Numerology (legacy)", kind: "redirect", redirectTo: "/services/lucky-vehicle-number" },
   { slug: "mobile-numerology", path: "/services/mobile-numerology", title: "Mobile Numerology (legacy)", kind: "redirect", redirectTo: "/services/lucky-mobile-number" },
   { slug: "varshphal-report-services", path: "/services/varshphal-report", title: "Varshphal (legacy path)", kind: "redirect", redirectTo: "/reports/varshphal-report" },
