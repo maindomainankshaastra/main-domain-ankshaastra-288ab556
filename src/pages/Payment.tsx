@@ -1548,16 +1548,14 @@ const PaymentPage = () => {
                   <>
                     <h3 className="font-display text-xl font-bold text-foreground mb-4">Order Summary</h3>
                     <div className="border-b border-border pb-4 mb-4">
-                      <p className="text-foreground font-semibold text-lg">{displayName}</p>
-                      {catalogDisplay?.hubTitle && (
-                        <p className="text-xs text-muted-foreground mt-1">{catalogDisplay.hubTitle}</p>
-                      )}
-                      {displaySummary && (
-                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{displaySummary}</p>
-                      )}
-                      <div className="flex justify-between text-sm mt-3 text-muted-foreground">
-                        <span>Base price</span>
-                        <span>₹{servicePrice.toLocaleString()}</span>
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="min-w-0">
+                          <p className="text-foreground font-semibold">{displayName}</p>
+                          {catalogDisplay?.hubTitle && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{catalogDisplay.hubTitle}</p>
+                          )}
+                        </div>
+                        <span className="text-foreground font-semibold whitespace-nowrap">₹{servicePrice.toLocaleString()}</span>
                       </div>
                     </div>
 
@@ -1628,7 +1626,7 @@ const PaymentPage = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="font-display text-xl font-bold text-foreground mb-6">Select Your Plan</h3>
+                    <h3 className="font-display text-xl font-bold text-foreground mb-4">Select Your Plan</h3>
                     <div className="space-y-3 mb-6">
                       {currentPackage?.options.map((option) => (
                         <button
@@ -1650,29 +1648,19 @@ const PaymentPage = () => {
                         </button>
                       ))}
                     </div>
-                    <div className="border-t border-border pt-4 space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Consultation Type</span>
-                        <span className="text-foreground">{currentPackage?.name}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Selected Plan</span>
-                        <span className="text-foreground">{selectedOption?.label || "-"}</span>
+                    <div className="border-t border-border pt-4">
+                      <h3 className="font-display text-lg font-bold text-foreground mb-3">Order Summary</h3>
+                      <div className="flex justify-between items-start gap-3 mb-3">
+                        <div className="min-w-0">
+                          <p className="text-foreground font-semibold">{currentPackage?.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{selectedOption?.label || "-"}</p>
+                        </div>
+                        <span className="text-foreground font-semibold whitespace-nowrap">₹{(selectedOption?.price || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-lg font-bold pt-3 border-t border-border">
                         <span className="text-foreground">Total</span>
-                        <span className="text-gradient-amber">₹{selectedOption?.price || 0}</span>
+                        <span className="text-gradient-amber">₹{(selectedOption?.price || 0).toLocaleString()}</span>
                       </div>
-                    </div>
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <h4 className="font-medium text-foreground mb-3">What you'll get:</h4>
-                      <ul className="space-y-2">
-                        {["Lal Kitab Remedies Included", "Personalized guidance", "Consultation within 48-72 hours", "Email follow-up support"].map((item) => (
-                          <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Check className="w-4 h-4 text-secondary flex-shrink-0" />{item}
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   </>
                 )}
