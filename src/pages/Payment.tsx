@@ -41,6 +41,7 @@ import {
 } from "@/lib/payment-form-ext";
 import { ExtendedPaymentFields } from "@/components/payment/ExtendedPaymentFields";
 import { resolveServiceDisplay } from "@/lib/service-display";
+import { OrderSummary } from "@/components/payment/OrderSummary";
 
 const KUNDLI_20_ADDON = { id: "kundli-20", label: "Personalised Premium Kundli 2.0", note: "PDF report", price: pricing.addons.kundli20 };
 const LUCKY_COLOR_ADDON = { id: "lucky-color", label: "Lucky Color and Number", note: "", price: pricing.addons.luckyColorNumber };
