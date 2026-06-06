@@ -996,6 +996,10 @@ const PaymentPage = () => {
   const summaryHub = isServiceMode ? catalogDisplay?.hubTitle : selectedOption?.label;
   const summaryOriginal = isServiceMode ? catalogDisplay?.originalPrice : undefined;
   const summaryAddons = selectedAddonObjects.map((a) => ({ label: a.label, price: a.price }));
+  const deliveryNote =
+    formType === "consultation"
+      ? "Call Consultation with Himansshu Ji will be scheduled within 48-72 hours."
+      : "Delivered via Email in 9 Hours";
   const renderOrderSummary = (sticky: boolean) => (
     <OrderSummary
       serviceName={displayName || "Service"}
@@ -1003,6 +1007,7 @@ const PaymentPage = () => {
       basePrice={basePrice}
       originalPrice={summaryOriginal}
       addons={summaryAddons}
+      deliveryNote={deliveryNote}
       sticky={sticky}
     />
   );
