@@ -993,7 +993,12 @@ const PaymentPage = () => {
   const HeroIcon = isServiceMode ? Sparkles : (currentPackage?.icon || Phone);
 
   // ───── Order Summary data (shared between desktop sidebar + mobile inline) ─────
-  const summaryHub = isServiceMode ? catalogDisplay?.hubTitle : selectedOption?.label;
+  const summaryHub =
+    formType === "consultation"
+      ? undefined
+      : isServiceMode
+        ? catalogDisplay?.hubTitle
+        : selectedOption?.label;
   const summaryOriginal = isServiceMode ? catalogDisplay?.originalPrice : undefined;
   const summaryAddons = selectedAddonObjects.map((a) => ({ label: a.label, price: a.price }));
   const deliveryNote =
@@ -1011,6 +1016,49 @@ const PaymentPage = () => {
       sticky={sticky}
     />
   );
+  const renderAddons = () =>
+    isServiceMode && availableAddons.length > 0 ? (
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-primary" />
+          Recommended Add-ons
+        </h4>
+        <div className="space-y-2">
+          {availableAddons.map((a) => {
+            const checked = selectedAddons.includes(a.id);
+            return (
+              <button
+                type="button"
+                key={a.id}
+                onClick={() => toggleAddon(a.id)}
+                className={cn(
+                  "w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-start gap-3",
+                  checked ? "border-primary bg-primary/10" : "border-border hover:border-primary/50",
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
+                    checked ? "border-primary bg-primary" : "border-muted-foreground",
+                  )}
+                >
+                  {checked && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-sm text-foreground">{a.label}</span>
+                    <span className="font-semibold text-sm text-primary whitespace-nowrap">
+                      +₹{a.price.toLocaleString()}
+                    </span>
+                  </div>
+                  {a.note && <div className="text-xs text-muted-foreground mt-0.5">{a.note}</div>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    ) : null;
 
   // ───── per-type field renderer ─────
   const renderFields = () => {
@@ -1538,9 +1586,10 @@ const PaymentPage = () => {
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     {renderFields()}
 
-                    {/* Mobile-only Order Summary — appears below form, above Pay button */}
-                    <div className="lg:hidden">
+                    {/* Mobile: Order Summary on top, add-ons below */}
+                    <div className="lg:hidden space-y-6">
                       {renderOrderSummary(false)}
+                      {renderAddons()}
                     </div>
 
                     <button
@@ -1601,48 +1650,9 @@ const PaymentPage = () => {
                 </div>
               )}
 
-              {/* Add-ons selector */}
-              {isServiceMode && availableAddons.length > 0 && (
-                <div className="bg-card border border-border rounded-2xl p-6">
-                  <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    Recommended Add-ons
-                  </h4>
-                  <div className="space-y-2">
-                    {availableAddons.map((a) => {
-                      const checked = selectedAddons.includes(a.id);
-                      return (
-                        <button
-                          type="button"
-                          key={a.id}
-                          onClick={() => toggleAddon(a.id)}
-                          className={cn(
-                            "w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-start gap-3",
-                            checked ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
-                            checked ? "border-primary bg-primary" : "border-muted-foreground"
-                          )}>
-                            {checked && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="font-medium text-sm text-foreground">{a.label}</span>
-                              <span className="font-semibold text-sm text-primary whitespace-nowrap">+₹{a.price.toLocaleString()}</span>
-                            </div>
-                            {a.note && <div className="text-xs text-muted-foreground mt-0.5">{a.note}</div>}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Sticky Order Summary */}
+              {/* Order Summary on top, add-ons below */}
               {renderOrderSummary(true)}
+              {renderAddons()}
             </motion.div>
           </div>
         </div>
