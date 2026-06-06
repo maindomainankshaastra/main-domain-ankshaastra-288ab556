@@ -15,6 +15,7 @@ export type ServiceDisplayInfo = {
   packageName: string;
   hubTitle?: string;
   price: number;
+  originalPrice?: number;
   summary: string;
 };
 
@@ -36,6 +37,7 @@ for (const { hub, pkg } of allPackages) {
     packageName: pkg.name,
     hubTitle: hub,
     price: pkg.price,
+    originalPrice: pkg.originalPrice,
     summary: pkg.description || pkg.name,
   });
 }
