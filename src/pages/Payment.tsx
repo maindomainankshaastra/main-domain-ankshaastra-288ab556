@@ -992,6 +992,21 @@ const PaymentPage = () => {
   const heroColor = isServiceMode ? "from-primary to-amber" : (currentPackage?.color || "from-primary to-accent");
   const HeroIcon = isServiceMode ? Sparkles : (currentPackage?.icon || Phone);
 
+  // ───── Order Summary data (shared between desktop sidebar + mobile inline) ─────
+  const summaryHub = isServiceMode ? catalogDisplay?.hubTitle : selectedOption?.label;
+  const summaryOriginal = isServiceMode ? catalogDisplay?.originalPrice : undefined;
+  const summaryAddons = selectedAddonObjects.map((a) => ({ label: a.label, price: a.price }));
+  const renderOrderSummary = (sticky: boolean) => (
+    <OrderSummary
+      serviceName={displayName || "Service"}
+      hubTitle={summaryHub}
+      basePrice={basePrice}
+      originalPrice={summaryOriginal}
+      addons={summaryAddons}
+      sticky={sticky}
+    />
+  );
+
   // ───── per-type field renderer ─────
   const renderFields = () => {
     const c = form.control;
