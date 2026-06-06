@@ -36,7 +36,7 @@ export const OrderSummary = ({
   addons = [],
   gst,
   gstInclusive = true,
-  deliveryNote = "Delivered via Email in 9 Hours",
+  deliveryNote = "Delivered within 12-24 Hrs.",
   className,
   sticky = false,
   compact = false,

@@ -471,7 +471,8 @@ const PaymentPage = () => {
     if (formType === "kundali" || formType === "kundali-multi") return [];
     if (formType === "office-vastu") return [];
     if (formType === "consultation") return [KUNDLI_20_ADDON];
-    if (formType === "name-correction" || formType === "name-check") {
+    if (formType === "name-check") return [];
+    if (formType === "name-correction") {
       return [KUNDLI_20_ADDON, LUCKY_COLOR_ADDON, MISSING_NUMBER_ADDON];
     }
     if (formType === "lucky-vehicle") {
@@ -999,7 +1000,7 @@ const PaymentPage = () => {
   const deliveryNote =
     formType === "consultation"
       ? "Call Consultation with Himansshu Ji will be scheduled within 48-72 hours."
-      : "Delivered via Email in 9 Hours";
+      : "Delivered within 12-24 Hrs.";
   const renderOrderSummary = (sticky: boolean) => (
     <OrderSummary
       serviceName={displayName || "Service"}
