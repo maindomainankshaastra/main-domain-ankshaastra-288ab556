@@ -997,12 +997,17 @@ const PaymentPage = () => {
   const summaryHub = isServiceMode ? undefined : selectedOption?.label;
   const summaryOriginal = isServiceMode ? catalogDisplay?.originalPrice : undefined;
   const summaryAddons = selectedAddonObjects.map((a) => ({ label: a.label, price: a.price }));
-  const deliveryNote =
-    formType === "consultation"
-      ? "Call Consultation with Himansshu Ji will be scheduled within 48-72 hours."
-      : formType === "name-correction" || formType === "name-correction-couple"
-        ? "Delivered within 12-48 Hrs."
-        : "Delivered within 12-24 Hrs.";
+  const serviceLower = (serviceName || "").toLowerCase();
+  const isNameCorrectionReport =
+    formType === "name-correction" ||
+    formType === "name-correction-couple" ||
+    serviceLower === "name correction" ||
+    serviceLower.includes("complete blueprint");
+  const deliveryNote = formType === "consultation"
+    ? "Call Consultation with Himansshu Ji will be scheduled within 48-72 hours."
+    : isNameCorrectionReport
+      ? "Delivered within 12-48 Hrs."
+      : "Delivered within 12-24 Hrs.";
   const renderOrderSummary = (sticky: boolean) => (
     <OrderSummary
       serviceName={displayName || "Service"}

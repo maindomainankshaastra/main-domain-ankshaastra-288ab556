@@ -304,7 +304,7 @@ const NameCorrection = () => {
                 Get Name Correction Report
               </Link>
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
-                <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr</span>
+                <span className="font-semibold"><Clock className="inline w-3 h-3 mr-1" />Delivered within 12-48 Hrs.</span>
                 <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
               </div>
             </div>
@@ -347,7 +347,7 @@ const NameCorrection = () => {
                 Get Complete Blueprint
               </Link>
               <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
-                <span><Clock className="inline w-3 h-3 mr-1" />24–48 hr</span>
+                <span className="font-semibold"><Clock className="inline w-3 h-3 mr-1" />Delivered within 12-48 Hrs.</span>
                 <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
               </div>
             </div>
