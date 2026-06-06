@@ -299,6 +299,11 @@ Email: ${formData.email}`;
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-3xl font-bold text-foreground">{formatINR(plan.price)}</span>
                 </div>
+                {plan.serviceTitle.toLowerCase().includes("onsite") && (
+                  <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                    Travel (flight — window seat preferred / car — SUV) + accommodation (4-star and above) + other charges are extra.
+                  </p>
+                )}
                 <Link to={payLink(plan.serviceTitle, plan.price, plan.formType)} className={`w-full py-3 rounded-2xl font-semibold text-center transition-all duration-300 block mt-auto ${plan.popular ? 'btn-primary' : 'bg-muted text-foreground hover:bg-primary/10'}`}>
                   Book Now
                 </Link>

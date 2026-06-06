@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import ExternalRedirect from "@/components/ExternalRedirect";
+import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import ThankYou from "./pages/ThankYou";
 const Services = lazy(() => import("./pages/Services"));
@@ -65,6 +66,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <AuthProvider>
           <Suspense fallback={<PageLoader />}>
           <Routes>

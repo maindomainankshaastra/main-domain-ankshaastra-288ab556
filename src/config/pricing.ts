@@ -12,6 +12,7 @@ export const pricing = {
   addons: {
     kundli20: 299,
     luckyColorNumber: 497,
+    shubhMuhrat: 497,
     missingNumberRemedy: 917,
     nickName: 497,
     extraNames: 497,

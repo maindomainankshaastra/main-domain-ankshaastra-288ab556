@@ -16,7 +16,10 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useFormContext, useWatch } from "react-hook-form";
 import type { ExtendedFormType } from "@/lib/payment-form-ext";
+
+const MAX_LAYOUT_PDF_BYTES = 10 * 1024 * 1024;
 
 type Props = {
   formType: ExtendedFormType;
@@ -35,6 +38,120 @@ const ContactBlock = ({ EmailField, WhatsappField, control }: Pick<Props, "Email
     <WhatsappField control={control} />
   </div>
 );
+
+type OfficeVastuProps = Pick<Props, "control" | "serviceName" | "DOBPicker" | "TOBPicker" | "GenderRadio" | "EmailField" | "WhatsappField">;
+
+function OfficeVastuPaymentFields({
+  control,
+  serviceName,
+  DOBPicker,
+  TOBPicker,
+  GenderRadio,
+  EmailField,
+  WhatsappField,
+}: OfficeVastuProps) {
+  const { setValue } = useFormContext();
+  const layoutAvailable = useWatch({ control, name: "layoutAvailable" });
+  const layoutFileName = useWatch({ control, name: "layoutFileName" });
+  const isOnsite = serviceName?.toLowerCase().includes("onsite") ?? false;
+
+  const handleLayoutUpload = (file: File | undefined, onChange: (v: string) => void) => {
+    if (!file) {
+      onChange("");
+      setValue("layoutFileName", "", { shouldValidate: true });
+      return;
+    }
+    if (file.type !== "application/pdf" || file.size > MAX_LAYOUT_PDF_BYTES) {
+      onChange("");
+      setValue("layoutFileName", "", { shouldValidate: true });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      onChange(result.split(",")[1] || "");
+      setValue("layoutFileName", file.name, { shouldValidate: true });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <>
+      {isOnsite && (
+        <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-4 py-3 text-sm text-foreground">
+          Travel (flight — window seat preferred / car — SUV) + accommodation (4-star and above) + other charges are extra for onsite visits.
+        </div>
+      )}
+      <p className="text-sm text-muted-foreground">
+        If there are multiple owners, share one owner&apos;s details here. Further details will be collected over a phone call.
+      </p>
+      <FormField control={control} name="fullName" render={({ field }) => (
+        <FormItem><FormLabel>Owner&apos;s Full Name *</FormLabel><FormControl><Input placeholder="Owner's full name as per records" {...field} /></FormControl><FormMessage /></FormItem>
+      )} />
+      <p className="text-sm font-medium text-foreground">Owner&apos;s Date &amp; Time of Birth *</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <DOBPicker control={control} name="dob" />
+        <TOBPicker control={control} name="tob" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField control={control} name="pincode" render={({ field }) => (
+          <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={control} name="pob" render={({ field }) => (
+          <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+      </div>
+      <GenderRadio control={control} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <FormField control={control} name="officePincode" render={({ field }) => (
+          <FormItem><FormLabel>Office Location Pincode *</FormLabel><FormControl><Input maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={control} name="officeCity" render={({ field }) => (
+          <FormItem><FormLabel>Office City (Auto-Fetched) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={control} name="officeState" render={({ field }) => (
+          <FormItem><FormLabel>Office State (Auto-Fetched) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+      </div>
+      <FormField control={control} name="layoutAvailable" render={({ field }) => (
+        <FormItem><FormLabel>Office Map / Layout Available *</FormLabel>
+          <Select value={field.value} onValueChange={field.onChange}>
+            <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
+            <SelectContent>
+              <SelectItem value="yes">Yes</SelectItem>
+              <SelectItem value="no">No</SelectItem>
+            </SelectContent>
+          </Select>
+          <FormMessage /></FormItem>
+      )} />
+      {layoutAvailable === "yes" && (
+        <FormField control={control} name="layoutFileData" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Upload Office Layout (PDF only, max 10 MB) *</FormLabel>
+            <FormControl>
+              <Input
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={(e) => handleLayoutUpload(e.target.files?.[0], field.onChange)}
+              />
+            </FormControl>
+            {layoutFileName && <p className="text-xs text-muted-foreground mt-1">Selected: {layoutFileName}</p>}
+            <FormMessage />
+          </FormItem>
+        )} />
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField control={control} name="businessIndustry" render={({ field }) => (
+          <FormItem><FormLabel>Business Industry *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={control} name="companyLegalName" render={({ field }) => (
+          <FormItem><FormLabel>Company Full Legal Name (as per PAN / GST / MSME / COI) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+      </div>
+      <ContactBlock control={control} EmailField={EmailField} WhatsappField={WhatsappField} />
+    </>
+  );
+}
 
 export function ExtendedPaymentFields({
   formType,
@@ -381,54 +498,15 @@ export function ExtendedPaymentFields({
 
   if (formType === "office-vastu") {
     return (
-      <>
-        {FullName}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DOBPicker control={control} />
-          <TOBPicker control={control} />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField control={control} name="pincode" render={({ field }) => (
-            <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={control} name="pob" render={({ field }) => (
-            <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-        </div>
-        <GenderRadio control={control} />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField control={control} name="officePincode" render={({ field }) => (
-            <FormItem><FormLabel>Office Location Pincode *</FormLabel><FormControl><Input maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={control} name="officeCity" render={({ field }) => (
-            <FormItem><FormLabel>Office City (Auto-Fetched) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={control} name="officeState" render={({ field }) => (
-            <FormItem><FormLabel>Office State (Auto-Fetched) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-        </div>
-        <FormField control={control} name="layoutAvailable" render={({ field }) => (
-          <FormItem><FormLabel>Office Layout Availability *</FormLabel>
-            <Select value={field.value} onValueChange={field.onChange}>
-              <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
-              <SelectContent>
-                <SelectItem value="yes">Yes</SelectItem>
-                <SelectItem value="no">No</SelectItem>
-                <SelectItem value="optional">Optional Upload</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage /></FormItem>
-        )} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField control={control} name="businessIndustry" render={({ field }) => (
-            <FormItem><FormLabel>Business Industry *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={control} name="companyLegalName" render={({ field }) => (
-            <FormItem><FormLabel>Company Full Legal Name (as per PAN / GST / MSME / COI) *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-        </div>
-        <ContactBlock control={control} EmailField={EmailField} WhatsappField={WhatsappField} />
-      </>
+      <OfficeVastuPaymentFields
+        control={control}
+        serviceName={serviceName}
+        DOBPicker={DOBPicker}
+        TOBPicker={TOBPicker}
+        GenderRadio={GenderRadio}
+        EmailField={EmailField}
+        WhatsappField={WhatsappField}
+      />
     );
   }
 

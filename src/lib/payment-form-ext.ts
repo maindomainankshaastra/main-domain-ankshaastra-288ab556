@@ -138,21 +138,35 @@ export const businessPartnerSchema = z.object({
   ...contactFields,
 });
 
-export const officeVastuSchema = z.object({
-  fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
-  dob: dobField,
-  tob: tobField,
-  pincode: pincodeField,
-  pob: z.string().trim().min(2, "Place of birth required").max(120),
-  gender: genderField,
-  officePincode: pincodeField,
-  officeCity: z.string().trim().min(2, "Office city required").max(80),
-  officeState: z.string().trim().min(2, "Office state required").max(80),
-  layoutAvailable: z.enum(["yes", "no", "optional"], { required_error: "Select option" }),
-  businessIndustry: z.string().trim().min(2, "Industry required").max(120),
-  companyLegalName: z.string().trim().min(2, "Company legal name required").max(160),
-  ...contactFields,
-});
+export const officeVastuSchema = z
+  .object({
+    fullName: z.string().trim().min(2, "Owner's full name required").max(100).regex(nameRx, "Letters only"),
+    dob: dobField,
+    tob: tobField,
+    pincode: pincodeField,
+    pob: z.string().trim().min(2, "Place of birth required").max(120),
+    gender: genderField,
+    officePincode: pincodeField,
+    officeCity: z.string().trim().min(2, "Office city required").max(80),
+    officeState: z.string().trim().min(2, "Office state required").max(80),
+    layoutAvailable: z.enum(["yes", "no"], { required_error: "Select option" }),
+    layoutFileName: z.string().optional().or(z.literal("")),
+    layoutFileData: z.string().optional().or(z.literal("")),
+    businessIndustry: z.string().trim().min(2, "Industry required").max(120),
+    companyLegalName: z.string().trim().min(2, "Company legal name required").max(160),
+    ...contactFields,
+  })
+  .superRefine((data, ctx) => {
+    if (data.layoutAvailable === "yes") {
+      if (!data.layoutFileData?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Upload office layout PDF (max 10 MB)",
+          path: ["layoutFileData"],
+        });
+      }
+    }
+  });
 
 export type ExtendedFormType =
   | "lucky-vehicle"
@@ -267,6 +281,6 @@ export function getExtendedDefaultValues(formType: ExtendedFormType): Record<str
     case "business-partner":
       return { person1: emptyPerson, person2: emptyPerson, purpose: "business_partnership" as const, industry: "", ...contact };
     case "office-vastu":
-      return { fullName: "", dob: emptyDob, tob: emptyTob, pincode: "", pob: "", gender: undefined, officePincode: "", officeCity: "", officeState: "", layoutAvailable: undefined, businessIndustry: "", companyLegalName: "", ...contact };
+      return { fullName: "", dob: emptyDob, tob: emptyTob, pincode: "", pob: "", gender: undefined, officePincode: "", officeCity: "", officeState: "", layoutAvailable: undefined, layoutFileName: "", layoutFileData: "", businessIndustry: "", companyLegalName: "", ...contact };
   }
 }

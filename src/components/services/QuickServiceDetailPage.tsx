@@ -77,22 +77,6 @@ export default function QuickServiceDetailPage({ service }: Props) {
         </div>
       </section>
 
-      {service.addons && service.addons.length > 0 && (
-        <section className="py-12 container mx-auto px-4 max-w-3xl">
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold mb-3">Available Add-Ons at Checkout</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {service.addons.map((a) => (
-                <li key={a.label} className="flex justify-between gap-4">
-                  <span>{a.label}</span>
-                  <span className="font-semibold text-foreground">{formatINR(a.price)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
       <section className="py-16 container mx-auto px-4 max-w-xl text-center">
         <div className="rounded-2xl border-2 border-primary bg-card p-8 shadow-lg">
           <h3 className="font-display text-2xl font-bold mb-2">{service.title}</h3>

@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { servicesNavItems, reportsNavItems } from "@/data/navMenu";
+import { reportsNavItems } from "@/data/navMenu";
 
 type DropdownMenuConfig = {
   name: string;
@@ -26,12 +26,7 @@ const navLinks: Array<
   | { name: string; path: string; hasDropdown: true; dropdown: DropdownMenuConfig }
 > = [
   { name: "Home", path: "/" },
-  {
-    name: "Services",
-    path: "/services",
-    hasDropdown: true,
-    dropdown: { name: "Services", pathPrefix: "/services", items: servicesNavItems },
-  },
+  { name: "Services", path: "/services" },
   {
     name: "Reports",
     path: "/reports",

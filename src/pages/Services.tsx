@@ -192,8 +192,8 @@ const ServiceCard = ({ service, index }: { service: any; index: number }) => {
 
 /* ─────────────── Main Page ─────────────── */
 const ServicesPage = () => {
-  const [services, setServices] = useState<ServiceWithPageRoute[]>([]);
-  const [refreshing, setRefreshing] = useState(true);
+  const [services, setServices] = useState<ServiceWithPageRoute[]>(catalogBaseline);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");

@@ -40,10 +40,14 @@ import {
   type ExtendedFormType,
 } from "@/lib/payment-form-ext";
 import { ExtendedPaymentFields } from "@/components/payment/ExtendedPaymentFields";
+import { resolveServiceDisplay } from "@/lib/service-display";
 
 const KUNDLI_20_ADDON = { id: "kundli-20", label: "Personalised Premium Kundli 2.0", note: "PDF report", price: pricing.addons.kundli20 };
 const LUCKY_COLOR_ADDON = { id: "lucky-color", label: "Lucky Color and Number", note: "", price: pricing.addons.luckyColorNumber };
 const MISSING_NUMBER_ADDON = { id: "missing-number", label: "Missing Number and Repeating Number Remedy", note: "", price: pricing.addons.missingNumberRemedy };
+const LUCKY_VEHICLE_COLOR_ADDON = { id: "lucky-vehicle-color", label: "Lucky Vehicle Color", note: "", price: pricing.luckyNumber.vehicleColor };
+const LUCKY_VEHICLE_NUMBER_ADDON = { id: "lucky-vehicle-number", label: "Lucky Vehicle Number", note: "", price: pricing.luckyNumber.vehicle };
+const SHUBH_MUHURAT_ADDON = { id: "shubh-muhrat", label: "Shubh Muhrat", note: "", price: pricing.addons.shubhMuhrat };
 
 // Add-ons available at checkout for service-mode orders.
 const DEFAULT_ADDONS = [KUNDLI_20_ADDON] as const;
@@ -242,8 +246,10 @@ const personNameCorrSchema = z.object({
   middleName: z.string().trim().max(50).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
   lastName: z.string().trim().min(1, "Last name required").max(50).regex(nameRx, "Letters only"),
   middleIsFatherName: z.enum(["yes", "no"], { required_error: "Please select" }),
+  lastNameChangeOk: z.enum(["yes", "no"], { required_error: "Please select" }),
   dob: dobField,
   tob: tobField,
+  pincode: pincodeField,
   pob: z.string().trim().min(2, "Place of birth required").max(120),
   gender: genderField,
   relationFather: relationField,
@@ -259,7 +265,6 @@ const nameCorrectionCoupleSchema = z.object({
   person2: personNameCorrSchema,
   email: emailField,
   whatsapp: phoneField,
-  pincode: pincodeField,
   reason: z.string().trim().min(10, "Please share (min 10 characters)").max(2000),
 });
 
@@ -425,7 +430,10 @@ const PaymentPage = () => {
   const [serviceError, setServiceError] = useState<string | null>(null);
 
   const isServiceMode = !!serviceName;
-  const servicePrice = serviceInfo?.price ?? (serviceAmount ? parseInt(serviceAmount, 10) : 0);
+  const catalogDisplay = useMemo(() => resolveServiceDisplay(serviceName), [serviceName]);
+  const urlPrice = serviceAmount ? parseInt(serviceAmount, 10) : 0;
+  const servicePrice = urlPrice > 0 ? urlPrice : (serviceInfo?.price ?? catalogDisplay?.price ?? 0);
+  const canSubmitService = isServiceMode && servicePrice > 0 && !serviceLoading;
 
   const formType: FormType = useMemo(() => {
     if (formTypeParam && EXTENDED_FORM_TYPES.includes(formTypeParam as ExtendedFormType)) {
@@ -460,17 +468,21 @@ const PaymentPage = () => {
   const availableAddons: Addon[] = useMemo(() => {
     if (formType === "pyaar-shastra") return [...PYAAR_ADDONS];
     if (formType === "kundali" || formType === "kundali-multi") return [];
+    if (formType === "office-vastu") return [];
     if (formType === "consultation") return [KUNDLI_20_ADDON];
     if (formType === "name-correction" || formType === "name-check") {
       return [KUNDLI_20_ADDON, LUCKY_COLOR_ADDON, MISSING_NUMBER_ADDON];
     }
-    if (
-      formType === "lucky-vehicle" ||
-      formType === "lucky-vehicle-color" ||
-      formType === "lucky-vehicle-date" ||
-      formType === "lucky-mobile" ||
-      formType === "lucky-flat"
-    ) {
+    if (formType === "lucky-vehicle") {
+      return [LUCKY_VEHICLE_COLOR_ADDON, SHUBH_MUHURAT_ADDON];
+    }
+    if (formType === "lucky-vehicle-color") {
+      return [LUCKY_VEHICLE_NUMBER_ADDON, SHUBH_MUHURAT_ADDON];
+    }
+    if (formType === "lucky-vehicle-date") {
+      return [LUCKY_VEHICLE_NUMBER_ADDON, LUCKY_VEHICLE_COLOR_ADDON];
+    }
+    if (formType === "lucky-mobile" || formType === "lucky-flat") {
       return [MISSING_NUMBER_ADDON, LUCKY_COLOR_ADDON];
     }
     return [...DEFAULT_ADDONS];
@@ -520,7 +532,9 @@ const PaymentPage = () => {
       .catch((error) => {
         if (controller.signal.aborted) return;
         console.error("Service lookup failed", error);
-        setServiceError("Unable to load service pricing from the service catalog.");
+        if (!serviceAmount && !resolveServiceDisplay(serviceName)?.price) {
+          setServiceError("Unable to load service pricing from the service catalog.");
+        }
         setServiceInfo(null);
       })
       .finally(() => {
@@ -578,13 +592,14 @@ const PaymentPage = () => {
     if (formType === "name-correction-couple") {
       const blankPerson = {
         firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any,
-        dob: baseDob, tob: baseTob, pob: "", gender: undefined as any,
+        lastNameChangeOk: undefined as any,
+        dob: baseDob, tob: baseTob, pincode: "", pob: "", gender: undefined as any,
         relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any,
         fatherName: "", motherName: "", spouseName: "", profession: "",
       };
       return {
         schema: nameCorrectionCoupleSchema,
-        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", pincode: "", reason: "" },
+        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", reason: "" },
       };
     }
     if (formType === "pyaar-shastra") {
@@ -967,7 +982,10 @@ const PaymentPage = () => {
     }
   };
 
-  const displayName = isServiceMode ? serviceName : (currentPackage?.name || "Consultation");
+  const displayName = isServiceMode
+    ? (catalogDisplay?.packageName || serviceName)
+    : (currentPackage?.name || "Consultation");
+  const displaySummary = isServiceMode ? (catalogDisplay?.summary || "") : "";
   const basePrice = isServiceMode ? servicePrice : (selectedOption?.price || 0);
   const displayPrice = basePrice + addonsTotal;
   const heroColor = isServiceMode ? "from-primary to-amber" : (currentPackage?.color || "from-primary to-accent");
@@ -1255,7 +1273,7 @@ const PaymentPage = () => {
           </div>
           <FormField control={c} name={`${name}.middleIsFatherName`} render={({ field }) => (
             <FormItem>
-              <FormLabel>Is the middle name father's name? *</FormLabel>
+              <FormLabel>Is your middle name your father&apos;s name? *</FormLabel>
               <FormControl>
                 <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
                   <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id={`${name}-mfn-yes`} /><Label htmlFor={`${name}-mfn-yes`}>Yes</Label></div>
@@ -1265,13 +1283,30 @@ const PaymentPage = () => {
               <FormMessage />
             </FormItem>
           )} />
+          <FormField control={c} name={`${name}.lastNameChangeOk`} render={({ field }) => (
+            <FormItem>
+              <FormLabel>Are you comfortable making a change in your last name (if required)? *</FormLabel>
+              <FormControl>
+                <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id={`${name}-lnc-yes`} /><Label htmlFor={`${name}-lnc-yes`}>Yes</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="no" id={`${name}-lnc-no`} /><Label htmlFor={`${name}-lnc-no`}>No</Label></div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DOBPicker control={c} name={`${name}.dob`} />
             <TOBPicker control={c} name={`${name}.tob`} />
           </div>
-          <FormField control={c} name={`${name}.pob`} render={({ field }) => (
-            <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={c} name={`${name}.pincode`} render={({ field }) => (
+              <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={c} name={`${name}.pob`} render={({ field }) => (
+              <FormItem><FormLabel>Place of Birth (Auto-Fetched) *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
           <FormField control={c} name={`${name}.gender`} render={({ field }) => (
             <FormItem>
               <FormLabel>Gender *</FormLabel>
@@ -1330,13 +1365,8 @@ const PaymentPage = () => {
           </div>
           <PersonNameCorrBlock name="person1" title="Person 1 — Full Details" accent="bg-primary" />
           <PersonNameCorrBlock name="person2" title="Person 2 — Full Details" accent="bg-amber-500" />
-          <h3 className="font-semibold text-foreground pt-2">Contact & Delivery</h3>
+          <h3 className="font-semibold text-foreground pt-2">Contact Details</h3>
           {ContactRow}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={c} name="pincode" render={({ field }) => (
-              <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-          </div>
           <FormField control={c} name="reason" render={({ field }) => (
             <FormItem><FormLabel>Reason for Name Correction *</FormLabel>
               <FormControl><Textarea placeholder="Share your goals, struggles, and what you'd like to improve for both people." className="min-h-[140px] resize-none" {...field} /></FormControl>
@@ -1489,7 +1519,7 @@ const PaymentPage = () => {
 
                     <button
                       type="submit"
-                      disabled={isProcessing || (!isServiceMode && !selectedPackage) || (isServiceMode && (serviceLoading || !!serviceError))}
+                      disabled={isProcessing || (!isServiceMode && !selectedPackage) || (isServiceMode && !canSubmitService)}
                       className={`w-full py-4 text-lg rounded-xl font-semibold text-white transition-all duration-300 bg-gradient-to-r ${heroColor} hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {isProcessing ? "Processing..." : `Pay ₹${displayPrice.toLocaleString()}`}
@@ -1518,8 +1548,14 @@ const PaymentPage = () => {
                   <>
                     <h3 className="font-display text-xl font-bold text-foreground mb-4">Order Summary</h3>
                     <div className="border-b border-border pb-4 mb-4">
-                      <p className="text-foreground font-semibold text-lg">{serviceName}</p>
-                      <div className="flex justify-between text-sm mt-2 text-muted-foreground">
+                      <p className="text-foreground font-semibold text-lg">{displayName}</p>
+                      {catalogDisplay?.hubTitle && (
+                        <p className="text-xs text-muted-foreground mt-1">{catalogDisplay.hubTitle}</p>
+                      )}
+                      {displaySummary && (
+                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{displaySummary}</p>
+                      )}
+                      <div className="flex justify-between text-sm mt-3 text-muted-foreground">
                         <span>Base price</span>
                         <span>₹{servicePrice.toLocaleString()}</span>
                       </div>
