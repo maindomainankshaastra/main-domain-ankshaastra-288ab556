@@ -97,6 +97,13 @@ const faqs = [
   { q: "Is a live session included in all packages?", a: "Live video sessions with Himansshu Ji are included only in the Premium 'Name Correction + Live Session' package." },
 ];
 
+const scrollToPackage = (targetId: string) => {
+  const el = document.getElementById(targetId);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+};
+
 const NameCorrection = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeT, setActiveT] = useState(0);
@@ -132,10 +139,11 @@ const NameCorrection = () => {
 
       {/* SECTION 1 — HERO (minimal) */}
       <section className="relative overflow-hidden isolate" style={body}>
-        <Link
-          to={payLink("Name Check", 293, "name-check")}
-          aria-label="Get your Name Correction Report — ₹293"
-          className="block w-full"
+        <button
+          type="button"
+          onClick={() => scrollToPackage("package-name-check")}
+          aria-label="Get Name Check — scroll to package selection"
+          className="block w-full cursor-pointer border-0 p-0 bg-transparent"
         >
           <picture>
             <source media="(min-width: 768px)" srcSet={heroDesktop} />
@@ -147,15 +155,16 @@ const NameCorrection = () => {
               fetchPriority="high"
             />
           </picture>
-        </Link>
+        </button>
       </section>
 
       {/* SECTION 1.5 — Name Alignment Blueprint banner */}
       <section className="relative overflow-hidden isolate" style={body}>
-        <Link
-          to={payLink("Name Correction", pricing.nameCorrection.standard, "name-correction")}
-          aria-label="What is a Name Alignment Blueprint? Order Now"
-          className="block w-full"
+        <button
+          type="button"
+          onClick={() => scrollToPackage("package-name-correction")}
+          aria-label="Order Now — scroll to package selection"
+          className="block w-full cursor-pointer border-0 p-0 bg-transparent"
         >
           <picture>
             <source media="(min-width: 768px)" srcSet={blueprintDesktop} />
@@ -166,7 +175,7 @@ const NameCorrection = () => {
               loading="lazy"
             />
           </picture>
-        </Link>
+        </button>
       </section>
 
       {/* SECTION 3 — Why Trust */}
@@ -225,7 +234,7 @@ const NameCorrection = () => {
       </section>
 
       {/* SECTION 5 — Pricing */}
-      <section style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24">
+      <section id="name-correction-packages" style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24 scroll-mt-24">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <h2 style={{ ...heading, color: COLORS.brown }} className="text-center text-3xl md:text-[44px] font-semibold mb-12 leading-tight">
             Select the <span style={{ color: COLORS.gold }}>Name Correction Report Package</span>
@@ -233,7 +242,7 @@ const NameCorrection = () => {
 
           <div className="grid lg:grid-cols-3 gap-6 lg:gap-5 items-stretch">
             {/* Card 1 — Name Check */}
-            <div className="relative rounded-xl p-7 flex flex-col"
+            <div id="package-name-check" className="relative rounded-xl p-7 flex flex-col scroll-mt-28"
               style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider"
                 style={{ background: COLORS.brown, color: COLORS.white }}>NOT SURE?</div>
@@ -274,7 +283,7 @@ const NameCorrection = () => {
             </div>
 
             {/* Card 2 — Name Correction (Most Popular) */}
-            <div className="relative rounded-xl p-7 flex flex-col lg:scale-[1.02]"
+            <div id="package-name-correction" className="relative rounded-xl p-7 flex flex-col lg:scale-[1.02] scroll-mt-28"
               style={{ background: COLORS.white, border: `2px solid ${COLORS.amber}`, borderRadius: 12, boxShadow: "0 8px 28px rgba(193,122,26,0.18)" }}>
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[11px] font-semibold tracking-wider"
                 style={{ background: COLORS.amber, color: COLORS.white }}>★ MOST POPULAR</div>
@@ -301,7 +310,7 @@ const NameCorrection = () => {
             </div>
 
             {/* Card 3 — Premium */}
-            <div className="relative rounded-xl p-7 flex flex-col"
+            <div id="package-complete-blueprint" className="relative rounded-xl p-7 flex flex-col scroll-mt-28"
               style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider"
                 style={{ background: COLORS.brown, color: COLORS.gold }}>✦ PREMIUM</div>
@@ -527,11 +536,13 @@ const NameCorrection = () => {
       </section>
 
       {/* Sticky bottom bar mobile */}
-      <Link to={payLink("Name Correction", pricing.nameCorrection.standard, "name-correction")}
-        className="lg:hidden fixed left-0 right-0 bottom-16 z-40 block text-center py-3.5 font-medium"
+      <button
+        type="button"
+        onClick={() => scrollToPackage("name-correction-packages")}
+        className="lg:hidden fixed left-0 right-0 bottom-16 z-40 block w-full text-center py-3.5 font-medium cursor-pointer border-0"
         style={{ background: COLORS.gold, color: COLORS.white, ...body }}>
         Get My Report →
-      </Link>
+      </button>
 
     </Layout>
   );

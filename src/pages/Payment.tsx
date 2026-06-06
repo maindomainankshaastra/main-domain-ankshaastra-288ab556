@@ -993,12 +993,7 @@ const PaymentPage = () => {
   const HeroIcon = isServiceMode ? Sparkles : (currentPackage?.icon || Phone);
 
   // ───── Order Summary data (shared between desktop sidebar + mobile inline) ─────
-  const summaryHub =
-    formType === "consultation"
-      ? undefined
-      : isServiceMode
-        ? catalogDisplay?.hubTitle
-        : selectedOption?.label;
+  const summaryHub = isServiceMode ? undefined : selectedOption?.label;
   const summaryOriginal = isServiceMode ? catalogDisplay?.originalPrice : undefined;
   const summaryAddons = selectedAddonObjects.map((a) => ({ label: a.label, price: a.price }));
   const deliveryNote =
