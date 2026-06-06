@@ -1563,129 +1563,81 @@ const PaymentPage = () => {
             </motion.div>
 
             {/* Sidebar */}
-            <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}>
-              <div className="bg-card border border-border rounded-2xl p-8 sticky top-24">
-                {isServiceMode ? (
-                  <>
-                    <h3 className="font-display text-xl font-bold text-foreground mb-4">Order Summary</h3>
-                    <div className="border-b border-border pb-4 mb-4">
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="min-w-0">
-                          <p className="text-foreground font-semibold">{displayName}</p>
-                          {catalogDisplay?.hubTitle && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{catalogDisplay.hubTitle}</p>
-                          )}
-                        </div>
-                        <span className="text-foreground font-semibold whitespace-nowrap">₹{servicePrice.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    {/* Add-ons */}
-                    {availableAddons.length > 0 && (
-                    <div className="mb-4">
-                      <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        Recommended Add-ons
-                      </h4>
-                      <div className="space-y-2">
-                        {availableAddons.map((a) => {
-                          const checked = selectedAddons.includes(a.id);
-                          return (
-                            <button
-                              type="button"
-                              key={a.id}
-                              onClick={() => toggleAddon(a.id)}
-                              className={cn(
-                                "w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-start gap-3",
-                                checked ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
-                              )}
-                            >
-                              <div className={cn(
-                                "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
-                                checked ? "border-primary bg-primary" : "border-muted-foreground"
-                              )}>
-                                {checked && <Check className="w-3 h-3 text-white" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="font-medium text-sm text-foreground">{a.label}</span>
-                                  <span className="font-semibold text-sm text-primary whitespace-nowrap">+₹{a.price.toLocaleString()}</span>
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-0.5">{a.note}</div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    )}
-
-                    {selectedAddonObjects.length > 0 && (
-                      <div className="border-t border-border pt-3 mb-3 space-y-1">
-                        {selectedAddonObjects.map((a) => (
-                          <div key={a.id} className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">+ {a.label}</span>
-                            <span className="text-foreground">₹{a.price.toLocaleString()}</span>
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden lg:block space-y-6"
+            >
+              {/* Plan selector (consultation only) */}
+              {!isServiceMode && currentPackage && (
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <h3 className="font-display text-xl font-bold text-foreground mb-4">Select Your Plan</h3>
+                  <div className="space-y-3">
+                    {currentPackage.options.map((option) => (
+                      <button
+                        type="button"
+                        key={option.id}
+                        onClick={() => setSelectedPackage(option.id)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200",
+                          selectedPackage === option.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center", selectedPackage === option.id ? "border-primary bg-primary" : "border-muted-foreground")}>
+                            {selectedPackage === option.id && <div className="w-2 h-2 rounded-full bg-white" />}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <span className="font-medium text-foreground">{option.label}</span>
+                        </div>
+                        <span className="font-bold text-primary">₹{option.price}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                    <div className="flex justify-between text-lg font-bold pt-2">
-                      <span className="text-foreground">Total</span>
-                      <span className="text-gradient-amber">₹{displayPrice.toLocaleString()}</span>
-                    </div>
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <ul className="space-y-2">
-                        {["Delivered via Email in 9 Hours"].map((item) => (
-                          <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Check className="w-4 h-4 text-secondary flex-shrink-0" />{item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="font-display text-xl font-bold text-foreground mb-4">Select Your Plan</h3>
-                    <div className="space-y-3 mb-6">
-                      {currentPackage?.options.map((option) => (
+              {/* Add-ons selector */}
+              {isServiceMode && availableAddons.length > 0 && (
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Recommended Add-ons
+                  </h4>
+                  <div className="space-y-2">
+                    {availableAddons.map((a) => {
+                      const checked = selectedAddons.includes(a.id);
+                      return (
                         <button
                           type="button"
-                          key={option.id}
-                          onClick={() => setSelectedPackage(option.id)}
+                          key={a.id}
+                          onClick={() => toggleAddon(a.id)}
                           className={cn(
-                            "w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200",
-                            selectedPackage === option.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                            "w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-start gap-3",
+                            checked ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
                           )}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center", selectedPackage === option.id ? "border-primary bg-primary" : "border-muted-foreground")}>
-                              {selectedPackage === option.id && <div className="w-2 h-2 rounded-full bg-white" />}
-                            </div>
-                            <span className="font-medium text-foreground">{option.label}</span>
+                          <div className={cn(
+                            "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
+                            checked ? "border-primary bg-primary" : "border-muted-foreground"
+                          )}>
+                            {checked && <Check className="w-3 h-3 text-white" />}
                           </div>
-                          <span className="font-bold text-primary">₹{option.price}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium text-sm text-foreground">{a.label}</span>
+                              <span className="font-semibold text-sm text-primary whitespace-nowrap">+₹{a.price.toLocaleString()}</span>
+                            </div>
+                            {a.note && <div className="text-xs text-muted-foreground mt-0.5">{a.note}</div>}
+                          </div>
                         </button>
-                      ))}
-                    </div>
-                    <div className="border-t border-border pt-4">
-                      <h3 className="font-display text-lg font-bold text-foreground mb-3">Order Summary</h3>
-                      <div className="flex justify-between items-start gap-3 mb-3">
-                        <div className="min-w-0">
-                          <p className="text-foreground font-semibold">{currentPackage?.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{selectedOption?.label || "-"}</p>
-                        </div>
-                        <span className="text-foreground font-semibold whitespace-nowrap">₹{(selectedOption?.price || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-lg font-bold pt-3 border-t border-border">
-                        <span className="text-foreground">Total</span>
-                        <span className="text-gradient-amber">₹{(selectedOption?.price || 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Sticky Order Summary */}
+              {renderOrderSummary(true)}
             </motion.div>
           </div>
         </div>
