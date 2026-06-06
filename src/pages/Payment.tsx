@@ -1533,6 +1533,11 @@ const PaymentPage = () => {
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     {renderFields()}
 
+                    {/* Mobile-only Order Summary — appears below form, above Pay button */}
+                    <div className="lg:hidden">
+                      {renderOrderSummary(false)}
+                    </div>
+
                     <button
                       type="submit"
                       disabled={isProcessing || (!isServiceMode && !selectedPackage) || (isServiceMode && !canSubmitService)}
