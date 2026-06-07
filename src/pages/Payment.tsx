@@ -484,8 +484,15 @@ const PaymentPage = () => {
     if (formType === "lucky-vehicle-date") {
       return [LUCKY_VEHICLE_NUMBER_ADDON, LUCKY_VEHICLE_COLOR_ADDON];
     }
-    if (formType === "lucky-mobile" || formType === "lucky-flat") {
+    if (formType === "lucky-mobile") {
       return [MISSING_NUMBER_ADDON, LUCKY_COLOR_ADDON];
+    }
+    if (
+      formType === "lucky-flat" ||
+      formType === "business-dates" ||
+      formType === "business-property"
+    ) {
+      return [];
     }
     return [...DEFAULT_ADDONS];
   }, [formType]);

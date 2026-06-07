@@ -71,9 +71,9 @@ export const luckyFlatSchema = z.object({
   currentState: z.string().trim().min(2, "State required").max(80),
   gender: genderField,
   towerBlock: z.string().trim().min(1, "Tower / wing / block required").max(80),
-  floorNumber: z.string().trim().min(1, "Floor number required").max(20),
+  address: z.string().trim().min(2, "Address required").max(300),
   propertyPurpose: z.enum(["self", "investment", "rental", "business"], { required_error: "Select purpose" }),
-  facingDirection: z.string().trim().max(80).optional().or(z.literal("")),
+  flatFacingDirection: z.string().trim().max(80).optional().or(z.literal("")),
   connectedNumber: z.string().trim().max(80).optional().or(z.literal("")),
   ...contactFields,
 });
@@ -124,9 +124,10 @@ export const businessPropertySchema = z.object({
   dob: dobField,
   gender: genderField,
   numberOptions: z.string().trim().min(1, "Share number options").max(300),
-  floorNumber: z.string().trim().max(20).optional().or(z.literal("")),
-  businessType: z.string().trim().min(2, "Business type required").max(120),
+  address: z.string().trim().min(2, "Address required").max(300),
+  businessType: z.string().trim().min(2, "Industry required").max(120),
   facingDirection: z.string().trim().max(80).optional().or(z.literal("")),
+  eventName: z.string().trim().max(160).optional().or(z.literal("")),
   ...contactFields,
 });
 
@@ -269,7 +270,7 @@ export function getExtendedDefaultValues(formType: ExtendedFormType): Record<str
     case "lucky-mobile":
       return { fullName: "", dob: emptyDob, currentCity: "", currentState: "", gender: undefined, currentMobile: "", preferredSeries: "", preferredDigits: "", avoidDigits: "", purpose: undefined, ...contact };
     case "lucky-flat":
-      return { fullName: "", dob: emptyDob, currentCity: "", currentState: "", gender: undefined, towerBlock: "", floorNumber: "", propertyPurpose: undefined, facingDirection: "", connectedNumber: "", ...contact };
+      return { fullName: "", dob: emptyDob, currentCity: "", currentState: "", gender: undefined, towerBlock: "", address: "", propertyPurpose: undefined, flatFacingDirection: "", connectedNumber: "", ...contact };
     case "relationship-analysis":
       return { person1: emptyPerson, person2: emptyPerson, purpose: undefined, ...contact };
     case "business-brand":
@@ -277,7 +278,7 @@ export function getExtendedDefaultValues(formType: ExtendedFormType): Record<str
     case "business-dates":
       return { fullName: "", dob: emptyDob, gender: undefined, reason: "", ...contact };
     case "business-property":
-      return { fullName: "", dob: emptyDob, gender: undefined, numberOptions: "", floorNumber: "", businessType: "", facingDirection: "", ...contact };
+      return { fullName: "", dob: emptyDob, gender: undefined, numberOptions: "", address: "", businessType: "", facingDirection: "", eventName: "", ...contact };
     case "business-partner":
       return { person1: emptyPerson, person2: emptyPerson, purpose: "business_partnership" as const, industry: "", ...contact };
     case "office-vastu":
