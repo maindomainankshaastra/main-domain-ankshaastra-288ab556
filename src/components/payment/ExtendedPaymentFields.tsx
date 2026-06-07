@@ -308,8 +308,8 @@ export function ExtendedPaymentFields({
           <FormField control={control} name="towerBlock" render={({ field }) => (
             <FormItem><FormLabel>Tower / Wing / Block Name *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
-          <FormField control={control} name="floorNumber" render={({ field }) => (
-            <FormItem><FormLabel>Floor Number *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          <FormField control={control} name="address" render={({ field }) => (
+            <FormItem><FormLabel>Address *</FormLabel><FormControl><Input placeholder="Full property address" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <FormField control={control} name="propertyPurpose" render={({ field }) => (
@@ -326,8 +326,8 @@ export function ExtendedPaymentFields({
             <FormMessage /></FormItem>
         )} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField control={control} name="facingDirection" render={({ field }) => (
-            <FormItem><FormLabel>Facing Direction (if known)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          <FormField control={control} name="flatFacingDirection" render={({ field }) => (
+            <FormItem><FormLabel>Flat Facing Direction (if known)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="connectedNumber" render={({ field }) => (
             <FormItem><FormLabel>Number You Feel Connected To</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -458,13 +458,16 @@ export function ExtendedPaymentFields({
   }
 
   if (formType === "business-dates") {
+    const sn = (serviceName || "").toLowerCase();
+    const subject = sn.includes("land") ? "land" : "company";
+    const reasonLabel = `Required details you want to furnish about ${subject} *`;
     return (
       <>
         {FullName}
         <DOBPicker control={control} />
         <GenderRadio control={control} />
         <FormField control={control} name="reason" render={({ field }) => (
-          <FormItem><FormLabel>Reason / Explanation *</FormLabel><FormControl><Textarea className="min-h-[120px]" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>{reasonLabel}</FormLabel><FormControl><Textarea className="min-h-[120px]" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <ContactBlock control={control} EmailField={EmailField} WhatsappField={WhatsappField} />
       </>
@@ -472,25 +475,44 @@ export function ExtendedPaymentFields({
   }
 
   if (formType === "business-property") {
+    const sn = (serviceName || "").toLowerCase();
+    const isStall = sn.includes("exhibition") || sn.includes("stall");
+    const isPlot = sn.includes("plot");
+    const numberLabel = isStall
+      ? "Stall Number Options *"
+      : isPlot
+        ? "Plot Number Options *"
+        : "Shop / Office / Plot / Exhibition Number Options *";
+    const facingLabel = isStall
+      ? "Stall Facing Direction"
+      : isPlot
+        ? "Plot Facing Direction"
+        : "Facing Direction";
+    const industryLabel = isStall ? "Industry *" : "Business Type *";
     return (
       <>
         {FullName}
         <DOBPicker control={control} />
         <GenderRadio control={control} />
         <FormField control={control} name="numberOptions" render={({ field }) => (
-          <FormItem><FormLabel>Shop / Office / Plot / Exhibition Number Options *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>{numberLabel}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField control={control} name="floorNumber" render={({ field }) => (
-            <FormItem><FormLabel>Floor Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          <FormField control={control} name="address" render={({ field }) => (
+            <FormItem><FormLabel>Address *</FormLabel><FormControl><Input placeholder="Full address" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="businessType" render={({ field }) => (
-            <FormItem><FormLabel>Business Type *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>{industryLabel}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <FormField control={control} name="facingDirection" render={({ field }) => (
-          <FormItem><FormLabel>Facing Direction</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>{facingLabel}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
         )} />
+        {isStall && (
+          <FormField control={control} name="eventName" render={({ field }) => (
+            <FormItem><FormLabel>Exhibition Stall / Event Name (if any)</FormLabel><FormControl><Input placeholder="e.g. Auto Expo 2026" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        )}
         <ContactBlock control={control} EmailField={EmailField} WhatsappField={WhatsappField} />
       </>
     );
