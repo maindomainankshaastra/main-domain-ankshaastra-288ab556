@@ -10,6 +10,12 @@ const DIRECT_TO_CHECKOUT_SLUGS = new Set([
   "lucky-vehicle-number",
   "lucky-vehicle-color",
   "lucky-vehicle-purchase-date",
+  "lucky-flat-number",
+  "exhibition-stall-number",
+  "plot-number-analysis",
+  "land-purchase-date",
+  "company-bank-account-opening-date",
+  "company-registration-date",
 ]);
 
 /**
