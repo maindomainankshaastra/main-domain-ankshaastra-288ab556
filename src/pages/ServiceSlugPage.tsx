@@ -3,6 +3,14 @@ import DynamicServicePage from "@/pages/DynamicServicePage";
 import QuickServiceDetailPage from "@/components/services/QuickServiceDetailPage";
 import { getStandaloneBySlug } from "@/data/standaloneServices";
 import { isQuickServiceSlug, reservedServiceSlugs } from "@/data/serviceRoutes";
+import { payLink } from "@/config/pricing";
+
+// Services that should skip the detail page and go straight to the checkout form.
+const DIRECT_TO_CHECKOUT_SLUGS = new Set([
+  "lucky-vehicle-number",
+  "lucky-vehicle-color",
+  "lucky-vehicle-purchase-date",
+]);
 
 /**
  * Catch-all for /services/:slug
@@ -15,6 +23,18 @@ export default function ServiceSlugPage() {
 
   if (reservedServiceSlugs.has(slug)) {
     return <Navigate to="/services" replace />;
+  }
+
+  if (DIRECT_TO_CHECKOUT_SLUGS.has(slug)) {
+    const standalone = getStandaloneBySlug(slug);
+    if (standalone) {
+      return (
+        <Navigate
+          to={payLink(standalone.serviceTitle, standalone.price, standalone.formType)}
+          replace
+        />
+      );
+    }
   }
 
   if (isQuickServiceSlug(slug)) {
