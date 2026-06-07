@@ -1012,11 +1012,18 @@ const PaymentPage = () => {
       formType === "name-correction-couple" ||
       serviceLower === "name correction" ||
       serviceLower.includes("complete blueprint"));
+  const isExtendedReport =
+    formType === "lucky-vehicle" ||
+    formType === "lucky-vehicle-color" ||
+    formType === "lucky-vehicle-date" ||
+    formType === "lucky-flat" ||
+    formType === "business-dates" ||
+    formType === "business-property";
   const deliveryNote = formType === "consultation"
     ? "Call Consultation with Himansshu Ji will be scheduled within 48-72 hours."
     : isNameCheckPackage
       ? "Delivered within 12-24 Hrs."
-      : isNameCorrectionReport
+      : isNameCorrectionReport || isExtendedReport
         ? "Delivered within 24-48 Hrs."
         : "Delivered within 12-24 Hrs.";
   const renderOrderSummary = (sticky: boolean) => (
