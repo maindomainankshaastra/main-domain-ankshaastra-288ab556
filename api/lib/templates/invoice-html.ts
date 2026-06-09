@@ -13,6 +13,8 @@ export type InvoiceTemplateData = {
   businessStateName?: string;
   logoUrl?: string;
   customerName: string;
+  purchasedByName?: string;
+  serviceSubjects?: Array<{ person_index: number; full_name: string }>;
   customerEmail?: string;
   customerPhone?: string;
   customerBillingAddress?: string;
@@ -66,6 +68,17 @@ export function renderInvoiceHtml(data: InvoiceTemplateData): string {
     .filter(Boolean)
     .map((line) => `<div>${escape(line)}</div>`)
     .join('');
+
+  const purchasedBy = data.purchasedByName || data.customerName;
+  const subjects = data.serviceSubjects || [];
+  const subjectBlock =
+    subjects.length === 0
+      ? ''
+      : subjects.length === 1
+        ? `<div style="margin-top:8px;"><strong>Service Subject:</strong> ${escape(subjects[0].full_name)}</div>`
+        : `<div style="margin-top:8px;"><strong>Service Subjects:</strong><ol style="margin:6px 0 0 18px;padding:0;">${subjects
+            .map((s) => `<li>${escape(s.full_name)}</li>`)
+            .join('')}</ol></div>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -131,8 +144,9 @@ export function renderInvoiceHtml(data: InvoiceTemplateData): string {
   <div class="two-col">
     <div>
       <div class="section-title">Customer Details</div>
-      <div><strong>Name</strong> ${escape(data.customerName)}</div>
-      ${data.customerPhone ? `<div><strong>Phone</strong> ${escape(data.customerPhone)}</div>` : ''}
+      <div><strong>Purchased By</strong> ${escape(purchasedBy)}</div>
+      ${subjectBlock}
+      ${data.customerPhone ? `<div style="margin-top:8px;"><strong>Phone</strong> ${escape(data.customerPhone)}</div>` : ''}
       ${data.customerEmail ? `<div><strong>Email</strong> ${escape(data.customerEmail)}</div>` : ''}
     </div>
     <div>

@@ -42,6 +42,7 @@ import {
 import { ExtendedPaymentFields } from "@/components/payment/ExtendedPaymentFields";
 import { resolveServiceDisplay } from "@/lib/service-display";
 import { OrderSummary } from "@/components/payment/OrderSummary";
+import { inferPersonCountFromServiceTitle, resolvePurchaserName, extractServicePersonsFromSnapshot } from "@/lib/service-persons";
 
 const KUNDLI_20_ADDON = { id: "kundli-20", label: "Personalised Premium Kundli 2.0", note: "PDF report", price: pricing.addons.kundli20 };
 const LUCKY_COLOR_ADDON = { id: "lucky-color", label: "Lucky Color and Number", note: "", price: pricing.addons.luckyColorNumber };
@@ -453,6 +454,17 @@ const PaymentPage = () => {
     return 2;
   }, [serviceName]);
 
+  const requiredPersonCount = useMemo(() => {
+    const fromTitle = inferPersonCountFromServiceTitle(serviceName);
+    if (fromTitle.min > 1) return fromTitle.min;
+    if (formType === "kundali-multi") return kundaliCount;
+    if (formType === "name-correction-couple" || formType === "couple" || formType === "pyaar-shastra") return 2;
+    if (formType === "relationship-analysis" || formType === "business-partner") return 2;
+    return 1;
+  }, [serviceName, formType, kundaliCount]);
+
+  const isMultiPersonCheckout = requiredPersonCount > 1;
+
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAwaitingPayment, setIsAwaitingPayment] = useState(false);
@@ -843,11 +855,7 @@ const PaymentPage = () => {
       return;
     }
 
-    const displayPersonName =
-      formData.fullName ||
-      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ") ||
-      formData?.person1?.fullName ||
-      "";
+    const displayPersonName = resolvePurchaserName(formData as Record<string, unknown>);
 
     let order: { id: string; amount: number; dbOrderId?: string };
     try {
@@ -978,6 +986,25 @@ const PaymentPage = () => {
 
     if (isServiceMode && !servicePrice) {
       toast({ title: "Service price unavailable", description: "We could not load the current price for this service. Please refresh or contact support.", variant: "destructive" });
+      return;
+    }
+
+    if (isMultiPersonCheckout && !String(data.purchaserName || "").trim()) {
+      toast({
+        title: "Purchaser name required",
+        description: "Enter your name as the person making this payment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const enteredSubjects = extractServicePersonsFromSnapshot(data as Record<string, unknown>).length;
+    if (requiredPersonCount > 1 && enteredSubjects < requiredPersonCount) {
+      toast({
+        title: "Incomplete person details",
+        description: `This service requires details for ${requiredPersonCount} person(s). You have entered ${enteredSubjects}.`,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -1120,11 +1147,24 @@ const PaymentPage = () => {
     );
 
     const ContactRow = (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField control={c} name="email" render={({ field }) => (
-          <FormItem><FormLabel>Email *</FormLabel><FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <WhatsappField control={c} />
+      <div className="space-y-4">
+        {isMultiPersonCheckout && (
+          <FormField control={c} name="purchaserName" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Your Name (Purchaser) *</FormLabel>
+              <FormControl>
+                <Input placeholder="Name of person making payment" {...field} value={field.value ?? ""} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField control={c} name="email" render={({ field }) => (
+            <FormItem><FormLabel>Email *</FormLabel><FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <WhatsappField control={c} />
+        </div>
       </div>
     );
 

@@ -132,7 +132,19 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   page.drawText('Customer Details', { x: margin, y, size: 9, font: fontBold, color: black });
   page.drawText('Billing Address', { x: margin + 250, y, size: 9, font: fontBold, color: black });
   y -= 14;
-  page.drawText(`Name ${sanitizePdfText(data.customerName)}`.slice(0, 42), { x: margin, y, size: 8, font, color: black });
+  const purchasedBy = data.purchasedByName || data.customerName;
+  page.drawText(`Purchased By ${sanitizePdfText(purchasedBy)}`.slice(0, 48), { x: margin, y, size: 8, font, color: black });
+  y -= 11;
+  const subjects = data.serviceSubjects || [];
+  if (subjects.length === 1) {
+    page.drawText(`Subject ${sanitizePdfText(subjects[0].full_name)}`.slice(0, 48), { x: margin, y, size: 8, font, color: black });
+    y -= 11;
+  } else if (subjects.length > 1) {
+    subjects.slice(0, 3).forEach((subject, index) => {
+      page.drawText(`${index + 1}. ${sanitizePdfText(subject.full_name)}`.slice(0, 48), { x: margin, y, size: 8, font, color: black });
+      y -= 11;
+    });
+  }
   const billing = [data.customerCity, data.customerState, data.customerPincode ? `Pincode ${data.customerPincode}` : ''].filter(Boolean).join(', ');
   page.drawText(sanitizePdfText(billing || data.customerBillingAddress || '-').slice(0, 48), { x: margin + 250, y, size: 8, font, color: black });
   y -= 11;

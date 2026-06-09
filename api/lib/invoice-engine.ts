@@ -13,6 +13,10 @@ import { buildInvoicePaymentEmailHtml } from './templates/invoice-email.js';
 import { buildOrderDetailsHtml } from './order-form-details.js';
 import { buildInvoiceEmailSubject } from './schedule-invoice.js';
 import { resolveGstConfigBillingTexts } from './gst-config-fields.js';
+import {
+  resolveOrderServiceSubjects,
+  syncServicePersonsForOrder,
+} from './service-persons-store.js';
 
 export type GenerateInvoiceInput = {
   orderId: string;
@@ -251,12 +255,25 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
     await supabase.from('orders').update({ user_id: invoiceUserId }).eq('id', order.id);
   }
 
+  const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
+  const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
+  try {
+    await syncServicePersonsForOrder(String(order.id), snapshot);
+  } catch (err) {
+    console.warn('[invoice-engine] service persons sync skipped:', err);
+  }
+  const serviceSubjects = await resolveOrderServiceSubjects(order);
+
   const { templateData, gst } = buildInvoiceTemplateData({
     order,
     gstConfig,
     invoiceNumber,
     paymentId,
     paymentMethod: input.paymentMethod || (order.payment_method as string | undefined),
+    serviceSubjects: serviceSubjects.map((p) => ({
+      person_index: p.person_index,
+      full_name: p.full_name,
+    })),
   });
 
   // Reserve invoice row BEFORE PDF generation so concurrent requests hit unique constraint.

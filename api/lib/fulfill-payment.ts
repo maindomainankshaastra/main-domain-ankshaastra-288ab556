@@ -10,6 +10,10 @@ import {
 } from "./payment-order-map.js";
 import { mergeOrderMetadata } from "./order-form-details.js";
 import { scheduleInvoiceGeneration } from "./schedule-invoice.js";
+import {
+  resolvePurchaserName,
+  syncServicePersonsForOrder,
+} from "./service-persons-store.js";
 
 export type FulfillPaymentInput = {
   razorpay_order_id: string;
@@ -59,10 +63,9 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
 
   const supabase = getSupabaseAdmin();
 
-  const customer_name =
-    (formData.fullName as string) ||
-    [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ") ||
-    "Customer";
+  const customer_name = resolvePurchaserName(formData, {
+    fallback: (formData.fullName as string) || "Customer",
+  });
   const customer_email = formData.email ? String(formData.email) : null;
   const customer_phone = formData.whatsapp ? String(formData.whatsapp) : null;
   const userId = formData.userId || formData.user_id || null;
@@ -132,9 +135,21 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
 
   if (!orderId) throw new Error("Could not resolve order");
 
-  void saveOrderMetadata(orderId, formData).catch((err) => {
-    console.warn("[fulfill-payment] Could not save form metadata:", err);
-  });
+  await saveOrderMetadata(orderId, formData);
+
+  try {
+    const { data: updatedOrder } = await supabase
+      .from("orders")
+      .select("metadata")
+      .eq("id", orderId)
+      .maybeSingle();
+    const updatedMeta = (updatedOrder?.metadata as Record<string, unknown> | undefined) || {};
+    const snapshot =
+      (updatedMeta.formSnapshot as Record<string, unknown> | undefined) || formData;
+    await syncServicePersonsForOrder(orderId, snapshot);
+  } catch (err) {
+    console.warn("[fulfill-payment] Could not sync service persons:", err);
+  }
 
   const hasInvoice =
     (await paymentHasDeliverableInvoice(razorpay_payment_id)) ||

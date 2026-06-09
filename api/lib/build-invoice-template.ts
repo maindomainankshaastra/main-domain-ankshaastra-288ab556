@@ -47,8 +47,15 @@ export function resolveCustomerBilling(order: OrderRow) {
 
   const billingParts = [city, stateName, pincode ? `Pincode: ${pincode}` : undefined].filter(Boolean);
 
+  const purchaserName =
+    pickString(metadata, ['purchaserName']) ||
+    pickString(snapshot, ['purchaserName', 'billingName', 'contactName']) ||
+    (order.customer_name ? String(order.customer_name) : undefined) ||
+    pickString(snapshot, ['fullName', 'firstName']) ||
+    'Customer';
+
   return {
-    name: String(order.customer_name || pickString(snapshot, ['fullName', 'firstName']) || 'Customer'),
+    name: purchaserName,
     email: String(order.customer_email || pickString(snapshot, ['email']) || ''),
     phone: String(order.customer_phone || pickString(snapshot, ['whatsapp', 'mobileNumber', 'currentMobile']) || ''),
     city,
@@ -78,8 +85,9 @@ export function buildInvoiceTemplateData(input: {
   invoiceNumber: string;
   paymentId?: string;
   paymentMethod?: string;
+  serviceSubjects?: Array<{ person_index: number; full_name: string }>;
 }): { templateData: InvoiceTemplateData; gst: GstBreakdown } {
-  const { order, gstConfig, invoiceNumber, paymentId, paymentMethod } = input;
+  const { order, gstConfig, invoiceNumber, paymentId, paymentMethod, serviceSubjects = [] } = input;
   const billing = resolveCustomerBilling(order);
   const businessStateCode = resolveBusinessStateCode(gstConfig);
   const customerStateCode = billing.stateCode || businessStateCode;
@@ -116,6 +124,8 @@ export function buildInvoiceTemplateData(input: {
     businessWebsite: configExtras.website_url || siteUrl.replace(/^https?:\/\//, ''),
     logoUrl: getInvoiceLogoUrl(),
     customerName: billing.name,
+    purchasedByName: billing.name,
+    serviceSubjects,
     customerEmail: billing.email || undefined,
     customerPhone: billing.phone || undefined,
     customerBillingAddress: billing.billingAddress || undefined,
