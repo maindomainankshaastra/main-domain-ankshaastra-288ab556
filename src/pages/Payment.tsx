@@ -43,6 +43,7 @@ import { ExtendedPaymentFields } from "@/components/payment/ExtendedPaymentField
 import { resolveServiceDisplay } from "@/lib/service-display";
 import { OrderSummary } from "@/components/payment/OrderSummary";
 import { inferPersonCountFromServiceTitle, resolvePurchaserName, extractServicePersonsFromSnapshot } from "@/lib/service-persons";
+import { isIOSSafari, normalizeRazorpayContact } from "@/lib/safari-compat";
 
 const KUNDLI_20_ADDON = { id: "kundli-20", label: "Personalised Premium Kundli 2.0", note: "PDF report", price: pricing.addons.kundli20 };
 const LUCKY_COLOR_ADDON = { id: "lucky-color", label: "Lucky Color and Number", note: "", price: pricing.addons.luckyColorNumber };
@@ -903,6 +904,17 @@ const PaymentPage = () => {
     paymentCtxRef.current = ctx;
     setIsAwaitingPayment(true);
 
+    if (isIOSSafari()) {
+      toast({
+        title: "Paying on iPhone?",
+        description:
+          "If a UPI app link shows “invalid address”, enter your UPI ID instead, or pay by card/netbanking.",
+        duration: 8000,
+      });
+    }
+
+    const contactDigits = normalizeRazorpayContact(formData.whatsapp);
+
     const options = {
       key: razorpayKey,
       amount: order.amount,
@@ -910,6 +922,7 @@ const PaymentPage = () => {
       name: "Ankshaastra",
       description: isServiceMode ? serviceName : "Consultation Booking",
       order_id: order.id,
+      retry: { enabled: true, max_count: 3 },
       handler: async function (response: {
         razorpay_order_id?: string;
         razorpay_payment_id?: string;
@@ -960,14 +973,17 @@ const PaymentPage = () => {
         }
       },
       modal: {
+        confirm_close: true,
+        backdropclose: false,
         ondismiss: () => {
+          setIsAwaitingPayment(false);
           void reconcilePendingPayment();
         },
       },
       prefill: {
         name: displayPersonName,
         email: formData.email,
-        contact: formData.whatsapp,
+        contact: contactDigits,
       },
       theme: { color: "#ea580c" },
     };
