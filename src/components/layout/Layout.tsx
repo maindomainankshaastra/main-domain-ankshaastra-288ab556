@@ -12,10 +12,13 @@ interface LayoutProps {
   children: ReactNode;
   /** When true, hides Navbar, Footer, and floating WhatsApp button. Used for focused report pages. */
   minimal?: boolean;
+  /** When true, hides the floating WhatsApp button (without hiding nav/footer). */
+  hideWhatsApp?: boolean;
 }
 
-const Layout = ({ children, minimal = false }: LayoutProps) => {
+const Layout = ({ children, minimal = false, hideWhatsApp = false }: LayoutProps) => {
   const navigate = useNavigate();
+  const showWhatsApp = !minimal && !hideWhatsApp;
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {!minimal && <Navbar />}
@@ -48,8 +51,8 @@ const Layout = ({ children, minimal = false }: LayoutProps) => {
         <PageTransition>{children}</PageTransition>
       </main>
       {!minimal && <Footer />}
-      <BackToTop />
-      {!minimal && <WhatsAppButton />}
+      <BackToTop solo={!showWhatsApp} />
+      {showWhatsApp && <WhatsAppButton />}
     </div>
   );
 };
