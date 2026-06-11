@@ -1177,7 +1177,16 @@ const PaymentPage = () => {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField control={c} name="email" render={({ field }) => (
-            <FormItem><FormLabel>Email *</FormLabel><FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem>
+              <FormLabel>Email *</FormLabel>
+              <FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl>
+              {formType === "kundali" && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Please enter the correct email ID — your Kundli will be delivered to this address.
+                </p>
+              )}
+              <FormMessage />
+            </FormItem>
           )} />
           <WhatsappField control={c} />
         </div>
@@ -1629,7 +1638,7 @@ const PaymentPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout hideWhatsApp={formType === "kundali"}>
       {/* Hero Section */}
       <section className="pt-12 pb-8 bg-gradient-to-br from-brown-dark via-brown to-brown-dark relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">

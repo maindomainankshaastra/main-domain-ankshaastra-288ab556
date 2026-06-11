@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { ArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const BackToTop = () => {
+interface BackToTopProps {
+  /** When true, position at the right edge (no sibling floating button to dodge). */
+  solo?: boolean;
+}
+
+const BackToTop = ({ solo = false }: BackToTopProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -33,7 +38,7 @@ const BackToTop = () => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           onClick={scrollToTop}
-          className="back-to-top"
+          className={solo ? "back-to-top back-to-top-solo" : "back-to-top"}
           aria-label="Scroll to top"
         >
           <ArrowUp className="w-5 h-5" />
