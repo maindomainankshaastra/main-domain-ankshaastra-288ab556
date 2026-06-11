@@ -1,3 +1,4 @@
+import kundliHeroBg from "@/assets/kundli-hero-bg.jpg";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
