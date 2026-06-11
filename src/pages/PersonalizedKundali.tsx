@@ -98,7 +98,11 @@ const PersonalizedKundali = () => {
 
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 gradient-hero" />
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${kundliHeroBg})` }}
+        />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 80, repeat: Infinity, ease: "linear" }} className="absolute -top-32 -right-32 w-96 h-96 rounded-full border border-white/10" />
           <motion.div animate={{ rotate: -360 }} transition={{ duration: 60, repeat: Infinity, ease: "linear" }} className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full border border-white/10" />
