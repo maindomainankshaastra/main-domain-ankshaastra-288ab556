@@ -1638,7 +1638,7 @@ const PaymentPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout hideWhatsApp={formType === "kundali"}>
       {/* Hero Section */}
       <section className="pt-12 pb-8 bg-gradient-to-br from-brown-dark via-brown to-brown-dark relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
