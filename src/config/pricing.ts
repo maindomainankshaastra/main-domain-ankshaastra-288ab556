@@ -18,7 +18,7 @@ export const pricing = {
     extraNames: 497,
   },
   nameCorrection: {
-    standard: 2447,
+    standard: 2987,
     standardOriginal: 7500,
     withBlueprint: 7397,
     withBlueprintOriginal: 10076,
