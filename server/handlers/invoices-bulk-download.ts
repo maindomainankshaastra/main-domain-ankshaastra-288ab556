@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
-import { getSupabaseAdmin } from '../../api/lib/supabase-admin.js';
-import { getUserFromAuthHeader, isAdminUser } from '../../api/lib/auth-api.js';
-import { downloadInvoicePdfBuffer } from '../../api/lib/invoice-storage.js';
+import { getSupabaseAdmin } from '../lib/supabase-admin.js';
+import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+import { downloadInvoicePdfBuffer } from '../lib/invoice-storage.js';
 
 type Req = {
   method?: string;

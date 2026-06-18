@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { generateInvoicePdf } from "../../api/lib/pdf-engine";
-import type { InvoiceTemplateData } from "../../api/lib/templates/invoice-html";
+import { generateInvoicePdf } from "../../server/lib/pdf-engine";
+import type { InvoiceTemplateData } from "../../server/lib/templates/invoice-html";
 
 const pdfMock = vi.hoisted(() => ({
   output: Buffer.from("%PDF-1.4\nmock"),

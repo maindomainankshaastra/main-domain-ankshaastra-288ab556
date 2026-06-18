@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from '../../api/lib/supabase-admin.js';
-import { getUserFromAuthHeader, isAdminUser } from '../../api/lib/auth-api.js';
+import { getSupabaseAdmin } from '../lib/supabase-admin.js';
+import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 
 type Req = {
   method?: string;

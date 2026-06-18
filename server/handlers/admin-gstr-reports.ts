@@ -1,20 +1,20 @@
-import { getUserFromAuthHeader, isAdminUser } from '../../api/lib/auth-api.js';
-import { getSupabaseAdmin } from '../../api/lib/supabase-admin.js';
-import { filterInvoicesByPeriod } from '../../api/lib/gstr-aggregate.js';
+import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+import { getSupabaseAdmin } from '../lib/supabase-admin.js';
+import { filterInvoicesByPeriod } from '../lib/gstr-aggregate.js';
 import {
   buildGstr1Workbook,
   buildGstSummaryWorkbook,
   buildSalesRegisterWorkbook,
   buildSacSummaryWorkbook,
   type GstExportMeta,
-} from '../../api/lib/gstr-excel-export.js';
+} from '../lib/gstr-excel-export.js';
 import {
   buildValidationReport,
   validateGstConfig,
   validateInvoicesForGstr,
   type InvoiceGstRow,
-} from '../../api/lib/gst-validation.js';
-import { resolveGstConfigExtras } from '../../api/lib/gst-config-fields.js';
+} from '../lib/gst-validation.js';
+import { resolveGstConfigExtras } from '../lib/gst-config-fields.js';
 
 type Req = {
   method?: string;

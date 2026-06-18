@@ -1,7 +1,7 @@
-import { getUserFromAuthHeader, isAdminUser } from '../../api/lib/auth-api.js';
-import { sendEmail } from '../../api/lib/email-engine.js';
-import { assertSmtpConfigured, getSmtpConfigStatus } from '../../api/lib/smtp-config.js';
-import { wrapEmailLayout } from '../../api/lib/templates/email-layout.js';
+import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+import { sendEmail } from '../lib/email-engine.js';
+import { assertSmtpConfigured, getSmtpConfigStatus } from '../lib/smtp-config.js';
+import { wrapEmailLayout } from '../lib/templates/email-layout.js';
 
 type Req = {
   method?: string;

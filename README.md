@@ -63,7 +63,7 @@ The site includes:
 - Razorpay for payment checkout and verification.
 - Nodemailer email engine for invoice and order notifications.
 - PDF generation and invoice support using Puppeteer core.
-- GST and invoice utilities in `api/lib`.
+- GST and invoice utilities in `server/lib`.
 
 ## Project structure
 

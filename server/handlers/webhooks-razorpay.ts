@@ -1,12 +1,12 @@
-import { logWebhook, verifyRazorpaySignature } from "../../api/lib/webhook-utils.js";
-import { getSupabaseAdmin } from "../../api/lib/supabase-admin.js";
+import { logWebhook, verifyRazorpaySignature } from "../lib/webhook-utils.js";
+import { getSupabaseAdmin } from "../lib/supabase-admin.js";
 import {
   orderHasDeliverableInvoice,
   orderInvoiceGenerationActive,
   paymentHasDeliverableInvoice,
   paymentInvoiceGenerationActive,
-} from "../../api/lib/invoice-engine.js";
-import { scheduleInvoiceGeneration } from "../../api/lib/schedule-invoice.js";
+} from "../lib/invoice-engine.js";
+import { scheduleInvoiceGeneration } from "../lib/schedule-invoice.js";
 
 async function readRawBody(req: { on: (e: string, cb: (c: Buffer) => void) => void }): Promise<string> {
   const chunks: Buffer[] = [];

@@ -1,7 +1,7 @@
-import { verifyApiKey } from "../../api/lib/webhook-utils.js";
-import { getSupabaseAdmin } from "../../api/lib/supabase-admin.js";
-import { calculateGst } from "../../api/lib/gst.js";
-import { enqueueJob } from "../../api/lib/workflow-engine.js";
+import { verifyApiKey } from "../lib/webhook-utils.js";
+import { getSupabaseAdmin } from "../lib/supabase-admin.js";
+import { calculateGst } from "../lib/gst.js";
+import { enqueueJob } from "../lib/workflow-engine.js";
 
 /** Central API gateway for connected websites to submit orders. */
 export default async function handler(req: any, res: any) {

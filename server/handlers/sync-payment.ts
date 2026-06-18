@@ -1,5 +1,5 @@
-import { fulfillPayment, buildPaymentSignature } from "../../api/lib/fulfill-payment.js";
-import { pollRazorpayPaidOrder } from "../../api/lib/razorpay-api.js";
+import { fulfillPayment, buildPaymentSignature } from "../lib/fulfill-payment.js";
+import { pollRazorpayPaidOrder } from "../lib/razorpay-api.js";
 
 /**
  * POST /api/sync-payment

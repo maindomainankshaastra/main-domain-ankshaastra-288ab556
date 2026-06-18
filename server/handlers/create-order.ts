@@ -1,6 +1,6 @@
 import Razorpay from "razorpay";
-import { getSupabaseAdmin } from "../../api/lib/supabase-admin.js";
-import { calculateGst } from "../../api/lib/gst.js";
+import { getSupabaseAdmin } from "../lib/supabase-admin.js";
+import { calculateGst } from "../lib/gst.js";
 
 export default async function handler(req: { method?: string; body?: Record<string, unknown> }, res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } }) {
   if (req.method !== "POST") return res.status(405).end();

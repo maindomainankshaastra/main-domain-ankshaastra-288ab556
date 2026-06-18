@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "../../api/lib/supabase-admin.js";
+import { getSupabaseAdmin } from "../lib/supabase-admin.js";
 
 export default async function handler(
   req: { method?: string; query?: Record<string, string | string[]> },

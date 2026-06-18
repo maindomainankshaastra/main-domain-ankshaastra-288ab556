@@ -1,4 +1,4 @@
-import { processInvoiceJob } from '../../api/lib/invoice-engine.js';
+import { processInvoiceJob } from '../lib/invoice-engine.js';
 
 type Req = {
   method?: string;

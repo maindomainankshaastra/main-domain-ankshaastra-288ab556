@@ -1,4 +1,4 @@
-import { attachJsonBody } from "./lib/parse-body.js";
+import { attachJsonBody } from "../server/lib/parse-body.js";
 import createOrder from "../server/handlers/create-order.js";
 import services from "../server/handlers/services.js";
 import verifyPayment from "../server/handlers/verify-payment.js";

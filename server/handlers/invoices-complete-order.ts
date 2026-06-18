@@ -1,14 +1,14 @@
 import crypto from 'crypto';
-import { getSupabaseAdmin } from '../../api/lib/supabase-admin.js';
+import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 import {
   processInvoiceJob,
   orderHasDeliverableInvoice,
   orderInvoiceGenerationActive,
   paymentHasDeliverableInvoice,
   paymentInvoiceGenerationActive,
-} from '../../api/lib/invoice-engine.js';
-import { enqueueJob } from '../../api/lib/workflow-engine.js';
-import { resolveOrderForPayment, invoiceJobKey } from '../../api/lib/payment-order-map.js';
+} from '../lib/invoice-engine.js';
+import { enqueueJob } from '../lib/workflow-engine.js';
+import { resolveOrderForPayment, invoiceJobKey } from '../lib/payment-order-map.js';
 
 type Req = {
   method?: string;

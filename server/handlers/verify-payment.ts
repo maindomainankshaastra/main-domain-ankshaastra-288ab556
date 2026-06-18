@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { fulfillPayment } from "../../api/lib/fulfill-payment.js";
+import { fulfillPayment } from "../lib/fulfill-payment.js";
 
 export default async function handler(
   req: { method?: string; body?: Record<string, unknown> },

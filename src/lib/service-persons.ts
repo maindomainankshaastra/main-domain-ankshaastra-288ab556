@@ -1,5 +1,5 @@
 /**
- * Client-side helpers for service subject extraction (mirrors api/lib/service-persons.ts).
+ * Client-side helpers for service subject extraction (mirrors server/lib/service-persons.ts).
  */
 
 export type ServicePersonRecord = {

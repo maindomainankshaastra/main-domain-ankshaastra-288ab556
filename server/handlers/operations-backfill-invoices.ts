@@ -1,6 +1,6 @@
-import { verifyApiKey } from '../../api/lib/webhook-utils.js';
-import { getSupabaseAdmin } from '../../api/lib/supabase-admin.js';
-import { processInvoiceJob } from '../../api/lib/invoice-engine.js';
+import { verifyApiKey } from '../lib/webhook-utils.js';
+import { getSupabaseAdmin } from '../lib/supabase-admin.js';
+import { processInvoiceJob } from '../lib/invoice-engine.js';
 
 /**
  * POST /api/operations/backfill-invoices

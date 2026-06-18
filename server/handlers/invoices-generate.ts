@@ -1,5 +1,5 @@
-import { getUserFromAuthHeader, isAdminUser } from '../../api/lib/auth-api.js';
-import { processInvoiceJob } from '../../api/lib/invoice-engine.js';
+import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+import { processInvoiceJob } from '../lib/invoice-engine.js';
 
 type Req = {
   method?: string;

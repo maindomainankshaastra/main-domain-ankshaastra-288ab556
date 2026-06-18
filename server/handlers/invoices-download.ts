@@ -1,6 +1,6 @@
-import { getSupabaseAdmin } from '../../api/lib/supabase-admin.js';
-import { getUserFromAuthHeader, userCanAccessInvoice } from '../../api/lib/auth-api.js';
-import { refreshInvoicePdfUrl } from '../../api/lib/invoice-storage.js';
+import { getSupabaseAdmin } from '../lib/supabase-admin.js';
+import { getUserFromAuthHeader, userCanAccessInvoice } from '../lib/auth-api.js';
+import { refreshInvoicePdfUrl } from '../lib/invoice-storage.js';
 
 type Req = {
   method?: string;

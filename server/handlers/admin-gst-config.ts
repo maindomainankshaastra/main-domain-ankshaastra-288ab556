@@ -5,9 +5,9 @@ import {
   isMissingOptionalColumnError,
   resolveGstConfigBillingTexts,
   resolveGstConfigExtras,
-} from '../../api/lib/gst-config-fields.js';
-import { getUserFromAuthHeader, isAdminUser } from '../../api/lib/auth-api.js';
-import { getSupabaseAdmin } from '../../api/lib/supabase-admin.js';
+} from '../lib/gst-config-fields.js';
+import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 
 type Req = {
   method?: string;
