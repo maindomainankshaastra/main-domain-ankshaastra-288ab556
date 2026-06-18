@@ -5,45 +5,47 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, FileSpreadsheet, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Loader2, FileSpreadsheet, ShieldCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 type ValidationIssue = {
-  level: "error" | "warning";
+  level: "error" | "warning" | "info";
   code: string;
   message: string;
   invoiceNumber?: string;
+};
+
+type Dashboard = {
+  totalInvoices: number;
+  totalSales: number;
+  taxableValue: number;
+  cgstCollected: number;
+  sgstCollected: number;
+  igstCollected: number;
+  b2bCount: number;
+  b2csCount: number;
+  b2clCount: number;
+  creditNotesCount: number;
+  validInvoices: number;
+  warningInvoices: number;
+  errorInvoices: number;
+  autoCorrectedInvoices: number;
 };
 
 type ValidationReport = {
   period: string;
   errors: ValidationIssue[];
   warnings: ValidationIssue[];
+  info: ValidationIssue[];
   readyToFile: boolean;
+  filingStatus: "draft" | "ready_to_file" | "filed";
+  dashboard?: Dashboard;
 };
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
-
-async function apiCall(
-  token: string,
-  method: "GET" | "POST",
-  body?: Record<string, unknown>,
-): Promise<unknown> {
-  const res = await fetch("/api/admin/gstr-reports", {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: method === "POST" ? JSON.stringify(body) : undefined,
-  });
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw Object.assign(new Error(String(data.error || "Request failed")), { data });
-  return data;
-}
 
 function downloadBase64Xlsx(filename: string, base64: string) {
   const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
@@ -58,6 +60,15 @@ function downloadBase64Xlsx(filename: string, base64: string) {
   URL.revokeObjectURL(url);
 }
 
+function StatCard({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg border bg-card p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold">{value}</p>
+    </div>
+  );
+}
+
 export default function GstReportsModule() {
   const now = new Date();
   const [year, setYear] = useState(String(now.getFullYear()));
@@ -70,6 +81,8 @@ export default function GstReportsModule() {
     const current = now.getFullYear();
     return Array.from({ length: 5 }, (_, i) => String(current - i));
   }, [now]);
+
+  const canExport = report ? report.errors.length === 0 : false;
 
   const runValidate = async () => {
     setValidating(true);
@@ -86,51 +99,87 @@ export default function GstReportsModule() {
       if (!res.ok) throw new Error(withPeriod.error || "Validation failed");
 
       setReport(withPeriod);
-      if (withPeriod.readyToFile) {
-        toast.success("Validation passed — ready to export");
+      if (withPeriod.errors.length === 0) {
+        toast.success("Validation passed — warnings do not block filing");
       } else {
-        toast.error(`${withPeriod.errors?.length || 0} validation error(s) — fix before filing`);
+        toast.error(`${withPeriod.errors.length} error(s) must be fixed before filing`);
       }
     } catch (e: unknown) {
-      const err = e as { message?: string; data?: ValidationReport };
-      if (err.data?.errors) setReport(err.data as ValidationReport);
-      toast.error(err.message || "Validation failed");
+      toast.error(e instanceof Error ? e.message : "Validation failed");
     } finally {
       setValidating(false);
     }
   };
 
+  const postAction = async (action: string, extra?: Record<string, unknown>) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("Not signed in");
+
+    const res = await fetch("/api/admin/gstr-reports", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action, year: Number(year), month: Number(month), ...extra }),
+    });
+    const data = (await res.json()) as ValidationReport & { error?: string; filename?: string; data?: string };
+    if (!res.ok) {
+      if (data.errors) setReport(data);
+      throw new Error(data.error || "Request failed");
+    }
+    return data;
+  };
+
   const exportReport = async (type: string, label: string) => {
     setExporting(type);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not signed in");
-
-      const result = (await apiCall(token, "POST", {
-        action: "export",
-        type,
-        year: Number(year),
-        month: Number(month),
-      })) as { filename: string; data: string };
-
-      downloadBase64Xlsx(result.filename, result.data);
-      toast.success(`${label} downloaded`);
+      const result = await postAction("export", { type });
+      if (result.filename && result.data) {
+        downloadBase64Xlsx(result.filename, result.data);
+        toast.success(`${label} downloaded`);
+      }
     } catch (e: unknown) {
-      const err = e as { message?: string; data?: ValidationReport };
-      if (err.data?.errors) setReport(err.data as ValidationReport);
-      toast.error(err.message || "Export failed");
+      toast.error(e instanceof Error ? e.message : "Export failed");
     } finally {
       setExporting(null);
     }
   };
 
+  const markReady = async () => {
+    try {
+      await postAction("mark-ready");
+      toast.success("Marked Ready To File");
+      await runValidate();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not update status");
+    }
+  };
+
+  const markFiled = async () => {
+    try {
+      await postAction("mark-filed");
+      toast.success("Marked as Filed");
+      await runValidate();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not update status");
+    }
+  };
+
+  const d = report?.dashboard;
+  const statusLabel = {
+    draft: "Draft",
+    ready_to_file: "Ready To File",
+    filed: "Filed",
+  }[report?.filingStatus || "draft"];
+
   return (
     <AdminPage
       title="GST & GSTR-1 Reports"
-      description="Validate invoices for a filing period and export GSTR-1, SAC summary, sales register, and GST summary workbooks."
+      description="ANKSHAASTRA OCCULT EXPERTS LLP — SAC 999799, UP (09), monthly GSTR-1. Only errors block filing."
     >
-      <div className="space-y-6 max-w-3xl">
+      <div className="space-y-6 max-w-5xl">
         <div className="flex flex-wrap gap-4 items-end">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Year</p>
@@ -158,33 +207,58 @@ export default function GstReportsModule() {
             {validating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
             Validate Period
           </Button>
+          {canExport && (
+            <>
+              <Button variant="secondary" onClick={markReady}>Mark Ready To File</Button>
+              <Button variant="outline" onClick={markFiled}>Mark Filed</Button>
+            </>
+          )}
         </div>
 
         {report && (
-          <Alert variant={report.readyToFile ? "default" : "destructive"}>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle className="flex items-center gap-2">
-              Filing period {report.period}
-              <Badge variant={report.readyToFile ? "default" : "destructive"}>
-                {report.readyToFile ? "Ready To File" : "Not Ready"}
-              </Badge>
-            </AlertTitle>
-            <AlertDescription className="mt-2 space-y-2">
-              {report.errors.length === 0 && report.warnings.length === 0 && (
-                <p>No validation issues found.</p>
+          <Alert variant={report.errors.length ? "destructive" : "default"}>
+            {report.errors.length ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+            <AlertTitle className="flex items-center gap-2 flex-wrap">
+              Period {report.period}
+              <Badge variant={report.errors.length ? "destructive" : "default"}>{statusLabel}</Badge>
+              {report.warnings.length > 0 && (
+                <Badge variant="outline">{report.warnings.length} warning(s)</Badge>
               )}
+            </AlertTitle>
+            <AlertDescription className="mt-2 space-y-1 max-h-48 overflow-y-auto">
               {report.errors.map((issue) => (
-                <p key={`${issue.code}-${issue.invoiceNumber || issue.message}`} className="text-sm">
-                  <strong>Error:</strong> {issue.message}
-                </p>
+                <p key={`e-${issue.code}-${issue.invoiceNumber}`} className="text-sm"><strong>Error:</strong> {issue.message}</p>
               ))}
               {report.warnings.map((issue) => (
-                <p key={`${issue.code}-w-${issue.invoiceNumber || issue.message}`} className="text-sm text-muted-foreground">
-                  <strong>Warning:</strong> {issue.message}
-                </p>
+                <p key={`w-${issue.code}-${issue.invoiceNumber}`} className="text-sm text-muted-foreground"><strong>Warning:</strong> {issue.message}</p>
               ))}
+              {report.info.slice(0, 10).map((issue) => (
+                <p key={`i-${issue.code}-${issue.invoiceNumber}`} className="text-sm text-muted-foreground"><strong>Info:</strong> {issue.message}</p>
+              ))}
+              {report.info.length > 10 && (
+                <p className="text-xs text-muted-foreground">+ {report.info.length - 10} auto-correction info messages</p>
+              )}
             </AlertDescription>
           </Alert>
+        )}
+
+        {d && (
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+            <StatCard label="Total Invoices" value={d.totalInvoices} />
+            <StatCard label="Total Sales" value={`₹${d.totalSales.toLocaleString("en-IN")}`} />
+            <StatCard label="Taxable Value" value={`₹${d.taxableValue.toLocaleString("en-IN")}`} />
+            <StatCard label="CGST" value={`₹${d.cgstCollected.toLocaleString("en-IN")}`} />
+            <StatCard label="SGST" value={`₹${d.sgstCollected.toLocaleString("en-IN")}`} />
+            <StatCard label="IGST" value={`₹${d.igstCollected.toLocaleString("en-IN")}`} />
+            <StatCard label="B2B" value={d.b2bCount} />
+            <StatCard label="B2CS" value={d.b2csCount} />
+            <StatCard label="B2CL" value={d.b2clCount} />
+            <StatCard label="Credit Notes" value={d.creditNotesCount} />
+            <StatCard label="Valid" value={d.validInvoices} />
+            <StatCard label="Warnings" value={d.warningInvoices} />
+            <StatCard label="Errors" value={d.errorInvoices} />
+            <StatCard label="Auto Corrected" value={d.autoCorrectedInvoices} />
+          </div>
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -198,7 +272,7 @@ export default function GstReportsModule() {
               key={type}
               variant="outline"
               className="justify-start h-auto py-3"
-              disabled={!!exporting || !report?.readyToFile}
+              disabled={!!exporting || !canExport}
               onClick={() => exportReport(type, label)}
             >
               {exporting === type ? (
@@ -212,8 +286,8 @@ export default function GstReportsModule() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Supplier state: Uttar Pradesh (09). B2CS invoices are aggregated by state and GST rate in the GSTR-1 export.
-          Exports are blocked when validation errors exist.
+          GSTIN 09AAFFE7583B1ZD · SAC 999799 · UP (09). B2CS rows are aggregated by state and rate.
+          Warnings (missing state, address) do not block export or filing.
         </p>
       </div>
     </AdminPage>

@@ -1,5 +1,6 @@
 import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
+import { normalizeInvoiceForGstr } from '../lib/gst-auto-fix.js';
 import { filterInvoicesByPeriod } from '../lib/gstr-aggregate.js';
 import {
   buildGstr1Workbook,
@@ -9,9 +10,11 @@ import {
   type GstExportMeta,
 } from '../lib/gstr-excel-export.js';
 import {
+  buildGstrDashboard,
   buildValidationReport,
   validateGstConfig,
   validateInvoicesForGstr,
+  type GstValidationIssue,
   type InvoiceGstRow,
 } from '../lib/gst-validation.js';
 import { resolveGstConfigExtras } from '../lib/gst-config-fields.js';
@@ -43,7 +46,7 @@ async function loadPeriodInvoices(year: number, month: number) {
 
   const { data, error } = await supabase
     .from('invoices')
-    .select('*')
+    .select('*, orders:order_id(id, metadata)')
     .gte('invoice_date', start)
     .lt('invoice_date', end)
     .in('status', ['paid', 'generating'])
@@ -53,12 +56,46 @@ async function loadPeriodInvoices(year: number, month: number) {
   return (data || []) as Record<string, unknown>[];
 }
 
+function prepareInvoices(
+  raw: Record<string, unknown>[],
+  gstConfig: Record<string, unknown> | null,
+): { invoices: InvoiceGstRow[]; info: GstValidationIssue[] } {
+  const info: GstValidationIssue[] = [];
+  const invoices = raw.map((row) => {
+    const order = (row.orders as Record<string, unknown> | null) || null;
+    const { invoice, info: rowInfo } = normalizeInvoiceForGstr(row, order, gstConfig);
+    info.push(...rowInfo);
+    return {
+      ...invoice,
+      invoice_date: String(invoice.invoice_date || '').slice(0, 10),
+      total_amount: Number(invoice.total_amount || 0),
+    } as InvoiceGstRow;
+  });
+  return { invoices, info };
+}
+
+async function getFilingStatus(periodLabel: string): Promise<'draft' | 'ready_to_file' | 'filed'> {
+  const supabase = getSupabaseAdmin();
+  const { data } = await supabase
+    .from('gstr_export_runs')
+    .select('status')
+    .eq('filing_period', periodLabel)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const status = String(data?.status || 'draft');
+  if (status === 'filed') return 'filed';
+  if (status === 'ready_to_file' || status === 'exported') return 'ready_to_file';
+  return 'draft';
+}
+
 async function runValidation(year: number, month: number) {
   const supabase = getSupabaseAdmin();
   const { data: config } = await supabase.from('gst_config').select('*').limit(1).single();
   const configIssues = validateGstConfig((config || {}) as Record<string, unknown>);
   const raw = await loadPeriodInvoices(year, month);
-  const invoices = filterInvoicesByPeriod(
+  const filtered = filterInvoicesByPeriod(
     raw.map((r) => ({
       ...r,
       invoice_date: String(r.invoice_date || '').slice(0, 10),
@@ -67,8 +104,16 @@ async function runValidation(year: number, month: number) {
     year,
     month,
   );
-  const invoiceIssues = validateInvoicesForGstr(invoices as InvoiceGstRow[]);
-  return buildValidationReport(configIssues, invoiceIssues);
+  const rawById = new Map(raw.map((r) => [String(r.id), r]));
+  const preparedRaw = filtered.map((inv) => rawById.get(String(inv.id)) || inv);
+  const { invoices, info } = prepareInvoices(preparedRaw, (config || {}) as Record<string, unknown>);
+  const invoiceIssues = validateInvoicesForGstr(invoices);
+  const report = buildValidationReport(configIssues, invoiceIssues, info);
+  const dashboard = buildGstrDashboard(invoices, invoiceIssues);
+  const storedStatus = await getFilingStatus(`${year}-${String(month).padStart(2, '0')}`);
+  const filingStatus = report.errors.length > 0 ? 'draft' : storedStatus === 'filed' ? 'filed' : report.filingStatus;
+
+  return { invoices, report, dashboard, filingStatus };
 }
 
 function exportMeta(
@@ -76,17 +121,16 @@ function exportMeta(
   periodLabel: string,
   generatedBy: string,
 ): GstExportMeta {
-  const extras = resolveGstConfigExtras(config);
   return {
-    companyName: String(config.legal_name || config.business_name || 'Ankshaastra'),
-    gstin: String(config.gstin || ''),
+    companyName: String(config.legal_name || config.business_name || 'ANKSHAASTRA OCCULT EXPERTS LLP'),
+    gstin: String(config.gstin || '09AAFFE7583B1ZD'),
     filingPeriod: periodLabel,
     generatedAt: new Date().toISOString(),
     generatedBy,
   };
 }
 
-/** GET validate / POST export GSTR reports */
+/** GET validate / POST export / POST mark-ready GSTR reports */
 export default async function handler(req: Req, res: Res) {
   const authHeader = req.headers?.authorization || req.headers?.Authorization;
   const user = await getUserFromAuthHeader(authHeader);
@@ -108,35 +152,62 @@ export default async function handler(req: Req, res: Res) {
   }
 
   if (req.method === 'GET' || action === 'validate') {
-    const report = await runValidation(period.year, period.month);
+    const { report, dashboard, filingStatus } = await runValidation(period.year, period.month);
     return res.status(200).json({
       period: period.label,
+      filingStatus,
+      dashboard,
       ...report,
     });
   }
 
+  if (req.method === 'POST' && action === 'mark-ready') {
+    const { report } = await runValidation(period.year, period.month);
+    if (!report.readyToFile) {
+      return res.status(400).json({
+        error: 'Cannot mark ready — fix errors first',
+        period: period.label,
+        ...report,
+      });
+    }
+    const supabase = getSupabaseAdmin();
+    await supabase.from('gstr_export_runs').insert({
+      filing_period: period.label,
+      export_type: 'status',
+      status: 'ready_to_file',
+      validation_errors: report.errors,
+      validation_warnings: report.warnings,
+      ready_to_file: true,
+      generated_by: user.id,
+      metadata: { info: report.info },
+    });
+    return res.status(200).json({ ok: true, period: period.label, filingStatus: 'ready_to_file' });
+  }
+
+  if (req.method === 'POST' && action === 'mark-filed') {
+    const supabase = getSupabaseAdmin();
+    await supabase.from('gstr_export_runs').insert({
+      filing_period: period.label,
+      export_type: 'status',
+      status: 'filed',
+      ready_to_file: true,
+      generated_by: user.id,
+    });
+    return res.status(200).json({ ok: true, period: period.label, filingStatus: 'filed' });
+  }
+
   if (req.method === 'POST') {
-    const validation = await runValidation(period.year, period.month);
-    if (!validation.readyToFile) {
+    const { invoices, report } = await runValidation(period.year, period.month);
+    if (!report.readyToFile) {
       return res.status(400).json({
         error: 'Validation failed — fix errors before export',
         period: period.label,
-        ...validation,
+        ...report,
       });
     }
 
     const supabase = getSupabaseAdmin();
     const { data: config } = await supabase.from('gst_config').select('*').limit(1).single();
-    const raw = await loadPeriodInvoices(period.year, period.month);
-    const invoices = filterInvoicesByPeriod(
-      raw.map((r) => ({
-        ...r,
-        invoice_date: String(r.invoice_date || '').slice(0, 10),
-        total_amount: Number(r.total_amount || 0),
-      })) as Parameters<typeof filterInvoicesByPeriod>[0],
-      period.year,
-      period.month,
-    );
 
     const meta = exportMeta(
       (config || {}) as Record<string, unknown>,
@@ -173,10 +244,11 @@ export default async function handler(req: Req, res: Res) {
         filing_period: period.label,
         export_type: exportType,
         status: 'exported',
-        validation_errors: validation.errors,
-        validation_warnings: validation.warnings,
+        validation_errors: report.errors,
+        validation_warnings: report.warnings,
         ready_to_file: true,
         generated_by: user.id,
+        metadata: { info: report.info },
       });
     } catch {
       // table may not exist until migration runs
@@ -186,6 +258,7 @@ export default async function handler(req: Req, res: Res) {
       filename,
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       data: buffer.toString('base64'),
+      warnings: report.warnings,
     });
   }
 

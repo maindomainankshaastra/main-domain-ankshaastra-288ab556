@@ -46,6 +46,7 @@ const ServicesModule = lazy(() => import("./pages/admin/modules/ServicesModule")
 const TemplatesModule = lazy(() => import("./pages/admin/modules/TemplatesModule"));
 const SettingsModule = lazy(() => import("./pages/admin/modules/SettingsModule"));
 const GstReportsModule = lazy(() => import("./pages/admin/modules/GstReportsModule"));
+const GstMaintenanceModule = lazy(() => import("./pages/admin/modules/GstMaintenanceModule"));
 const PricingModule = lazy(() => import("./pages/admin/modules/PricingModule"));
 const ServicePagesModule = lazy(() => import("./pages/admin/modules/ServicePagesModule"));
 const DynamicServicePage = lazy(() => import("./pages/DynamicServicePage"));
@@ -118,6 +119,7 @@ const App = () => (
               <Route path="templates" element={<TemplatesModule />} />
               <Route path="settings" element={<SettingsModule />} />
               <Route path="gst-reports" element={<GstReportsModule />} />
+              <Route path="gst-maintenance" element={<GstMaintenanceModule />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

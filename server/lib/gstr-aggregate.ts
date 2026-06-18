@@ -112,7 +112,7 @@ export function aggregateSacSummary(invoices: GstrInvoiceRecord[]): SacSummaryRo
   const map = new Map<string, SacSummaryRow>();
 
   for (const inv of invoices) {
-    const sacCode = sacOf(inv) || '998314';
+    const sacCode = sacOf(inv) || '999799';
     const gstRate = gstRateOf(inv);
     const key = `${sacCode}|${gstRate}`;
 

@@ -16,6 +16,7 @@ import {
   Settings,
   Crown,
   FileSpreadsheet,
+  Wrench,
 } from "lucide-react";
 
 const nav = [
@@ -33,6 +34,7 @@ const nav = [
   { to: "/admin/templates", label: "Templates", icon: FileCode },
   { to: "/admin/settings", label: "GST Configuration", icon: Settings },
   { to: "/admin/gst-reports", label: "GSTR Reports", icon: FileSpreadsheet },
+  { to: "/admin/gst-maintenance", label: "GST Maintenance", icon: Wrench },
 ];
 
 const AdminLayout = () => (

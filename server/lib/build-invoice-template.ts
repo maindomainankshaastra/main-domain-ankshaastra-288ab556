@@ -1,6 +1,7 @@
 import { calculateGst, type GstBreakdown } from './gst.js';
 import { amountInWordsInr } from './amount-in-words.js';
-import { resolveSacCode } from './invoice-constants.js';
+import { resolveSacCode, resolveDefaultGstRate } from './invoice-constants.js';
+import { UNKNOWN_STATE_CODE, UNKNOWN_STATE_NAME } from './gst-company-defaults.js';
 import {
   formatPlaceOfSupply,
   stateCodeFromGstin,
@@ -95,8 +96,12 @@ export function buildInvoiceTemplateData(input: {
   const { order, gstConfig, invoiceNumber, paymentId, paymentMethod, serviceSubjects = [] } = input;
   const billing = resolveCustomerBilling(order);
   const businessStateCode = resolveBusinessStateCode(gstConfig);
+  const resolvedStateCode = billing.stateCode || UNKNOWN_STATE_CODE;
   const customerStateCode = billing.stateCode || businessStateCode;
-  const gstRate = Number(gstConfig?.default_gst_rate ?? 18);
+  const customerStateName =
+    billing.stateName ||
+    (resolvedStateCode === UNKNOWN_STATE_CODE ? UNKNOWN_STATE_NAME : undefined);
+  const gstRate = resolveDefaultGstRate(gstConfig);
 
   const gst = calculateGst({
     amount: Number(order.total_amount || order.amount || 0),
@@ -123,8 +128,8 @@ export function buildInvoiceTemplateData(input: {
     invoiceNumber,
     invoiceDate,
     dueDate: invoiceDate,
-    businessName: String(gstConfig?.legal_name || gstConfig?.business_name || 'Ankshaastra Occult Experts LLP'),
-    businessGstin: gstConfig?.gstin ? String(gstConfig.gstin) : undefined,
+    businessName: String(gstConfig?.legal_name || gstConfig?.business_name || 'ANKSHAASTRA OCCULT EXPERTS LLP'),
+    businessGstin: gstConfig?.gstin ? String(gstConfig.gstin) : '09AAFFE7583B1ZD',
     businessAddress: configExtras.address || undefined,
     businessPhone: configExtras.business_phone || process.env.BUSINESS_PHONE,
     businessEmail: configExtras.business_email || process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL,

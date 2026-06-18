@@ -3,7 +3,10 @@ import { nextInvoiceNumber } from './gst.js';
 import { type InvoiceTemplateData } from './templates/invoice-html.js';
 import { buildInvoiceTemplateData, resolveCustomerBilling } from './build-invoice-template.js';
 import { classifyGstrInvoice } from './gstr-classification.js';
+import { detectCustomerState } from './gst-state-detection.js';
+import { UNKNOWN_STATE_CODE, UNKNOWN_STATE_NAME } from './gst-company-defaults.js';
 import { resolveSacCode } from './invoice-constants.js';
+import { formatPlaceOfSupply } from './indian-states.js';
 import { generateInvoicePdf } from './pdf-engine.js';
 import { sendEmail, type SendEmailInput } from './email-engine.js';
 import { advanceWorkflow } from './workflow-engine.js';
@@ -278,14 +281,43 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   });
 
   const billing = resolveCustomerBilling(order);
+  let customerStateCode = billing.stateCode;
+  let customerStateName = billing.stateName;
+  if (!customerStateCode) {
+    const detected = detectCustomerState(
+      { billing_address: billing.billingAddress, customer_state: billing.stateName },
+      order,
+    );
+    customerStateCode = detected.stateCode;
+    customerStateName = detected.stateName;
+  }
+  if (!customerStateCode) {
+    customerStateCode = UNKNOWN_STATE_CODE;
+    customerStateName = UNKNOWN_STATE_NAME;
+  }
+
   const supplierState = String(gstConfig?.state_code || '09').padStart(2, '0').slice(-2);
   const gstrCategory = classifyGstrInvoice({
     customerGstin: billing.customerGstin,
     invoiceValue: gst.grandTotal,
-    customerStateCode: billing.stateCode || supplierState,
+    customerStateCode,
     supplierStateCode: supplierState,
   });
   const sacCode = resolveSacCode(gstConfig);
+
+  if (!invoiceNumber?.trim()) {
+    throw new Error('Invoice number is required');
+  }
+  if (!/^\d{6}$/.test(sacCode)) {
+    throw new Error('Valid SAC code is required');
+  }
+  if (!Number.isFinite(gst.subtotal) || gst.subtotal <= 0) {
+    throw new Error('Taxable value is required');
+  }
+
+  const placeOfSupply =
+    billing.placeOfSupply || formatPlaceOfSupply(customerStateCode) || customerStateName;
+  const invoiceDate = new Date().toISOString().slice(0, 10);
 
   // Reserve invoice row BEFORE PDF generation so concurrent requests hit unique constraint.
   const { data: reserved, error: reserveErr } = await supabase
@@ -299,14 +331,15 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
       customer_email: order.customer_email,
       customer_phone: order.customer_phone,
       customer_gstin: billing.customerGstin || null,
-      customer_state: billing.stateName || null,
-      customer_state_code: billing.stateCode || null,
-      place_of_supply: billing.placeOfSupply || null,
+      customer_state: customerStateName || null,
+      customer_state_code: customerStateCode,
+      place_of_supply: placeOfSupply,
       gstr_category: gstrCategory,
       sac_code: sacCode,
       hsn_sac_code: sacCode,
       billing_address: billing.billingAddress || null,
       service_title: order.service_title,
+      invoice_date: invoiceDate,
       base_amount: gst.subtotal,
       subtotal: gst.subtotal,
       gst_total: gst.gstTotal,

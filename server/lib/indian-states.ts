@@ -37,6 +37,7 @@ export const INDIAN_STATE_NAMES: Record<string, string> = {
   '36': 'TELANGANA',
   '37': 'ANDHRA PRADESH',
   '38': 'LADAKH',
+  '00': 'UNKNOWN',
 };
 
 export function stateCodeFromGstin(gstin?: string | null): string | undefined {

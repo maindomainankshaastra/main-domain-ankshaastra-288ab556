@@ -80,7 +80,7 @@ export async function buildGstr1Workbook(
     ]);
   }
 
-  const b2csSheet = wb.addWorksheet('B2CS Aggregate');
+  const b2csSheet = wb.addWorksheet('B2CS');
   await writeMetaRows(b2csSheet, meta, 'B2CS — Aggregated by State & Rate');
   b2csSheet.addRow(['State', 'Code', 'GST %', 'Invoices', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total GST', 'Gross']);
   b2csSheet.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
@@ -105,6 +105,42 @@ export async function buildGstr1Workbook(
   b2cl.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
   for (const inv of byCat.B2CL) {
     b2cl.addRow([
+      inv.invoice_number,
+      inv.invoice_date,
+      inv.customer_name,
+      inv.place_of_supply || stateNameFromCode(inv.customer_state_code || '') || '',
+      round2(Number(inv.subtotal ?? inv.base_amount ?? 0)),
+      round2(Number(inv.igst_amount || 0)),
+      round2(Number(inv.total_amount || 0)),
+    ]);
+  }
+
+  const cdnr = wb.addWorksheet('CDNR');
+  await writeMetaRows(cdnr, meta, 'CDNR — Credit Notes (GST Registered)');
+  cdnr.addRow(['Invoice No', 'Date', 'Customer', 'GSTIN', 'State', 'SAC', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total']);
+  cdnr.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
+  for (const inv of byCat.CDNR) {
+    cdnr.addRow([
+      inv.invoice_number,
+      inv.invoice_date,
+      inv.customer_name,
+      inv.customer_gstin || '',
+      inv.place_of_supply || inv.customer_state || '',
+      inv.sac_code || inv.hsn_sac_code || '',
+      round2(Number(inv.subtotal ?? inv.base_amount ?? 0)),
+      round2(Number(inv.cgst_amount || 0)),
+      round2(Number(inv.sgst_amount || 0)),
+      round2(Number(inv.igst_amount || 0)),
+      round2(Number(inv.total_amount || 0)),
+    ]);
+  }
+
+  const cdnur = wb.addWorksheet('CDNUR');
+  await writeMetaRows(cdnur, meta, 'CDNUR — Credit Notes (Unregistered)');
+  cdnur.addRow(['Invoice No', 'Date', 'Customer', 'State', 'Taxable', 'IGST', 'Total']);
+  cdnur.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
+  for (const inv of byCat.CDNUR) {
+    cdnur.addRow([
       inv.invoice_number,
       inv.invoice_date,
       inv.customer_name,
