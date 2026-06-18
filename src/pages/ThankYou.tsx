@@ -23,6 +23,8 @@ const ThankYou = () => {
   const [invoice, setInvoice] = useState(invoiceFromUrl);
   const [confirming, setConfirming] = useState(() => Boolean(pendingVerification));
 
+  const isKundli = /kundli|kundali/i.test(service);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, []);
@@ -138,6 +140,14 @@ const ThankYou = () => {
                   <li className="flex gap-3"><span className="text-amber-200 font-bold">3.</span> For premium reports, expect delivery within 3–7 working days.</li>
                 </ul>
               </div>
+
+              {isKundli && (
+                <div className="bg-amber-300/10 border border-amber-200/30 rounded-2xl p-5 mb-8 text-left">
+                  <p className="text-amber-100 text-sm leading-relaxed">
+                    <span className="font-semibold">Important:</span> Your Kundli report will be delivered to your email. Please check your <span className="font-semibold">Spam / Junk folder</span> if you don&apos;t see it in your inbox, and mark it as &quot;Not Spam&quot; to ensure future delivery.
+                  </p>
+                </div>
+              )}
 
               <div className="flex justify-center">
                 <Link

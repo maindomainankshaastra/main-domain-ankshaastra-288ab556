@@ -1,3 +1,4 @@
+import kundliHeroBg from "@/assets/kundli-hero-bg.jpg";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
@@ -97,7 +98,11 @@ const PersonalizedKundali = () => {
 
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 gradient-hero" />
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-40"
+          style={{ backgroundImage: `url(${kundliHeroBg})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/85" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 80, repeat: Infinity, ease: "linear" }} className="absolute -top-32 -right-32 w-96 h-96 rounded-full border border-white/10" />
           <motion.div animate={{ rotate: -360 }} transition={{ duration: 60, repeat: Infinity, ease: "linear" }} className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full border border-white/10" />
@@ -111,11 +116,12 @@ const PersonalizedKundali = () => {
               <span className="text-sm text-white font-medium">Personalised Premium Kundli 2.0</span>
             </span>
             <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-[1.15] mb-6">
-              Career problems? Marriage troubles?{" "}
-              <span className="text-gradient-amber">Money not working in your favour?</span>{" "}
-              Kundli can answer everything for you!
+              <span className="text-gradient-amber">Aapki date of birth mein aapki poori zindagi likhi hai.</span>
             </h1>
-            <p className="text-lg text-white/80 mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-white font-medium mb-4">
+              Career. Relationships. Money. Timing.
+            </p>
+            <p className="text-base md:text-lg text-white/80 mb-10 leading-relaxed max-w-2xl mx-auto">
               100% Personalized | Delivered within 9 Hours | Expert-Verified Predictions
             </p>
 

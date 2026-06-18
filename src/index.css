@@ -245,4 +245,8 @@
     transform: translateY(-2px);
     background: hsl(var(--orange-dark));
   }
+
+  .back-to-top-solo {
+    @apply right-6 xl:right-6;
+  }
 }

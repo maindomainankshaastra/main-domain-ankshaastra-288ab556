@@ -290,7 +290,7 @@ const NameCorrection = () => {
               <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction</h3>
               <div className="flex items-baseline gap-3 mb-1">
                 <span className="line-through text-base" style={{ color: "#987" }}>{formatINR(pricing.nameCorrection.standardOriginal)}</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>67% OFF</span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>60% OFF</span>
               </div>
               <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(pricing.nameCorrection.standard)}</div>
               <ul className="space-y-3 mb-6 flex-1">
