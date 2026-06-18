@@ -123,6 +123,11 @@ export const GST_CONFIG_OPTIONAL_COLUMNS = [
   'thank_you_message',
   'invoice_footer',
   'terms_conditions',
+  'trade_name',
+  'registered_state',
+  'default_sac_code',
+  'financial_year',
+  'gst_filing_frequency',
 ] as const;
 
 export function isMissingOptionalColumnError(message: string): boolean {

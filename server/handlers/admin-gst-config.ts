@@ -41,6 +41,11 @@ function buildPayload(body: Record<string, unknown>, includeOptionalColumns: boo
     bank_name: body.bank_name,
     bank_account: body.bank_account,
     bank_ifsc: body.bank_ifsc,
+    trade_name: body.trade_name,
+    registered_state: body.registered_state,
+    default_sac_code: body.default_sac_code,
+    financial_year: body.financial_year,
+    gst_filing_frequency: body.gst_filing_frequency,
   };
 
   const billingTexts = {

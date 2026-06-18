@@ -73,19 +73,23 @@ export default function SettingsModule() {
   };
 
   return (
-    <AdminPage title="GST & Billing Settings" description="Manage GST settings, invoice numbering, bank details, and invoice/email billing copy." loading={loading}>
+    <AdminPage title="GST Configuration" description="Legal entity, SAC codes, invoice numbering, bank details, and GSTR filing settings." loading={loading}>
       <div className="grid gap-4 max-w-lg">
-        <div><Label>Business Name</Label><Input value={String(form.business_name || "")} onChange={(e) => setForm({ ...form, business_name: e.target.value })} /></div>
-        <div><Label>Legal Name</Label><Input value={String(form.legal_name || "")} onChange={(e) => setForm({ ...form, legal_name: e.target.value })} placeholder="As printed on invoice" /></div>
-        <div><Label>GSTIN</Label><Input value={String(form.gstin || "")} onChange={(e) => setForm({ ...form, gstin: e.target.value })} /></div>
+        <div><Label>Legal Business Name</Label><Input value={String(form.legal_name || "")} onChange={(e) => setForm({ ...form, legal_name: e.target.value })} placeholder="As on GST registration" /></div>
+        <div><Label>Trade Name</Label><Input value={String(form.trade_name || form.business_name || "")} onChange={(e) => setForm({ ...form, trade_name: e.target.value, business_name: e.target.value })} placeholder="Brand name on invoices" /></div>
+        <div><Label>GSTIN</Label><Input value={String(form.gstin || "")} onChange={(e) => setForm({ ...form, gstin: e.target.value.toUpperCase() })} /></div>
         <div><Label>PAN</Label><Input value={String(form.pan || "")} onChange={(e) => setForm({ ...form, pan: e.target.value })} /></div>
+        <div><Label>Registered State</Label><Input value={String(form.registered_state || "Uttar Pradesh")} onChange={(e) => setForm({ ...form, registered_state: e.target.value })} /></div>
+        <div><Label>State Code</Label><Input value={String(form.state_code || "09")} onChange={(e) => setForm({ ...form, state_code: e.target.value })} placeholder="09 for Uttar Pradesh" /></div>
+        <div><Label>Default SAC Code</Label><Input value={String(form.default_sac_code || "998314")} onChange={(e) => setForm({ ...form, default_sac_code: e.target.value })} placeholder="e.g. 998314, 998399, 998596" /><p className="text-xs text-muted-foreground mt-1">Services use SAC (not HSN). All invoices inherit this code.</p></div>
+        <div><Label>Default GST Rate %</Label><Input type="number" value={String(form.default_gst_rate ?? 18)} onChange={(e) => setForm({ ...form, default_gst_rate: e.target.value })} /></div>
+        <div><Label>Invoice Prefix</Label><Input value={String(form.invoice_prefix || "INV")} onChange={(e) => setForm({ ...form, invoice_prefix: e.target.value })} placeholder="e.g. EYN26-27K-7000" /><p className="text-xs text-muted-foreground mt-1">Invoice numbers are generated as prefix + sequence.</p></div>
+        <div><Label>Financial Year</Label><Input value={String(form.financial_year || "")} onChange={(e) => setForm({ ...form, financial_year: e.target.value })} placeholder="e.g. 2025-26" /></div>
+        <div><Label>GST Filing Frequency</Label><Input value={String(form.gst_filing_frequency || "monthly")} onChange={(e) => setForm({ ...form, gst_filing_frequency: e.target.value })} placeholder="monthly or quarterly" /></div>
         <div><Label>Address</Label><Textarea value={String(form.address || "")} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
-        <div><Label>State Code</Label><Input value={String(form.state_code || "09")} onChange={(e) => setForm({ ...form, state_code: e.target.value })} placeholder="e.g. 09 for Uttar Pradesh" /></div>
         <div><Label>Business Phone</Label><Input value={String(form.business_phone || "")} onChange={(e) => setForm({ ...form, business_phone: e.target.value })} placeholder="+91 9667305577" /></div>
         <div><Label>Business Email</Label><Input value={String(form.business_email || "")} onChange={(e) => setForm({ ...form, business_email: e.target.value })} placeholder="social@ankshaastra.com" /></div>
         <div><Label>Website</Label><Input value={String(form.website_url || "")} onChange={(e) => setForm({ ...form, website_url: e.target.value })} placeholder="www.ankshaastra.com" /></div>
-        <div><Label>Default GST %</Label><Input type="number" value={String(form.default_gst_rate ?? 18)} onChange={(e) => setForm({ ...form, default_gst_rate: e.target.value })} /></div>
-        <div><Label>Invoice Prefix</Label><Input value={String(form.invoice_prefix || "INV")} onChange={(e) => setForm({ ...form, invoice_prefix: e.target.value })} placeholder="e.g. EYN26-27K-7000" /><p className="text-xs text-muted-foreground mt-1">Invoice numbers are generated as prefix + sequence (e.g. EYN26-27K-70001, EYN26-27K-70002).</p></div>
         <div><Label>Bank Name</Label><Input value={String(form.bank_name || "")} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} /></div>
         <div><Label>Bank Account Number</Label><Input value={String(form.bank_account || "")} onChange={(e) => setForm({ ...form, bank_account: e.target.value })} /></div>
         <div><Label>Bank IFSC</Label><Input value={String(form.bank_ifsc || "")} onChange={(e) => setForm({ ...form, bank_ifsc: e.target.value })} /></div>

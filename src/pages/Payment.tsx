@@ -43,6 +43,7 @@ import { ExtendedPaymentFields } from "@/components/payment/ExtendedPaymentField
 import { resolveServiceDisplay } from "@/lib/service-display";
 import { OrderSummary } from "@/components/payment/OrderSummary";
 import { inferPersonCountFromServiceTitle, resolvePurchaserName, extractServicePersonsFromSnapshot } from "@/lib/service-persons";
+import { stateCodeFromName } from "@/lib/indian-states";
 import { isIOSSafari, normalizeRazorpayContact } from "@/lib/safari-compat";
 
 const KUNDLI_20_ADDON = { id: "kundli-20", label: "Personalised Premium Kundli 2.0", note: "PDF report", price: pricing.addons.kundli20 };
@@ -674,18 +675,28 @@ const PaymentPage = () => {
       const current = (form.getValues(path) as string | undefined) || "";
       if (current.trim() === "") form.setValue(path, next, { shouldValidate: true, shouldDirty: true });
     };
+    const fillGstState = (stateName: string) => {
+      if (!stateName) return;
+      form.setValue("customerState", stateName, { shouldDirty: true });
+      const code = stateCodeFromName(stateName);
+      if (code) form.setValue("customerStateCode", code, { shouldDirty: true });
+    };
     const fillPob = async (pobPath: string, pin: string) => {
       if (!/^\d{6}$/.test(pin)) return;
       const po = await lookup(pin);
       if (!po) return;
       fillIfEmpty(pobPath, po.place);
+      if (po.state) fillGstState(po.state);
     };
     const fillOffice = async (pin: string) => {
       if (!/^\d{6}$/.test(pin)) return;
       const po = await lookup(pin);
       if (!po) return;
       if (po.district) fillIfEmpty("officeCity", po.district);
-      if (po.state) fillIfEmpty("officeState", po.state);
+      if (po.state) {
+        fillIfEmpty("officeState", po.state);
+        fillGstState(po.state);
+      }
     };
     const sub = form.watch((value, { name }) => {
       if (!name) return;

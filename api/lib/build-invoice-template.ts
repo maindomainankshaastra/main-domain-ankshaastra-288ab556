@@ -1,6 +1,6 @@
 import { calculateGst, type GstBreakdown } from './gst.js';
 import { amountInWordsInr } from './amount-in-words.js';
-import { DEFAULT_SAC_CODE } from './invoice-constants.js';
+import { resolveSacCode } from './invoice-constants.js';
 import {
   formatPlaceOfSupply,
   stateCodeFromGstin,
@@ -38,12 +38,16 @@ export function resolveCustomerBilling(order: OrderRow) {
   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
 
   const city = pickString(snapshot, ['currentCity', 'officeCity']);
-  const stateName = pickString(snapshot, ['currentState', 'officeState']) || parseStateFromPob(pickString(snapshot, ['pob', 'placeOfBirth']));
+  const stateName =
+    pickString(snapshot, ['customerState', 'currentState', 'officeState']) ||
+    parseStateFromPob(pickString(snapshot, ['pob', 'placeOfBirth']));
   const pincode = pickString(snapshot, ['pincode', 'officePincode']);
   const stateCode =
+    pickString(snapshot, ['customerStateCode', 'stateCode']) ||
     pickString(metadata, ['state_code']) ||
-    pickString(snapshot, ['stateCode']) ||
     stateCodeFromName(stateName);
+
+  const customerGstin = pickString(snapshot, ['customerGstin', 'gstin', 'gstNumber']);
 
   const billingParts = [city, stateName, pincode ? `Pincode: ${pincode}` : undefined].filter(Boolean);
 
@@ -64,6 +68,7 @@ export function resolveCustomerBilling(order: OrderRow) {
     pincode,
     billingAddress: billingParts.join(', '),
     placeOfSupply: formatPlaceOfSupply(stateCode),
+    customerGstin,
   };
 }
 
@@ -112,6 +117,8 @@ export function buildInvoiceTemplateData(input: {
   const configExtras = resolveGstConfigExtras(gstConfig);
   const billingTexts = resolveGstConfigBillingTexts(gstConfig);
 
+  const sacCode = resolveSacCode(gstConfig);
+
   const templateData: InvoiceTemplateData = {
     invoiceNumber,
     invoiceDate,
@@ -135,14 +142,14 @@ export function buildInvoiceTemplateData(input: {
     placeOfSupply: billing.placeOfSupply || formatPlaceOfSupply(businessStateCode),
     businessStateName: stateNameFromCode(businessStateCode),
     serviceTitle,
-    sacCode: DEFAULT_SAC_CODE,
+    sacCode,
     gstRate,
     items: [
       {
         description: serviceTitle,
         quantity: 1,
         unitPrice: gst.subtotal,
-        hsnSac: DEFAULT_SAC_CODE,
+        hsnSac: sacCode,
         lineTotal: gst.grandTotal,
         taxableValue: gst.subtotal,
         taxAmount: gst.gstTotal,

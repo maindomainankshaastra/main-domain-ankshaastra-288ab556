@@ -2,7 +2,8 @@ import { getSupabaseAdmin } from './supabase-admin.js';
 import { nextInvoiceNumber } from './gst.js';
 import { type InvoiceTemplateData } from './templates/invoice-html.js';
 import { buildInvoiceTemplateData, resolveCustomerBilling } from './build-invoice-template.js';
-import { DEFAULT_SAC_CODE } from './invoice-constants.js';
+import { classifyGstrInvoice } from './gstr-classification.js';
+import { resolveSacCode } from './invoice-constants.js';
 import { generateInvoicePdf } from './pdf-engine.js';
 import { sendEmail, type SendEmailInput } from './email-engine.js';
 import { advanceWorkflow } from './workflow-engine.js';
@@ -276,6 +277,16 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
     })),
   });
 
+  const billing = resolveCustomerBilling(order);
+  const supplierState = String(gstConfig?.state_code || '09').padStart(2, '0').slice(-2);
+  const gstrCategory = classifyGstrInvoice({
+    customerGstin: billing.customerGstin,
+    invoiceValue: gst.grandTotal,
+    customerStateCode: billing.stateCode || supplierState,
+    supplierStateCode: supplierState,
+  });
+  const sacCode = resolveSacCode(gstConfig);
+
   // Reserve invoice row BEFORE PDF generation so concurrent requests hit unique constraint.
   const { data: reserved, error: reserveErr } = await supabase
     .from('invoices')
@@ -287,6 +298,14 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
       customer_name: order.customer_name || 'Customer',
       customer_email: order.customer_email,
       customer_phone: order.customer_phone,
+      customer_gstin: billing.customerGstin || null,
+      customer_state: billing.stateName || null,
+      customer_state_code: billing.stateCode || null,
+      place_of_supply: billing.placeOfSupply || null,
+      gstr_category: gstrCategory,
+      sac_code: sacCode,
+      hsn_sac_code: sacCode,
+      billing_address: billing.billingAddress || null,
       service_title: order.service_title,
       base_amount: gst.subtotal,
       subtotal: gst.subtotal,
@@ -372,7 +391,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
       description: order.service_title,
       quantity: 1,
       unit_price: gst.subtotal,
-      hsn_sac_code: DEFAULT_SAC_CODE,
+      hsn_sac_code: sacCode,
       taxable_amount: gst.subtotal,
       gst_rate: templateData.gstRate,
       cgst_amount: gst.cgst,

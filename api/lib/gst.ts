@@ -19,7 +19,7 @@ export type GstInput = {
 export function calculateGst(input: GstInput): GstBreakdown {
   const rate = input.gstRate ?? 18;
   const isInclusive = input.isGstInclusive ?? true;
-  const businessState = input.businessStateCode ?? "27";
+  const businessState = input.businessStateCode ?? "09";
   const customerState = input.customerStateCode ?? businessState;
   const isIntraState = businessState === customerState;
 

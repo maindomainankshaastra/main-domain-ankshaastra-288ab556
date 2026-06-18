@@ -15,6 +15,7 @@ import {
   FileCode,
   Settings,
   Crown,
+  FileSpreadsheet,
 } from "lucide-react";
 
 const nav = [
@@ -30,7 +31,8 @@ const nav = [
   { to: "/admin/service-pages", label: "Pages & Packages", icon: Package },
   { to: "/admin/pricing", label: "Pricing Management", icon: FileCode },
   { to: "/admin/templates", label: "Templates", icon: FileCode },
-  { to: "/admin/settings", label: "GST & Billing", icon: Settings },
+  { to: "/admin/settings", label: "GST Configuration", icon: Settings },
+  { to: "/admin/gst-reports", label: "GSTR Reports", icon: FileSpreadsheet },
 ];
 
 const AdminLayout = () => (
