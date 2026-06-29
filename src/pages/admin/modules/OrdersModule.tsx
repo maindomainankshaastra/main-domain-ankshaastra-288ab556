@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { FileText, Loader2 } from "lucide-react";
 import { generateInvoiceForOrder } from "@/lib/invoice-admin";
+import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
 
 type Order = {
   id: string;
@@ -27,6 +28,12 @@ const orderStatuses: OrderStatus[] = ["pending", "paid", "failed", "refunded", "
 export default function OrdersModule() {
   const { rows, loading, reload } = useAdminTable<Order>("orders");
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [siteFilter, setSiteFilter] = useState("all");
+
+  const filteredRows = useMemo(() => {
+    if (siteFilter === "all") return rows;
+    return rows.filter((o) => (o.source_website || "ankshaastra.com") === siteFilter);
+  }, [rows, siteFilter]);
 
   const runGenerateInvoice = async (orderId: string) => {
     setGeneratingId(orderId);
@@ -69,9 +76,20 @@ export default function OrdersModule() {
   };
 
   return (
-    <AdminPage title="Orders & Bookings" description="All orders across connected websites." loading={loading} empty={!rows.length}>
+    <AdminPage title="Orders & Bookings" description="All orders across connected websites (main, Empower, Miracle Baby)." loading={loading} empty={!filteredRows.length}>
+      <div className="mb-4 flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">Filter by site</span>
+        <Select value={siteFilter} onValueChange={setSiteFilter}>
+          <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {CONNECTED_SITE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="space-y-2">
-        {rows.map((o) => (
+        {filteredRows.map((o) => (
           <div key={o.id} className="flex flex-wrap gap-3 justify-between items-center border border-border rounded-lg p-4">
             <div className="min-w-0">
               <p className="font-semibold truncate">{o.service_title}</p>

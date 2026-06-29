@@ -10,6 +10,7 @@ import {
 } from "./payment-order-map.js";
 import { mergeOrderMetadata } from "./order-form-details.js";
 import { scheduleInvoiceGeneration } from "./schedule-invoice.js";
+import { normalizeSourceWebsite } from "./connected-sites.js";
 import {
   resolvePurchaserName,
   syncServicePersonsForOrder,
@@ -69,6 +70,9 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
   const customer_email = formData.email ? String(formData.email) : null;
   const customer_phone = formData.whatsapp ? String(formData.whatsapp) : null;
   const userId = formData.userId || formData.user_id || null;
+  const sourceWebsite = normalizeSourceWebsite(
+    (formData.sourceWebsite as string | undefined) || (formData.source_website as string | undefined),
+  );
 
   let orderId: string | null = null;
   let alreadyPaid = false;
@@ -101,7 +105,8 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
         customer_email,
         customer_phone,
         user_id: userId,
-        source_website: "ankshaastra.com",
+        source_website: sourceWebsite,
+        metadata: { formSnapshot: formData, sourceWebsite },
       })
       .select("id")
       .single();

@@ -1,4 +1,5 @@
 import { attachJsonBody } from "../server/lib/parse-body.js";
+import { applyPartnerCors, isPartnerPublicRoute } from "../server/lib/cors.js";
 import createOrder from "../server/handlers/create-order.js";
 import services from "../server/handlers/services.js";
 import verifyPayment from "../server/handlers/verify-payment.js";
@@ -20,6 +21,7 @@ import emailTest from "../server/handlers/email-test.js";
 import adminGstConfig from "../server/handlers/admin-gst-config.js";
 import adminGstrReports from "../server/handlers/admin-gstr-reports.js";
 import adminGstMaintenance from "../server/handlers/admin-gst-maintenance.js";
+import operationsSiteManifest from "../server/handlers/operations-site-manifest.js";
 
 /** Single serverless function for all /api/* routes (Vercel Hobby: max 12 functions). */
 export const config = { api: { bodyParser: false } };
@@ -47,6 +49,7 @@ const routes: Record<string, ApiHandler> = {
   "operations/process-jobs": operationsProcessJobs,
   "operations/retry-job": operationsRetryJob,
   "operations/order-ingest": operationsOrderIngest,
+  "operations/site-manifest": operationsSiteManifest,
   "operations/backfill-invoices": operationsBackfillInvoices,
   "service-pages": servicePages,
   "email/test": emailTest,
@@ -69,6 +72,13 @@ function resolveRoute(req: IncomingReq): string {
 
 export default async function handler(req: Parameters<ApiHandler>[0], res: Parameters<ApiHandler>[1]) {
   const routeKey = resolveRoute(req as IncomingReq);
+
+  if (isPartnerPublicRoute(routeKey)) {
+    if (applyPartnerCors(req as IncomingReq, res as Parameters<typeof applyPartnerCors>[1])) {
+      return;
+    }
+  }
+
   const routeHandler = routes[routeKey];
 
   if (!routeHandler) {

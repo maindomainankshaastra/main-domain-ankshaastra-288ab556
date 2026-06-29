@@ -1,0 +1,1 @@
+var e=[{value:`all`,label:`All sites`},{value:`ankshaastra.com`,label:`ankshaastra.com`},{value:`empower.ankshaastra.com`,label:`empower.ankshaastra.com`},{value:`miraclebaby.ankshaastra.com`,label:`miraclebaby.ankshaastra.com`}];typeof window<`u`&&window.location.hostname===`localhost`&&`${window.location.origin}`;export{e as t};

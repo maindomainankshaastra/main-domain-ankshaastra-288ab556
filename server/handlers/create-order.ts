@@ -1,6 +1,7 @@
 import Razorpay from "razorpay";
 import { getSupabaseAdmin } from "../lib/supabase-admin.js";
 import { calculateGst } from "../lib/gst.js";
+import { normalizeSourceWebsite } from "../lib/connected-sites.js";
 
 export default async function handler(req: { method?: string; body?: Record<string, unknown> }, res: { status: (n: number) => { json: (o: unknown) => void; end: () => void } }) {
   if (req.method !== "POST") return res.status(405).end();
@@ -15,7 +16,7 @@ export default async function handler(req: { method?: string; body?: Record<stri
   let amount = Number(body.amount);
   let serviceTitle = String(body.serviceTitle || body.service || "Service");
   const userId = body.userId ? String(body.userId) : null;
-  const sourceWebsite = String(body.sourceWebsite || "ankshaastra.com");
+  const sourceWebsite = normalizeSourceWebsite(body.sourceWebsite as string | undefined);
   const orderType = String(body.orderType || "service");
   const customerName = body.customerName ? String(body.customerName) : null;
   const customerEmail = body.customerEmail ? String(body.customerEmail) : null;

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, FileArchive, Loader2 } from "lucide-react";
 import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
+import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
 import { toast } from "sonner";
 
 type Invoice = {
@@ -35,6 +36,12 @@ export default function InvoicesModule() {
   const now = new Date();
   const [bulkYear, setBulkYear] = useState(String(now.getFullYear()));
   const [bulkMonth, setBulkMonth] = useState(String(now.getMonth() + 1));
+  const [siteFilter, setSiteFilter] = useState("all");
+
+  const filteredRows = useMemo(() => {
+    if (siteFilter === "all") return rows;
+    return rows.filter((i) => (i.source_website || "ankshaastra.com") === siteFilter);
+  }, [rows, siteFilter]);
 
   const yearOptions = useMemo(() => {
     const current = now.getFullYear();
@@ -125,12 +132,23 @@ export default function InvoicesModule() {
       title="Invoice Manager"
       description="GST invoices stored in Supabase — download PDFs individually or as a monthly ZIP bundle."
       loading={loading}
-      empty={!rows.length}
+      empty={!filteredRows.length}
       emptyMessage="No invoices yet. You can still download a monthly ZIP if PDFs exist for that period."
       actions={bulkActions}
     >
+      <div className="mb-4 flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">Filter by site</span>
+        <Select value={siteFilter} onValueChange={setSiteFilter}>
+          <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {CONNECTED_SITE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="space-y-2">
-        {rows.map((i) => (
+        {filteredRows.map((i) => (
           <div key={i.id} className="flex flex-wrap justify-between gap-3 border border-border rounded-lg p-4">
             <div>
               <p className="font-semibold text-primary">{i.invoice_number}</p>

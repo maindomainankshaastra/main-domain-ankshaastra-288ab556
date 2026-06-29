@@ -61,7 +61,9 @@ Choose one provider path.
 | Variable | Example | Notes |
 | --- | --- | --- |
 | `CRON_SECRET` | long random string | Used to authorize `/api/operations/process-jobs`. Required if you call the job processor from Vercel Cron. |
-| `OPERATIONS_API_KEYS` | `key1,key2` | Optional comma-separated API keys for operations endpoints. |
+| `OPERATIONS_API_KEYS` | `empower_prod_key_xxxxx` | API keys for `/api/operations/order-ingest` (Empower server-side). |
+| `PARTNER_SITE_ORIGINS` | `https://empower.ankshaastra.com` | CORS origins for partner checkout APIs. Defaults include Empower. |
+| `SITE_URL` | `https://ankshaastra.com` | Hub URL returned in `/api/operations/site-manifest`. |
 
 ## Frontend Business Settings
 
@@ -76,6 +78,16 @@ These are browser-safe `VITE_` values used by the UI.
 | `VITE_CONTACT_EMAIL` | `contact@ankshaastra.com` |
 | `VITE_BUSINESS_ADDRESS` | `India` |
 | `VITE_API_BASE_URL` | leave blank unless using a separate API host |
+
+### Partner site integration (Empower, Miracle Baby)
+
+| Variable | Example |
+| --- | --- |
+| `OPERATIONS_API_KEYS` | `empower_prod_key_xxxxx` |
+| `PARTNER_SITE_ORIGINS` | `https://empower.ankshaastra.com` |
+| `SITE_URL` | `https://ankshaastra.com` |
+
+See [EMPOWER_CENTRAL_HUB_PLAN.md](./EMPOWER_CENTRAL_HUB_PLAN.md) for phase-wise rollout.
 
 Pricing variables are already listed in `.env.example`. Add them to Vercel only if you want to override the defaults in `src/config/pricing.ts`.
 
