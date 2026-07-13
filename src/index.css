@@ -1,0 +1,252 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ankshaastra Design System - Warm Amber/Brown Vedic Theme */
+
+@layer base {
+  :root {
+    /* Core - warm cream backgrounds, dark brown text */
+    --background: 33 60% 96%;          /* #FDF5EC cream */
+    --foreground: 24 60% 14%;          /* #3B1F0E dark brown */
+
+    --card: 35 100% 98%;               /* #FFF8F0 lighter cream */
+    --card-foreground: 24 60% 14%;
+
+    --popover: 35 100% 98%;
+    --popover-foreground: 24 60% 14%;
+
+    /* Primary - Burnt amber/orange */
+    --primary: 22 75% 44%;             /* #C4621D */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Deep warm brown (hero/footer) */
+    --secondary: 22 72% 36%;           /* #9B4A1A */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent - soft warm tan (borders) */
+    --accent: 33 53% 62%;              /* #D4A96A */
+    --accent-foreground: 24 60% 14%;
+
+    /* Muted */
+    --muted: 33 50% 92%;
+    --muted-foreground: 24 25% 35%;
+
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 33 53% 78%;              /* soft tan border */
+    --input: 33 53% 78%;
+    --ring: 22 75% 44%;
+
+    --radius: 0.75rem;
+
+    /* Custom warm tokens */
+    --amber: 33 80% 52%;               /* warm amber */
+    --amber-light: 36 90% 70%;
+    --amber-dark: 28 80% 42%;
+
+    --brown: 22 72% 36%;               /* deep hero brown */
+    --brown-light: 22 60% 50%;
+    --brown-dark: 22 65% 22%;
+
+    --cream: 33 60% 96%;
+    --cream-light: 35 100% 98%;
+    --cream-dark: 33 50% 90%;
+
+    --orange: 22 75% 44%;
+    --orange-light: 24 80% 55%;
+    --orange-dark: 22 80% 36%;
+
+    --tan: 33 53% 62%;
+    --tan-light: 33 60% 78%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(22 75% 44%) 0%, hsl(33 80% 52%) 100%);
+    --gradient-warm: linear-gradient(135deg, hsl(22 72% 36%) 0%, hsl(22 75% 44%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(22 72% 36%) 0%, hsl(22 65% 28%) 100%);
+    --gradient-cream: linear-gradient(180deg, hsl(33 60% 96%) 0%, hsl(35 100% 98%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(22 50% 20% / 0.06);
+    --shadow-md: 0 4px 12px -2px hsl(22 50% 20% / 0.10);
+    --shadow-lg: 0 12px 32px -8px hsl(22 50% 20% / 0.15);
+    --shadow-xl: 0 24px 48px -12px hsl(22 50% 20% / 0.20);
+    --shadow-amber: 0 8px 24px -6px hsl(22 75% 44% / 0.35);
+
+    --sidebar-background: 35 100% 98%;
+    --sidebar-foreground: 24 60% 14%;
+    --sidebar-primary: 22 75% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 33 50% 92%;
+    --sidebar-accent-foreground: 24 60% 14%;
+    --sidebar-border: 33 53% 78%;
+    --sidebar-ring: 22 75% 44%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html, body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', 'Nunito', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', 'Libre Baskerville', serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .font-display {
+    font-family: 'Cormorant Garamond', 'Libre Baskerville', serif;
+  }
+
+  .font-serif-display {
+    font-family: 'Libre Baskerville', serif;
+  }
+
+  .font-body {
+    font-family: 'DM Sans', sans-serif;
+  }
+}
+
+@layer components {
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--orange)) 0%, hsl(var(--amber)) 100%);
+  }
+
+  .gradient-warm {
+    background: linear-gradient(135deg, hsl(var(--brown)) 0%, hsl(var(--orange)) 100%);
+  }
+
+  .gradient-hero {
+    background: linear-gradient(135deg, hsl(var(--brown)) 0%, hsl(var(--brown-dark)) 100%);
+  }
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--orange)) 0%, hsl(var(--amber)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-amber {
+    background: linear-gradient(135deg, hsl(var(--amber)) 0%, hsl(var(--amber-dark)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-warm {
+    background: linear-gradient(135deg, hsl(var(--brown)) 0%, hsl(var(--orange)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300;
+    background: linear-gradient(135deg, hsl(var(--orange)) 0%, hsl(var(--orange-dark)) 100%);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px hsl(var(--orange) / 0.3);
+  }
+
+  .btn-outline-warm {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 border-2;
+    border-color: hsl(var(--orange));
+    color: hsl(var(--orange));
+    background: transparent;
+  }
+
+  .btn-outline-warm:hover {
+    background: hsl(var(--orange));
+    color: white;
+  }
+
+  .card-warm {
+    @apply bg-card border border-border rounded-2xl transition-all duration-300;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-warm:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: hsl(var(--accent));
+  }
+
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-padding {
+    @apply py-16 md:py-20 lg:py-24;
+  }
+
+  .bg-grid-pattern {
+    background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0);
+    background-size: 32px 32px;
+  }
+
+  /* Animations */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes slow-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .animate-fade-up { animation: fade-up 0.6s ease-out forwards; }
+  .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+  .animate-scale-in { animation: scale-in 0.4s ease-out forwards; }
+  .animate-slow-spin { animation: slow-spin 60s linear infinite; }
+
+  /* Floating action buttons */
+  .whatsapp-btn {
+    @apply fixed bottom-24 xl:bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300;
+    background: #25D366;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+  }
+
+  .whatsapp-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+  }
+
+  .back-to-top {
+    @apply fixed bottom-24 xl:bottom-6 right-24 xl:right-24 z-50 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300;
+    background: hsl(var(--orange));
+    color: white;
+  }
+
+  .back-to-top:hover {
+    transform: translateY(-2px);
+    background: hsl(var(--orange-dark));
+  }
+
+  .back-to-top-solo {
+    @apply right-6 xl:right-6;
+  }
+}

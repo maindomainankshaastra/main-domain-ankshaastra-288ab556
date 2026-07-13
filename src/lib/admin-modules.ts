@@ -1,0 +1,16 @@
+export const ADMIN_MODULES = [
+  { key: "orders", label: "Orders & Bookings" },
+  { key: "invoices", label: "Invoice Manager" },
+  { key: "email", label: "Email Center" },
+  { key: "crm", label: "CRM" },
+  { key: "workflows", label: "Workflows" },
+  { key: "webhooks", label: "Webhook Logs" },
+  { key: "ai-reports", label: "AI Reports" },
+  { key: "services", label: "Services Management" },
+  { key: "service-pages", label: "Pages & Packages" },
+  { key: "pricing", label: "Pricing Management" },
+  { key: "templates", label: "Templates" },
+  { key: "settings", label: "GST Configuration" },
+  { key: "gst-reports", label: "GSTR Reports" },
+  { key: "gst-maintenance", label: "GST Maintenance" },
+];
