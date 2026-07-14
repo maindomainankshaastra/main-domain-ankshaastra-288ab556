@@ -87,7 +87,9 @@ async function resolveInvoiceUserId(
   return null;
 }
 
-async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput['attachments']> {
+// async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput['attachments']> {
+export async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput['attachments']> {
+
   const storagePath = invoice.pdf_storage_path as string | undefined;
   if (!storagePath) {
     console.warn('[invoice] Missing pdf_storage_path on invoice:', invoice?.id);

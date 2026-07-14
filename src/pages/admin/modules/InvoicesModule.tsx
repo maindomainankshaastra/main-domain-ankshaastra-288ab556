@@ -1,185 +1,1328 @@
-// import { useMemo, useState } from "react";
-// import { AdminPage } from "@/components/admin/AdminPage";
-// import { useAdminTable } from "@/hooks/useAdminData";
-// import { Badge } from "@/components/ui/badge";
-// import { Button } from "@/components/ui/button";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// import { Download, FileArchive, Loader2 } from "lucide-react";
-// import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
-// import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
-// import { toast } from "sonner";
+// // // import { useMemo, useState } from "react";
+// // // import { AdminPage } from "@/components/admin/AdminPage";
+// // // import { useAdminTable } from "@/hooks/useAdminData";
+// // // import { Badge } from "@/components/ui/badge";
+// // // import { Button } from "@/components/ui/button";
+// // // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// // // import { Download, FileArchive, Loader2 } from "lucide-react";
+// // // import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
+// // // import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
+// // // import { toast } from "sonner";
 
-// type Invoice = {
-//   id: string;
-//   invoice_number: string;
-//   customer_name: string;
-//   service_title: string;
-//   total_amount: number;
-//   status: string;
-//   source_website?: string;
-//   pdf_url?: string;
-//   pdf_storage_path?: string | null;
-//   invoice_date: string;
-// };
+// // // type Invoice = {
+// // //   id: string;
+// // //   invoice_number: string;
+// // //   customer_name: string;
+// // //   service_title: string;
+// // //   total_amount: number;
+// // //   status: string;
+// // //   source_website?: string;
+// // //   pdf_url?: string;
+// // //   pdf_storage_path?: string | null;
+// // //   invoice_date: string;
+// // // };
 
-// const MONTHS = [
-//   "January", "February", "March", "April", "May", "June",
-//   "July", "August", "September", "October", "November", "December",
-// ];
+// // // const MONTHS = [
+// // //   "January", "February", "March", "April", "May", "June",
+// // //   "July", "August", "September", "October", "November", "December",
+// // // ];
 
-// export default function InvoicesModule() {
-//   const { rows, loading } = useAdminTable<Invoice>("invoices", "invoice_date");
-//   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-//   const [bulkLoading, setBulkLoading] = useState(false);
-//   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
+// // // export default function InvoicesModule() {
+// // //   const { rows, loading } = useAdminTable<Invoice>("invoices", "invoice_date");
+// // //   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+// // //   const [bulkLoading, setBulkLoading] = useState(false);
+// // //   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
 
-//   const now = new Date();
-//   const [bulkYear, setBulkYear] = useState(String(now.getFullYear()));
-//   const [bulkMonth, setBulkMonth] = useState(String(now.getMonth() + 1));
-//   const [siteFilter, setSiteFilter] = useState("all");
+// // //   const now = new Date();
+// // //   const [bulkYear, setBulkYear] = useState(String(now.getFullYear()));
+// // //   const [bulkMonth, setBulkMonth] = useState(String(now.getMonth() + 1));
+// // //   const [siteFilter, setSiteFilter] = useState("all");
 
-//   const filteredRows = useMemo(() => {
-//     if (siteFilter === "all") return rows;
-//     return rows.filter((i) => (i.source_website || "ankshaastra.com") === siteFilter);
-//   }, [rows, siteFilter]);
+// // //   const filteredRows = useMemo(() => {
+// // //     if (siteFilter === "all") return rows;
+// // //     return rows.filter((i) => (i.source_website || "ankshaastra.com") === siteFilter);
+// // //   }, [rows, siteFilter]);
 
-//   const yearOptions = useMemo(() => {
-//     const current = now.getFullYear();
-//     return Array.from({ length: 5 }, (_, i) => String(current - i));
-//   }, [now]);
+// // //   const yearOptions = useMemo(() => {
+// // //     const current = now.getFullYear();
+// // //     return Array.from({ length: 5 }, (_, i) => String(current - i));
+// // //   }, [now]);
 
-//   const downloadInvoice = async (inv: Invoice) => {
-//     setDownloadingId(inv.id);
-//     try {
-//       const url = (await fetchInvoiceDownloadUrl(inv.id)) || inv.pdf_url;
-//       if (!url) {
-//         toast.error("Invoice PDF is not available yet.");
-//         return;
-//       }
-//       window.open(url, "_blank", "noopener,noreferrer");
-//     } catch {
-//       toast.error("Could not download invoice");
-//     } finally {
-//       setDownloadingId(null);
-//     }
-//   };
+// // //   const downloadInvoice = async (inv: Invoice) => {
+// // //     setDownloadingId(inv.id);
+// // //     try {
+// // //       const url = (await fetchInvoiceDownloadUrl(inv.id)) || inv.pdf_url;
+// // //       if (!url) {
+// // //         toast.error("Invoice PDF is not available yet.");
+// // //         return;
+// // //       }
+// // //       window.open(url, "_blank", "noopener,noreferrer");
+// // //     } catch {
+// // //       toast.error("Could not download invoice");
+// // //     } finally {
+// // //       setDownloadingId(null);
+// // //     }
+// // //   };
 
-//   const downloadMonthlyBundle = async () => {
-//     setBulkLoading(true);
-//     setBulkProgress("Preparing…");
-//     try {
-//       const result = await downloadMonthlyInvoiceZip(Number(bulkYear), Number(bulkMonth), (p) => {
-//         if (p.phase === "listing") {
-//           setBulkProgress("Loading invoice list…");
-//         } else if (p.phase === "downloading") {
-//           setBulkProgress(`Downloading PDFs ${p.done}/${p.total}…`);
-//         } else {
-//           setBulkProgress("Creating ZIP file…");
-//         }
-//       });
-//       const monthLabel = MONTHS[Number(bulkMonth) - 1];
-//       toast.success(
-//         `Downloaded ${result.included} invoice${result.included === 1 ? "" : "s"} for ${monthLabel} ${bulkYear}` +
-//           (result.skipped ? ` (${result.skipped} skipped)` : ""),
-//       );
-//     } catch (e) {
-//       toast.error(e instanceof Error ? e.message : "Bulk download failed");
-//     } finally {
-//       setBulkLoading(false);
-//       setBulkProgress(null);
-//     }
-//   };
+// // //   const downloadMonthlyBundle = async () => {
+// // //     setBulkLoading(true);
+// // //     setBulkProgress("Preparing…");
+// // //     try {
+// // //       const result = await downloadMonthlyInvoiceZip(Number(bulkYear), Number(bulkMonth), (p) => {
+// // //         if (p.phase === "listing") {
+// // //           setBulkProgress("Loading invoice list…");
+// // //         } else if (p.phase === "downloading") {
+// // //           setBulkProgress(`Downloading PDFs ${p.done}/${p.total}…`);
+// // //         } else {
+// // //           setBulkProgress("Creating ZIP file…");
+// // //         }
+// // //       });
+// // //       const monthLabel = MONTHS[Number(bulkMonth) - 1];
+// // //       toast.success(
+// // //         `Downloaded ${result.included} invoice${result.included === 1 ? "" : "s"} for ${monthLabel} ${bulkYear}` +
+// // //           (result.skipped ? ` (${result.skipped} skipped)` : ""),
+// // //       );
+// // //     } catch (e) {
+// // //       toast.error(e instanceof Error ? e.message : "Bulk download failed");
+// // //     } finally {
+// // //       setBulkLoading(false);
+// // //       setBulkProgress(null);
+// // //     }
+// // //   };
 
-//   const bulkActions = (
-//     <div className="flex flex-wrap items-center gap-2">
-//       <Select value={bulkMonth} onValueChange={setBulkMonth}>
-//         <SelectTrigger className="w-[140px]">
-//           <SelectValue placeholder="Month" />
-//         </SelectTrigger>
-//         <SelectContent>
-//           {MONTHS.map((label, index) => (
-//             <SelectItem key={label} value={String(index + 1)}>
-//               {label}
-//             </SelectItem>
-//           ))}
-//         </SelectContent>
-//       </Select>
-//       <Select value={bulkYear} onValueChange={setBulkYear}>
-//         <SelectTrigger className="w-[100px]">
-//           <SelectValue placeholder="Year" />
-//         </SelectTrigger>
-//         <SelectContent>
-//           {yearOptions.map((year) => (
-//             <SelectItem key={year} value={year}>
-//               {year}
-//             </SelectItem>
-//           ))}
-//         </SelectContent>
-//       </Select>
-//       <Button size="sm" disabled={bulkLoading} onClick={() => void downloadMonthlyBundle()}>
-//         {bulkLoading ? (
-//           <Loader2 className="w-4 h-4 animate-spin mr-2" />
-//         ) : (
-//           <FileArchive className="w-4 h-4 mr-2" />
-//         )}
-//         {bulkProgress || "Download ZIP"}
-//       </Button>
-//     </div>
-//   );
+// // //   const bulkActions = (
+// // //     <div className="flex flex-wrap items-center gap-2">
+// // //       <Select value={bulkMonth} onValueChange={setBulkMonth}>
+// // //         <SelectTrigger className="w-[140px]">
+// // //           <SelectValue placeholder="Month" />
+// // //         </SelectTrigger>
+// // //         <SelectContent>
+// // //           {MONTHS.map((label, index) => (
+// // //             <SelectItem key={label} value={String(index + 1)}>
+// // //               {label}
+// // //             </SelectItem>
+// // //           ))}
+// // //         </SelectContent>
+// // //       </Select>
+// // //       <Select value={bulkYear} onValueChange={setBulkYear}>
+// // //         <SelectTrigger className="w-[100px]">
+// // //           <SelectValue placeholder="Year" />
+// // //         </SelectTrigger>
+// // //         <SelectContent>
+// // //           {yearOptions.map((year) => (
+// // //             <SelectItem key={year} value={year}>
+// // //               {year}
+// // //             </SelectItem>
+// // //           ))}
+// // //         </SelectContent>
+// // //       </Select>
+// // //       <Button size="sm" disabled={bulkLoading} onClick={() => void downloadMonthlyBundle()}>
+// // //         {bulkLoading ? (
+// // //           <Loader2 className="w-4 h-4 animate-spin mr-2" />
+// // //         ) : (
+// // //           <FileArchive className="w-4 h-4 mr-2" />
+// // //         )}
+// // //         {bulkProgress || "Download ZIP"}
+// // //       </Button>
+// // //     </div>
+// // //   );
 
-//   return (
-//     <AdminPage
-//       title="Invoice Manager"
-//       description="GST invoices stored in Supabase — download PDFs individually or as a monthly ZIP bundle."
-//       loading={loading}
-//       empty={!filteredRows.length}
-//       emptyMessage="No invoices yet. You can still download a monthly ZIP if PDFs exist for that period."
-//       actions={bulkActions}
-//     >
-//       <div className="mb-4 flex items-center gap-3">
-//         <span className="text-sm text-muted-foreground">Filter by site</span>
-//         <Select value={siteFilter} onValueChange={setSiteFilter}>
-//           <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-//           <SelectContent>
-//             {CONNECTED_SITE_OPTIONS.map((opt) => (
-//               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-//             ))}
-//           </SelectContent>
-//         </Select>
-//       </div>
-//       <div className="space-y-2">
-//         {filteredRows.map((i) => (
-//           <div key={i.id} className="flex flex-wrap justify-between gap-3 border border-border rounded-lg p-4">
-//             <div>
-//               <p className="font-semibold text-primary">{i.invoice_number}</p>
-//               <p className="text-sm text-muted-foreground">{i.customer_name} · {i.service_title}</p>
-//               <p className="text-xs text-muted-foreground mt-1">{i.source_website} · {new Date(i.invoice_date).toLocaleDateString()}</p>
-//             </div>
-//             <div className="flex items-center gap-3">
-//               <span className="font-semibold">₹{Number(i.total_amount).toLocaleString()}</span>
-//               <Badge>{i.status}</Badge>
-//               {(i.pdf_storage_path || i.pdf_url) && (
-//                 <Button
-//                   size="sm"
-//                   variant="outline"
-//                   disabled={downloadingId === i.id}
-//                   onClick={() => downloadInvoice(i)}
-//                 >
-//                   {downloadingId === i.id ? (
-//                     <Loader2 className="w-4 h-4 animate-spin" />
-//                   ) : (
-//                     <Download className="w-4 h-4" />
-//                   )}
-//                 </Button>
-//               )}
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </AdminPage>
-//   );
-// }
+// // //   return (
+// // //     <AdminPage
+// // //       title="Invoice Manager"
+// // //       description="GST invoices stored in Supabase — download PDFs individually or as a monthly ZIP bundle."
+// // //       loading={loading}
+// // //       empty={!filteredRows.length}
+// // //       emptyMessage="No invoices yet. You can still download a monthly ZIP if PDFs exist for that period."
+// // //       actions={bulkActions}
+// // //     >
+// // //       <div className="mb-4 flex items-center gap-3">
+// // //         <span className="text-sm text-muted-foreground">Filter by site</span>
+// // //         <Select value={siteFilter} onValueChange={setSiteFilter}>
+// // //           <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+// // //           <SelectContent>
+// // //             {CONNECTED_SITE_OPTIONS.map((opt) => (
+// // //               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+// // //             ))}
+// // //           </SelectContent>
+// // //         </Select>
+// // //       </div>
+// // //       <div className="space-y-2">
+// // //         {filteredRows.map((i) => (
+// // //           <div key={i.id} className="flex flex-wrap justify-between gap-3 border border-border rounded-lg p-4">
+// // //             <div>
+// // //               <p className="font-semibold text-primary">{i.invoice_number}</p>
+// // //               <p className="text-sm text-muted-foreground">{i.customer_name} · {i.service_title}</p>
+// // //               <p className="text-xs text-muted-foreground mt-1">{i.source_website} · {new Date(i.invoice_date).toLocaleDateString()}</p>
+// // //             </div>
+// // //             <div className="flex items-center gap-3">
+// // //               <span className="font-semibold">₹{Number(i.total_amount).toLocaleString()}</span>
+// // //               <Badge>{i.status}</Badge>
+// // //               {(i.pdf_storage_path || i.pdf_url) && (
+// // //                 <Button
+// // //                   size="sm"
+// // //                   variant="outline"
+// // //                   disabled={downloadingId === i.id}
+// // //                   onClick={() => downloadInvoice(i)}
+// // //                 >
+// // //                   {downloadingId === i.id ? (
+// // //                     <Loader2 className="w-4 h-4 animate-spin" />
+// // //                   ) : (
+// // //                     <Download className="w-4 h-4" />
+// // //                   )}
+// // //                 </Button>
+// // //               )}
+// // //             </div>
+// // //           </div>
+// // //         ))}
+// // //       </div>
+// // //     </AdminPage>
+// // //   );
+// // // }
 
+
+// // // import { useMemo, useState } from "react";
+// // // import { supabase } from "@/integrations/supabase/client";
+// // // import { AdminPage } from "@/components/admin/AdminPage";
+// // // import { useAdminTable } from "@/hooks/useAdminData";
+// // // import { Badge } from "@/components/ui/badge";
+// // // import { Button } from "@/components/ui/button";
+// // // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// // // import { Input } from "@/components/ui/input";
+// // // import {
+// // //   Dialog,
+// // //   DialogContent,
+// // //   DialogHeader,
+// // //   DialogTitle,
+// // //   DialogDescription,
+// // // } from "@/components/ui/dialog";
+// // // import {
+// // //   AlertDialog,
+// // //   AlertDialogAction,
+// // //   AlertDialogCancel,
+// // //   AlertDialogContent,
+// // //   AlertDialogDescription,
+// // //   AlertDialogFooter,
+// // //   AlertDialogHeader,
+// // //   AlertDialogTitle,
+// // // } from "@/components/ui/alert-dialog";
+// // // import { Download, FileArchive, Loader2, Eye, Trash2 } from "lucide-react";
+// // // import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
+// // // import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
+// // // import { toast } from "sonner";
+
+// // // type Invoice = {
+// // //   id: string;
+// // //   invoice_number: string;
+// // //   customer_name: string;
+// // //   service_title: string;
+// // //   total_amount: number;
+// // //   status: string;
+// // //   source_website?: string;
+// // //   pdf_url?: string;
+// // //   pdf_storage_path?: string | null;
+// // //   invoice_date: string;
+// // //   // Optional fields — present only if these columns exist in your
+// // //   // Supabase "invoices" table. Rendered as "—" when undefined.
+// // //   customer_email?: string;
+// // //   customer_address?: string;
+// // //   gst_number?: string;
+// // //   gst_amount?: number;
+// // //   payment_status?: string;
+// // //   created_at?: string;
+// // // };
+
+// // // const MONTHS = [
+// // //   "January", "February", "March", "April", "May", "June",
+// // //   "July", "August", "September", "October", "November", "December",
+// // // ];
+
+// // // const PAGE_SIZE = 10;
+
+// // // export default function InvoicesModule() {
+// // //   const { rows, loading, reload } = useAdminTable<Invoice>("invoices", "invoice_date");
+// // //   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+// // //   const [bulkLoading, setBulkLoading] = useState(false);
+// // //   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
+
+// // //   const now = new Date();
+// // //   const [bulkYear, setBulkYear] = useState(String(now.getFullYear()));
+// // //   const [bulkMonth, setBulkMonth] = useState(String(now.getMonth() + 1));
+// // //   const [siteFilter, setSiteFilter] = useState("all");
+
+// // //   // New: search + filters
+// // //   const [search, setSearch] = useState("");
+// // //   const [statusFilter, setStatusFilter] = useState("all");
+// // //   const [monthFilter, setMonthFilter] = useState("all");
+// // //   const [yearFilter, setYearFilter] = useState("all");
+// // //   const [dateFrom, setDateFrom] = useState("");
+// // //   const [dateTo, setDateTo] = useState("");
+
+// // //   // View dialog state
+// // //   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
+
+// // //   // Delete dialog state
+// // //   const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
+// // //   const [deleting, setDeleting] = useState(false);
+
+// // //   // Pagination state
+// // //   const [page, setPage] = useState(1);
+
+// // //   const yearOptions = useMemo(() => {
+// // //     const current = now.getFullYear();
+// // //     return Array.from({ length: 5 }, (_, i) => String(current - i));
+// // //   }, [now]);
+
+// // //   const statusOptions = useMemo(() => {
+// // //     const unique = Array.from(new Set(rows.map((i) => i.status).filter(Boolean)));
+// // //     return unique;
+// // //   }, [rows]);
+
+// // //   const filteredRows = useMemo(() => {
+// // //     let data = rows;
+
+// // //     if (siteFilter !== "all") {
+// // //       data = data.filter((i) => (i.source_website || "ankshaastra.com") === siteFilter);
+// // //     }
+
+// // //     if (statusFilter !== "all") {
+// // //       data = data.filter((i) => i.status === statusFilter);
+// // //     }
+
+// // //     if (monthFilter !== "all") {
+// // //       data = data.filter((i) => {
+// // //         const d = new Date(i.invoice_date);
+// // //         return String(d.getMonth() + 1) === monthFilter;
+// // //       });
+// // //     }
+
+// // //     if (yearFilter !== "all") {
+// // //       data = data.filter((i) => {
+// // //         const d = new Date(i.invoice_date);
+// // //         return String(d.getFullYear()) === yearFilter;
+// // //       });
+// // //     }
+
+// // //     if (dateFrom) {
+// // //       const from = new Date(dateFrom);
+// // //       data = data.filter((i) => new Date(i.invoice_date) >= from);
+// // //     }
+
+// // //     if (dateTo) {
+// // //       const to = new Date(dateTo);
+// // //       to.setHours(23, 59, 59, 999);
+// // //       data = data.filter((i) => new Date(i.invoice_date) <= to);
+// // //     }
+
+// // //     if (search.trim()) {
+// // //       const q = search.toLowerCase();
+// // //       data = data.filter(
+// // //         (i) =>
+// // //           (i.invoice_number || "").toLowerCase().includes(q) ||
+// // //           (i.customer_name || "").toLowerCase().includes(q) ||
+// // //           (i.customer_email || "").toLowerCase().includes(q) ||
+// // //           (i.service_title || "").toLowerCase().includes(q)
+// // //       );
+// // //     }
+
+// // //     return data;
+// // //   }, [rows, siteFilter, statusFilter, monthFilter, yearFilter, dateFrom, dateTo, search]);
+
+// // //   // Reset to page 1 whenever filters/search change the result set
+// // //   useMemo(() => {
+// // //     setPage(1);
+// // //   }, [siteFilter, statusFilter, monthFilter, yearFilter, dateFrom, dateTo, search]);
+
+// // //   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+
+// // //   const paginatedRows = useMemo(() => {
+// // //     const start = (page - 1) * PAGE_SIZE;
+// // //     return filteredRows.slice(start, start + PAGE_SIZE);
+// // //   }, [filteredRows, page]);
+
+// // //   const goToPreviousPage = () => setPage((p) => Math.max(1, p - 1));
+// // //   const goToNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
+
+// // //   const downloadInvoice = async (inv: Invoice) => {
+// // //     setDownloadingId(inv.id);
+// // //     try {
+// // //       const url = (await fetchInvoiceDownloadUrl(inv.id)) || inv.pdf_url;
+// // //       if (!url) {
+// // //         toast.error("Invoice PDF is not available yet.");
+// // //         return;
+// // //       }
+// // //       window.open(url, "_blank", "noopener,noreferrer");
+// // //     } catch {
+// // //       toast.error("Could not download invoice");
+// // //     } finally {
+// // //       setDownloadingId(null);
+// // //     }
+// // //   };
+
+// // //   const downloadMonthlyBundle = async () => {
+// // //     setBulkLoading(true);
+// // //     setBulkProgress("Preparing…");
+// // //     try {
+// // //       const result = await downloadMonthlyInvoiceZip(Number(bulkYear), Number(bulkMonth), (p) => {
+// // //         if (p.phase === "listing") {
+// // //           setBulkProgress("Loading invoice list…");
+// // //         } else if (p.phase === "downloading") {
+// // //           setBulkProgress(`Downloading PDFs ${p.done}/${p.total}…`);
+// // //         } else {
+// // //           setBulkProgress("Creating ZIP file…");
+// // //         }
+// // //       });
+// // //       const monthLabel = MONTHS[Number(bulkMonth) - 1];
+// // //       toast.success(
+// // //         `Downloaded ${result.included} invoice${result.included === 1 ? "" : "s"} for ${monthLabel} ${bulkYear}` +
+// // //           (result.skipped ? ` (${result.skipped} skipped)` : ""),
+// // //       );
+// // //     } catch (e) {
+// // //       toast.error(e instanceof Error ? e.message : "Bulk download failed");
+// // //     } finally {
+// // //       setBulkLoading(false);
+// // //       setBulkProgress(null);
+// // //     }
+// // //   };
+
+// // //   const confirmDeleteInvoice = async () => {
+// // //     if (!deleteInvoiceId) return;
+// // //     setDeleting(true);
+// // //     try {
+// // //       // Safety net: delete dependent rows first in case a FK
+// // //       // constraint exists (e.g. email_logs.invoice_id -> invoices.id).
+// // //       // Ideally this should be ON DELETE CASCADE at the DB level.
+// // //       const { error: emailLogsError } = await supabase
+// // //         .from("email_logs")
+// // //         .delete()
+// // //         .eq("invoice_id", deleteInvoiceId);
+
+// // //       if (emailLogsError && emailLogsError.code !== "42703") {
+// // //         // 42703 = column does not exist, meaning there's no such FK — safe to ignore.
+// // //         toast.error(emailLogsError.message || "Failed to delete related email logs");
+// // //         return;
+// // //       }
+
+// // //       const { error } = await supabase.from("invoices").delete().eq("id", deleteInvoiceId);
+// // //       if (error) {
+// // //         toast.error(error.message || "Failed to delete invoice");
+// // //       } else {
+// // //         toast.success("Invoice deleted successfully");
+// // //         reload();
+// // //       }
+// // //     } catch (e: unknown) {
+// // //       toast.error(e instanceof Error ? e.message : "Failed to delete invoice");
+// // //     } finally {
+// // //       setDeleting(false);
+// // //       setDeleteInvoiceId(null);
+// // //     }
+// // //   };
+
+// // //   const bulkActions = (
+// // //     <div className="flex flex-wrap items-center gap-2">
+// // //       <Select value={bulkMonth} onValueChange={setBulkMonth}>
+// // //         <SelectTrigger className="w-[140px]">
+// // //           <SelectValue placeholder="Month" />
+// // //         </SelectTrigger>
+// // //         <SelectContent>
+// // //           {MONTHS.map((label, index) => (
+// // //             <SelectItem key={label} value={String(index + 1)}>
+// // //               {label}
+// // //             </SelectItem>
+// // //           ))}
+// // //         </SelectContent>
+// // //       </Select>
+// // //       <Select value={bulkYear} onValueChange={setBulkYear}>
+// // //         <SelectTrigger className="w-[100px]">
+// // //           <SelectValue placeholder="Year" />
+// // //         </SelectTrigger>
+// // //         <SelectContent>
+// // //           {yearOptions.map((year) => (
+// // //             <SelectItem key={year} value={year}>
+// // //               {year}
+// // //             </SelectItem>
+// // //           ))}
+// // //         </SelectContent>
+// // //       </Select>
+// // //       <Button size="sm" disabled={bulkLoading} onClick={() => void downloadMonthlyBundle()}>
+// // //         {bulkLoading ? (
+// // //           <Loader2 className="w-4 h-4 animate-spin mr-2" />
+// // //         ) : (
+// // //           <FileArchive className="w-4 h-4 mr-2" />
+// // //         )}
+// // //         {bulkProgress || "Download ZIP"}
+// // //       </Button>
+// // //     </div>
+// // //   );
+
+// // //   return (
+// // //     <AdminPage
+// // //       title="Invoice Manager"
+// // //       description="GST invoices stored in Supabase — download PDFs individually or as a monthly ZIP bundle."
+// // //       loading={loading}
+// // //       empty={!filteredRows.length}
+// // //       emptyMessage="No invoices yet. You can still download a monthly ZIP if PDFs exist for that period."
+// // //       actions={bulkActions}
+// // //     >
+// // //       {/* Search */}
+// // //       <div className="mb-3">
+// // //         <Input
+// // //           placeholder="Search by invoice number, customer, email or service..."
+// // //           value={search}
+// // //           onChange={(e) => setSearch(e.target.value)}
+// // //           className="w-full max-w-md"
+// // //         />
+// // //       </div>
+
+// // //       {/* Filters */}
+// // //       <div className="mb-4 flex flex-wrap items-center gap-3">
+// // //         <Select value={siteFilter} onValueChange={setSiteFilter}>
+// // //           <SelectTrigger className="w-[200px]"><SelectValue placeholder="All sites" /></SelectTrigger>
+// // //           <SelectContent>
+// // //             {CONNECTED_SITE_OPTIONS.map((opt) => (
+// // //               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+// // //             ))}
+// // //           </SelectContent>
+// // //         </Select>
+
+// // //         <Select value={statusFilter} onValueChange={setStatusFilter}>
+// // //           <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+// // //           <SelectContent>
+// // //             <SelectItem value="all">All statuses</SelectItem>
+// // //             {statusOptions.map((s) => (
+// // //               <SelectItem key={s} value={s}>{s}</SelectItem>
+// // //             ))}
+// // //           </SelectContent>
+// // //         </Select>
+
+// // //         <Select value={monthFilter} onValueChange={setMonthFilter}>
+// // //           <SelectTrigger className="w-[140px]"><SelectValue placeholder="Month" /></SelectTrigger>
+// // //           <SelectContent>
+// // //             <SelectItem value="all">All months</SelectItem>
+// // //             {MONTHS.map((label, index) => (
+// // //               <SelectItem key={label} value={String(index + 1)}>{label}</SelectItem>
+// // //             ))}
+// // //           </SelectContent>
+// // //         </Select>
+
+// // //         <Select value={yearFilter} onValueChange={setYearFilter}>
+// // //           <SelectTrigger className="w-[110px]"><SelectValue placeholder="Year" /></SelectTrigger>
+// // //           <SelectContent>
+// // //             <SelectItem value="all">All years</SelectItem>
+// // //             {yearOptions.map((year) => (
+// // //               <SelectItem key={year} value={year}>{year}</SelectItem>
+// // //             ))}
+// // //           </SelectContent>
+// // //         </Select>
+
+// // //         <div className="flex items-center gap-2">
+// // //           <Input
+// // //             type="date"
+// // //             value={dateFrom}
+// // //             onChange={(e) => setDateFrom(e.target.value)}
+// // //             className="w-[150px]"
+// // //           />
+// // //           <span className="text-xs text-muted-foreground">to</span>
+// // //           <Input
+// // //             type="date"
+// // //             value={dateTo}
+// // //             onChange={(e) => setDateTo(e.target.value)}
+// // //             className="w-[150px]"
+// // //           />
+// // //         </div>
+
+// // //         {(siteFilter !== "all" || statusFilter !== "all" || monthFilter !== "all" || yearFilter !== "all" || dateFrom || dateTo || search) && (
+// // //           <Button
+// // //             size="sm"
+// // //             variant="ghost"
+// // //             onClick={() => {
+// // //               setSiteFilter("all");
+// // //               setStatusFilter("all");
+// // //               setMonthFilter("all");
+// // //               setYearFilter("all");
+// // //               setDateFrom("");
+// // //               setDateTo("");
+// // //               setSearch("");
+// // //             }}
+// // //           >
+// // //             Clear filters
+// // //           </Button>
+// // //         )}
+// // //       </div>
+
+// // //       {/* Invoice listing — multi-domain, each with website name visible */}
+// // //       <div className="space-y-2">
+// // //         {paginatedRows.map((i) => (
+// // //           <div key={i.id} className="flex flex-wrap justify-between gap-3 border border-border rounded-lg p-4">
+// // //             <div>
+// // //               <div className="flex items-center gap-2 mb-1">
+// // //                 <Badge variant="outline" className="text-xs">
+// // //                   {i.source_website || "ankshaastra.com"}
+// // //                 </Badge>
+// // //                 <p className="font-semibold text-primary">{i.invoice_number}</p>
+// // //               </div>
+// // //               <p className="text-sm text-muted-foreground">{i.customer_name} · {i.service_title}</p>
+// // //               <p className="text-xs text-muted-foreground mt-1">{new Date(i.invoice_date).toLocaleDateString()}</p>
+// // //             </div>
+// // //             <div className="flex items-center gap-3">
+// // //               <span className="font-semibold">₹{Number(i.total_amount).toLocaleString()}</span>
+// // //               <Badge>{i.status}</Badge>
+// // //               {(i.pdf_storage_path || i.pdf_url) && (
+// // //                 <Button
+// // //                   size="sm"
+// // //                   variant="outline"
+// // //                   disabled={downloadingId === i.id}
+// // //                   onClick={() => downloadInvoice(i)}
+// // //                 >
+// // //                   {downloadingId === i.id ? (
+// // //                     <Loader2 className="w-4 h-4 animate-spin" />
+// // //                   ) : (
+// // //                     <Download className="w-4 h-4" />
+// // //                   )}
+// // //                 </Button>
+// // //               )}
+// // //               <Button size="sm" variant="outline" onClick={() => setViewInvoice(i)}>
+// // //                 <Eye className="w-4 h-4 mr-1" />
+// // //                 View
+// // //               </Button>
+// // //               <Button size="sm" variant="destructive" onClick={() => setDeleteInvoiceId(i.id)}>
+// // //                 <Trash2 className="w-4 h-4 mr-1" />
+// // //                 Delete
+// // //               </Button>
+// // //             </div>
+// // //           </div>
+// // //         ))}
+// // //       </div>
+
+// // //       {/* Pagination controls */}
+// // //       {filteredRows.length > 0 && (
+// // //         <div className="mt-4 flex items-center justify-between">
+// // //           <p className="text-xs text-muted-foreground">
+// // //             Page {page} of {totalPages} · {filteredRows.length} invoices
+// // //           </p>
+// // //           <div className="flex items-center gap-2">
+// // //             <Button size="sm" variant="outline" onClick={goToPreviousPage} disabled={page <= 1}>
+// // //               Previous
+// // //             </Button>
+// // //             <Button size="sm" variant="outline" onClick={goToNextPage} disabled={page >= totalPages}>
+// // //               Next
+// // //             </Button>
+// // //           </div>
+// // //         </div>
+// // //       )}
+
+// // //       {/* View Invoice Dialog */}
+// // //       <Dialog open={!!viewInvoice} onOpenChange={(open) => !open && setViewInvoice(null)}>
+// // //         <DialogContent>
+// // //           <DialogHeader>
+// // //             <DialogTitle>Invoice Details</DialogTitle>
+// // //             <DialogDescription>Full details for this invoice.</DialogDescription>
+// // //           </DialogHeader>
+// // //           {viewInvoice && (
+// // //             <div className="space-y-2 text-sm max-h-[70vh] overflow-y-auto pr-1">
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Invoice Number</span>
+// // //                 <span className="font-medium">{viewInvoice.invoice_number}</span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Customer Name</span>
+// // //                 <span className="font-medium">{viewInvoice.customer_name}</span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Email</span>
+// // //                 <span className="font-medium">{viewInvoice.customer_email || "—"}</span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Address</span>
+// // //                 <span className="font-medium text-right">{viewInvoice.customer_address || "—"}</span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">GST Number</span>
+// // //                 <span className="font-medium">{viewInvoice.gst_number || "—"}</span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Service</span>
+// // //                 <span className="font-medium text-right">{viewInvoice.service_title}</span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Amount</span>
+// // //                 <span className="font-medium">₹{Number(viewInvoice.total_amount).toLocaleString()}</span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">GST Amount</span>
+// // //                 <span className="font-medium">
+// // //                   {viewInvoice.gst_amount != null ? `₹${Number(viewInvoice.gst_amount).toLocaleString()}` : "—"}
+// // //                 </span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Total</span>
+// // //                 <span className="font-medium">
+// // //                   ₹{(Number(viewInvoice.total_amount) + Number(viewInvoice.gst_amount || 0)).toLocaleString()}
+// // //                 </span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Status</span>
+// // //                 <Badge>{viewInvoice.status}</Badge>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Payment Status</span>
+// // //                 <span className="font-medium">{viewInvoice.payment_status || "—"}</span>
+// // //               </div>
+// // //               <div className="flex justify-between border-b border-border pb-2">
+// // //                 <span className="text-muted-foreground">Website</span>
+// // //                 <span className="font-medium">{viewInvoice.source_website || "ankshaastra.com"}</span>
+// // //               </div>
+// // //               <div className="flex justify-between pb-1">
+// // //                 <span className="text-muted-foreground">Created Date</span>
+// // //                 <span className="font-medium">
+// // //                   {new Date(viewInvoice.created_at || viewInvoice.invoice_date).toLocaleString()}
+// // //                 </span>
+// // //               </div>
+// // //             </div>
+// // //           )}
+// // //         </DialogContent>
+// // //       </Dialog>
+
+// // //       {/* Delete Invoice Confirmation Dialog */}
+// // //       <AlertDialog open={!!deleteInvoiceId} onOpenChange={(open) => !open && setDeleteInvoiceId(null)}>
+// // //         <AlertDialogContent>
+// // //           <AlertDialogHeader>
+// // //             <AlertDialogTitle>Delete this invoice?</AlertDialogTitle>
+// // //             <AlertDialogDescription>
+// // //               This action cannot be undone. This will permanently delete the invoice from Supabase.
+// // //             </AlertDialogDescription>
+// // //           </AlertDialogHeader>
+// // //           <AlertDialogFooter>
+// // //             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+// // //             <AlertDialogAction
+// // //               onClick={confirmDeleteInvoice}
+// // //               disabled={deleting}
+// // //               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+// // //             >
+// // //               {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+// // //               Delete
+// // //             </AlertDialogAction>
+// // //           </AlertDialogFooter>
+// // //         </AlertDialogContent>
+// // //       </AlertDialog>
+// // //     </AdminPage>
+// // //   );
+// // // }
+
+// // import { useMemo, useState } from "react";
+// // import { supabase } from "@/integrations/supabase/client";
+// // import { AdminPage } from "@/components/admin/AdminPage";
+// // import { useAdminTable } from "@/hooks/useAdminData";
+// // import { Badge } from "@/components/ui/badge";
+// // import { Button } from "@/components/ui/button";
+// // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// // import { Input } from "@/components/ui/input";
+// // import {
+// //   Dialog,
+// //   DialogContent,
+// //   DialogHeader,
+// //   DialogTitle,
+// //   DialogDescription,
+// // } from "@/components/ui/dialog";
+// // import {
+// //   AlertDialog,
+// //   AlertDialogAction,
+// //   AlertDialogCancel,
+// //   AlertDialogContent,
+// //   AlertDialogDescription,
+// //   AlertDialogFooter,
+// //   AlertDialogHeader,
+// //   AlertDialogTitle,
+// // } from "@/components/ui/alert-dialog";
+// // import {
+// //   DropdownMenu,
+// //   DropdownMenuContent,
+// //   DropdownMenuItem,
+// //   DropdownMenuSeparator,
+// //   DropdownMenuTrigger,
+// // } from "@/components/ui/dropdown-menu";
+// // import { Download, FileArchive, Loader2, Eye, Trash2, SlidersHorizontal, MoreVertical } from "lucide-react";
+// // import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
+// // import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
+// // import { toast } from "sonner";
+// // import { cn } from "@/lib/utils";
+
+// // type Invoice = {
+// //   id: string;
+// //   invoice_number: string;
+// //   customer_name: string;
+// //   service_title: string;
+// //   total_amount: number;
+// //   status: string;
+// //   source_website?: string;
+// //   pdf_url?: string;
+// //   pdf_storage_path?: string | null;
+// //   invoice_date: string;
+// //   // Optional fields — present only if these columns exist in your
+// //   // Supabase "invoices" table. Rendered as "—" when undefined.
+// //   customer_email?: string;
+// //   customer_address?: string;
+// //   gst_number?: string;
+// //   gst_amount?: number;
+// //   payment_status?: string;
+// //   created_at?: string;
+// // };
+
+// // const MONTHS = [
+// //   "January", "February", "March", "April", "May", "June",
+// //   "July", "August", "September", "October", "November", "December",
+// // ];
+
+// // const PAGE_SIZE = 10;
+
+// // // Same fixed status → color mapping used on Orders & Bookings, so "paid"
+// // // looks the same shade of green everywhere instead of each screen inventing
+// // // its own status color.
+// // const STATUS_STYLES: Record<string, string> = {
+// //   paid: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
+// //   pending: "bg-amber-100 text-amber-700 hover:bg-amber-100",
+// //   failed: "bg-red-100 text-red-700 hover:bg-red-100",
+// //   refunded: "bg-slate-200 text-slate-700 hover:bg-slate-200",
+// //   cancelled: "bg-slate-200 text-slate-600 hover:bg-slate-200",
+// // };
+
+// // function formatDate(iso: string) {
+// //   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+// // }
+
+// // function formatDateTime(iso: string) {
+// //   const d = new Date(iso);
+// //   return `${formatDate(iso)}, ${d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
+// // }
+
+// // export default function InvoicesModule() {
+// //   const { rows, loading, reload } = useAdminTable<Invoice>("invoices", "invoice_date");
+// //   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+// //   const [bulkLoading, setBulkLoading] = useState(false);
+// //   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
+
+// //   const now = new Date();
+// //   const [bulkYear, setBulkYear] = useState(String(now.getFullYear()));
+// //   const [bulkMonth, setBulkMonth] = useState(String(now.getMonth() + 1));
+// //   const [siteFilter, setSiteFilter] = useState("all");
+
+// //   // New: search + filters
+// //   const [search, setSearch] = useState("");
+// //   const [statusFilter, setStatusFilter] = useState("all");
+// //   const [monthFilter, setMonthFilter] = useState("all");
+// //   const [yearFilter, setYearFilter] = useState("all");
+// //   const [dateFrom, setDateFrom] = useState("");
+// //   const [dateTo, setDateTo] = useState("");
+
+// //   // Secondary filters (status/month/year/date-range) are used occasionally, not
+// //   // on every visit, so they're collapsed behind a toggle — search + site stay
+// //   // visible since those are used every time.
+// //   const [showFilters, setShowFilters] = useState(false);
+
+// //   // View dialog state
+// //   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
+
+// //   // Delete dialog state
+// //   const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
+// //   const [deleting, setDeleting] = useState(false);
+
+// //   // Pagination state
+// //   const [page, setPage] = useState(1);
+
+// //   const yearOptions = useMemo(() => {
+// //     const current = now.getFullYear();
+// //     return Array.from({ length: 5 }, (_, i) => String(current - i));
+// //   }, [now]);
+
+// //   const statusOptions = useMemo(() => {
+// //     const unique = Array.from(new Set(rows.map((i) => i.status).filter(Boolean)));
+// //     return unique;
+// //   }, [rows]);
+
+// //   const activeSecondaryFilterCount = [
+// //     statusFilter !== "all",
+// //     monthFilter !== "all",
+// //     yearFilter !== "all",
+// //     !!dateFrom,
+// //     !!dateTo,
+// //   ].filter(Boolean).length;
+
+// //   const filteredRows = useMemo(() => {
+// //     let data = rows;
+
+// //     if (siteFilter !== "all") {
+// //       data = data.filter((i) => (i.source_website || "ankshaastra.com") === siteFilter);
+// //     }
+
+// //     if (statusFilter !== "all") {
+// //       data = data.filter((i) => i.status === statusFilter);
+// //     }
+
+// //     if (monthFilter !== "all") {
+// //       data = data.filter((i) => {
+// //         const d = new Date(i.invoice_date);
+// //         return String(d.getMonth() + 1) === monthFilter;
+// //       });
+// //     }
+
+// //     if (yearFilter !== "all") {
+// //       data = data.filter((i) => {
+// //         const d = new Date(i.invoice_date);
+// //         return String(d.getFullYear()) === yearFilter;
+// //       });
+// //     }
+
+// //     if (dateFrom) {
+// //       const from = new Date(dateFrom);
+// //       data = data.filter((i) => new Date(i.invoice_date) >= from);
+// //     }
+
+// //     if (dateTo) {
+// //       const to = new Date(dateTo);
+// //       to.setHours(23, 59, 59, 999);
+// //       data = data.filter((i) => new Date(i.invoice_date) <= to);
+// //     }
+
+// //     if (search.trim()) {
+// //       const q = search.toLowerCase();
+// //       data = data.filter(
+// //         (i) =>
+// //           (i.invoice_number || "").toLowerCase().includes(q) ||
+// //           (i.customer_name || "").toLowerCase().includes(q) ||
+// //           (i.customer_email || "").toLowerCase().includes(q) ||
+// //           (i.service_title || "").toLowerCase().includes(q)
+// //       );
+// //     }
+
+// //     return data;
+// //   }, [rows, siteFilter, statusFilter, monthFilter, yearFilter, dateFrom, dateTo, search]);
+
+// //   // Reset to page 1 whenever filters/search change the result set
+// //   useMemo(() => {
+// //     setPage(1);
+// //   }, [siteFilter, statusFilter, monthFilter, yearFilter, dateFrom, dateTo, search]);
+
+// //   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+
+// //   const paginatedRows = useMemo(() => {
+// //     const start = (page - 1) * PAGE_SIZE;
+// //     return filteredRows.slice(start, start + PAGE_SIZE);
+// //   }, [filteredRows, page]);
+
+// //   const goToPreviousPage = () => setPage((p) => Math.max(1, p - 1));
+// //   const goToNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
+
+// //   const downloadInvoice = async (inv: Invoice) => {
+// //     setDownloadingId(inv.id);
+// //     try {
+// //       const url = (await fetchInvoiceDownloadUrl(inv.id)) || inv.pdf_url;
+// //       if (!url) {
+// //         toast.error("Invoice PDF is not available yet.");
+// //         return;
+// //       }
+// //       window.open(url, "_blank", "noopener,noreferrer");
+// //     } catch {
+// //       toast.error("Could not download invoice");
+// //     } finally {
+// //       setDownloadingId(null);
+// //     }
+// //   };
+
+// //   const downloadMonthlyBundle = async () => {
+// //     setBulkLoading(true);
+// //     setBulkProgress("Preparing…");
+// //     try {
+// //       const result = await downloadMonthlyInvoiceZip(Number(bulkYear), Number(bulkMonth), (p) => {
+// //         if (p.phase === "listing") {
+// //           setBulkProgress("Loading invoice list…");
+// //         } else if (p.phase === "downloading") {
+// //           setBulkProgress(`Downloading PDFs ${p.done}/${p.total}…`);
+// //         } else {
+// //           setBulkProgress("Creating ZIP file…");
+// //         }
+// //       });
+// //       const monthLabel = MONTHS[Number(bulkMonth) - 1];
+// //       toast.success(
+// //         `Downloaded ${result.included} invoice${result.included === 1 ? "" : "s"} for ${monthLabel} ${bulkYear}` +
+// //           (result.skipped ? ` (${result.skipped} skipped)` : ""),
+// //       );
+// //     } catch (e) {
+// //       toast.error(e instanceof Error ? e.message : "Bulk download failed");
+// //     } finally {
+// //       setBulkLoading(false);
+// //       setBulkProgress(null);
+// //     }
+// //   };
+
+// //   const confirmDeleteInvoice = async () => {
+// //     if (!deleteInvoiceId) return;
+// //     setDeleting(true);
+// //     try {
+// //       // Safety net: delete dependent rows first in case a FK
+// //       // constraint exists (e.g. email_logs.invoice_id -> invoices.id).
+// //       // Ideally this should be ON DELETE CASCADE at the DB level.
+// //       const { error: emailLogsError } = await supabase
+// //         .from("email_logs")
+// //         .delete()
+// //         .eq("invoice_id", deleteInvoiceId);
+
+// //       if (emailLogsError && emailLogsError.code !== "42703") {
+// //         // 42703 = column does not exist, meaning there's no such FK — safe to ignore.
+// //         toast.error(emailLogsError.message || "Failed to delete related email logs");
+// //         return;
+// //       }
+
+// //       const { error } = await supabase.from("invoices").delete().eq("id", deleteInvoiceId);
+// //       if (error) {
+// //         toast.error(error.message || "Failed to delete invoice");
+// //       } else {
+// //         toast.success("Invoice deleted successfully");
+// //         reload();
+// //       }
+// //     } catch (e: unknown) {
+// //       toast.error(e instanceof Error ? e.message : "Failed to delete invoice");
+// //     } finally {
+// //       setDeleting(false);
+// //       setDeleteInvoiceId(null);
+// //     }
+// //   };
+
+// //   const bulkActions = (
+// //     <div className="flex flex-wrap items-center gap-2">
+// //       <Select value={bulkMonth} onValueChange={setBulkMonth}>
+// //         <SelectTrigger className="w-[140px]">
+// //           <SelectValue placeholder="Month" />
+// //         </SelectTrigger>
+// //         <SelectContent>
+// //           {MONTHS.map((label, index) => (
+// //             <SelectItem key={label} value={String(index + 1)}>
+// //               {label}
+// //             </SelectItem>
+// //           ))}
+// //         </SelectContent>
+// //       </Select>
+// //       <Select value={bulkYear} onValueChange={setBulkYear}>
+// //         <SelectTrigger className="w-[100px]">
+// //           <SelectValue placeholder="Year" />
+// //         </SelectTrigger>
+// //         <SelectContent>
+// //           {yearOptions.map((year) => (
+// //             <SelectItem key={year} value={year}>
+// //               {year}
+// //             </SelectItem>
+// //           ))}
+// //         </SelectContent>
+// //       </Select>
+// //       <Button size="sm" disabled={bulkLoading} onClick={() => void downloadMonthlyBundle()}>
+// //         {bulkLoading ? (
+// //           <Loader2 className="w-4 h-4 animate-spin mr-2" />
+// //         ) : (
+// //           <FileArchive className="w-4 h-4 mr-2" />
+// //         )}
+// //         {bulkProgress || "Download ZIP"}
+// //       </Button>
+// //     </div>
+// //   );
+
+// //   return (
+// //     <AdminPage
+// //       title="Invoice Manager"
+// //       description="GST invoices stored in Supabase — download PDFs individually or as a monthly ZIP bundle."
+// //       loading={loading}
+// //       empty={!filteredRows.length}
+// //       emptyMessage="No invoices yet. You can still download a monthly ZIP if PDFs exist for that period."
+// //       actions={bulkActions}
+// //     >
+// //       {/* Always-visible row: search + site + filters toggle. Secondary filters
+// //           (status/month/year/date-range) are used occasionally, so they're
+// //           tucked behind "Filters" instead of sitting above every invoice on
+// //           every visit. */}
+// //       <div className="mb-3 flex flex-wrap items-center gap-3">
+// //         <Input
+// //           placeholder="Search by invoice number, customer, email or service..."
+// //           value={search}
+// //           onChange={(e) => setSearch(e.target.value)}
+// //           className="w-full max-w-md"
+// //         />
+
+// //         <Select value={siteFilter} onValueChange={setSiteFilter}>
+// //           <SelectTrigger className="w-[200px]"><SelectValue placeholder="All sites" /></SelectTrigger>
+// //           <SelectContent>
+// //             {CONNECTED_SITE_OPTIONS.map((opt) => (
+// //               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+// //             ))}
+// //           </SelectContent>
+// //         </Select>
+
+// //         <Button
+// //           size="sm"
+// //           variant={activeSecondaryFilterCount > 0 ? "secondary" : "outline"}
+// //           onClick={() => setShowFilters((v) => !v)}
+// //         >
+// //           <SlidersHorizontal className="w-4 h-4 mr-1.5" />
+// //           Filters
+// //           {activeSecondaryFilterCount > 0 && (
+// //             <Badge variant="outline" className="ml-1.5 h-5 min-w-5 px-1 text-xs">
+// //               {activeSecondaryFilterCount}
+// //             </Badge>
+// //           )}
+// //         </Button>
+// //       </div>
+
+// //       {showFilters && (
+// //         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
+// //           <Select value={statusFilter} onValueChange={setStatusFilter}>
+// //             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+// //             <SelectContent>
+// //               <SelectItem value="all">All statuses</SelectItem>
+// //               {statusOptions.map((s) => (
+// //                 <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+// //               ))}
+// //             </SelectContent>
+// //           </Select>
+
+// //           <Select value={monthFilter} onValueChange={setMonthFilter}>
+// //             <SelectTrigger className="w-[140px]"><SelectValue placeholder="Month" /></SelectTrigger>
+// //             <SelectContent>
+// //               <SelectItem value="all">All months</SelectItem>
+// //               {MONTHS.map((label, index) => (
+// //                 <SelectItem key={label} value={String(index + 1)}>{label}</SelectItem>
+// //               ))}
+// //             </SelectContent>
+// //           </Select>
+
+// //           <Select value={yearFilter} onValueChange={setYearFilter}>
+// //             <SelectTrigger className="w-[110px]"><SelectValue placeholder="Year" /></SelectTrigger>
+// //             <SelectContent>
+// //               <SelectItem value="all">All years</SelectItem>
+// //               {yearOptions.map((year) => (
+// //                 <SelectItem key={year} value={year}>{year}</SelectItem>
+// //               ))}
+// //             </SelectContent>
+// //           </Select>
+
+// //           <div className="flex items-center gap-2">
+// //             <Input
+// //               type="date"
+// //               value={dateFrom}
+// //               onChange={(e) => setDateFrom(e.target.value)}
+// //               className="w-[150px]"
+// //             />
+// //             <span className="text-xs text-muted-foreground">to</span>
+// //             <Input
+// //               type="date"
+// //               value={dateTo}
+// //               onChange={(e) => setDateTo(e.target.value)}
+// //               className="w-[150px]"
+// //             />
+// //           </div>
+
+// //           {(activeSecondaryFilterCount > 0 || search) && (
+// //             <Button
+// //               size="sm"
+// //               variant="ghost"
+// //               onClick={() => {
+// //                 setStatusFilter("all");
+// //                 setMonthFilter("all");
+// //                 setYearFilter("all");
+// //                 setDateFrom("");
+// //                 setDateTo("");
+// //               }}
+// //             >
+// //               Clear filters
+// //             </Button>
+// //           )}
+// //         </div>
+// //       )}
+
+// //       {/* Invoice listing — multi-domain, each with website name visible */}
+// //       <div className="space-y-2">
+// //         {paginatedRows.map((i) => (
+// //           <div key={i.id} className="flex flex-wrap justify-between gap-3 border border-border rounded-lg p-4">
+// //             <div>
+// //               <div className="flex items-center gap-2 mb-1">
+// //                 <Badge variant="outline" className="text-xs">
+// //                   {i.source_website || "ankshaastra.com"}
+// //                 </Badge>
+// //                 <p className="font-semibold text-primary">{i.invoice_number}</p>
+// //               </div>
+// //               <p className="text-sm text-muted-foreground">{i.customer_name} · {i.service_title}</p>
+// //               <p className="text-xs text-muted-foreground mt-1">{formatDate(i.invoice_date)}</p>
+// //             </div>
+// //             <div className="flex items-center gap-3">
+// //               <span className="font-semibold">₹{Number(i.total_amount).toLocaleString()}</span>
+
+// //               <Badge className={cn("capitalize border-0", STATUS_STYLES[i.status] || STATUS_STYLES.cancelled)}>
+// //                 {i.status}
+// //               </Badge>
+
+// //               {(i.pdf_storage_path || i.pdf_url) && (
+// //                 <Button
+// //                   size="icon"
+// //                   variant="ghost"
+// //                   className="h-8 w-8"
+// //                   disabled={downloadingId === i.id}
+// //                   onClick={() => downloadInvoice(i)}
+// //                   aria-label="Download invoice PDF"
+// //                 >
+// //                   {downloadingId === i.id ? (
+// //                     <Loader2 className="w-4 h-4 animate-spin" />
+// //                   ) : (
+// //                     <Download className="w-4 h-4" />
+// //                   )}
+// //                 </Button>
+// //               )}
+
+// //               <Button
+// //                 size="icon"
+// //                 variant="ghost"
+// //                 className="h-8 w-8"
+// //                 onClick={() => setViewInvoice(i)}
+// //                 aria-label="View invoice details"
+// //               >
+// //                 <Eye className="w-4 h-4" />
+// //               </Button>
+
+// //               {/* Delete lives behind a kebab menu instead of a full-width red
+// //                   button, since it's a rare, guarded action, not one that should
+// //                   carry the same visual weight as View/Download on every row. */}
+// //               <DropdownMenu>
+// //                 <DropdownMenuTrigger asChild>
+// //                   <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="More actions">
+// //                     <MoreVertical className="w-4 h-4" />
+// //                   </Button>
+// //                 </DropdownMenuTrigger>
+// //                 <DropdownMenuContent align="end">
+// //                   <DropdownMenuItem
+// //                     onClick={() => setDeleteInvoiceId(i.id)}
+// //                     className="text-destructive focus:text-destructive"
+// //                   >
+// //                     <Trash2 className="w-4 h-4 mr-2" />
+// //                     Delete
+// //                   </DropdownMenuItem>
+// //                 </DropdownMenuContent>
+// //               </DropdownMenu>
+// //             </div>
+// //           </div>
+// //         ))}
+// //       </div>
+
+// //       {/* Pagination controls */}
+// //       {filteredRows.length > 0 && (
+// //         <div className="mt-4 flex items-center justify-between">
+// //           <p className="text-xs text-muted-foreground">
+// //             Page {page} of {totalPages} · {filteredRows.length} invoices
+// //           </p>
+// //           <div className="flex items-center gap-2">
+// //             <Button size="sm" variant="outline" onClick={goToPreviousPage} disabled={page <= 1}>
+// //               Previous
+// //             </Button>
+// //             <Button size="sm" variant="outline" onClick={goToNextPage} disabled={page >= totalPages}>
+// //               Next
+// //             </Button>
+// //           </div>
+// //         </div>
+// //       )}
+
+// //       {/* View Invoice Dialog */}
+// //       <Dialog open={!!viewInvoice} onOpenChange={(open) => !open && setViewInvoice(null)}>
+// //         <DialogContent>
+// //           <DialogHeader>
+// //             <DialogTitle>Invoice Details</DialogTitle>
+// //             <DialogDescription>Full details for this invoice.</DialogDescription>
+// //           </DialogHeader>
+// //           {viewInvoice && (
+// //             <div className="space-y-2 text-sm max-h-[70vh] overflow-y-auto pr-1">
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Invoice Number</span>
+// //                 <span className="font-medium">{viewInvoice.invoice_number}</span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Customer Name</span>
+// //                 <span className="font-medium">{viewInvoice.customer_name}</span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Email</span>
+// //                 <span className="font-medium">{viewInvoice.customer_email || "—"}</span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Address</span>
+// //                 <span className="font-medium text-right">{viewInvoice.customer_address || "—"}</span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">GST Number</span>
+// //                 <span className="font-medium">{viewInvoice.gst_number || "—"}</span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Service</span>
+// //                 <span className="font-medium text-right">{viewInvoice.service_title}</span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Amount</span>
+// //                 <span className="font-medium">₹{Number(viewInvoice.total_amount).toLocaleString()}</span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">GST Amount</span>
+// //                 <span className="font-medium">
+// //                   {viewInvoice.gst_amount != null ? `₹${Number(viewInvoice.gst_amount).toLocaleString()}` : "—"}
+// //                 </span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Total</span>
+// //                 <span className="font-medium">
+// //                   ₹{(Number(viewInvoice.total_amount) + Number(viewInvoice.gst_amount || 0)).toLocaleString()}
+// //                 </span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Status</span>
+// //                 <Badge className={cn("capitalize border-0", STATUS_STYLES[viewInvoice.status] || STATUS_STYLES.cancelled)}>
+// //                   {viewInvoice.status}
+// //                 </Badge>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Payment Status</span>
+// //                 <span className="font-medium">{viewInvoice.payment_status || "—"}</span>
+// //               </div>
+// //               <div className="flex justify-between border-b border-border pb-2">
+// //                 <span className="text-muted-foreground">Website</span>
+// //                 <span className="font-medium">{viewInvoice.source_website || "ankshaastra.com"}</span>
+// //               </div>
+// //               <div className="flex justify-between pb-1">
+// //                 <span className="text-muted-foreground">Created Date</span>
+// //                 <span className="font-medium">
+// //                   {formatDateTime(viewInvoice.created_at || viewInvoice.invoice_date)}
+// //                 </span>
+// //               </div>
+// //             </div>
+// //           )}
+// //         </DialogContent>
+// //       </Dialog>
+
+// //       {/* Delete Invoice Confirmation Dialog */}
+// //       <AlertDialog open={!!deleteInvoiceId} onOpenChange={(open) => !open && setDeleteInvoiceId(null)}>
+// //         <AlertDialogContent>
+// //           <AlertDialogHeader>
+// //             <AlertDialogTitle>Delete this invoice?</AlertDialogTitle>
+// //             <AlertDialogDescription>
+// //               This action cannot be undone. This will permanently delete the invoice from Supabase.
+// //             </AlertDialogDescription>
+// //           </AlertDialogHeader>
+// //           <AlertDialogFooter>
+// //             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+// //             <AlertDialogAction
+// //               onClick={confirmDeleteInvoice}
+// //               disabled={deleting}
+// //               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+// //             >
+// //               {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+// //               Delete
+// //             </AlertDialogAction>
+// //           </AlertDialogFooter>
+// //         </AlertDialogContent>
+// //       </AlertDialog>
+// //     </AdminPage>
+// //   );
+// // }
 
 // import { useMemo, useState } from "react";
 // import { supabase } from "@/integrations/supabase/client";
@@ -206,10 +1349,18 @@
 //   AlertDialogHeader,
 //   AlertDialogTitle,
 // } from "@/components/ui/alert-dialog";
-// import { Download, FileArchive, Loader2, Eye, Trash2 } from "lucide-react";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import { Download, FileArchive, Loader2, Eye, Trash2, SlidersHorizontal, MoreVertical } from "lucide-react";
 // import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
 // import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
 // import { toast } from "sonner";
+// import { cn } from "@/lib/utils";
 
 // type Invoice = {
 //   id: string;
@@ -239,6 +1390,26 @@
 
 // const PAGE_SIZE = 10;
 
+// // Same fixed status → color mapping used on Orders & Bookings, so "paid"
+// // looks the same shade of green everywhere instead of each screen inventing
+// // its own status color.
+// const STATUS_STYLES: Record<string, string> = {
+//   paid: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
+//   pending: "bg-amber-100 text-amber-700 hover:bg-amber-100",
+//   failed: "bg-red-100 text-red-700 hover:bg-red-100",
+//   refunded: "bg-slate-200 text-slate-700 hover:bg-slate-200",
+//   cancelled: "bg-slate-200 text-slate-600 hover:bg-slate-200",
+// };
+
+// function formatDate(iso: string) {
+//   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+// }
+
+// function formatDateTime(iso: string) {
+//   const d = new Date(iso);
+//   return `${formatDate(iso)}, ${d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
+// }
+
 // export default function InvoicesModule() {
 //   const { rows, loading, reload } = useAdminTable<Invoice>("invoices", "invoice_date");
 //   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -257,6 +1428,11 @@
 //   const [yearFilter, setYearFilter] = useState("all");
 //   const [dateFrom, setDateFrom] = useState("");
 //   const [dateTo, setDateTo] = useState("");
+
+//   // Secondary filters (status/month/year/date-range) are used occasionally, not
+//   // on every visit, so they're collapsed behind a toggle — search + site stay
+//   // visible since those are used every time.
+//   const [showFilters, setShowFilters] = useState(false);
 
 //   // View dialog state
 //   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
@@ -277,6 +1453,14 @@
 //     const unique = Array.from(new Set(rows.map((i) => i.status).filter(Boolean)));
 //     return unique;
 //   }, [rows]);
+
+//   const activeSecondaryFilterCount = [
+//     statusFilter !== "all",
+//     monthFilter !== "all",
+//     yearFilter !== "all",
+//     !!dateFrom,
+//     !!dateTo,
+//   ].filter(Boolean).length;
 
 //   const filteredRows = useMemo(() => {
 //     let data = rows;
@@ -464,18 +1648,18 @@
 //       emptyMessage="No invoices yet. You can still download a monthly ZIP if PDFs exist for that period."
 //       actions={bulkActions}
 //     >
-//       {/* Search */}
-//       <div className="mb-3">
+//       {/* Always-visible row: search + site + filters toggle. Secondary filters
+//           (status/month/year/date-range) are used occasionally, so they're
+//           tucked behind "Filters" instead of sitting above every invoice on
+//           every visit. */}
+//       <div className="mb-3 flex flex-wrap items-center gap-3">
 //         <Input
 //           placeholder="Search by invoice number, customer, email or service..."
 //           value={search}
 //           onChange={(e) => setSearch(e.target.value)}
 //           className="w-full max-w-md"
 //         />
-//       </div>
 
-//       {/* Filters */}
-//       <div className="mb-4 flex flex-wrap items-center gap-3">
 //         <Select value={siteFilter} onValueChange={setSiteFilter}>
 //           <SelectTrigger className="w-[200px]"><SelectValue placeholder="All sites" /></SelectTrigger>
 //           <SelectContent>
@@ -485,70 +1669,86 @@
 //           </SelectContent>
 //         </Select>
 
-//         <Select value={statusFilter} onValueChange={setStatusFilter}>
-//           <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
-//           <SelectContent>
-//             <SelectItem value="all">All statuses</SelectItem>
-//             {statusOptions.map((s) => (
-//               <SelectItem key={s} value={s}>{s}</SelectItem>
-//             ))}
-//           </SelectContent>
-//         </Select>
-
-//         <Select value={monthFilter} onValueChange={setMonthFilter}>
-//           <SelectTrigger className="w-[140px]"><SelectValue placeholder="Month" /></SelectTrigger>
-//           <SelectContent>
-//             <SelectItem value="all">All months</SelectItem>
-//             {MONTHS.map((label, index) => (
-//               <SelectItem key={label} value={String(index + 1)}>{label}</SelectItem>
-//             ))}
-//           </SelectContent>
-//         </Select>
-
-//         <Select value={yearFilter} onValueChange={setYearFilter}>
-//           <SelectTrigger className="w-[110px]"><SelectValue placeholder="Year" /></SelectTrigger>
-//           <SelectContent>
-//             <SelectItem value="all">All years</SelectItem>
-//             {yearOptions.map((year) => (
-//               <SelectItem key={year} value={year}>{year}</SelectItem>
-//             ))}
-//           </SelectContent>
-//         </Select>
-
-//         <div className="flex items-center gap-2">
-//           <Input
-//             type="date"
-//             value={dateFrom}
-//             onChange={(e) => setDateFrom(e.target.value)}
-//             className="w-[150px]"
-//           />
-//           <span className="text-xs text-muted-foreground">to</span>
-//           <Input
-//             type="date"
-//             value={dateTo}
-//             onChange={(e) => setDateTo(e.target.value)}
-//             className="w-[150px]"
-//           />
-//         </div>
-
-//         {(siteFilter !== "all" || statusFilter !== "all" || monthFilter !== "all" || yearFilter !== "all" || dateFrom || dateTo || search) && (
-//           <Button
-//             size="sm"
-//             variant="ghost"
-//             onClick={() => {
-//               setSiteFilter("all");
-//               setStatusFilter("all");
-//               setMonthFilter("all");
-//               setYearFilter("all");
-//               setDateFrom("");
-//               setDateTo("");
-//               setSearch("");
-//             }}
-//           >
-//             Clear filters
-//           </Button>
-//         )}
+//         <Button
+//           size="sm"
+//           variant={activeSecondaryFilterCount > 0 ? "secondary" : "outline"}
+//           onClick={() => setShowFilters((v) => !v)}
+//         >
+//           <SlidersHorizontal className="w-4 h-4 mr-1.5" />
+//           Filters
+//           {activeSecondaryFilterCount > 0 && (
+//             <Badge variant="outline" className="ml-1.5 h-5 min-w-5 px-1 text-xs">
+//               {activeSecondaryFilterCount}
+//             </Badge>
+//           )}
+//         </Button>
 //       </div>
+
+//       {showFilters && (
+//         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
+//           <Select value={statusFilter} onValueChange={setStatusFilter}>
+//             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+//             <SelectContent>
+//               <SelectItem value="all">All statuses</SelectItem>
+//               {statusOptions.map((s) => (
+//                 <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+//               ))}
+//             </SelectContent>
+//           </Select>
+
+//           <Select value={monthFilter} onValueChange={setMonthFilter}>
+//             <SelectTrigger className="w-[140px]"><SelectValue placeholder="Month" /></SelectTrigger>
+//             <SelectContent>
+//               <SelectItem value="all">All months</SelectItem>
+//               {MONTHS.map((label, index) => (
+//                 <SelectItem key={label} value={String(index + 1)}>{label}</SelectItem>
+//               ))}
+//             </SelectContent>
+//           </Select>
+
+//           <Select value={yearFilter} onValueChange={setYearFilter}>
+//             <SelectTrigger className="w-[110px]"><SelectValue placeholder="Year" /></SelectTrigger>
+//             <SelectContent>
+//               <SelectItem value="all">All years</SelectItem>
+//               {yearOptions.map((year) => (
+//                 <SelectItem key={year} value={year}>{year}</SelectItem>
+//               ))}
+//             </SelectContent>
+//           </Select>
+
+//           <div className="flex items-center gap-2">
+//             <Input
+//               type="date"
+//               value={dateFrom}
+//               onChange={(e) => setDateFrom(e.target.value)}
+//               className="w-[150px]"
+//             />
+//             <span className="text-xs text-muted-foreground">to</span>
+//             <Input
+//               type="date"
+//               value={dateTo}
+//               onChange={(e) => setDateTo(e.target.value)}
+//               className="w-[150px]"
+//             />
+//           </div>
+
+//           {(activeSecondaryFilterCount > 0 || search) && (
+//             <Button
+//               size="sm"
+//               variant="ghost"
+//               onClick={() => {
+//                 setStatusFilter("all");
+//                 setMonthFilter("all");
+//                 setYearFilter("all");
+//                 setDateFrom("");
+//                 setDateTo("");
+//               }}
+//             >
+//               Clear filters
+//             </Button>
+//           )}
+//         </div>
+//       )}
 
 //       {/* Invoice listing — multi-domain, each with website name visible */}
 //       <div className="space-y-2">
@@ -562,17 +1762,23 @@
 //                 <p className="font-semibold text-primary">{i.invoice_number}</p>
 //               </div>
 //               <p className="text-sm text-muted-foreground">{i.customer_name} · {i.service_title}</p>
-//               <p className="text-xs text-muted-foreground mt-1">{new Date(i.invoice_date).toLocaleDateString()}</p>
+//               <p className="text-xs text-muted-foreground mt-1">{formatDate(i.invoice_date)}</p>
 //             </div>
 //             <div className="flex items-center gap-3">
 //               <span className="font-semibold">₹{Number(i.total_amount).toLocaleString()}</span>
-//               <Badge>{i.status}</Badge>
+
+//               <Badge className={cn("capitalize border-0", STATUS_STYLES[i.status] || STATUS_STYLES.cancelled)}>
+//                 {i.status}
+//               </Badge>
+
 //               {(i.pdf_storage_path || i.pdf_url) && (
 //                 <Button
-//                   size="sm"
-//                   variant="outline"
+//                   size="icon"
+//                   variant="ghost"
+//                   className="h-8 w-8"
 //                   disabled={downloadingId === i.id}
 //                   onClick={() => downloadInvoice(i)}
+//                   aria-label="Download invoice PDF"
 //                 >
 //                   {downloadingId === i.id ? (
 //                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -581,14 +1787,36 @@
 //                   )}
 //                 </Button>
 //               )}
-//               <Button size="sm" variant="outline" onClick={() => setViewInvoice(i)}>
-//                 <Eye className="w-4 h-4 mr-1" />
-//                 View
+
+//               <Button
+//                 size="icon"
+//                 variant="ghost"
+//                 className="h-8 w-8"
+//                 onClick={() => setViewInvoice(i)}
+//                 aria-label="View invoice details"
+//               >
+//                 <Eye className="w-4 h-4" />
 //               </Button>
-//               <Button size="sm" variant="destructive" onClick={() => setDeleteInvoiceId(i.id)}>
-//                 <Trash2 className="w-4 h-4 mr-1" />
-//                 Delete
-//               </Button>
+
+//               {/* Delete lives behind a kebab menu instead of a full-width red
+//                   button, since it's a rare, guarded action, not one that should
+//                   carry the same visual weight as View/Download on every row. */}
+//               <DropdownMenu>
+//                 <DropdownMenuTrigger asChild>
+//                   <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="More actions">
+//                     <MoreVertical className="w-4 h-4" />
+//                   </Button>
+//                 </DropdownMenuTrigger>
+//                 <DropdownMenuContent align="end">
+//                   <DropdownMenuItem
+//                     onClick={() => setDeleteInvoiceId(i.id)}
+//                     className="text-destructive focus:text-destructive"
+//                   >
+//                     <Trash2 className="w-4 h-4 mr-2" />
+//                     Delete
+//                   </DropdownMenuItem>
+//                 </DropdownMenuContent>
+//               </DropdownMenu>
 //             </div>
 //           </div>
 //         ))}
@@ -596,14 +1824,18 @@
 
 //       {/* Pagination controls */}
 //       {filteredRows.length > 0 && (
-//         <div className="mt-4 flex items-center justify-between">
+//         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 //           <p className="text-xs text-muted-foreground">
-//             Page {page} of {totalPages} · {filteredRows.length} invoices
+//             Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredRows.length)} of{" "}
+//             {filteredRows.length}
 //           </p>
-//           <div className="flex items-center gap-2">
+//           <div className="flex items-center gap-3">
 //             <Button size="sm" variant="outline" onClick={goToPreviousPage} disabled={page <= 1}>
 //               Previous
 //             </Button>
+//             <p className="text-xs text-muted-foreground whitespace-nowrap">
+//               Page {page} of {totalPages}
+//             </p>
 //             <Button size="sm" variant="outline" onClick={goToNextPage} disabled={page >= totalPages}>
 //               Next
 //             </Button>
@@ -662,7 +1894,9 @@
 //               </div>
 //               <div className="flex justify-between border-b border-border pb-2">
 //                 <span className="text-muted-foreground">Status</span>
-//                 <Badge>{viewInvoice.status}</Badge>
+//                 <Badge className={cn("capitalize border-0", STATUS_STYLES[viewInvoice.status] || STATUS_STYLES.cancelled)}>
+//                   {viewInvoice.status}
+//                 </Badge>
 //               </div>
 //               <div className="flex justify-between border-b border-border pb-2">
 //                 <span className="text-muted-foreground">Payment Status</span>
@@ -675,7 +1909,7 @@
 //               <div className="flex justify-between pb-1">
 //                 <span className="text-muted-foreground">Created Date</span>
 //                 <span className="font-medium">
-//                   {new Date(viewInvoice.created_at || viewInvoice.invoice_date).toLocaleString()}
+//                   {formatDateTime(viewInvoice.created_at || viewInvoice.invoice_date)}
 //                 </span>
 //               </div>
 //             </div>
@@ -717,12 +1951,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -741,8 +1979,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download, FileArchive, Loader2, Eye, Trash2, SlidersHorizontal, MoreVertical } from "lucide-react";
+import {
+  Download,
+  FileArchive,
+  Loader2,
+  Eye,
+  Trash2,
+  SlidersHorizontal,
+  MoreVertical,
+  Plus,
+  Mail,
+  ArrowLeft,
+} from "lucide-react";
 import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
+import { createManualInvoice, sendInvoiceEmail } from "@/lib/invoice-actions";
 import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -786,6 +2036,41 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-slate-200 text-slate-600 hover:bg-slate-200",
 };
 
+const GST_RATE_OPTIONS = ["0", "5", "12", "18", "28"];
+
+const PAYMENT_STATUS_OPTIONS = ["paid", "pending", "failed"];
+
+type CreateInvoiceForm = {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  sourceWebsite: string;
+  serviceTitle: string;
+  packageName: string;
+  price: string;
+  gstRate: string;
+  paymentStatus: string;
+  invoiceDate: string;
+  notes: string;
+};
+
+function emptyCreateForm(): CreateInvoiceForm {
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    sourceWebsite: CONNECTED_SITE_OPTIONS[0]?.value || "ankshaastra.com",
+    serviceTitle: "",
+    packageName: "",
+    price: "",
+    gstRate: "18",
+    paymentStatus: "paid",
+    invoiceDate: today,
+    notes: "",
+  };
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
@@ -828,6 +2113,20 @@ export default function InvoicesModule() {
 
   // Pagination state
   const [page, setPage] = useState(1);
+
+  // ---- Create Invoice modal state ----
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createStep, setCreateStep] = useState<"form" | "preview">("form");
+  const [createForm, setCreateForm] = useState<CreateInvoiceForm>(emptyCreateForm());
+  const [creating, setCreating] = useState(false);
+
+  // ---- Send Email modal state ----
+  const [emailInvoice, setEmailInvoice] = useState<Invoice | null>(null);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailAttachPdf, setEmailAttachPdf] = useState(true);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const yearOptions = useMemo(() => {
     const current = now.getFullYear();
@@ -987,6 +2286,125 @@ export default function InvoicesModule() {
     }
   };
 
+  // ---- Create Invoice handlers ----
+
+  const openCreateModal = () => {
+    setCreateForm(emptyCreateForm());
+    setCreateStep("form");
+    setCreateOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    setCreateOpen(false);
+    setCreateStep("form");
+    setCreateForm(emptyCreateForm());
+  };
+
+  const updateCreateForm = <K extends keyof CreateInvoiceForm>(key: K, value: CreateInvoiceForm[K]) => {
+    setCreateForm((f) => ({ ...f, [key]: value }));
+  };
+
+  const createFormIsValid =
+    createForm.customerName.trim() &&
+    createForm.customerEmail.trim() &&
+    createForm.serviceTitle.trim() &&
+    Number(createForm.price) > 0;
+
+  const previewAmount = Number(createForm.price) || 0;
+  const previewGstAmount = (previewAmount * Number(createForm.gstRate || 0)) / 100;
+  const previewTotal = previewAmount + previewGstAmount;
+
+  const goToPreview = () => {
+    if (!createFormIsValid) {
+      toast.error("Please fill customer name, email, service and a valid price.");
+      return;
+    }
+    setCreateStep("preview");
+  };
+
+  const confirmCreateInvoice = async () => {
+    setCreating(true);
+    try {
+      const result = await createManualInvoice({
+        customerName: createForm.customerName.trim(),
+        customerEmail: createForm.customerEmail.trim(),
+        customerPhone: createForm.customerPhone.trim() || undefined,
+        sourceWebsite: createForm.sourceWebsite,
+        serviceTitle: createForm.serviceTitle.trim(),
+        packageName: createForm.packageName.trim() || undefined,
+        price: previewAmount,
+        gstRate: Number(createForm.gstRate) || 0,
+        paymentStatus: createForm.paymentStatus,
+        invoiceDate: createForm.invoiceDate,
+        notes: createForm.notes.trim() || undefined,
+      });
+
+      if (result.ok === false) {
+        toast.error(result.error || "Invoice is still being generated — refresh in a few seconds.");
+        return;
+      }
+
+      toast.success(
+        result.invoice_number ? `Invoice ${result.invoice_number} created successfully` : "Invoice created successfully",
+      );
+      closeCreateModal();
+      reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not create invoice");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // ---- Send Email handlers ----
+
+  const openEmailModal = (inv: Invoice) => {
+    setEmailInvoice(inv);
+    setEmailTo(inv.customer_email || "");
+    setEmailSubject(`Invoice ${inv.invoice_number} — ${inv.service_title}`);
+    setEmailMessage(
+      `Dear ${inv.customer_name || "Customer"},\n\nPlease find your invoice ${inv.invoice_number} attached.\n\nThank you for choosing us.`,
+    );
+    setEmailAttachPdf(true);
+  };
+
+  const closeEmailModal = () => {
+    setEmailInvoice(null);
+    setEmailTo("");
+    setEmailSubject("");
+    setEmailMessage("");
+    setEmailAttachPdf(true);
+  };
+
+  const confirmSendEmail = async () => {
+    if (!emailInvoice) return;
+    if (!emailTo.trim()) {
+      toast.error("Recipient email is required");
+      return;
+    }
+    if (!emailSubject.trim()) {
+      toast.error("Subject is required");
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      await sendInvoiceEmail({
+        invoiceId: emailInvoice.id,
+        to: emailTo.trim(),
+        subject: emailSubject.trim(),
+        message: emailMessage,
+        attachPdf: emailAttachPdf,
+      });
+      toast.success("Invoice email sent successfully");
+      closeEmailModal();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send invoice email");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const bulkActions = (
     <div className="flex flex-wrap items-center gap-2">
       <Select value={bulkMonth} onValueChange={setBulkMonth}>
@@ -1020,6 +2438,10 @@ export default function InvoicesModule() {
           <FileArchive className="w-4 h-4 mr-2" />
         )}
         {bulkProgress || "Download ZIP"}
+      </Button>
+      <Button size="sm" variant="default" onClick={openCreateModal}>
+        <Plus className="w-4 h-4 mr-2" />
+        Create Invoice
       </Button>
     </div>
   );
@@ -1183,6 +2605,16 @@ export default function InvoicesModule() {
                 <Eye className="w-4 h-4" />
               </Button>
 
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={() => openEmailModal(i)}
+                aria-label="Send invoice email"
+              >
+                <Mail className="w-4 h-4" />
+              </Button>
+
               {/* Delete lives behind a kebab menu instead of a full-width red
                   button, since it's a rare, guarded action, not one that should
                   carry the same visual weight as View/Download on every row. */}
@@ -1209,14 +2641,18 @@ export default function InvoicesModule() {
 
       {/* Pagination controls */}
       {filteredRows.length > 0 && (
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
-            Page {page} of {totalPages} · {filteredRows.length} invoices
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredRows.length)} of{" "}
+            {filteredRows.length}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button size="sm" variant="outline" onClick={goToPreviousPage} disabled={page <= 1}>
               Previous
             </Button>
+            <p className="text-xs text-muted-foreground whitespace-nowrap">
+              Page {page} of {totalPages}
+            </p>
             <Button size="sm" variant="outline" onClick={goToNextPage} disabled={page >= totalPages}>
               Next
             </Button>
@@ -1295,6 +2731,290 @@ export default function InvoicesModule() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Invoice Dialog (two steps: form → preview) */}
+      <Dialog open={createOpen} onOpenChange={(open) => !open && !creating && closeCreateModal()}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {createStep === "form" ? "Create Invoice" : "Preview Invoice"}
+            </DialogTitle>
+            <DialogDescription>
+              {createStep === "form"
+                ? "Enter customer and service details to generate a new invoice."
+                : "Review the details below, then confirm to generate the invoice."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {createStep === "form" ? (
+            <div className="space-y-4 py-1">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-customer-name">Customer Name</Label>
+                  <Input
+                    id="inv-customer-name"
+                    value={createForm.customerName}
+                    onChange={(e) => updateCreateForm("customerName", e.target.value)}
+                    placeholder="Full name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-customer-email">Customer Email</Label>
+                  <Input
+                    id="inv-customer-email"
+                    type="email"
+                    value={createForm.customerEmail}
+                    onChange={(e) => updateCreateForm("customerEmail", e.target.value)}
+                    placeholder="name@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-phone">Phone</Label>
+                  <Input
+                    id="inv-phone"
+                    value={createForm.customerPhone}
+                    onChange={(e) => updateCreateForm("customerPhone", e.target.value)}
+                    placeholder="+91 XXXXX XXXXX"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Website</Label>
+                  <Select
+                    value={createForm.sourceWebsite}
+                    onValueChange={(v) => updateCreateForm("sourceWebsite", v)}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select site" /></SelectTrigger>
+                    <SelectContent>
+                      {CONNECTED_SITE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-service">Service</Label>
+                  <Input
+                    id="inv-service"
+                    value={createForm.serviceTitle}
+                    onChange={(e) => updateCreateForm("serviceTitle", e.target.value)}
+                    placeholder="e.g. Astrology Consultation"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-package">Package</Label>
+                  <Input
+                    id="inv-package"
+                    value={createForm.packageName}
+                    onChange={(e) => updateCreateForm("packageName", e.target.value)}
+                    placeholder="e.g. Premium"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-price">Price (₹)</Label>
+                  <Input
+                    id="inv-price"
+                    type="number"
+                    min="0"
+                    value={createForm.price}
+                    onChange={(e) => updateCreateForm("price", e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>GST %</Label>
+                  <Select value={createForm.gstRate} onValueChange={(v) => updateCreateForm("gstRate", v)}>
+                    <SelectTrigger><SelectValue placeholder="GST %" /></SelectTrigger>
+                    <SelectContent>
+                      {GST_RATE_OPTIONS.map((rate) => (
+                        <SelectItem key={rate} value={rate}>{rate}%</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Payment Status</Label>
+                  <Select
+                    value={createForm.paymentStatus}
+                    onValueChange={(v) => updateCreateForm("paymentStatus", v)}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-date">Invoice Date</Label>
+                  <Input
+                    id="inv-date"
+                    type="date"
+                    value={createForm.invoiceDate}
+                    onChange={(e) => updateCreateForm("invoiceDate", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="inv-notes">Notes</Label>
+                <Textarea
+                  id="inv-notes"
+                  value={createForm.notes}
+                  onChange={(e) => updateCreateForm("notes", e.target.value)}
+                  placeholder="Optional internal notes"
+                  rows={3}
+                />
+              </div>
+
+              <DialogFooter className="pt-2">
+                <Button variant="outline" onClick={closeCreateModal}>Cancel</Button>
+                <Button onClick={goToPreview}>Preview Invoice</Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4 py-1">
+              <div className="space-y-2 text-sm rounded-lg border border-border p-4">
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Invoice Number</span>
+                  <span className="font-medium">Auto-generated on save</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Customer</span>
+                  <span className="font-medium text-right">
+                    {createForm.customerName}
+                    <br />
+                    <span className="text-xs text-muted-foreground">{createForm.customerEmail}</span>
+                  </span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Website</span>
+                  <span className="font-medium">
+                    {CONNECTED_SITE_OPTIONS.find((o) => o.value === createForm.sourceWebsite)?.label ||
+                      createForm.sourceWebsite}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Service</span>
+                  <span className="font-medium text-right">
+                    {createForm.serviceTitle}
+                    {createForm.packageName ? ` — ${createForm.packageName}` : ""}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Amount</span>
+                  <span className="font-medium">₹{previewAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">GST ({createForm.gstRate}%)</span>
+                  <span className="font-medium">₹{previewGstAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Total</span>
+                  <span className="font-semibold">₹{previewTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pb-1">
+                  <span className="text-muted-foreground">Email</span>
+                  <span className="font-medium">{createForm.customerEmail}</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                This is an estimated preview. The final GST amount is calculated by the system's GST
+                configuration at the time the invoice is generated.
+              </p>
+
+              <DialogFooter className="pt-2">
+                <Button variant="outline" onClick={() => setCreateStep("form")} disabled={creating}>
+                  <ArrowLeft className="w-4 h-4 mr-1.5" />
+                  Back
+                </Button>
+                <Button onClick={confirmCreateInvoice} disabled={creating}>
+                  {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Confirm &amp; Create
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Email Dialog */}
+      <Dialog open={!!emailInvoice} onOpenChange={(open) => !open && !sendingEmail && closeEmailModal()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Invoice Email</DialogTitle>
+            <DialogDescription>
+              {emailInvoice ? `Send invoice ${emailInvoice.invoice_number} to the customer.` : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="email-to">Customer Email</Label>
+              <Input
+                id="email-to"
+                type="email"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+                placeholder="name@example.com"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email-message">Message</Label>
+              <Textarea
+                id="email-message"
+                rows={5}
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="email-attach-pdf"
+                checked={emailAttachPdf}
+                onCheckedChange={(checked) => setEmailAttachPdf(checked === true)}
+              />
+              <Label htmlFor="email-attach-pdf" className="cursor-pointer font-normal">
+                Attach PDF
+              </Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeEmailModal} disabled={sendingEmail}>
+              Cancel
+            </Button>
+            <Button onClick={confirmSendEmail} disabled={sendingEmail}>
+              {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Send Invoice
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
