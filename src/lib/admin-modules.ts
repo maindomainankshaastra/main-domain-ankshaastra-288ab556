@@ -8,7 +8,7 @@ export const ADMIN_MODULES = [
   { key: "ai-reports", label: "AI Reports" },
   { key: "services", label: "Services Management" },
   { key: "service-pages", label: "Pages & Packages" },
-  { key: "pricing", label: "Pricing Management" },
+  // { key: "pricing", label: "Pricing Management" },
   { key: "templates", label: "Templates" },
   { key: "settings", label: "GST Configuration" },
   { key: "gst-reports", label: "GSTR Reports" },

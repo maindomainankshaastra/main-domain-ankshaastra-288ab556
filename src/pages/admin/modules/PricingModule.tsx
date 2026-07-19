@@ -1,3 +1,12 @@
+/* ⚠️ DISABLED — Pricing Management removed (unused, duplicate of Service Catalog)
+export default function PricingModule() {
+  ... (poora existing code) ...
+}
+*/
+
+
+
+
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPage } from "@/components/admin/AdminPage";
@@ -117,3 +126,10 @@ export default function PricingModule() {
     </AdminPage>
   );
 }
+
+
+/* ⚠️ DISABLED — Pricing Management removed (unused, duplicate of Service Catalog)
+export default function PricingModule() {
+  ... (poora existing code) ...
+}
+*/

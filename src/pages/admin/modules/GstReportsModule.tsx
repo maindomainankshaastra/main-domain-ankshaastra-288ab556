@@ -177,7 +177,7 @@ export default function GstReportsModule() {
   return (
     <AdminPage
       title="GST & GSTR-1 Reports"
-      description="ANKSHAASTRA OCCULT EXPERTS LLP — SAC 999799, UP (09), monthly GSTR-1. Only errors block filing."
+    //   description="ANKSHAASTRA OCCULT EXPERTS LLP — SAC 999799, UP (09), monthly GSTR-1. Only errors block filing."
     >
       <div className="space-y-6 max-w-5xl">
         <div className="flex flex-wrap gap-4 items-end">
@@ -293,3 +293,4 @@ export default function GstReportsModule() {
     </AdminPage>
   );
 }
+
