@@ -4099,7 +4099,9 @@
 //     </AdminPage>
 //   );
 // }
+
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
@@ -4244,6 +4246,8 @@ export default function CrmModule() {
   // without needing to change the shared useAdminTable hook.
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+    const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [websiteFilter, setWebsiteFilter] = useState("All");
@@ -4413,6 +4417,27 @@ export default function CrmModule() {
       setLoadingRelated(false);
     }
   };
+
+  // Deep-link support: Global Search sends ?open=<customer id>. Instead of
+  // auto-opening a read-only dialog, scroll to and briefly highlight that
+  // exact row in the list, so the admin can use any action on it (View,
+  // Delete, Restore) themselves — not just see a static popup.
+  useEffect(() => {
+    const openId = searchParams.get("open");
+    if (!openId || !customers.length) return;
+    const match = customers.find((c) => c.id === openId);
+    if (match) {
+      setHighlightedId(openId);
+      setSearchParams({}, { replace: true });
+      setTimeout(() => {
+        document.getElementById(`customer-row-${openId}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+      setTimeout(() => setHighlightedId(null), 3000);
+    }
+  }, [searchParams, customers, setSearchParams]);
 
   const closeViewDialog = () => {
     setViewCustomer(null);
@@ -4608,7 +4633,13 @@ export default function CrmModule() {
           {paginatedCustomers.map((c) => (
             <div
               key={c.id}
-              className="border border-border rounded-lg p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+              id={`customer-row-${c.id}`}
+              className={cn(
+                "border rounded-lg p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between transition-colors",
+                highlightedId === c.id
+                  ? "border-primary ring-2 ring-primary/40 bg-primary/5"
+                  : "border-border"
+              )}
             >
               <div className="min-w-0">
                 <p className="font-semibold truncate">{c.full_name}</p>

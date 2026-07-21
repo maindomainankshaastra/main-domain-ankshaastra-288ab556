@@ -168,6 +168,8 @@ import invoicesSendEmail from "./server/handlers/invoices-send-email.js";
 import adminGstConfig from "./server/handlers/admin-gst-config.js";
 import adminGstrReports from "./server/handlers/admin-gstr-reports.js";
 import adminGstMaintenance from "./server/handlers/admin-gst-maintenance.js";
+import adminAuditLogs from "./server/handlers/admin-audit-logs.js";
+
 
 const app = express();
 
@@ -207,6 +209,13 @@ app.post("/api/admin/gstr-reports", (req, res) => adminGstrReports(req as any, r
 // GST Maintenance page — "Fix All GST Data" button (repairs historical
 // invoices missing GST rate/SAC/state, per fixed business rules).
 app.post("/api/admin/gst-maintenance", (req, res) => adminGstMaintenance(req as any, res as any));
+
+
+// Audit Logs — Super Admin only. Handler itself enforces the role check
+// and returns 403 for anyone else, so this route is safe to expose here
+// the same way as the other admin routes.
+app.get("/api/admin/audit-logs", (req, res) => adminAuditLogs(req as any, res as any));
+ 
 
 const PORT = 8081;
 

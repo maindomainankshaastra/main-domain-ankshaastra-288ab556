@@ -6707,7 +6707,8 @@
 // }
 
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
@@ -6875,6 +6876,7 @@ export default function InvoicesModule() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const now = new Date();
   const [bulkYear, setBulkYear] = useState(String(now.getFullYear()));
@@ -6891,6 +6893,30 @@ export default function InvoicesModule() {
   const [showFilters, setShowFilters] = useState(false);
 
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
+
+  // Deep-link support: Global Search sends ?open=<invoice id>. Instead of
+  // auto-opening a read-only dialog, scroll to and briefly highlight that
+  // exact row in the list, so the admin can use any action on it (View,
+  // Download, Email, Delete) themselves — not just see a static popup.
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  useEffect(() => {
+    const openId = searchParams.get("open");
+    if (!openId || !rows.length) return;
+    const match = rows.find((i) => i.id === openId);
+    if (match) {
+      setHighlightedId(openId);
+      setSearchParams({}, { replace: true });
+      // Wait a tick for the list to render, then scroll the row into view.
+      setTimeout(() => {
+        document.getElementById(`invoice-row-${openId}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+      // Remove the highlight after a few seconds.
+      setTimeout(() => setHighlightedId(null), 3000);
+    }
+  }, [searchParams, rows, setSearchParams]);
 
   const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -7337,7 +7363,16 @@ export default function InvoicesModule() {
 
       <div className="space-y-2">
         {paginatedRows.map((i) => (
-          <div key={i.id} className="flex flex-wrap justify-between gap-3 border border-border rounded-lg p-4">
+          <div
+            key={i.id}
+            id={`invoice-row-${i.id}`}
+            className={cn(
+              "flex flex-wrap justify-between gap-3 border rounded-lg p-4 transition-colors",
+              highlightedId === i.id
+                ? "border-primary ring-2 ring-primary/40 bg-primary/5"
+                : "border-border"
+            )}
+          >
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant="outline" className="text-xs">

@@ -68,10 +68,9 @@ export function ConfirmLiveUpdateDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault();
-              onConfirm();
-            }}
+    onClick={() => {
+        onConfirm();
+    }}
             disabled={loading}
             className={
               isDestructive
