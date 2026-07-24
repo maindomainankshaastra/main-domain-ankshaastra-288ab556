@@ -22,6 +22,9 @@ import adminGstConfig from "../server/handlers/admin-gst-config.js";
 import adminGstrReports from "../server/handlers/admin-gstr-reports.js";
 import adminGstMaintenance from "../server/handlers/admin-gst-maintenance.js";
 import operationsSiteManifest from "../server/handlers/operations-site-manifest.js";
+import invoicesSendEmail from "../server/handlers/invoices-send-email.js";
+import invoicesCreateManual from "../server/handlers/invoices-create-manual.js";
+import adminAuditLogs from "../server/handlers/admin-audit-logs.js";
 
 /** Single serverless function for all /api/* routes (Vercel Hobby: max 12 functions). */
 export const config = { api: { bodyParser: false } };
@@ -45,6 +48,7 @@ const routes: Record<string, ApiHandler> = {
   "invoices/bulk-download": invoicesBulkDownload,
   "invoices/bulk-manifest": invoicesBulkManifest,
   "invoices/file": invoicesFile,
+  "invoices/send-email": invoicesSendEmail, 
   "webhooks/razorpay": webhooksRazorpay,
   "operations/process-jobs": operationsProcessJobs,
   "operations/retry-job": operationsRetryJob,
@@ -56,6 +60,8 @@ const routes: Record<string, ApiHandler> = {
   "admin/gst-config": adminGstConfig,
   "admin/gstr-reports": adminGstrReports,
   "admin/gst-maintenance": adminGstMaintenance,
+  "invoices/create-manual": invoicesCreateManual,
+"admin/audit-logs": adminAuditLogs,
 };
 
 function resolveRoute(req: IncomingReq): string {
