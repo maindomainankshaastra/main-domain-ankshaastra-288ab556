@@ -95,7 +95,7 @@ const catalogBaseline: ServiceWithPageRoute[] = servicesCatalogListings.map((ite
   category: item.category,
   price: item.price,
   gst_rate: 18,
-  is_active: true,
+  is_active: page.status === "published",
   _pageRoute: item.route,
 }));
 

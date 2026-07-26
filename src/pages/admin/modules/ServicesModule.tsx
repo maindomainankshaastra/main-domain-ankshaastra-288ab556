@@ -3972,26 +3972,63 @@ export default function ServicesModule() {
   // just triggered from the confirmation dialog instead of form submit.
   // `editing` is always set here since this dialog only opens via openEdit().
   const performSave = async () => {
-    if (!editing) return;
-    setSaving(true);
-    const payload = formToPayload(form);
-    const { error } = await supabase.from("services").update(payload).eq("id", editing.id);
-    setSaving(false);
-    setShowSaveConfirm(false);
+  if (!editing) return;
+  setSaving(true);
+  const payload = formToPayload(form);
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Service updated");
-      setOpen(false);
-      reload();
-    }
-  };
+  // Keep the matching service_pages row (if any) in sync with is_active,
+  // so toggling "Active" off here also pulls it off the live website —
+  // same fix as confirmDelete, for the same underlying gap.
+  const { data: matchingPage } = await supabase
+    .from("service_pages")
+    .select("id")
+    .ilike("title", payload.title)
+    .maybeSingle();
+
+  if (matchingPage?.id) {
+    await supabase
+      .from("service_pages")
+      .update({
+        status: payload.is_active ? "published" : "draft",
+        published_at: payload.is_active ? new Date().toISOString() : null,
+      })
+      .eq("id", matchingPage.id);
+  }
+
+  const { error } = await supabase.from("services").update(payload).eq("id", editing.id);
+  setSaving(false);
+  setShowSaveConfirm(false);
+
+  if (error) {
+    toast.error(error.message);
+  } else {
+    toast.success("Service updated");
+    setOpen(false);
+    reload();
+  }
+};
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase.from("services").delete().eq("id", deleteTarget.id);
+    // Find and deactivate the matching service_pages row (if this service came
+// from a Page/Package) so the live website stops showing it too — deleting
+// only from "services" left the underlying page untouched, which is the
+// exact bug that let deleted/inactive services keep appearing on the site.
+const { data: matchingPage } = await supabase
+  .from("service_pages")
+  .select("id")
+  .ilike("title", deleteTarget.title)
+  .maybeSingle();
+
+if (matchingPage?.id) {
+  await supabase
+    .from("service_pages")
+    .update({ status: "draft", published_at: null })
+    .eq("id", matchingPage.id);
+}
+
+const { error } = await supabase.from("services").delete().eq("id", deleteTarget.id);
     setDeleting(false);
     if (error) {
       toast.error(error.message);

@@ -254,7 +254,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             
 <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            {/* <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> */}
+            <Route path="/dashboard" element={<ProtectedRoute customerOnly><Dashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="orders" element={<OrdersModule />} />

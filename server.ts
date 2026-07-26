@@ -164,6 +164,7 @@ import createOrder from "./server/handlers/create-order.js";
 import verifyPayment from "./server/handlers/verify-payment.js";
 import services from "./server/handlers/services.js";
 import invoicesCreateManual from "./server/handlers/invoices-create-manual.js";
+import invoicesUpdateManual from "./server/handlers/invoices-update-manual.js";
 import invoicesSendEmail from "./server/handlers/invoices-send-email.js";
 import adminGstConfig from "./server/handlers/admin-gst-config.js";
 import adminGstrReports from "./server/handlers/admin-gstr-reports.js";
@@ -187,6 +188,13 @@ app.post(
   (req, res) => invoicesCreateManual(req as any, res as any)
 );
 
+
+// Invoice Manager — Edit Invoice (regenerates invoice + PDF from updated
+// order details; never auto-emails, see handler comment for details).
+app.post(
+  "/api/invoices/update-manual",
+  (req, res) => invoicesUpdateManual(req as any, res as any)
+);
 // Invoice Manager — "Send Invoice" modal (admin-only re-send/manual send
 // of an invoice email). Handler already existed in server/handlers but was
 // never wired up here, which is why the frontend got a 404.

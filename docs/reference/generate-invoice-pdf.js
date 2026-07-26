@@ -214,6 +214,56 @@ export async function generateInvoicePDFLocal(invoiceData) {
     const fy = 'This is a computer-generated invoice and does not require a signature.';
     page.drawText(fy, { x: (width - font.widthOfTextAtSize(fy, 8)) / 2, y, size: 8, font, color: gray });
 
+    // ── Terms & Conditions ────────────────────────────────────────────────────
+    y -= 22;
+    page.drawLine({ start: { x: L, y }, end: { x: R, y }, thickness: 0.5, color: lightGray });
+    y -= 14;
+    page.drawText('TERMS & CONDITIONS', { x: L, y, size: 9, font: fontBold, color: purple });
+    y -= 13;
+
+    const termsAndConditions = [
+      '1. Services provided by Ankshaastra Occult Experts LLP are digital consultation and advisory services in nature.',
+      '2. Payment once made is non-refundable and non-transferable unless otherwise stated in writing by Ankshaastra Occult Experts LLP.',
+      '3. Service delivery timelines may vary depending on the nature of the service purchased.',
+      '4. The company shall not be liable for any indirect, incidental, or consequential losses arising from the use of its services.',
+      '5. Any dispute relating to services, payments, or invoices shall be subject to the jurisdiction of the competent courts of Uttar Pradesh, India.',
+      '6. All applicable taxes have been charged in accordance with prevailing GST regulations.',
+      '7. The SAC Code applicable to the services rendered under this invoice is 999799.',
+      '8. Customers are advised to retain this invoice for future reference and tax-related purposes.',
+      '9. By making payment, the customer acknowledges acceptance of these terms and conditions.',
+    ];
+
+    const termsFontSize = 7.5;
+    const termsLineHeight = 10;
+    const maxTermsWidth = R - L;
+
+    // pdf-lib has no built-in text wrapping — this breaks each clause into
+    // multiple lines so nothing runs past the right margin.
+    const wrapLine = (text) => {
+      const words = text.split(' ');
+      const lines = [];
+      let current = '';
+      for (const word of words) {
+        const candidate = current ? `${current} ${word}` : word;
+        if (font.widthOfTextAtSize(candidate, termsFontSize) > maxTermsWidth && current) {
+          lines.push(current);
+          current = word;
+        } else {
+          current = candidate;
+        }
+      }
+      if (current) lines.push(current);
+      return lines;
+    };
+
+    for (const clause of termsAndConditions) {
+      const wrapped = wrapLine(clause);
+      for (const line of wrapped) {
+        page.drawText(line, { x: L, y, size: termsFontSize, font, color: gray });
+        y -= termsLineHeight;
+      }
+    }
+
     const pdfBytes = await pdfDoc.save();
     return Buffer.from(pdfBytes);
   } catch (err) {

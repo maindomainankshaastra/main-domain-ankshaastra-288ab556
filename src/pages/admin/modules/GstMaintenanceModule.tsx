@@ -191,7 +191,7 @@ export default function GstMaintenanceModule() {
               <li>Assign SAC <strong>999799</strong> when missing</li>
               <li>Assign GST rate <strong>18%</strong> when missing</li>
               <li>Detect customer state from billing address / order form snapshot</li>
-              <li>Set Unknown (00) when state cannot be detected</li>
+              <li>Default to state code 09 (Uttar Pradesh) when state cannot be detected — treated as intra-state (CGST+SGST)</li>
               <li>Mark records as <code>gst_auto_corrected</code></li>
             </ul>
           </AlertDescription>

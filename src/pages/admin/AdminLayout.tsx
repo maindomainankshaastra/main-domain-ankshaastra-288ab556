@@ -589,7 +589,7 @@
 //                 <Crown className="w-8 h-8 text-primary shrink-0" />
 //                 <div>
 //                   <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Operations Console</h1>
-//                   <p className="text-sm text-muted-foreground">Centralized communication, invoicing & automation</p>
+//                   
 //                 </div>
 //               </div>
 //             </div>
@@ -1635,6 +1635,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import logo from "@/assets/ankshaastra-logo-color-text-transparent-cropped.png";
 import {
   Dialog,
   DialogContent,
@@ -2229,10 +2230,10 @@ const AdminLayout = () => {
                 </button>
               )}
               <div className="flex items-center gap-4">
-                <Crown className="w-8 h-8 text-primary shrink-0" />
+                <img src={logo} alt="Ankshaastra" className="h-9 w-auto shrink-0" />
                 <div>
                   <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Operations Console</h1>
-                  <p className="text-sm text-muted-foreground">Centralized communication, invoicing & automation</p>
+                  {/* <p className="text-sm text-muted-foreground">Centralized communication, invoicing & automation</p> */}
                 </div>
               </div>
             </div>
