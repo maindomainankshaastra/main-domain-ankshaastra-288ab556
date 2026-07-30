@@ -30,6 +30,16 @@ export type GenerateInvoiceInput = {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// FIX (website field): strips accidental Markdown link syntax
+// ("[label](url)" -> "label") and any protocol prefix, so the email footer
+// never shows raw "[www.x.com](https://www.x.com)" text regardless of what
+// was typed into a config field somewhere upstream.
+function cleanWebsiteText(text?: string | null): string {
+  if (!text) return 'ankshaastra.com';
+  const withoutMarkdown = String(text).replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+  return withoutMarkdown.replace(/^https?:\/\//, '').replace(/\/$/, '').trim() || 'ankshaastra.com';
+}
+
 export async function upsertCustomerFromOrder(order: Record<string, unknown>) {
   const supabase = getSupabaseAdmin();
   const email = order.customer_email as string | undefined;
@@ -87,7 +97,6 @@ async function resolveInvoiceUserId(
   return null;
 }
 
-// async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput['attachments']> {
 export async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput['attachments']> {
 
   const storagePath = invoice.pdf_storage_path as string | undefined;
@@ -488,6 +497,15 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   const billingTexts = resolveGstConfigBillingTexts(gstConfigRow as Record<string, unknown> | null);
   const thankYouMessage = billingTexts.thank_you_message || undefined;
 
+  // FIX (website field): resolve the per-order website once here, from the
+  // invoice's own source_website (falls back to the order's, then a
+  // hardcoded default) — same priority as build-invoice-template.js — and
+  // pass it into every wrapEmailLayout() call below so the email footer
+  // matches whichever of the three sites this order actually came from.
+  const emailFooterWebsite = cleanWebsiteText(
+    (invoice.source_website as string | undefined) || (order.source_website as string | undefined),
+  );
+
   if (invoice.customer_email) {
     const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
     const invoiceAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
@@ -507,6 +525,8 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
           thankYouMessage,
         }),
         emailSubject,
+        'Ankshaastra Occult Experts LLP',
+        emailFooterWebsite,
       );
 
       try {
@@ -548,6 +568,8 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
       <p style="margin-top:16px;">Invoice PDF is attached.</p>
     `,
         `New order: ${serviceTitle}`,
+        'Ankshaastra Occult Experts LLP',
+        emailFooterWebsite,
       );
 
       try {
