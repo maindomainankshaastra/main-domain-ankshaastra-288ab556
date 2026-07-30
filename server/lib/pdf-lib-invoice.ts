@@ -28,19 +28,15 @@ async function embedLogo(pdfDoc: PDFDocument) {
   }
 }
 
-function drawWrappedText(
-  page: PDFPage,
-  text: string,
-  x: number,
-  y: number,
-  size: number,
-  font: PDFFont,
-  color: ReturnType<typeof rgb>,
-  maxChars: number,
-  lineHeight: number,
-  maxLines: number,
-) {
-  const lines = sanitizePdfText(text)
+// Wraps text into lines that fit maxChars, honoring existing newlines.
+// FIX: previously callers used `.slice(0, N)` on single lines (e.g. the
+// business address), which hard-cuts text mid-word instead of wrapping —
+// this is what produced "...Aligarh-202001. Cor" in the real invoice.
+// `drawWrappedText` already wrapped correctly; the bug was that not every
+// caller used it, and where it was used, `maxLines` silently dropped any
+// remaining lines (see FIX notes below at the Terms & Conditions section).
+function wrapLines(text: string, maxChars: number): string[] {
+  return sanitizePdfText(text)
     .split(/\r?\n/)
     .flatMap((paragraph) => {
       const words = paragraph.split(' ').filter(Boolean);
@@ -57,15 +53,7 @@ function drawWrappedText(
       }
       wrapped.push(current);
       return wrapped;
-    })
-    .slice(0, maxLines);
-
-  let cursorY = y;
-  for (const line of lines) {
-    page.drawText(line.slice(0, maxChars), { x, y: cursorY, size, font, color });
-    cursorY -= lineHeight;
-  }
-  return cursorY;
+    });
 }
 
 function drawRightText(page: PDFPage, text: string, xRight: number, y: number, size: number, font: PDFFont, color = rgb(0, 0, 0)) {
@@ -73,10 +61,22 @@ function drawRightText(page: PDFPage, text: string, xRight: number, y: number, s
   page.drawText(text, { x: xRight - width, y, size, font, color });
 }
 
+const MANDATORY_TERMS = [
+  '1. Services provided by Ankshaastra Occult Experts LLP are digital consultation and advisory services in nature.',
+  '2. Payment once made is non-refundable and non-transferable unless otherwise stated in writing by Ankshaastra Occult Experts LLP.',
+  '3. Service delivery timelines may vary depending on the nature of the service purchased.',
+  '4. The company shall not be liable for any indirect, incidental, or consequential losses arising from the use of its services.',
+  '5. Any dispute relating to services, payments, or invoices shall be subject to the jurisdiction of the competent courts of Uttar Pradesh, India.',
+  '6. All applicable taxes have been charged in accordance with prevailing GST regulations.',
+  '7. The SAC Code applicable to the services rendered under this invoice is 999799.',
+  '8. Customers are advised to retain this invoice for future reference and tax-related purposes.',
+  '9. By making payment, the customer acknowledges acceptance of these terms and conditions.',
+];
+
 /** Serverless-safe PDF generation (no Chromium). */
 export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): Promise<Buffer> {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([595.28, 841.89]);
+  let page = pdfDoc.addPage([595.28, 841.89]);
   const { width, height } = page.getSize();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -85,7 +85,39 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   const gray = rgb(0.35, 0.35, 0.35);
   const black = rgb(0, 0, 0);
   const margin = 36;
+  const BOTTOM_MARGIN = 50;
   let y = height - margin;
+
+  // FIX (layout): the whole rest of the function used to position content
+  // via hardcoded absolute y-values (`y = 120`, `y: 90`, `y: 56`,
+  // `footerY = 48`) that had nothing to do with how much space was left on
+  // the page. Whatever landed after those fixed points — Bank Details,
+  // Signatory, Thank You, Invoice Footer, and Terms & Conditions — was
+  // squeezed into whatever few points remained (as little as 48pt),
+  // pushing most of it below y=0 where it's invisible. `ensureSpace()`
+  // replaces every one of those hardcoded values: it checks the room left
+  // on the CURRENT page and only starts a new page if there truly isn't
+  // enough, so content always flows continuously and nothing is discarded.
+  function ensureSpace(neededHeight: number) {
+    if (y - neededHeight < BOTTOM_MARGIN) {
+      page = pdfDoc.addPage([width, height]);
+      y = height - margin;
+      page.drawText(`Invoice ${data.invoiceNumber} — continued`, {
+        x: margin, y, size: 8, font, color: gray,
+      });
+      y -= 20;
+    }
+  }
+
+  // Draws wrapped text at the cursor, breaking across pages if needed, and
+  // never silently dropping lines (no maxLines cap).
+  function drawFlowingText(text: string, size: number, useFont: PDFFont, color: ReturnType<typeof rgb>, maxChars: number, lineHeight: number) {
+    for (const line of wrapLines(text, maxChars)) {
+      ensureSpace(lineHeight);
+      page.drawText(line, { x: margin, y, size, font: useFont, color });
+      y -= lineHeight;
+    }
+  }
 
   page.drawText('TAX INVOICE', { x: margin, y, size: 20, font: fontBold, color: blue });
   drawRightText(page, '1', width - margin, y + 4, 10, font, gray);
@@ -103,7 +135,6 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     });
   }
 
-  const companyWidth = width - margin * 2 - (logo ? logoWidth + 16 : 0);
   page.drawText((data.businessName || 'Ankshaastra').slice(0, 48), { x: margin, y, size: 13, font: fontBold, color: black });
   y -= 14;
   const companyLines = [
@@ -114,9 +145,15 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     data.businessWebsite ? `Website ${data.businessWebsite}` : '',
   ].filter(Boolean);
 
+  // FIX: each line used to be `.slice(0, 90)` — a hard character-count cut
+  // with no wrapping, which is exactly what truncated the business address
+  // mid-word in the real invoice ("...Aligarh-202001. Cor"). Long lines
+  // (the address in particular) now wrap onto as many lines as needed.
   for (const line of companyLines) {
-    page.drawText(sanitizePdfText(line).slice(0, 90), { x: margin, y, size: 8, font, color: gray });
-    y -= 11;
+    for (const wrapped of wrapLines(line, 90)) {
+      page.drawText(wrapped, { x: margin, y, size: 8, font, color: gray });
+      y -= 11;
+    }
   }
 
   y -= 10;
@@ -202,8 +239,16 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     y -= 14;
   }
   page.drawText('Amount Paid', { x: totalsX, y, size: 9, font: fontBold, color: rgb(0.12, 0.48, 0.12) });
+  y -= 30;
 
-  y = 120;
+  // ── Bank Details & Signatory ────────────────────────────────────────────
+  // FIX (layout): was `y = 120` — a fixed jump to a hardcoded spot near the
+  // bottom regardless of where the totals section actually ended. Now it
+  // continues naturally from the current cursor (with a modest fixed gap
+  // above), and ensureSpace() moves the whole block to a new page together
+  // if there isn't enough room left on this one.
+  ensureSpace(140);
+  const bankBlockTop = y;
   page.drawText('Bank Details', { x: margin, y, size: 9, font: fontBold, color: black });
   y -= 14;
   const bankLines = [
@@ -218,21 +263,110 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     y -= 11;
   }
 
-  page.drawText(`For ${data.businessName}`.slice(0, 50), { x: width - margin - 150, y: 90, size: 8, font, color: black });
-  page.drawText('Authorized Signatory', { x: width - margin - 120, y: 56, size: 8, font: fontBold, color: black });
+  // Signatory column — was hardcoded to y:90/y:56; now anchored to the same
+  // reference point as the Bank Details title so the two columns always
+  // line up, wherever that title ends up landing.
+  page.drawText(`For ${data.businessName}`.slice(0, 50), { x: width - margin - 150, y: bankBlockTop - 34, size: 8, font, color: black });
+  page.drawText('Authorized Signatory', { x: width - margin - 120, y: bankBlockTop - 68, size: 8, font: fontBold, color: black });
+  y = Math.min(y, bankBlockTop - 68) - 24;
 
-  let footerY = 48;
+  // ── Footer ───────────────────────────────────────────────────────────────
+  // FIX (layout + content): was `footerY = 48` with only ~48pt of vertical
+  // room left for Thank You + Invoice Footer + Terms & Conditions combined
+  // — nowhere near enough, and each block was additionally hard-capped via
+  // `maxLines` (3 / 4 / 6), silently discarding any content beyond that
+  // even when there would have been room. Both problems are fixed below:
+  // sections now flow with ensureSpace()/drawFlowingText() (no maxLines
+  // cap, no lost content), and the legally-required footer text is now
+  // always drawn in full regardless of what's configured in `invoiceFooter`.
   if (data.thankYouMessage) {
-    page.drawText('Thank You', { x: margin, y: footerY, size: 8, font: fontBold, color: black });
-    footerY = drawWrappedText(page, data.thankYouMessage, margin, footerY - 12, 7, font, gray, 95, 9, 3);
+    ensureSpace(24);
+    page.drawText('Thank You', { x: margin, y, size: 8, font: fontBold, color: black });
+    y -= 12;
+    drawFlowingText(data.thankYouMessage, 7, font, gray, 95, 9);
+    y -= 6;
   }
+
   if (data.invoiceFooter) {
-    page.drawText('Invoice Footer', { x: margin, y: footerY - 4, size: 8, font: fontBold, color: black });
-    footerY = drawWrappedText(page, data.invoiceFooter, margin, footerY - 16, 7, font, gray, 95, 9, 4);
+    ensureSpace(24);
+    page.drawText('Invoice Footer', { x: margin, y, size: 8, font: fontBold, color: black });
+    y -= 12;
+    drawFlowingText(data.invoiceFooter, 7, font, gray, 95, 9);
+    y -= 6;
   }
-  if (data.termsConditions) {
-    page.drawText('Terms & Conditions', { x: margin, y: footerY - 4, size: 8, font: fontBold, color: black });
-    drawWrappedText(page, data.termsConditions, margin, footerY - 16, 7, font, gray, 95, 9, 6);
+
+  // Mandatory legal footer — always rendered in full, independent of GST
+  // config data, so it can never be missing or incomplete on any invoice.
+  ensureSpace(20);
+  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.5, color: rgb(0.85, 0.87, 0.9) });
+  y -= 14;
+
+  const legalFooterLines: Array<{ text: string; bold?: boolean; gap?: boolean }> = [
+    { text: 'Registered Address:', bold: true },
+    { text: '5/56 A, Agarwal Marg,' },
+    { text: 'Behind Sarsol Police Chowki,' },
+    { text: 'Aligarh - 202001.' },
+    { gap: true, text: '' },
+    { text: 'Corporate Address:', bold: true },
+    { text: 'Unit No. O-622,' },
+    { text: 'Block-E,' },
+    { text: 'Eye of Noida,' },
+    { text: 'Sector 140A,' },
+    { text: 'Noida - 201305.' },
+    { gap: true, text: '' },
+  ];
+  for (const line of legalFooterLines) {
+    if (line.gap) { y -= 5; continue; }
+    ensureSpace(11);
+    page.drawText(line.text, { x: margin, y, size: 8, font: line.bold ? fontBold : font, color: line.bold ? black : gray });
+    y -= 11;
+  }
+  drawFlowingText('This is a computer-generated invoice and does not require a physical signature.', 8, font, gray, 95, 11);
+  y -= 5;
+  drawFlowingText('For support regarding this invoice or the associated service, please contact our customer support team.', 8, font, gray, 95, 11);
+  y -= 5;
+  ensureSpace(11);
+  page.drawText('Ankshaastra Occult Experts LLP', { x: margin, y, size: 8, font: fontBold, color: black });
+  y -= 11;
+  for (const line of ['GSTIN: 09AAFFE7583B1ZD', 'Email: social@ankshaastra.com', 'Website: www.ankshaastra.com']) {
+    ensureSpace(11);
+    page.drawText(line, { x: margin, y, size: 8, font, color: gray });
+    y -= 11;
+  }
+  y -= 12;
+
+  // ── Terms & Conditions ───────────────────────────────────────────────────
+  // FIX: always renders all 9 mandatory clauses in full (previously capped
+  // at `maxLines: 6`, so clauses 7-9 were silently dropped even before the
+  // off-page clipping bug). Uses `data.termsConditions` from GST config
+  // when present (so it can still be customised there), but falls back to
+  // the mandatory clauses if that config value is missing — never blank.
+  const termsSource = data.termsConditions
+    ? wrapLines(data.termsConditions, 95)
+    : MANDATORY_TERMS.flatMap((clause) => wrapLines(clause, 95));
+
+  ensureSpace(24);
+  page.drawText('Terms & Conditions', { x: margin, y, size: 9, font: fontBold, color: black });
+  y -= 14;
+  for (const line of termsSource) {
+    ensureSpace(9);
+    page.drawText(line, { x: margin, y, size: 7, font, color: gray });
+    y -= 9;
+  }
+
+  // ── Page numbers (only stamped when the invoice spans multiple pages) ────
+  const totalPages = pdfDoc.getPageCount();
+  if (totalPages > 1) {
+    pdfDoc.getPages().forEach((p, idx) => {
+      const label = `Page ${idx + 1} of ${totalPages}`;
+      p.drawText(label, {
+        x: width - margin - font.widthOfTextAtSize(label, 7),
+        y: 20,
+        size: 7,
+        font,
+        color: gray,
+      });
+    });
   }
 
   return Buffer.from(await pdfDoc.save());
