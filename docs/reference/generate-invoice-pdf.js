@@ -51,7 +51,7 @@ export async function generateInvoicePDFLocal(invoiceData) {
 
     // ── PDF setup ─────────────────────────────────────────────────────────────
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595, 842]); // A4
+    let page = pdfDoc.addPage([595, 842]); // A4
     const { width, height } = page.getSize();
 
     const font     = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -67,6 +67,47 @@ export async function generateInvoicePDFLocal(invoiceData) {
     let y = height - 40;
     const L = 40;  // left margin
     const R = width - 40; // right edge
+    const BOTTOM_MARGIN = 60; // keep space for page-number stamp + breathing room
+
+    // Generic word-wrapper (pdf-lib has no built-in text wrapping).
+    // Parametrised by font/size/maxWidth so it can be reused for both the
+    // Terms & Conditions clauses and the new footer sentences.
+    function wrapText(textFont, text, size, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let current = '';
+      for (const word of words) {
+        const candidate = current ? `${current} ${word}` : word;
+        if (textFont.widthOfTextAtSize(candidate, size) > maxWidth && current) {
+          lines.push(current);
+          current = word;
+        } else {
+          current = candidate;
+        }
+      }
+      if (current) lines.push(current);
+      return lines;
+    }
+
+    // FIX (layout): the original file drew every element top-down with fixed
+    // `y -=` decrements on a single, fixed-height (842pt) page and never
+    // checked whether `y` had run past the bottom margin. Once the preceding
+    // sections (customer/bank details, notes) took up enough room — and
+    // especially once the footer below was expanded to the full required
+    // text — the Terms & Conditions and/or footer were pushed past y=0 and
+    // got silently clipped off the page. `ensureSpace()` now checks the
+    // remaining room before drawing each subsequent block and, if there
+    // isn't enough, starts a fresh page instead of drawing off-canvas.
+    function ensureSpace(neededHeight) {
+      if (y - neededHeight < BOTTOM_MARGIN) {
+        page = pdfDoc.addPage([width, height]);
+        y = height - 50;
+        page.drawText(`Invoice ${invoiceNumber || orderId} — continued`, {
+          x: L, y, size: 8, font, color: gray,
+        });
+        y -= 20;
+      }
+    }
 
     // ── Header band ───────────────────────────────────────────────────────────
     page.drawRectangle({ x: 0, y: height - 80, width, height: 80, color: purple });
@@ -170,6 +211,11 @@ export async function generateInvoicePDFLocal(invoiceData) {
     y -= 20;
 
     // ── Bank & UPI ────────────────────────────────────────────────────────────
+    // FIX (layout): guard this whole block so it never starts too close to
+    // the bottom of the page — if there isn't room, it moves to a fresh page
+    // instead of drawing partially off-canvas.
+    ensureSpace(150);
+
     page.drawLine({ start: { x: L, y }, end: { x: R, y }, thickness: 1, color: gold });
     y -= 18;
 
@@ -196,6 +242,10 @@ export async function generateInvoicePDFLocal(invoiceData) {
     y -= 25;
 
     // ── Notes ─────────────────────────────────────────────────────────────────
+    // FIX (layout): guard so the Notes box never starts too close to the
+    // bottom margin.
+    ensureSpace(90);
+
     page.drawRectangle({ x: L, y: y - 32, width: R - L, height: 44, color: rgb(1, 0.97, 0.88) });
     page.drawRectangle({ x: L, y: y - 32, width: 3, height: 44, color: rgb(1, 0.76, 0.03) });
     page.drawText('Notes', { x: L + 10, y, size: 10, font: fontBold, color: purple });
@@ -206,21 +256,80 @@ export async function generateInvoicePDFLocal(invoiceData) {
     y -= 25;
 
     // ── Footer ────────────────────────────────────────────────────────────────
+    // FIX (content + layout): the previous footer only had two generic
+    // lines ("Thank you for your business!" + a short computer-generated
+    // notice) and did not match the mandated footer text at all. It is
+    // replaced here with the exact required footer content. The block's
+    // total height is computed up-front (including wrapped long sentences)
+    // so `ensureSpace()` can guarantee the ENTIRE footer moves to a new
+    // page together if it wouldn't otherwise fit — it never starts if it
+    // can't finish, so it can never be cut mid-block.
+    const FOOTER_SIZE = 8;
+    const FOOTER_LINE_H = 11;
+    const FOOTER_GAP_H = 6; // half-height spacer between footer paragraphs
+
+    const footerSentence1 = wrapText(
+      font,
+      'This is a computer-generated invoice and does not require a physical signature.',
+      FOOTER_SIZE,
+      R - L,
+    );
+    const footerSentence2 = wrapText(
+      font,
+      'For support regarding this invoice or the associated service, please contact our customer support team.',
+      FOOTER_SIZE,
+      R - L,
+    );
+
+    // Each entry is either a text line ({text, bold}) or a spacer ({gap:true}).
+    const footerEntries = [
+      { text: 'Registered Address:', bold: true },
+      { text: '5/56 A, Agarwal Marg,' },
+      { text: 'Behind Sarsol Police Chowki,' },
+      { text: 'Aligarh – 202001.' },
+      { gap: true },
+      { text: 'Corporate Address:', bold: true },
+      { text: 'Unit No. O-622,' },
+      { text: 'Block-E,' },
+      { text: 'Eye of Noida,' },
+      { text: 'Sector 140A,' },
+      { text: 'Noida – 201305.' },
+      { gap: true },
+      ...footerSentence1.map((line) => ({ text: line })),
+      { gap: true },
+      ...footerSentence2.map((line) => ({ text: line })),
+      { gap: true },
+      { text: 'Ankshaastra Occult Experts LLP', bold: true },
+      { text: 'GSTIN: 09AAFFE7583B1ZD' },
+      { text: 'Email: social@ankshaastra.com' },
+      { text: 'Website: www.ankshaastra.com' },
+    ];
+
+    const footerBlockHeight =
+      12 /* divider + gap above */ +
+      footerEntries.reduce((sum, e) => sum + (e.gap ? FOOTER_GAP_H : FOOTER_LINE_H), 0);
+
+    ensureSpace(footerBlockHeight);
+
     page.drawLine({ start: { x: L, y }, end: { x: R, y }, thickness: 0.5, color: lightGray });
     y -= 14;
-    const ty = 'Thank you for your business!';
-    page.drawText(ty, { x: (width - fontBold.widthOfTextAtSize(ty, 9)) / 2, y, size: 9, font: fontBold, color: gray });
-    y -= 12;
-    const fy = 'This is a computer-generated invoice and does not require a signature.';
-    page.drawText(fy, { x: (width - font.widthOfTextAtSize(fy, 8)) / 2, y, size: 8, font, color: gray });
+
+    for (const entry of footerEntries) {
+      if (entry.gap) {
+        y -= FOOTER_GAP_H;
+        continue;
+      }
+      page.drawText(entry.text, {
+        x: L,
+        y,
+        size: FOOTER_SIZE,
+        font: entry.bold ? fontBold : font,
+        color: entry.bold ? purple : gray,
+      });
+      y -= FOOTER_LINE_H;
+    }
 
     // ── Terms & Conditions ────────────────────────────────────────────────────
-    y -= 22;
-    page.drawLine({ start: { x: L, y }, end: { x: R, y }, thickness: 0.5, color: lightGray });
-    y -= 14;
-    page.drawText('TERMS & CONDITIONS', { x: L, y, size: 9, font: fontBold, color: purple });
-    y -= 13;
-
     const termsAndConditions = [
       '1. Services provided by Ankshaastra Occult Experts LLP are digital consultation and advisory services in nature.',
       '2. Payment once made is non-refundable and non-transferable unless otherwise stated in writing by Ankshaastra Occult Experts LLP.',
@@ -237,31 +346,48 @@ export async function generateInvoicePDFLocal(invoiceData) {
     const termsLineHeight = 10;
     const maxTermsWidth = R - L;
 
-    // pdf-lib has no built-in text wrapping — this breaks each clause into
-    // multiple lines so nothing runs past the right margin.
-    const wrapLine = (text) => {
-      const words = text.split(' ');
-      const lines = [];
-      let current = '';
-      for (const word of words) {
-        const candidate = current ? `${current} ${word}` : word;
-        if (font.widthOfTextAtSize(candidate, termsFontSize) > maxTermsWidth && current) {
-          lines.push(current);
-          current = word;
-        } else {
-          current = candidate;
-        }
-      }
-      if (current) lines.push(current);
-      return lines;
-    };
+    // Wrap every clause up front so we know exactly how tall the whole
+    // block is before drawing a single line of it.
+    const wrappedTermsLines = termsAndConditions.flatMap((clause) =>
+      wrapText(font, clause, termsFontSize, maxTermsWidth),
+    );
 
-    for (const clause of termsAndConditions) {
-      const wrapped = wrapLine(clause);
-      for (const line of wrapped) {
-        page.drawText(line, { x: L, y, size: termsFontSize, font, color: gray });
-        y -= termsLineHeight;
-      }
+    // FIX (layout): previously there was no check here at all — this is the
+    // block that was actually being clipped. `ensureSpace()` now guarantees
+    // the "TERMS & CONDITIONS" heading and every one of the 9 clauses move
+    // to a new page together if the current page doesn't have room left,
+    // so the block is never split mid-clause and never runs off the page.
+    const termsBlockHeight = 22 /* divider + gap */ + 13 /* heading */ + wrappedTermsLines.length * termsLineHeight;
+    ensureSpace(termsBlockHeight);
+
+    page.drawLine({ start: { x: L, y }, end: { x: R, y }, thickness: 0.5, color: lightGray });
+    y -= 14;
+    page.drawText('TERMS & CONDITIONS', { x: L, y, size: 9, font: fontBold, color: purple });
+    y -= 13;
+
+    for (const line of wrappedTermsLines) {
+      // Per-line safety net: guards against the terms block itself being
+      // taller than a single blank page (not expected with this fixed
+      // 9-clause text, but keeps the function correct if the clauses are
+      // ever edited to be longer).
+      ensureSpace(termsLineHeight);
+      page.drawText(line, { x: L, y, size: termsFontSize, font, color: gray });
+      y -= termsLineHeight;
+    }
+
+    // ── Page numbers (only stamped when the invoice spans multiple pages) ─────
+    const totalPages = pdfDoc.getPageCount();
+    if (totalPages > 1) {
+      pdfDoc.getPages().forEach((p, idx) => {
+        const label = `Page ${idx + 1} of ${totalPages}`;
+        p.drawText(label, {
+          x: width - 40 - font.widthOfTextAtSize(label, 7),
+          y: 20,
+          size: 7,
+          font,
+          color: gray,
+        });
+      });
     }
 
     const pdfBytes = await pdfDoc.save();
