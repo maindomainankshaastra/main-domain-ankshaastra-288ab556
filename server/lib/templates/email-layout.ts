@@ -1,4 +1,16 @@
-export function wrapEmailLayout(content: string, preheader = "", title = "Ankshaastra Occult Experts LLP"): string {
+// FIX (website field): wrapEmailLayout used to hardcode "ankshaastra.com" in
+// the footer for every email, regardless of which of the three sites
+// (Ankshaastra, Miracle Baby, Empower) the order actually came from. It now
+// accepts an optional `footerWebsite` param — callers pass the order's own
+// source_website so the footer matches the site the customer actually
+// bought from. Defaults to "ankshaastra.com" so any existing call site that
+// doesn't pass it keeps behaving exactly as before.
+export function wrapEmailLayout(
+  content: string,
+  preheader = "",
+  title = "Ankshaastra Occult Experts LLP",
+  footerWebsite = "ankshaastra.com",
+): string {
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>${title}</title></head>
@@ -13,7 +25,7 @@ export function wrapEmailLayout(content: string, preheader = "", title = "Anksha
 </td></tr>
 <tr><td style="padding:28px 32px;color:#1f2937;font-size:15px;line-height:1.7">${content}</td></tr>
 <tr><td style="padding:18px 32px;border-top:1px solid #e5e7eb;text-align:center;font-size:11px;color:#6b7280;background:#f8fafc">
-  © ${new Date().getFullYear()} Ankshaastra Occult Experts LLP · ankshaastra.com<br/>
+  © ${new Date().getFullYear()} Ankshaastra Occult Experts LLP · ${footerWebsite}<br/>
   This is a transactional message. Please do not reply to automated emails.
 </td></tr>
 </table>
