@@ -25,6 +25,7 @@ import operationsSiteManifest from "../server/handlers/operations-site-manifest.
 import invoicesSendEmail from "../server/handlers/invoices-send-email.js";
 import invoicesCreateManual from "../server/handlers/invoices-create-manual.js";
 import adminAuditLogs from "../server/handlers/admin-audit-logs.js";
+import operationsTriggerInvoice from "../server/handlers/operations-trigger-invoice.js";
 
 /** Single serverless function for all /api/* routes (Vercel Hobby: max 12 functions). */
 export const config = { api: { bodyParser: false } };
@@ -53,6 +54,7 @@ const routes: Record<string, ApiHandler> = {
   "operations/process-jobs": operationsProcessJobs,
   "operations/retry-job": operationsRetryJob,
   "operations/order-ingest": operationsOrderIngest,
+  "operations/trigger-invoice": operationsTriggerInvoice,
   "operations/site-manifest": operationsSiteManifest,
   "operations/backfill-invoices": operationsBackfillInvoices,
   "service-pages": servicePages,
