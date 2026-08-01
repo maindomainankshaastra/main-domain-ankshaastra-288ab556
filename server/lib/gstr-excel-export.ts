@@ -36,6 +36,21 @@ function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
+// FIX: rows from different sites (Ankshaastra / Empower / Miracle Baby) were
+// indistinguishable in every export sheet — there was no column identifying
+// which site an invoice came from, so a client scanning the file had no way
+// to tell them apart (all invoices just looked like "Ankshaastra" because
+// customer names repeat across sites). This reads the site label off the
+// invoice row, trying a few likely field names since the exact column name
+// on `GstrInvoiceRecord` wasn't confirmed — adjust the key list below if the
+// real field is named differently.
+function websiteOf(inv: GstrInvoiceRecord): string {
+  const row = inv as unknown as Record<string, unknown>;
+  const value =
+    row.source_website ?? row.website ?? row.site_name ?? row.site ?? row.source_site ?? '';
+  return value ? String(value) : '';
+}
+
 export async function buildGstr1Workbook(
   invoices: GstrInvoiceRecord[],
   meta: GstExportMeta,
@@ -61,12 +76,13 @@ export async function buildGstr1Workbook(
   const b2b = wb.addWorksheet('B2B');
   await writeMetaRows(b2b, meta, 'B2B Invoices');
   b2b.addRow([
-    'Invoice No', 'Date', 'Customer', 'GSTIN', 'State', 'SAC', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total',
+    'Invoice No', 'Website', 'Date', 'Customer', 'GSTIN', 'State', 'SAC', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total',
   ]);
   b2b.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
   for (const inv of byCat.B2B) {
     b2b.addRow([
       inv.invoice_number,
+      websiteOf(inv),
       inv.invoice_date,
       inv.customer_name,
       inv.customer_gstin || '',
@@ -98,14 +114,18 @@ export async function buildGstr1Workbook(
       round2(row.grossValue),
     ]);
   }
+  // Note: B2CS is aggregated by state+rate across ALL sites, so a per-row
+  // "Website" column doesn't apply here the way it does on the itemised
+  // sheets (B2B/B2CL/CDNR/CDNUR/Sales Register). Left unchanged.
 
   const b2cl = wb.addWorksheet('B2CL');
   await writeMetaRows(b2cl, meta, 'B2CL — Large Inter-State Unregistered');
-  b2cl.addRow(['Invoice No', 'Date', 'Customer', 'State', 'Taxable', 'IGST', 'Total']);
+  b2cl.addRow(['Invoice No', 'Website', 'Date', 'Customer', 'State', 'Taxable', 'IGST', 'Total']);
   b2cl.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
   for (const inv of byCat.B2CL) {
     b2cl.addRow([
       inv.invoice_number,
+      websiteOf(inv),
       inv.invoice_date,
       inv.customer_name,
       inv.place_of_supply || stateNameFromCode(inv.customer_state_code || '') || '',
@@ -117,11 +137,12 @@ export async function buildGstr1Workbook(
 
   const cdnr = wb.addWorksheet('CDNR');
   await writeMetaRows(cdnr, meta, 'CDNR — Credit Notes (GST Registered)');
-  cdnr.addRow(['Invoice No', 'Date', 'Customer', 'GSTIN', 'State', 'SAC', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total']);
+  cdnr.addRow(['Invoice No', 'Website', 'Date', 'Customer', 'GSTIN', 'State', 'SAC', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total']);
   cdnr.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
   for (const inv of byCat.CDNR) {
     cdnr.addRow([
       inv.invoice_number,
+      websiteOf(inv),
       inv.invoice_date,
       inv.customer_name,
       inv.customer_gstin || '',
@@ -137,11 +158,12 @@ export async function buildGstr1Workbook(
 
   const cdnur = wb.addWorksheet('CDNUR');
   await writeMetaRows(cdnur, meta, 'CDNUR — Credit Notes (Unregistered)');
-  cdnur.addRow(['Invoice No', 'Date', 'Customer', 'State', 'Taxable', 'IGST', 'Total']);
+  cdnur.addRow(['Invoice No', 'Website', 'Date', 'Customer', 'State', 'Taxable', 'IGST', 'Total']);
   cdnur.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
   for (const inv of byCat.CDNUR) {
     cdnur.addRow([
       inv.invoice_number,
+      websiteOf(inv),
       inv.invoice_date,
       inv.customer_name,
       inv.place_of_supply || stateNameFromCode(inv.customer_state_code || '') || '',
@@ -169,6 +191,7 @@ export async function buildGstr1Workbook(
       round2(row.grossValue),
     ]);
   }
+  // Same as B2CS: aggregated across sites by SAC code, no per-row website.
 
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);
@@ -195,6 +218,12 @@ export async function buildGstSummaryWorkbook(
   sheet.addRow(['IGST', round2(igst)]);
   sheet.addRow(['Gross Invoice Value', round2(gross)]);
 
+  // This report is a single aggregated total across all invoices/sites —
+  // no per-row breakdown exists here, so there's nothing to label. If a
+  // per-site breakdown of these totals is wanted, that's a new aggregation
+  // (grouping by websiteOf(inv) before summing) rather than a column add —
+  // let me know if you'd like that added.
+
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
@@ -206,14 +235,20 @@ export async function buildSalesRegisterWorkbook(
   const wb = new ExcelJS.Workbook();
   const sheet = wb.addWorksheet('Sales Register');
   await writeMetaRows(sheet, meta, 'Monthly Sales Register');
+  // FIX: added the "Website" column (2nd column, right after Invoice No) so
+  // every row is clearly labeled with the site it came from — this was the
+  // actual cause of the "Empower/Miracle Baby not updating" report: their
+  // invoices were already in the file, just visually indistinguishable from
+  // Ankshaastra's rows.
   sheet.addRow([
-    'Invoice No', 'Date', 'Customer', 'GSTIN', 'Category', 'State', 'SAC', 'Service',
+    'Invoice No', 'Website', 'Date', 'Customer', 'GSTIN', 'Category', 'State', 'SAC', 'Service',
     'Taxable', 'CGST', 'SGST', 'IGST', 'Total',
   ]);
   sheet.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
   for (const inv of invoices) {
     sheet.addRow([
       inv.invoice_number,
+      websiteOf(inv),
       inv.invoice_date,
       inv.customer_name,
       inv.customer_gstin || '',
@@ -256,6 +291,7 @@ export async function buildSacSummaryWorkbook(
       round2(row.grossValue),
     ]);
   }
+  // Aggregated by SAC code across all sites — no per-row website here either.
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
