@@ -160,9 +160,18 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
       y -= 11;
     });
   }
-  const billing = [data.customerCity, data.customerState, data.customerPincode ? `Pincode ${data.customerPincode}` : ''].filter(Boolean).join(', ');
-  page.drawText(sanitizePdfText(billing || data.customerBillingAddress || '-').slice(0, 48), { x: margin + 250, y, size: 8, font, color: black });
-  y -= 11;
+  // FIX (per client request 2026-08-01): always show City / State / Pincode
+  // as three explicit labeled fields on one line, each falling back to an
+  // em-dash (—) when that specific piece is missing — instead of silently
+  // dropping missing fields or showing a plain "-" when nothing was given.
+  const billingLine =
+    `City: ${data.customerCity || '—'}, ` +
+    `State: ${data.customerState || '—'}, ` +
+    `Pincode: ${data.customerPincode || '—'}`;
+  for (const wrapped of wrapLines(billingLine, 42)) {
+    page.drawText(wrapped, { x: margin + 250, y, size: 8, font, color: black });
+    y -= 11;
+  }
   if (data.customerPhone) {
     page.drawText(`Phone ${sanitizePdfText(data.customerPhone)}`.slice(0, 42), { x: margin, y, size: 8, font, color: black });
     y -= 11;
