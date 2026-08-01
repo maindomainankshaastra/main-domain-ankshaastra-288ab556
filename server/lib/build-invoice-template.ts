@@ -54,11 +54,11 @@ export function resolveCustomerBilling(order: OrderRow) {
   const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
 
-  const city = pickString(snapshot, ['currentCity', 'officeCity']);
+  const city = pickString(snapshot, ['currentCity', 'officeCity', 'city']);
   const stateName =
     pickString(snapshot, ['customerState', 'currentState', 'officeState']) ||
     parseStateFromPob(pickString(snapshot, ['pob', 'placeOfBirth']));
-  const pincode = pickString(snapshot, ['pincode', 'officePincode']);
+  const pincode = pickString(snapshot, ['pincode', 'officePincode', 'pinCode']);
   const stateCode =
     pickString(snapshot, ['customerStateCode', 'stateCode']) ||
     pickString(metadata, ['state_code']) ||
