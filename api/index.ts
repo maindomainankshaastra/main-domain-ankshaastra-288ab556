@@ -30,6 +30,16 @@ import operationsTriggerInvoice from "../server/handlers/operations-trigger-invo
 /** Single serverless function for all /api/* routes (Vercel Hobby: max 12 functions). */
 export const config = { api: { bodyParser: false } };
 
+// FIX: invoice generation (PDF creation + storage upload + QR code +
+// customer email + admin email, all synchronous) can genuinely take
+// 15-25+ seconds. Without this, Vercel's default serverless function
+// timeout (10s on Hobby) could kill the function mid-generation — losing
+// the invoice — regardless of how long the calling site (Empower/Miracle)
+// is willing to wait on its end. This raises the ceiling to 60s so slow
+// but legitimate invoice generation has room to finish.
+export const maxDuration = 60;
+ 
+
 type ApiHandler = (req: unknown, res: unknown) => Promise<unknown> | unknown;
 
 type IncomingReq = {
