@@ -29,12 +29,6 @@ async function embedLogo(pdfDoc: PDFDocument) {
 }
 
 // Wraps text into lines that fit maxChars, honoring existing newlines.
-// FIX: previously callers used `.slice(0, N)` on single lines (e.g. the
-// business address), which hard-cuts text mid-word instead of wrapping —
-// this is what produced "...Aligarh-202001. Cor" in the real invoice.
-// `drawWrappedText` already wrapped correctly; the bug was that not every
-// caller used it, and where it was used, `maxLines` silently dropped any
-// remaining lines (see FIX notes below at the Terms & Conditions section).
 function wrapLines(text: string, maxChars: number): string[] {
   return sanitizePdfText(text)
     .split(/\r?\n/)
@@ -88,16 +82,6 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   const BOTTOM_MARGIN = 50;
   let y = height - margin;
 
-  // FIX (layout): the whole rest of the function used to position content
-  // via hardcoded absolute y-values (`y = 120`, `y: 90`, `y: 56`,
-  // `footerY = 48`) that had nothing to do with how much space was left on
-  // the page. Whatever landed after those fixed points — Bank Details,
-  // Signatory, Thank You, Invoice Footer, and Terms & Conditions — was
-  // squeezed into whatever few points remained (as little as 48pt),
-  // pushing most of it below y=0 where it's invisible. `ensureSpace()`
-  // replaces every one of those hardcoded values: it checks the room left
-  // on the CURRENT page and only starts a new page if there truly isn't
-  // enough, so content always flows continuously and nothing is discarded.
   function ensureSpace(neededHeight: number) {
     if (y - neededHeight < BOTTOM_MARGIN) {
       page = pdfDoc.addPage([width, height]);
@@ -109,8 +93,6 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     }
   }
 
-  // Draws wrapped text at the cursor, breaking across pages if needed, and
-  // never silently dropping lines (no maxLines cap).
   function drawFlowingText(text: string, size: number, useFont: PDFFont, color: ReturnType<typeof rgb>, maxChars: number, lineHeight: number) {
     for (const line of wrapLines(text, maxChars)) {
       ensureSpace(lineHeight);
@@ -145,10 +127,6 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     data.businessWebsite ? `Website ${data.businessWebsite}` : '',
   ].filter(Boolean);
 
-  // FIX: each line used to be `.slice(0, 90)` — a hard character-count cut
-  // with no wrapping, which is exactly what truncated the business address
-  // mid-word in the real invoice ("...Aligarh-202001. Cor"). Long lines
-  // (the address in particular) now wrap onto as many lines as needed.
   for (const line of companyLines) {
     for (const wrapped of wrapLines(line, 90)) {
       page.drawText(wrapped, { x: margin, y, size: 8, font, color: gray });
@@ -242,11 +220,6 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   y -= 30;
 
   // ── Bank Details & Signatory ────────────────────────────────────────────
-  // FIX (layout): was `y = 120` — a fixed jump to a hardcoded spot near the
-  // bottom regardless of where the totals section actually ended. Now it
-  // continues naturally from the current cursor (with a modest fixed gap
-  // above), and ensureSpace() moves the whole block to a new page together
-  // if there isn't enough room left on this one.
   ensureSpace(140);
   const bankBlockTop = y;
   page.drawText('Bank Details', { x: margin, y, size: 9, font: fontBold, color: black });
@@ -263,22 +236,22 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     y -= 11;
   }
 
-  // Signatory column — was hardcoded to y:90/y:56; now anchored to the same
-  // reference point as the Bank Details title so the two columns always
-  // line up, wherever that title ends up landing.
   page.drawText(`For ${data.businessName}`.slice(0, 50), { x: width - margin - 150, y: bankBlockTop - 34, size: 8, font, color: black });
   page.drawText('Authorized Signatory', { x: width - margin - 120, y: bankBlockTop - 68, size: 8, font: fontBold, color: black });
   y = Math.min(y, bankBlockTop - 68) - 24;
 
   // ── Footer ───────────────────────────────────────────────────────────────
-  // FIX (layout + content): was `footerY = 48` with only ~48pt of vertical
-  // room left for Thank You + Invoice Footer + Terms & Conditions combined
-  // — nowhere near enough, and each block was additionally hard-capped via
-  // `maxLines` (3 / 4 / 6), silently discarding any content beyond that
-  // even when there would have been room. Both problems are fixed below:
-  // sections now flow with ensureSpace()/drawFlowingText() (no maxLines
-  // cap, no lost content), and the legally-required footer text is now
-  // always drawn in full regardless of what's configured in `invoiceFooter`.
+  // FIX (per client request 2026-08-01): the previous version of this file
+  // had a hardcoded "Mandatory legal footer" block here — Registered
+  // Address, Corporate Address, GSTIN, email, website, disclaimer lines —
+  // that always rendered regardless of GST Configuration data. That's
+  // exactly why editing the "Invoice Footer" field in the admin panel had
+  // no visible effect and why the address appeared twice (once from the
+  // header, once from this hardcoded block). The client's explicit request
+  // was: after the Thank You line, go straight to Terms & Conditions,
+  // nothing else in between. That hardcoded block is removed entirely —
+  // the business address/GSTIN/email/website are already shown once, in
+  // the header, so nothing legally required is lost.
   if (data.thankYouMessage) {
     ensureSpace(24);
     page.drawText('Thank You', { x: margin, y, size: 8, font: fontBold, color: black });
@@ -295,52 +268,10 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     y -= 6;
   }
 
-  // Mandatory legal footer — always rendered in full, independent of GST
-  // config data, so it can never be missing or incomplete on any invoice.
-  ensureSpace(20);
-  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.5, color: rgb(0.85, 0.87, 0.9) });
-  y -= 14;
-
-  const legalFooterLines: Array<{ text: string; bold?: boolean; gap?: boolean }> = [
-    { text: 'Registered Address:', bold: true },
-    { text: '5/56 A, Agarwal Marg,' },
-    { text: 'Behind Sarsol Police Chowki,' },
-    { text: 'Aligarh - 202001.' },
-    { gap: true, text: '' },
-    { text: 'Corporate Address:', bold: true },
-    { text: 'Unit No. O-622,' },
-    { text: 'Block-E,' },
-    { text: 'Eye of Noida,' },
-    { text: 'Sector 140A,' },
-    { text: 'Noida - 201305.' },
-    { gap: true, text: '' },
-  ];
-  for (const line of legalFooterLines) {
-    if (line.gap) { y -= 5; continue; }
-    ensureSpace(11);
-    page.drawText(line.text, { x: margin, y, size: 8, font: line.bold ? fontBold : font, color: line.bold ? black : gray });
-    y -= 11;
-  }
-  drawFlowingText('This is a computer-generated invoice and does not require a physical signature.', 8, font, gray, 95, 11);
-  y -= 5;
-  drawFlowingText('For support regarding this invoice or the associated service, please contact our customer support team.', 8, font, gray, 95, 11);
-  y -= 5;
-  ensureSpace(11);
-  page.drawText('Ankshaastra Occult Experts LLP', { x: margin, y, size: 8, font: fontBold, color: black });
-  y -= 11;
-  for (const line of ['GSTIN: 09AAFFE7583B1ZD', 'Email: social@ankshaastra.com', 'Website: www.ankshaastra.com']) {
-    ensureSpace(11);
-    page.drawText(line, { x: margin, y, size: 8, font, color: gray });
-    y -= 11;
-  }
-  y -= 12;
-
   // ── Terms & Conditions ───────────────────────────────────────────────────
-  // FIX: always renders all 9 mandatory clauses in full (previously capped
-  // at `maxLines: 6`, so clauses 7-9 were silently dropped even before the
-  // off-page clipping bug). Uses `data.termsConditions` from GST config
-  // when present (so it can still be customised there), but falls back to
-  // the mandatory clauses if that config value is missing — never blank.
+  // Uses data.termsConditions from GST config when present (so it stays
+  // editable from GST Configuration), falling back to the mandatory
+  // clauses only if that config value is ever empty — never blank.
   const termsSource = data.termsConditions
     ? wrapLines(data.termsConditions, 95)
     : MANDATORY_TERMS.flatMap((clause) => wrapLines(clause, 95));
