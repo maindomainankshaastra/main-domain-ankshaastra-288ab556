@@ -67,17 +67,39 @@ function stripMarkdownLink(text?: string): string | undefined {
   return withoutMarkdown.replace(/^https?:\/\//, '').replace(/\/$/, '').trim() || undefined;
 }
 
-export function resolveCustomerBilling(order: OrderRow) {
+// FIX (per client request 2026-08-02): rather than maintaining an
+// ever-growing exact-name list for every field-naming convention each of
+// the three sites happens to use (city / currentCity / cityOfDelivery /
+// deliveryCity / ...), this scans every key in the form snapshot and
+// returns the value of the first one whose KEY NAME matches the given
+// pattern, case-insensitively — regardless of exact naming. Used as a
+// fallback after the explicit alias list, so any new site/form field
+// naming convention is picked up automatically without further edits here.
+function findByKeyPattern(
+  snapshot: Record<string, unknown>,
+  pattern: RegExp,
+): string | undefined {
+  for (const [key, value] of Object.entries(snapshot)) {
+    if (pattern.test(key) && value !== null && value !== undefined && String(value).trim() !== '') {
+      return String(value).trim();
+    }
+  }
+  return undefined;
+}
   const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
 
   const city =
     pickString(snapshot, ['currentCity', 'officeCity', 'city']) ||
+    findByKeyPattern(snapshot, /city/i) ||
     parseCityFromPob(pickString(snapshot, ['pob', 'placeOfBirth']));
   const stateName =
-    pickString(snapshot, ['customerState', 'currentState', 'officeState']) ||
+    pickString(snapshot, ['customerState', 'currentState', 'officeState', 'state', 'deliveryState']) ||
+    findByKeyPattern(snapshot, /state/i) ||
     parseStateFromPob(pickString(snapshot, ['pob', 'placeOfBirth']));
-  const pincode = pickString(snapshot, ['pincode', 'officePincode', 'pinCode']);
+  const pincode =
+    pickString(snapshot, ['pincode', 'officePincode', 'pinCode']) ||
+    findByKeyPattern(snapshot, /pin.?code/i);
   const stateCode =
     pickString(snapshot, ['customerStateCode', 'stateCode']) ||
     pickString(metadata, ['state_code']) ||
