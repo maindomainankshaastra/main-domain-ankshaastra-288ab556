@@ -1230,6 +1230,17 @@ const PaymentPage = () => {
           )} />
           <WhatsappField control={c} />
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField control={c} name="currentPincode" render={({ field }) => (
+            <FormItem><FormLabel>PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} inputMode="numeric" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name="currentCity" render={({ field }) => (
+            <FormItem><FormLabel>City *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name="currentState" render={({ field }) => (
+            <FormItem><FormLabel>State *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
       </div>
     );
 
