@@ -33,9 +33,22 @@ type Props = {
 };
 
 const ContactBlock = ({ EmailField, WhatsappField, control }: Pick<Props, "EmailField" | "WhatsappField" | "control">) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <EmailField control={control} />
-    <WhatsappField control={control} />
+  <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <EmailField control={control} />
+      <WhatsappField control={control} />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <FormField control={control} name="currentPincode" render={({ field }) => (
+        <FormItem><FormLabel>PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} inputMode="numeric" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+      )} />
+      <FormField control={control} name="currentCity" render={({ field }) => (
+        <FormItem><FormLabel>City *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+      )} />
+      <FormField control={control} name="currentState" render={({ field }) => (
+        <FormItem><FormLabel>State *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+      )} />
+    </div>
   </div>
 );
 
@@ -249,14 +262,6 @@ export function ExtendedPaymentFields({
       <>
         {FullName}
         <DOBPicker control={control} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField control={control} name="currentCity" render={({ field }) => (
-            <FormItem><FormLabel>Current City *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={control} name="currentState" render={({ field }) => (
-            <FormItem><FormLabel>Current State *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-        </div>
         <GenderRadio control={control} />
         <FormField control={control} name="currentMobile" render={({ field }) => (
           <FormItem><FormLabel>Current Mobile Number (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -295,14 +300,6 @@ export function ExtendedPaymentFields({
       <>
         {FullName}
         <DOBPicker control={control} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField control={control} name="currentCity" render={({ field }) => (
-            <FormItem><FormLabel>Current City *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={control} name="currentState" render={({ field }) => (
-            <FormItem><FormLabel>Current State *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-        </div>
         <GenderRadio control={control} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField control={control} name="towerBlock" render={({ field }) => (

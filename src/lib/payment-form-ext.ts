@@ -19,6 +19,10 @@ export const genderField = z.enum(["male", "female", "other"], { required_error:
 const contactFields = {
   email: emailField,
   whatsapp: phoneField,
+  // Current residence — collected on every service form.
+  currentPincode: pincodeField,
+  currentCity: z.string().trim().min(2, "City required").max(80),
+  currentState: z.string().trim().min(2, "State required").max(80),
 };
 
 export const luckyVehicleSchema = z.object({
@@ -53,8 +57,6 @@ export const luckyVehicleDateSchema = z.object({
 export const luckyMobileSchema = z.object({
   fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
   dob: dobField,
-  currentCity: z.string().trim().min(2, "City required").max(80),
-  currentState: z.string().trim().min(2, "State required").max(80),
   gender: genderField,
   currentMobile: z.string().trim().max(20).optional().or(z.literal("")),
   preferredSeries: z.string().trim().max(100).optional().or(z.literal("")),
@@ -67,8 +69,6 @@ export const luckyMobileSchema = z.object({
 export const luckyFlatSchema = z.object({
   fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
   dob: dobField,
-  currentCity: z.string().trim().min(2, "City required").max(80),
-  currentState: z.string().trim().min(2, "State required").max(80),
   gender: genderField,
   towerBlock: z.string().trim().min(1, "Tower / wing / block required").max(80),
   address: z.string().trim().min(2, "Address required").max(300),
@@ -258,7 +258,7 @@ export function getExtendedDefaultValues(formType: ExtendedFormType): Record<str
   const emptyDob = { day: "", month: "", year: "" };
   const emptyTob = { hour: "", minute: "", meridiem: "AM" as const };
   const emptyPerson = { fullName: "", dob: emptyDob, tob: emptyTob, pincode: "", pob: "", gender: undefined };
-  const contact = { email: "", whatsapp: "" };
+  const contact = { email: "", whatsapp: "", currentPincode: "", currentCity: "", currentState: "" };
 
   switch (formType) {
     case "lucky-vehicle":
@@ -268,9 +268,9 @@ export function getExtendedDefaultValues(formType: ExtendedFormType): Record<str
     case "lucky-vehicle-date":
       return { fullName: "", dob: emptyDob, gender: undefined, purchaseWindow: "", ...contact };
     case "lucky-mobile":
-      return { fullName: "", dob: emptyDob, currentCity: "", currentState: "", gender: undefined, currentMobile: "", preferredSeries: "", preferredDigits: "", avoidDigits: "", purpose: undefined, ...contact };
+      return { fullName: "", dob: emptyDob, gender: undefined, currentMobile: "", preferredSeries: "", preferredDigits: "", avoidDigits: "", purpose: undefined, ...contact };
     case "lucky-flat":
-      return { fullName: "", dob: emptyDob, currentCity: "", currentState: "", gender: undefined, towerBlock: "", address: "", propertyPurpose: undefined, flatFacingDirection: "", connectedNumber: "", ...contact };
+      return { fullName: "", dob: emptyDob, gender: undefined, towerBlock: "", address: "", propertyPurpose: undefined, flatFacingDirection: "", connectedNumber: "", ...contact };
     case "relationship-analysis":
       return { person1: emptyPerson, person2: emptyPerson, purpose: undefined, ...contact };
     case "business-brand":

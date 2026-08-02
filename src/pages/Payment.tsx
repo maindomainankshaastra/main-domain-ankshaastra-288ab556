@@ -133,6 +133,14 @@ const tobField = z.object({
 const genderField = z.enum(["male", "female", "other"], { required_error: "Select gender" });
 const relationField = z.enum(["good", "neutral", "challenging"], { required_error: "Select" });
 
+// Current residence — collected on every service form (city / state / pincode).
+const currentLocationFields = {
+  currentPincode: pincodeField,
+  currentCity: z.string().trim().min(2, "City required").max(80),
+  currentState: z.string().trim().min(2, "State required").max(80),
+};
+export const CURRENT_LOCATION_DEFAULTS = { currentPincode: "", currentCity: "", currentState: "" };
+
 // ───── per-type schemas ─────
 const defaultSchema = z.object({
   fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
@@ -143,6 +151,7 @@ const defaultSchema = z.object({
   pob: z.string().trim().min(2, "Place of birth required").max(120),
   gender: genderField,
   pincode: pincodeField,
+  ...currentLocationFields,
 });
 
 const kundaliSchema = defaultSchema.extend({
@@ -165,6 +174,7 @@ const makeKundaliMultiSchema = (count: 2 | 3) => {
     email: emailField,
     whatsapp: phoneField,
     language: z.enum(["english", "hindi", "gujarati"], { required_error: "Select language" }),
+    ...currentLocationFields,
   };
   if (count === 3) base.person3 = kundaliPersonSchema;
   return z.object(base);
@@ -184,6 +194,7 @@ const consultationSchema = z.object({
   pincode: pincodeField,
   gender: genderField,
   issues: z.string().trim().min(10, "Please describe (min 10 characters)").max(2000),
+  ...currentLocationFields,
 });
 
 const nameCorrectionSchema = z.object({
@@ -207,6 +218,7 @@ const nameCorrectionSchema = z.object({
   spouseName: z.string().trim().max(100).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
   profession: z.string().trim().min(2, "Profession required").max(120),
   reason: z.string().trim().min(10, "Please share (min 10 characters)").max(2000),
+  ...currentLocationFields,
 });
 
 // Quick "Name Check" form — minimal fields
@@ -221,6 +233,7 @@ const nameCheckSchema = z.object({
   dob: dobField,
   pob: z.string().trim().min(2, "Place of birth required").max(120),
   gender: genderField,
+  ...currentLocationFields,
 });
 
 // Couple form — two people's birth details (used for premium Name Correction
@@ -238,6 +251,7 @@ const coupleSchema = z.object({
   person2: personSchema,
   email: emailField,
   whatsapp: phoneField,
+  ...currentLocationFields,
 });
 const pyaarShastraSchema = coupleSchema.extend({
   language: z.enum(["english", "hindi", "gujarati"], { required_error: "Select language" }),
@@ -270,6 +284,7 @@ const nameCorrectionCoupleSchema = z.object({
   email: emailField,
   whatsapp: phoneField,
   reason: z.string().trim().min(10, "Please share (min 10 characters)").max(2000),
+  ...currentLocationFields,
 });
 
 // ───── dropdown helpers ─────
@@ -571,10 +586,11 @@ const PaymentPage = () => {
   const { schema, defaults } = useMemo(() => {
     const baseDob = { day: "", month: "", year: "" };
     const baseTob = { hour: "", minute: "", meridiem: "" as any };
+    const loc = { ...CURRENT_LOCATION_DEFAULTS };
     if (formType === "kundali") {
       return {
         schema: kundaliSchema,
-        defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any },
+        defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any, ...loc },
       };
     }
     if (formType === "kundali-multi") {
@@ -582,7 +598,7 @@ const PaymentPage = () => {
       const defaults: any = {
         person1: { ...blank },
         person2: { ...blank },
-        email: "", whatsapp: "+91 ", language: undefined as any,
+        email: "", whatsapp: "+91 ", language: undefined as any, ...loc,
       };
       if (kundaliCount === 3) defaults.person3 = { ...blank };
       return { schema: makeKundaliMultiSchema(kundaliCount), defaults };
@@ -590,26 +606,26 @@ const PaymentPage = () => {
     if (formType === "consultation") {
       return {
         schema: consultationSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, issues: "" },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, issues: "", ...loc },
       };
     }
     if (formType === "name-correction") {
       return {
         schema: nameCorrectionSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, lastNameChangeOk: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, lastNameChangeOk: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "", ...loc },
       };
     }
     if (formType === "name-check") {
       return {
         schema: nameCheckSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, pob: "", gender: undefined as any },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, pob: "", gender: undefined as any, ...loc },
       };
     }
     if (formType === "couple") {
       const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pincode: "", pob: "" };
       return {
         schema: coupleSchema,
-        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 " },
+        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", ...loc },
       };
     }
     if (formType === "name-correction-couple") {
@@ -622,26 +638,26 @@ const PaymentPage = () => {
       };
       return {
         schema: nameCorrectionCoupleSchema,
-        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", reason: "" },
+        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", reason: "", ...loc },
       };
     }
     if (formType === "pyaar-shastra") {
       const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pincode: "", pob: "" };
       return {
         schema: pyaarShastraSchema,
-        defaults: { person1: { ...blankPerson, gender: "male" as any }, person2: { ...blankPerson, gender: "female" as any }, email: "", whatsapp: "+91 ", language: undefined as any },
+        defaults: { person1: { ...blankPerson, gender: "male" as any }, person2: { ...blankPerson, gender: "female" as any }, email: "", whatsapp: "+91 ", language: undefined as any, ...loc },
       };
     }
     if (EXTENDED_FORM_TYPES.includes(formType as ExtendedFormType)) {
       const ext = formType as ExtendedFormType;
       return {
         schema: getExtendedSchema(ext),
-        defaults: { ...getExtendedDefaultValues(ext), whatsapp: "+91 " },
+        defaults: { ...getExtendedDefaultValues(ext), whatsapp: "+91 ", ...loc },
       };
     }
     return {
       schema: defaultSchema,
-      defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "" },
+      defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", ...loc },
     };
   }, [formType, kundaliCount]);
 
@@ -698,6 +714,17 @@ const PaymentPage = () => {
         fillGstState(po.state);
       }
     };
+    // Current residence pincode → city + state (also drives GST place of supply).
+    const fillCurrent = async (pin: string) => {
+      if (!/^\d{6}$/.test(pin)) return;
+      const po = await lookup(pin);
+      if (!po) return;
+      if (po.district) form.setValue("currentCity", po.district, { shouldValidate: true, shouldDirty: true });
+      if (po.state) {
+        form.setValue("currentState", po.state, { shouldValidate: true, shouldDirty: true });
+        fillGstState(po.state);
+      }
+    };
     const sub = form.watch((value, { name }) => {
       if (!name) return;
       const multi = name.match(/^(person[123])\.pincode$/);
@@ -706,6 +733,8 @@ const PaymentPage = () => {
         fillPob(`${multi[1]}.pob`, pin);
       } else if (name === "pincode") {
         fillPob("pob", (value as any)?.pincode || "");
+      } else if (name === "currentPincode") {
+        fillCurrent((value as any)?.currentPincode || "");
       } else if (name === "officePincode") {
         fillOffice((value as any)?.officePincode || "");
       }
@@ -1200,6 +1229,17 @@ const PaymentPage = () => {
             </FormItem>
           )} />
           <WhatsappField control={c} />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField control={c} name="currentPincode" render={({ field }) => (
+            <FormItem><FormLabel>PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} inputMode="numeric" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name="currentCity" render={({ field }) => (
+            <FormItem><FormLabel>City *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={c} name="currentState" render={({ field }) => (
+            <FormItem><FormLabel>State *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+          )} />
         </div>
       </div>
     );
