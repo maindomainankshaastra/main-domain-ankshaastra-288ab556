@@ -133,6 +133,14 @@ const tobField = z.object({
 const genderField = z.enum(["male", "female", "other"], { required_error: "Select gender" });
 const relationField = z.enum(["good", "neutral", "challenging"], { required_error: "Select" });
 
+// Current residence — collected on every service form (city / state / pincode).
+const currentLocationFields = {
+  currentPincode: pincodeField,
+  currentCity: z.string().trim().min(2, "City required").max(80),
+  currentState: z.string().trim().min(2, "State required").max(80),
+};
+export const CURRENT_LOCATION_DEFAULTS = { currentPincode: "", currentCity: "", currentState: "" };
+
 // ───── per-type schemas ─────
 const defaultSchema = z.object({
   fullName: z.string().trim().min(2, "Full name required").max(100).regex(nameRx, "Letters only"),
@@ -143,6 +151,7 @@ const defaultSchema = z.object({
   pob: z.string().trim().min(2, "Place of birth required").max(120),
   gender: genderField,
   pincode: pincodeField,
+  ...currentLocationFields,
 });
 
 const kundaliSchema = defaultSchema.extend({
@@ -165,6 +174,7 @@ const makeKundaliMultiSchema = (count: 2 | 3) => {
     email: emailField,
     whatsapp: phoneField,
     language: z.enum(["english", "hindi", "gujarati"], { required_error: "Select language" }),
+    ...currentLocationFields,
   };
   if (count === 3) base.person3 = kundaliPersonSchema;
   return z.object(base);
@@ -184,6 +194,7 @@ const consultationSchema = z.object({
   pincode: pincodeField,
   gender: genderField,
   issues: z.string().trim().min(10, "Please describe (min 10 characters)").max(2000),
+  ...currentLocationFields,
 });
 
 const nameCorrectionSchema = z.object({
@@ -207,6 +218,7 @@ const nameCorrectionSchema = z.object({
   spouseName: z.string().trim().max(100).regex(/^[a-zA-Z\s.'-]*$/, "Letters only").optional().or(z.literal("")),
   profession: z.string().trim().min(2, "Profession required").max(120),
   reason: z.string().trim().min(10, "Please share (min 10 characters)").max(2000),
+  ...currentLocationFields,
 });
 
 // Quick "Name Check" form — minimal fields
@@ -221,6 +233,7 @@ const nameCheckSchema = z.object({
   dob: dobField,
   pob: z.string().trim().min(2, "Place of birth required").max(120),
   gender: genderField,
+  ...currentLocationFields,
 });
 
 // Couple form — two people's birth details (used for premium Name Correction
@@ -238,6 +251,7 @@ const coupleSchema = z.object({
   person2: personSchema,
   email: emailField,
   whatsapp: phoneField,
+  ...currentLocationFields,
 });
 const pyaarShastraSchema = coupleSchema.extend({
   language: z.enum(["english", "hindi", "gujarati"], { required_error: "Select language" }),
@@ -270,6 +284,7 @@ const nameCorrectionCoupleSchema = z.object({
   email: emailField,
   whatsapp: phoneField,
   reason: z.string().trim().min(10, "Please share (min 10 characters)").max(2000),
+  ...currentLocationFields,
 });
 
 // ───── dropdown helpers ─────
