@@ -86,6 +86,8 @@ function findByKeyPattern(
   }
   return undefined;
 }
+
+export function resolveCustomerBilling(order: OrderRow) {
   const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
 
