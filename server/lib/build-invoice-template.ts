@@ -34,6 +34,23 @@ function parseStateFromPob(pob?: string): string | undefined {
   return maybeState;
 }
 
+// FIX (per client request 2026-08-02): some booking forms (e.g. Ankshaastra's
+// own "Perfect Baby Name" / numerology forms) never collect a standalone
+// "city" field at all — only a combined "Place of Birth" string like
+// "Gautam Buddha Nagar, Uttar Pradesh, India". Previously city could only
+// come from currentCity/officeCity/city keys, so it was always blank for
+// these orders. This takes the first comma-separated segment of the place-
+// of-birth text as a city fallback, the same way parseStateFromPob() above
+// already derives the state from it.
+function parseCityFromPob(pob?: string): string | undefined {
+  if (!pob) return undefined;
+  const parts = pob.split(',').map((part) => part.trim()).filter(Boolean);
+  if (!parts.length) return undefined;
+  const candidate = parts[0];
+  if (!candidate || candidate.toLowerCase() === 'india') return undefined;
+  return candidate;
+}
+
 // FIX (website field): the "Website" line on the invoice/email previously
 // always came from a single, shared GST config value — the same for every
 // order regardless of which of the three sites (Ankshaastra, Miracle Baby,
@@ -54,7 +71,9 @@ export function resolveCustomerBilling(order: OrderRow) {
   const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
 
-  const city = pickString(snapshot, ['currentCity', 'officeCity', 'city']);
+  const city =
+    pickString(snapshot, ['currentCity', 'officeCity', 'city']) ||
+    parseCityFromPob(pickString(snapshot, ['pob', 'placeOfBirth']));
   const stateName =
     pickString(snapshot, ['customerState', 'currentState', 'officeState']) ||
     parseStateFromPob(pickString(snapshot, ['pob', 'placeOfBirth']));
