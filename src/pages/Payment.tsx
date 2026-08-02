@@ -586,10 +586,11 @@ const PaymentPage = () => {
   const { schema, defaults } = useMemo(() => {
     const baseDob = { day: "", month: "", year: "" };
     const baseTob = { hour: "", minute: "", meridiem: "" as any };
+    const loc = { ...CURRENT_LOCATION_DEFAULTS };
     if (formType === "kundali") {
       return {
         schema: kundaliSchema,
-        defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any },
+        defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", language: undefined as any, ...loc },
       };
     }
     if (formType === "kundali-multi") {
@@ -597,7 +598,7 @@ const PaymentPage = () => {
       const defaults: any = {
         person1: { ...blank },
         person2: { ...blank },
-        email: "", whatsapp: "+91 ", language: undefined as any,
+        email: "", whatsapp: "+91 ", language: undefined as any, ...loc,
       };
       if (kundaliCount === 3) defaults.person3 = { ...blank };
       return { schema: makeKundaliMultiSchema(kundaliCount), defaults };
@@ -605,26 +606,26 @@ const PaymentPage = () => {
     if (formType === "consultation") {
       return {
         schema: consultationSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, issues: "" },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, issues: "", ...loc },
       };
     }
     if (formType === "name-correction") {
       return {
         schema: nameCorrectionSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, lastNameChangeOk: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "" },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, lastNameChangeOk: undefined as any, email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", pincode: "", gender: undefined as any, relationFather: undefined as any, relationMother: undefined as any, relationSpouse: undefined as any, fatherName: "", motherName: "", spouseName: "", profession: "", reason: "", ...loc },
       };
     }
     if (formType === "name-check") {
       return {
         schema: nameCheckSchema,
-        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, pob: "", gender: undefined as any },
+        defaults: { firstName: "", middleName: "", lastName: "", middleIsFatherName: undefined as any, whatsapp: "+91 ", email: "", pincode: "", dob: baseDob, pob: "", gender: undefined as any, ...loc },
       };
     }
     if (formType === "couple") {
       const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pincode: "", pob: "" };
       return {
         schema: coupleSchema,
-        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 " },
+        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", ...loc },
       };
     }
     if (formType === "name-correction-couple") {
@@ -637,26 +638,26 @@ const PaymentPage = () => {
       };
       return {
         schema: nameCorrectionCoupleSchema,
-        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", reason: "" },
+        defaults: { person1: { ...blankPerson }, person2: { ...blankPerson }, email: "", whatsapp: "+91 ", reason: "", ...loc },
       };
     }
     if (formType === "pyaar-shastra") {
       const blankPerson = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pincode: "", pob: "" };
       return {
         schema: pyaarShastraSchema,
-        defaults: { person1: { ...blankPerson, gender: "male" as any }, person2: { ...blankPerson, gender: "female" as any }, email: "", whatsapp: "+91 ", language: undefined as any },
+        defaults: { person1: { ...blankPerson, gender: "male" as any }, person2: { ...blankPerson, gender: "female" as any }, email: "", whatsapp: "+91 ", language: undefined as any, ...loc },
       };
     }
     if (EXTENDED_FORM_TYPES.includes(formType as ExtendedFormType)) {
       const ext = formType as ExtendedFormType;
       return {
         schema: getExtendedSchema(ext),
-        defaults: { ...getExtendedDefaultValues(ext), whatsapp: "+91 " },
+        defaults: { ...getExtendedDefaultValues(ext), whatsapp: "+91 ", ...loc },
       };
     }
     return {
       schema: defaultSchema,
-      defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "" },
+      defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", ...loc },
     };
   }, [formType, kundaliCount]);
 
@@ -713,6 +714,17 @@ const PaymentPage = () => {
         fillGstState(po.state);
       }
     };
+    // Current residence pincode → city + state (also drives GST place of supply).
+    const fillCurrent = async (pin: string) => {
+      if (!/^\d{6}$/.test(pin)) return;
+      const po = await lookup(pin);
+      if (!po) return;
+      if (po.district) form.setValue("currentCity", po.district, { shouldValidate: true, shouldDirty: true });
+      if (po.state) {
+        form.setValue("currentState", po.state, { shouldValidate: true, shouldDirty: true });
+        fillGstState(po.state);
+      }
+    };
     const sub = form.watch((value, { name }) => {
       if (!name) return;
       const multi = name.match(/^(person[123])\.pincode$/);
@@ -721,6 +733,8 @@ const PaymentPage = () => {
         fillPob(`${multi[1]}.pob`, pin);
       } else if (name === "pincode") {
         fillPob("pob", (value as any)?.pincode || "");
+      } else if (name === "currentPincode") {
+        fillCurrent((value as any)?.currentPincode || "");
       } else if (name === "officePincode") {
         fillOffice((value as any)?.officePincode || "");
       }
