@@ -204,13 +204,12 @@ function escapeHtml(text: string): string {
 // select and copy the details straight out of the email.
 function sectionTable(rows: Array<[string, string]>): string {
   if (!rows.length) return '';
-  const tableRows = rows
+  return rows
     .map(
       ([label, value]) =>
-        `<tr><td style="padding:5px 12px 5px 0;font-weight:600;vertical-align:top;color:#444;white-space:nowrap;border-bottom:1px solid #eef1f5;">${escapeHtml(label)}</td><td style="padding:5px 0;vertical-align:top;border-bottom:1px solid #eef1f5;">${escapeHtml(value)}</td></tr>`,
+        `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;"><strong style="color:#444;">${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`,
     )
     .join('');
-  return `<table style="border-collapse:collapse;width:100%;max-width:560px;font-size:14px;line-height:1.5;margin-bottom:20px;">${tableRows}</table>`;
 }
 
 function sectionHeading(title: string): string {
