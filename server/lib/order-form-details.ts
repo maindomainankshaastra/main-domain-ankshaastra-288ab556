@@ -91,6 +91,20 @@ function formatTob(value: unknown): string {
   return `${t.hour}:${t.minute} ${t.meridiem || ''}`.trim();
 }
 
+// FIX (per client request 2026-08-02): HTML <input type="date"> fields
+// (e.g. "Expected Delivery — From/To") always store their value internally
+// as ISO "YYYY-MM-DD", regardless of how the date picker displays it on
+// screen. That raw ISO string was passed straight through into the email,
+// showing "2026-09-14" instead of a readable date. This detects any plain
+// ISO date string — for any field, not just delivery dates — and reformats
+// it to DD/MM/YYYY, matching how the booking form itself displays dates.
+function formatIsoDateIfPresent(value: string): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
+
 function formatValue(key: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return '';
   if (key === 'dob' || key.endsWith('Dob')) return formatDob(value);
@@ -109,7 +123,9 @@ function formatValue(key: string, value: unknown): string {
   }
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (typeof value === 'object') return '';
-  return String(value).trim();
+  const str = String(value).trim();
+  const isoDate = formatIsoDateIfPresent(str);
+  return isoDate || str;
 }
 
 function labelForKey(key: string): string {
