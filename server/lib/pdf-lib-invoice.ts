@@ -150,24 +150,35 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   const purchasedBy = data.purchasedByName || data.customerName;
   page.drawText(`Purchased By ${sanitizePdfText(purchasedBy)}`.slice(0, 48), { x: margin, y, size: 8, font, color: black });
   y -= 11;
+  // FIX (per client request 2026-08-02): only show the "Subject" line when
+  // it's actually a different person from the purchaser (e.g. a parent
+  // booking on behalf of a child) — previously it always showed for a
+  // single subject, which duplicated the name already shown right above in
+  // "Purchased By X" whenever the purchaser and subject were the same
+  // person.
   const subjects = data.serviceSubjects || [];
+  const isSameAsPurchaser = (name: string) =>
+    sanitizePdfText(name).toLowerCase() === sanitizePdfText(purchasedBy).toLowerCase();
   if (subjects.length === 1) {
-    page.drawText(`Subject ${sanitizePdfText(subjects[0].full_name)}`.slice(0, 48), { x: margin, y, size: 8, font, color: black });
-    y -= 11;
+    if (!isSameAsPurchaser(subjects[0].full_name)) {
+      page.drawText(`Subject ${sanitizePdfText(subjects[0].full_name)}`.slice(0, 48), { x: margin, y, size: 8, font, color: black });
+      y -= 11;
+    }
   } else if (subjects.length > 1) {
     subjects.slice(0, 3).forEach((subject, index) => {
       page.drawText(`${index + 1}. ${sanitizePdfText(subject.full_name)}`.slice(0, 48), { x: margin, y, size: 8, font, color: black });
       y -= 11;
     });
   }
-  // FIX (per client request 2026-08-01): always show City / State / Pincode
-  // as three explicit labeled fields on one line, each falling back to an
-  // em-dash (—) when that specific piece is missing — instead of silently
-  // dropping missing fields or showing a plain "-" when nothing was given.
+  // FIX (per client request 2026-08-01): show City / State / Pincode as
+  // three explicit labeled fields, each falling back to a plain hyphen (-)
+  // when that piece is missing. (An em-dash was tried first but pdf-lib's
+  // WinAnsi-only StandardFonts silently render it as blank, not as a
+  // visible dash — a plain "-" is in WinAnsi and always renders.)
   const billingLine =
-    `City: ${data.customerCity || '—'}, ` +
-    `State: ${data.customerState || '—'}, ` +
-    `Pincode: ${data.customerPincode || '—'}`;
+    `City: ${data.customerCity || '-'}, ` +
+    `State: ${data.customerState || '-'}, ` +
+    `Pincode: ${data.customerPincode || '-'}`;
   for (const wrapped of wrapLines(billingLine, 42)) {
     page.drawText(wrapped, { x: margin + 250, y, size: 8, font, color: black });
     y -= 11;
