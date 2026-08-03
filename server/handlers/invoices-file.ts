@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
-import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+// import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { downloadInvoicePdfBuffer } from '../lib/invoice-storage.js';
 
 type Req = {
@@ -28,7 +29,8 @@ export default async function handler(req: Req, res: Res) {
 
   const authHeader = req.headers?.authorization || req.headers?.Authorization;
   const user = await getUserFromAuthHeader(authHeader);
-  if (!user || !(await isAdminUser(user.id))) {
+  // if (!user || !(await isAdminUser(user.id))) {
+  if (!user || !(await hasModuleAccess(user.id, 'invoices'))) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
