@@ -265,7 +265,8 @@
 // }
 
 
-import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+// import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 import { normalizeSourceWebsite } from '../lib/connected-sites.js';
 import { processInvoiceJob } from '../lib/invoice-engine.js';
@@ -318,7 +319,8 @@ export default async function handler(req: Req, res: Res) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
-  const adminCheck = await isAdminUser(user.id);
+  // const adminCheck = await isAdminUser(user.id);
+  const adminCheck = await hasModuleAccess(user.id, 'invoices');
 
   // ---- DEBUG START ----
   console.log('isAdminUser result:', adminCheck, 'for user id:', user.id);
