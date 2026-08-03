@@ -6,7 +6,8 @@ import {
   resolveGstConfigBillingTexts,
   resolveGstConfigExtras,
 } from '../lib/gst-config-fields.js';
-import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+// import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
+import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 
 type Req = {
@@ -71,7 +72,10 @@ function buildPayload(body: Record<string, unknown>, includeOptionalColumns: boo
 export default async function handler(req: Req, res: Res) {
   const authHeader = req.headers?.authorization || req.headers?.Authorization;
   const user = await getUserFromAuthHeader(authHeader);
-  if (!user || !(await isAdminUser(user.id))) {
+  // if (!user || !(await isAdminUser(user.id))) {
+
+  if (!user || !(await hasModuleAccess(user.id, 'settings'))) {
+    
     return res.status(403).json({ error: 'Admin access required' });
   }
 
