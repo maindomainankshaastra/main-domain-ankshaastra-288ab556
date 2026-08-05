@@ -4,6 +4,17 @@ const SKIP_KEYS = new Set([
   'razorpay_order_id',
   'razorpay_payment_id',
   'razorpay_signature',
+  // Internal/admin-only fields seen on manually-created orders (order.metadata.manualEntry
+  // === true) — set by staff creating an invoice by hand, not filled in by the customer.
+  // These must never appear on a customer-facing invoice PDF/email.
+  'manualEntry',
+  'createdByAdmin',
+  'requestedGstRate',
+  'requestedInvoiceDate',
+  'packageName',
+  // Internal package/service identifiers (e.g. "namecheck-1", "single") — the service
+  // itself is already shown via the invoice's own "Item" line, so this would be redundant.
+  'packageType',
 ]);
 
 const FIELD_LABELS: Record<string, string> = {
@@ -63,10 +74,13 @@ const FIELD_LABELS: Record<string, string> = {
   formType: 'Form Type',
   serviceSlug: 'Service',
   addons: 'Add-ons',
-  // Miracle Baby booking form fields — added so these read naturally
-  // instead of relying only on the generic camelCase auto-formatter below.
+  // Miracle Baby booking form fields — confirmed against real order.metadata
+  // (2026-08-05) so these read naturally instead of relying only on the
+  // generic camelCase auto-formatter below.
   motherName: "Mother's Name",
   fatherName: "Father's Name",
+  motherDob: "Mother's Date of Birth",
+  fatherDob: "Father's Date of Birth",
   expectedDeliveryFrom: 'Expected Delivery — From',
   expectedDeliveryTo: 'Expected Delivery — To',
   pinCode: 'Pin Code',
@@ -75,7 +89,47 @@ const FIELD_LABELS: Record<string, string> = {
   preferredDeity: 'Preferred Deity',
   qualities: 'Qualities to Manifest',
   city: 'City',
+  notes: 'Notes / Special Request',
+  // Empower Name Check (namecheck-1 / namecheck-2) form fields — confirmed
+  // against real order.metadata (2026-08-05). Empower stores each person's
+  // fields as flat "person1Xxx"/"person2Xxx"/"person3Xxx" keys (not nested
+  // objects), which the person-prefix logic in labelForKey() below already
+  // turns into "Person 1 — Xxx" / "Person 2 — Xxx" automatically.
+  timeOfBirth: 'Time of Birth',
+  placeOfBirth: 'Place of Birth',
+  // Empower Baby Name Report (Perfect Baby Name / Complete Baby Name
+  // Blueprint) form fields.
+  childDob: "Child's Date of Birth",
+  childMiddleName: "Child's Middle Name",
+  childLastName: "Child's Last Name",
+  fatherFullName: "Father's Full Name",
+  fatherFirstName: "Father's First Name",
+  fatherMiddleName: "Father's Middle Name",
+  fatherLastName: "Father's Last Name",
+  fatherFirstNameAsMiddleName: "Father's First Name Used as Child's Middle Name?",
+  lastNameSpellingChangeOk: 'Comfortable Changing Last Name Spelling?',
+  // The booking form saves Name Style / Notes / Add-ons as one combined
+  // free-text field, e.g. "[NAME STYLE: Mix of All] [NOTES: ...] [ADD-ON: ...]"
+  // — so it's rendered as a single field rather than split into several.
+  nameOptions: 'Name Preferences & Notes',
 };
+
+// A key ending in one of these (case-insensitive) gets the label below,
+// combined with whatever prefix precedes it (see baseLabelForSuffix) —
+// covers new/unknown service fields automatically without needing a new
+// FIELD_LABELS entry every time a field name is a minor variant (e.g. a
+// future "guardianWhatsapp" or "childEmailId"). This, plus FIELD_LABELS
+// above, is what keeps future services working without code changes.
+const SUFFIX_LABEL_OVERRIDES: Array<[RegExp, string]> = [
+  [/dob$/i, 'Date of Birth'],
+  [/tob$/i, 'Time of Birth'],
+  [/whatsapp(number)?$/i, 'WhatsApp Number'],
+  [/email(id)?$/i, 'Email ID'],
+  [/pincode$/i, 'Pincode'],
+  // Empower Name Check: person1MiddleNameType / person2MiddleNameType
+  // ("yes"/"no"/null) = "Is the middle name father's/husband's name?"
+  [/middlenametype$/i, "Middle Name Is Father's/Husband's Name?"],
+];
 
 function formatDob(value: unknown): string {
   if (!value || typeof value !== 'object') return String(value ?? '');
@@ -107,7 +161,11 @@ function formatIsoDateIfPresent(value: string): string | null {
 
 function formatValue(key: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return '';
-  if (key === 'dob' || key.endsWith('Dob')) return formatDob(value);
+  if (key === 'dob' || key.endsWith('Dob')) {
+    if (value && typeof value === 'object') return formatDob(value);
+    const str = String(value ?? '').trim();
+    return formatIsoDateIfPresent(str) || str;
+  }
   if (key === 'tob' || key.endsWith('Tob')) return formatTob(value);
   if (key === 'addons' && Array.isArray(value)) {
     return value
@@ -122,20 +180,42 @@ function formatValue(key: string, value: unknown): string {
       .join(', ');
   }
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (typeof value === 'string' && /^(yes|no)$/i.test(value.trim())) {
+    return value.trim()[0].toUpperCase() + value.trim().slice(1).toLowerCase();
+  }
   if (typeof value === 'object') return '';
   const str = String(value).trim();
   const isoDate = formatIsoDateIfPresent(str);
   return isoDate || str;
 }
 
+function titleCaseFromKey(key: string): string {
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).trim();
+}
+
+function baseLabelForSuffix(suffix: string): string {
+  if (FIELD_LABELS[suffix]) return FIELD_LABELS[suffix];
+  const override = SUFFIX_LABEL_OVERRIDES.find(([pattern]) => pattern.test(suffix));
+  if (override) {
+    const [pattern, label] = override;
+    // Preserve any meaningful prefix before the recognized suffix, e.g.
+    // "motherDob" -> "Mother — Date of Birth", "fatherDob" -> "Father —
+    // Date of Birth" (not both collapsing to plain "Date of Birth").
+    const prefix = suffix.replace(new RegExp(pattern.source, 'i'), '');
+    const prefixLabel = prefix ? titleCaseFromKey(prefix) : '';
+    return prefixLabel ? `${prefixLabel} — ${label}` : label;
+  }
+  return titleCaseFromKey(suffix);
+}
+
 function labelForKey(key: string): string {
   if (FIELD_LABELS[key]) return FIELD_LABELS[key];
   if (key.startsWith('person')) {
     const suffix = key.replace(/^person\d+_?/, '');
-    const base = FIELD_LABELS[suffix] || suffix.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
+    const base = baseLabelForSuffix(suffix);
     return `Person ${key.match(/\d+/)?.[0] || ''} — ${base}`.trim();
   }
-  return key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
+  return baseLabelForSuffix(key);
 }
 
 function flattenFormEntries(obj: Record<string, unknown>, prefix = ''): Array<[string, string]> {
@@ -216,6 +296,51 @@ function sectionHeading(title: string): string {
   return `<h3 style="margin:20px 0 8px;font-size:15px;color:#4b77be;border-bottom:1px solid #e5e7eb;padding-bottom:6px;">${escapeHtml(title)}</h3>`;
 }
 
+// Returns just the service-specific form fields (label/value pairs) for an
+// order — e.g. Person 1 — First Name, Hospital Name, Expected Delivery — From,
+// etc. — whatever fields were actually filled in for whatever service was
+// purchased, on whichever of the three sites. Used by the invoice PDF so it
+// shows the correct fields for every service automatically, without any
+// per-service code changes. (Order ID/Amount/customer contact rows are
+// intentionally excluded here since the PDF already renders those itself.)
+export function getOrderFormRows(order: Record<string, unknown>): Array<[string, string]> {
+  const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
+  const snapshotFromMeta = metadata.formSnapshot as Record<string, unknown> | undefined;
+  const legacyMeta: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    if (key === 'formSnapshot' || key === 'formSnapshotAt' || key === 'serviceId') continue;
+    if (value !== null && value !== undefined && value !== '') legacyMeta[key] = value;
+  }
+  const formSnapshot = { ...legacyMeta, ...(snapshotFromMeta || {}) };
+
+  // These duplicate what's already shown elsewhere on the invoice (header
+  // "Purchased By" / "Phone" lines, and the Billing Address block, which is
+  // resolved separately in resolveCustomerBilling() using the same aliases)
+  // — confirmed against real order.metadata from all three sites (2026-08-05).
+  const alreadyShownKeys = new Set([
+    'city', 'currentCity', 'officeCity',
+    'state', 'customerState', 'currentState', 'officeState', 'deliveryState',
+    'pincode', 'pinCode', 'officePincode',
+    'email', 'whatsapp',
+    'name', 'mobile', 'mobileNumber', 'currentMobile',
+  ]);
+  // Manually-created orders (staff typing up an invoice by hand) sometimes
+  // use "notes" for an internal comment, not a customer-submitted special
+  // request — keep it off the customer-facing PDF/email in that case only.
+  if (metadata.manualEntry === true) alreadyShownKeys.add('notes');
+  // Empower forms save single-purchaser info twice — once as bare
+  // dob/gender/name, again as person1Dob/person1Gender/person1Name. Keep
+  // only the more detailed "Person 1 — ..." version when both are present.
+  if (formSnapshot.person1Dob) alreadyShownKeys.add('dob');
+  if (formSnapshot.person1Gender) alreadyShownKeys.add('gender');
+  if (formSnapshot.person1Name) alreadyShownKeys.add('name');
+  const formEntries = Object.fromEntries(
+    Object.entries(formSnapshot).filter(([key]) => !alreadyShownKeys.has(key)),
+  );
+
+  return flattenFormEntries(formEntries);
+}
+
 // FIX (per client request 2026-08-01): buildOrderDetailsHtml previously
 // emitted a single flat "Order Details" table mixing order metadata,
 // contact info, and every raw form field together. It's now split into
@@ -235,7 +360,6 @@ export function buildOrderDetailsHtml(order: Record<string, unknown>): string {
     ...legacyMeta,
     ...(snapshotFromMeta || {}),
   };
-
   // ── Order Information ────────────────────────────────────────────────────
   const orderInfoRows: Array<[string, string]> = [];
   const orderIdValue = order.id || order.razorpay_order_id;
@@ -256,15 +380,10 @@ export function buildOrderDetailsHtml(order: Record<string, unknown>): string {
   const cityValue = formSnapshot.city || formSnapshot.currentCity || formSnapshot.officeCity;
   if (cityValue) contactRows.push(['City', String(cityValue)]);
 
-  // Keys already surfaced above — excluded from the generic form dump below
-  // so nothing appears twice.
-  const alreadyShownKeys = new Set(['city', 'currentCity', 'officeCity', 'email', 'whatsapp']);
-  const formEntries = Object.fromEntries(
-    Object.entries(formSnapshot).filter(([key]) => !alreadyShownKeys.has(key)),
-  );
-
   // ── Order Details (Form Filled) ──────────────────────────────────────────
-  const formRows = flattenFormEntries(formEntries);
+  // (city/email/whatsapp already surfaced above are excluded inside
+  // getOrderFormRows so nothing appears twice)
+  const formRows = getOrderFormRows(order);
 
   if (!orderInfoRows.length && !contactRows.length && !formRows.length) return '';
 
