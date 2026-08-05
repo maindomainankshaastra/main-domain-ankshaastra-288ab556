@@ -259,10 +259,6 @@ export type InvoiceTemplateData = {
   customerName: string;
   purchasedByName?: string;
   serviceSubjects?: Array<{ person_index: number; full_name: string }>;
-  // Dynamic, service-specific form fields (label/value pairs) — whatever
-  // the customer actually filled in for whatever service was purchased.
-  // See getOrderFormRows() in order-form-details.ts.
-  serviceFormFields?: Array<[string, string]>;
   customerEmail?: string;
   customerPhone?: string;
   customerBillingAddress?: string;
