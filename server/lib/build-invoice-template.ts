@@ -10,6 +10,7 @@ import {
 } from './indian-states.js';
 import { resolveGstConfigBillingTexts, resolveGstConfigExtras } from './gst-config-fields.js';
 import { getInvoiceLogoUrl } from './invoice-logo.js';
+import { getOrderFormRows } from './order-form-details.js';
 import type { InvoiceTemplateData } from './templates/invoice-html.js';
 
 type GstConfigRow = Record<string, unknown>;
@@ -218,6 +219,12 @@ export function buildInvoiceTemplateData(input: {
     customerName: billing.name,
     purchasedByName: billing.name,
     serviceSubjects,
+    // Whatever fields the customer actually filled in for whatever service
+    // they bought — Compatibility shows Person 1/2 Name+DOB, C-Section
+    // Guidance shows Mother/Father Name+Hospital, etc. Works for every
+    // current and future service on all three sites with no code changes
+    // (see getOrderFormRows / labelForKey in order-form-details.ts).
+    serviceFormFields: getOrderFormRows(order),
     customerEmail: billing.email || undefined,
     customerPhone: billing.phone || undefined,
     customerBillingAddress: billing.billingAddress || undefined,
