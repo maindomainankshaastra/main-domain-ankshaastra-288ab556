@@ -193,6 +193,32 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     y -= 14;
   }
 
+  // ── Service Details (dynamic, per-service form fields) ──────────────────
+  // FIX (invoice generation, 2026-08-05): previously the PDF only ever
+  // showed the "Subject" name(s) — every other field the customer filled
+  // in (DOB, gender, hospital, expected delivery date, etc.) never
+  // appeared, regardless of which service was purchased. This renders
+  // whatever fields actually apply to the purchased service — Person 1/2
+  // Name+DOB for Compatibility, Mother/Father Name+Hospital for C-Section
+  // Guidance, Baby Name Details for Baby Name Report, etc. — for any
+  // current or future service on any of the three sites, driven entirely
+  // by data.serviceFormFields (see getOrderFormRows() in
+  // order-form-details.ts). No service/field names are hardcoded here.
+  const formFields = data.serviceFormFields || [];
+  if (formFields.length) {
+    ensureSpace(24);
+    page.drawText('Service Details', { x: margin, y, size: 9, font: fontBold, color: black });
+    y -= 14;
+    for (const [label, value] of formFields) {
+      for (const wrapped of wrapLines(`${label}: ${value}`, 95)) {
+        ensureSpace(11);
+        page.drawText(wrapped, { x: margin, y, size: 8, font, color: black });
+        y -= 11;
+      }
+    }
+    y -= 10;
+  }
+
   const item = data.items[0];
   const tableTop = y;
   const cols = [margin, margin + 18, margin + 210, margin + 285, margin + 330, margin + 405, margin + 470];
