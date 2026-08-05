@@ -8097,11 +8097,8 @@ function emptyCreateForm(): CreateInvoiceForm {
   };
 }
 
-// Matches the format used for invoiceDate in server/lib/build-invoice-template.ts
-// (en-GB, 2-digit day) so Invoice Date reads identically in the PDF, the
-// customer email, and this admin panel — e.g. "04 Aug 2026" everywhere.
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function formatDateTime(iso: string) {
