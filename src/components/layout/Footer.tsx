@@ -142,9 +142,9 @@ const Footer = () => {
             <Phone className="w-4 h-4 text-amber-light" />
             <span className="text-sm">+91 96673 05577</span>
           </a>
-          <a href="mailto:social@ankshaastra.com" className="flex items-center gap-3 hover:text-amber-light transition-colors">
+          <a href="mailto:service@ankshaastra.in" className="flex items-center gap-3 hover:text-amber-light transition-colors">
             <Mail className="w-4 h-4 text-amber-light" />
-            <span className="text-sm">social@ankshaastra.com</span>
+            <span className="text-sm">service@ankshaastra.in</span>
           </a>
           <a href="https://wa.me/919667305577" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-amber-light transition-colors">
             <MessageCircle className="w-4 h-4 text-amber-light" />
