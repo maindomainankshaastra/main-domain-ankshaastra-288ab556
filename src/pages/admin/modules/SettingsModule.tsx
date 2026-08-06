@@ -88,7 +88,7 @@
 //         <div><Label>GST Filing Frequency</Label><Input value={String(form.gst_filing_frequency || "monthly")} onChange={(e) => setForm({ ...form, gst_filing_frequency: e.target.value })} placeholder="monthly or quarterly" /></div>
 //         <div><Label>Address</Label><Textarea value={String(form.address || "")} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
 //         <div><Label>Business Phone</Label><Input value={String(form.business_phone || "")} onChange={(e) => setForm({ ...form, business_phone: e.target.value })} placeholder="+91 9667305577" /></div>
-//         <div><Label>Business Email</Label><Input value={String(form.business_email || "")} onChange={(e) => setForm({ ...form, business_email: e.target.value })} placeholder="social@ankshaastra.com" /></div>
+//         <div><Label>Business Email</Label><Input value={String(form.business_email || "")} onChange={(e) => setForm({ ...form, business_email: e.target.value })} placeholder="service@ankshaastra.in" /></div>
 //         <div><Label>Website</Label><Input value={String(form.website_url || "")} onChange={(e) => setForm({ ...form, website_url: e.target.value })} placeholder="www.ankshaastra.com" /></div>
 //         <div><Label>Bank Name</Label><Input value={String(form.bank_name || "")} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} /></div>
 //         <div><Label>Bank Account Number</Label><Input value={String(form.bank_account || "")} onChange={(e) => setForm({ ...form, bank_account: e.target.value })} /></div>
@@ -243,7 +243,7 @@ export default function SettingsModule() {
         <div><Label>GST Filing Frequency</Label><Input value={String(form.gst_filing_frequency || "monthly")} onChange={(e) => setForm({ ...form, gst_filing_frequency: e.target.value })} placeholder="monthly or quarterly" /></div>
         <div><Label>Address</Label><Textarea value={String(form.address || "")} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
         <div><Label>Business Phone</Label><Input value={String(form.business_phone || "")} onChange={(e) => setForm({ ...form, business_phone: e.target.value })} placeholder="+91 9667305577" /></div>
-        <div><Label>Business Email</Label><Input value={String(form.business_email || "")} onChange={(e) => setForm({ ...form, business_email: e.target.value })} placeholder="social@ankshaastra.com" /></div>
+        <div><Label>Business Email</Label><Input value={String(form.business_email || "")} onChange={(e) => setForm({ ...form, business_email: e.target.value })} placeholder="service@ankshaastra.in" /></div>
         <div><Label>Website</Label><Input value={String(form.website_url || "")} onChange={(e) => setForm({ ...form, website_url: e.target.value })} placeholder="www.ankshaastra.com" /></div>
         <div><Label>Bank Name</Label><Input value={String(form.bank_name || "")} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} /></div>
         <div><Label>Bank Account Number</Label><Input value={String(form.bank_account || "")} onChange={(e) => setForm({ ...form, bank_account: e.target.value })} /></div>
