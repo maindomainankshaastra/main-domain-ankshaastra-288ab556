@@ -137,7 +137,7 @@ export async function generateInvoicePDFLocal(invoiceData) {
       'Unit No. O-622, Block-E, Eye of Noida,',
       'Sector 140A, Noida - 201305',
       'Phone: 9667305577',
-      'Email: social@ankshaastra.com',
+      'Email: service@ankshaastra.in',
       'GSTIN: 09AAFFE7583B1ZD',
     ];
     for (const line of companyLines) {
@@ -301,7 +301,7 @@ export async function generateInvoicePDFLocal(invoiceData) {
       { gap: true },
       { text: 'Ankshaastra Occult Experts LLP', bold: true },
       { text: 'GSTIN: 09AAFFE7583B1ZD' },
-      { text: 'Email: social@ankshaastra.com' },
+      { text: 'Email: service@ankshaastra.in' },
       { text: 'Website: www.ankshaastra.com' },
     ];
 
