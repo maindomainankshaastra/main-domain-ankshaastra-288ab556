@@ -81,7 +81,7 @@ const SEOHead = ({
         addressCountry: "IN",
       },
       telephone: "+91-96673-05577",
-      email: "social@ankshaastra.com",
+      email: "service@ankshaastra.in",
       sameAs: [
         "https://instagram.com",
         "https://youtube.com",
