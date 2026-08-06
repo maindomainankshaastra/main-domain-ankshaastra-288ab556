@@ -17,7 +17,7 @@ export const business = {
   whatsappNumber: str(env.VITE_WHATSAPP_NUMBER, "919667305577"),
   // Secondary WhatsApp used by some lead-capture pages
   leadWhatsappNumber: str(env.VITE_LEAD_WHATSAPP_NUMBER, "919667305557"),
-  supportEmail: str(env.VITE_SUPPORT_EMAIL, "social@ankshaastra.com"),
+  supportEmail: str(env.VITE_SUPPORT_EMAIL, "service@ankshaastra.in"),
   contactEmail: str(env.VITE_CONTACT_EMAIL, "contact@ankshaastra.com"),
   // Razorpay public key (frontend checkout)
   razorpayKeyId: str(env.VITE_RAZORPAY_KEY_ID, ""),
