@@ -116,7 +116,7 @@ export async function sendPaymentEmail({
     // DB check failed — log and continue (better to send than silently drop)
     console.warn('⚠️  Dedup check failed (sending anyway):', dedupErr.message);
   }
-  const adminEmail = 'social@ankshaastra.com';
+  const adminEmail = 'service@ankshaastra.in';
   const fromEmail = process.env.FROM_EMAIL || 'Ankshaastra <noreply@ankshaastra.com>';
 
   
@@ -280,7 +280,7 @@ export async function sendPaymentEmail({
             <span style="font-size: 11px; color: #666;">Empower Your Name</span><br/>
             <span style="font-size: 11px; color: #666;">Unit No. O-622, Block-E, Eye of Noida,<br/>Sector 140A, Noida-201305</span><br/>
             <span style="font-size: 11px; color: #666;">Phone: 9667305577</span><br/>
-            <span style="font-size: 11px; color: #666;">Email: social@ankshaastra.com</span><br/>
+            <span style="font-size: 11px; color: #666;">Email: service@ankshaastra.in</span><br/>
             <span style="font-size: 11px; color: #666;">GSTIN: 09AAFFE7583B1ZD</span>
           </td>
           <td style="padding: 8px 0; vertical-align: top; width: 50%; text-align: right;">
