@@ -547,7 +547,16 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     }
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL || '';
+  // Route admin email based on source website
+const website = String(invoice.source_website || order.source_website || '').toLowerCase();
+
+let adminEmail = process.env.ANKSHAASTRA_ADMIN_EMAIL || process.env.ADMIN_EMAIL || '';
+
+if (website.includes('miracle')) {
+  adminEmail = process.env.MIRACLE_ADMIN_EMAIL || adminEmail;
+} else if (website.includes('empower')) {
+  adminEmail = process.env.EMPOWER_ADMIN_EMAIL || adminEmail;
+}
   if (adminEmail) {
     const orderAdminSent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : false;
     const adminAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_admin'));
