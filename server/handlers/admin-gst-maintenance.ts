@@ -43,6 +43,7 @@
 // }
 
 import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
+import { logAuditForUser } from '../lib/audit-log.js';
 import { fixAllHistoricalGstData } from '../lib/gst-auto-fix.js';
 
 type Req = {
@@ -73,6 +74,11 @@ export default async function handler(req: Req, res: Res) {
   try {
     const { getSupabaseAdmin } = await import('../lib/supabase-admin.js');
     const summary = await fixAllHistoricalGstData(getSupabaseAdmin());
+    await logAuditForUser(user, {
+  actionType: 'gst_settings_updated',
+  module: 'gst-maintenance',
+  newValue: summary,
+});
     return res.status(200).json({
       ok: true,
       summary: {
