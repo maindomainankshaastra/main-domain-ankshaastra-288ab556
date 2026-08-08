@@ -544,37 +544,14 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
     y -= 14;
   }
 
-  // ── Service Details (dynamic, per-service form fields) ──────────────────
-  // FIX (invoice generation, 2026-08-05): previously the PDF only ever
-  // showed the "Subject" name(s) — every other field the customer filled
-  // in (DOB, gender, hospital, expected delivery date, etc.) never
-  // appeared, regardless of which service was purchased. This renders
-  // whatever fields actually apply to the purchased service — Person 1/2
-  // Name+DOB for Compatibility, Mother/Father Name+Hospital for C-Section
-  // Guidance, Baby Name Details for Baby Name Report, etc. — for any
-  // current or future service on any of the three sites, driven entirely
-  // by data.serviceFormFields (see getOrderFormRows() in
-  // order-form-details.ts). No service/field names are hardcoded here.
-  const formFields = data.serviceFormFields || [];
-  if (formFields.length) {
-    ensureSpace(24);
-    page.drawText('Service Details', { x: margin, y, size: 9, font: fontBold, color: black });
-    y -= 14;
-    for (const row of formFields) {
-      if (row.kind === 'section') {
-        ensureSpace(13);
-        page.drawText(sanitizePdfText(row.title), { x: margin, y, size: 8, font: fontBold, color: black });
-        y -= 12;
-        continue;
-      }
-      for (const wrapped of wrapLines(`${row.label}: ${row.value}`, 95)) {
-        ensureSpace(11);
-        page.drawText(wrapped, { x: margin, y, size: 8, font, color: black });
-        y -= 11;
-      }
-    }
-    y -= 10;
-  }
+  // NOTE (2026-08-08, per client): the dynamic per-service "Service
+  // Details" block (Person 1/2 Details, Contact Details, etc.) that used to
+  // render here has been removed from the PDF — the client's upcoming new
+  // invoice design will include this itself, so the current PDF shouldn't
+  // duplicate it. It's still shown in the confirmation EMAIL (unaffected —
+  // see buildOrderDetailsHtml() in order-form-details.ts). If a future PDF
+  // redesign needs it back, data.serviceFormFields still has everything:
+  // an array of { kind: 'section', title } | { kind: 'field', label, value }.
 
   const item = data.items[0];
   const tableTop = y;
