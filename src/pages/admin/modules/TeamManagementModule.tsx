@@ -1,6 +1,7 @@
 
 
 
+
 // import { useEffect, useState } from "react";
 // import { useAuth } from "@/hooks/useAuth";
 // import { supabase } from "@/integrations/supabase/client";
@@ -11,19 +12,6 @@
 // import { Checkbox } from "@/components/ui/checkbox";
 // import { Badge } from "@/components/ui/badge";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// async function logAudit(actionType: string, targetUserId: string, targetName: string) {
-//   const { data } = await supabase.auth.getUser();
-//   const actor = data.user;
-//   await supabase.from("audit_logs").insert({
-//     user_id: actor?.id ?? null,
-//     user_name: actor?.user_metadata?.full_name || actor?.email || null,
-//     user_email: actor?.email ?? null,
-//     action_type: actionType,
-//     module: "team-management",
-//     record_id: targetUserId,
-//     record_name: targetName,
-//   });
-// }
 // import {
 //   Dialog,
 //   DialogContent,
@@ -45,6 +33,32 @@
 // import { toast } from "sonner";
 // import { Loader2, Search, UserCog, Trash2, Pencil, ShieldCheck, History, Users } from "lucide-react";
 // import { ADMIN_MODULES } from "@/lib/admin-modules";
+
+// // Writes one row to audit_logs. Fire-and-forget from the caller's point of
+// // view is NOT used here on purpose — callers `await` this so the write is
+// // attempted before the success toast fires, but a failure here must never
+// // block or throw into the calling action (add/edit/remove already
+// // succeeded by the time this runs).
+// async function logAudit(actionType: string, targetUserId: string, targetName: string) {
+//   try {
+//     const { data } = await supabase.auth.getUser();
+//     const actor = data.user;
+//     const { error } = await supabase.from("audit_logs").insert({
+//       user_id: actor?.id ?? null,
+//       user_name: actor?.user_metadata?.full_name || actor?.email || null,
+//       user_email: actor?.email ?? null,
+//       action_type: actionType,
+//       module: "team-management",
+//       record_id: targetUserId,
+//       record_name: targetName,
+//     });
+//     if (error) {
+//       console.warn("[audit-log] failed to write team-management entry:", error.message);
+//     }
+//   } catch (err) {
+//     console.warn("[audit-log] unexpected error writing team-management entry:", err);
+//   }
+// }
 
 // interface FoundUser {
 //   user_id: string;
@@ -428,11 +442,12 @@
 //       toast.error(error.message);
 //       return;
 //     }
+
 //     await logAudit(
-//   mode === "add" ? "team_member_added" : "permissions_changed",
-//   userId,
-//   label
-// );
+//       mode === "add" ? "team_member_added" : "permissions_changed",
+//       userId,
+//       label,
+//     );
 
 //     if (mode === "add") {
 //       toast.success(`${label} is now a staff member with limited access`);
@@ -471,7 +486,12 @@
 //     await supabase.from("admin_module_permissions").delete().eq("user_id", removeTarget.user_id);
 //     await supabase.from("user_roles").delete().eq("user_id", removeTarget.user_id).eq("role", "staff");
 //     await supabase.from("staff_removals").upsert(snapshot);
-//     await logAudit("team_member_removed", removeTarget.user_id, removeTarget.full_name);
+
+//     await logAudit(
+//       "team_member_removed",
+//       removeTarget.user_id,
+//       removeTarget.full_name || removeTarget.email || "Unknown",
+//     );
 
 //     setRemoving(false);
 //     toast.success("Staff access removed");
@@ -813,7 +833,12 @@ import { ADMIN_MODULES } from "@/lib/admin-modules";
 // attempted before the success toast fires, but a failure here must never
 // block or throw into the calling action (add/edit/remove already
 // succeeded by the time this runs).
-async function logAudit(actionType: string, targetUserId: string, targetName: string) {
+async function logAudit(
+  actionType: string,
+  targetUserId: string,
+  targetName: string,
+  actorRole?: string | null,
+) {
   try {
     const { data } = await supabase.auth.getUser();
     const actor = data.user;
@@ -821,6 +846,7 @@ async function logAudit(actionType: string, targetUserId: string, targetName: st
       user_id: actor?.id ?? null,
       user_name: actor?.user_metadata?.full_name || actor?.email || null,
       user_email: actor?.email ?? null,
+      user_role: actorRole ?? null,
       action_type: actionType,
       module: "team-management",
       record_id: targetUserId,
@@ -945,7 +971,7 @@ type PendingSave = {
 };
 
 const TeamManagementModule = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, role: currentRole } = useAuth();
 
   const [searchEmail, setSearchEmail] = useState("");
   const [searching, setSearching] = useState(false);
@@ -1221,6 +1247,7 @@ const TeamManagementModule = () => {
       mode === "add" ? "team_member_added" : "permissions_changed",
       userId,
       label,
+      currentRole,
     );
 
     if (mode === "add") {
@@ -1265,6 +1292,7 @@ const TeamManagementModule = () => {
       "team_member_removed",
       removeTarget.user_id,
       removeTarget.full_name || removeTarget.email || "Unknown",
+      currentRole,
     );
 
     setRemoving(false);
