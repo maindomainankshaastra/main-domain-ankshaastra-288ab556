@@ -3,6 +3,7 @@ import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 import { normalizeSourceWebsite } from '../lib/connected-sites.js';
 import { processInvoiceJob } from '../lib/invoice-engine.js';
+import { logAuditForUser } from '../lib/audit-log.js';
 
 type Req = {
   method?: string;
@@ -152,6 +153,13 @@ export default async function handler(req: Req, res: Res) {
         error: 'Invoice regeneration is still in progress. Please refresh in a few seconds.',
       });
     }
+
+    await logAuditForUser(user, {
+      actionType: 'update',
+      module: 'invoices',
+      recordId: result.invoiceId,
+      recordName: result.invoiceNumber,
+    });
 
     return res.status(200).json({
       ok: true,
