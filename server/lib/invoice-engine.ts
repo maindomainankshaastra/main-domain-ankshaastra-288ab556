@@ -1238,7 +1238,24 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     }
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.INVOICE_ADMIN_EMAIL || '';
+  // FIX (2026-08-08): the per-site admin-email routing below used to only
+  // exist in a large commented-out duplicate copy of this file (never
+  // executed) — the ACTIVE code still read the old process.env.ADMIN_EMAIL
+  // / process.env.INVOICE_ADMIN_EMAIL, which nothing sets anymore since
+  // being replaced by ANKSHAASTRA_ADMIN_EMAIL / EMPOWER_ADMIN_EMAIL /
+  // MIRACLE_ADMIN_EMAIL. That meant adminEmail was always empty and NO
+  // admin copy was ever sent, for any of the three sites. Moved the
+  // working routing logic here, into the code that actually runs.
+  const website = String(invoice.source_website || order.source_website || '').toLowerCase();
+
+  let adminEmail = process.env.ANKSHAASTRA_ADMIN_EMAIL || process.env.ADMIN_EMAIL || '';
+
+  if (website.includes('miracle')) {
+    adminEmail = process.env.MIRACLE_ADMIN_EMAIL || adminEmail;
+  } else if (website.includes('empower')) {
+    adminEmail = process.env.EMPOWER_ADMIN_EMAIL || adminEmail;
+  }
+
   if (adminEmail) {
     const orderAdminSent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : false;
     const adminAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_admin'));
