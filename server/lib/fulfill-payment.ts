@@ -1,3 +1,5 @@
+
+
 // import crypto from "crypto";
 // import { getSupabaseAdmin } from "./supabase-admin.js";
 // import {
@@ -8,7 +10,7 @@
 //   resolveOrderForPayment,
 //   resolveOrderAfterConflict,
 // } from "./payment-order-map.js";
-// import { mergeOrderMetadata } from "./order-form-details.js";
+// import { mergeOrderMetadata, getOrderFormRows } from "./order-form-details.js";
 // import { scheduleInvoiceGeneration } from "./schedule-invoice.js";
 // import { normalizeSourceWebsite } from "./connected-sites.js";
 // import {
@@ -145,6 +147,16 @@
 //   await saveOrderMetadata(orderId, formData);
 
 //   try {
+//   // FIX (2026-08-05): this payload previously only ever sent the fixed
+//   // columns below — none of the service-specific form fields (Person 1
+//   // Name/DOB, Hospital Name, Expected Delivery, etc.) were included at
+//   // all, for any service. This reuses the same labeled-field logic now
+//   // used for the invoice PDF/email, so the Sheet gets the same data.
+//   const formFieldRows = getOrderFormRows({ metadata: { formSnapshot: formData } });
+//   const formFieldsText = formFieldRows
+//     .map((row) => (row.kind === 'section' ? `— ${row.title} —` : `${row.label}: ${row.value}`))
+//     .join('\n');
+
 //   await fetch(GOOGLE_SHEET_WEBHOOK, {
 //     method: "POST",
 //     headers: {
@@ -161,6 +173,12 @@
 //   orderId,
 //   paymentId: razorpay_payment_id,
 //   createdAt: new Date().toISOString(),
+//   // New: service-specific fields, in both forms —
+//   // formFields (plain text, one "Label: value" per line — easiest to drop
+//   // straight into a single Sheet column) and formFieldsList (structured
+//   // array, if the Apps Script would rather build its own columns).
+//   formFields: formFieldsText,
+//   formFieldsList: formFieldRows,
 // }),
 //   });
 // } catch (err) {
@@ -221,15 +239,13 @@ import {
   resolveOrderForPayment,
   resolveOrderAfterConflict,
 } from "./payment-order-map.js";
-import { mergeOrderMetadata, getOrderFormRows } from "./order-form-details.js";
+import { mergeOrderMetadata } from "./order-form-details.js";
 import { scheduleInvoiceGeneration } from "./schedule-invoice.js";
 import { normalizeSourceWebsite } from "./connected-sites.js";
 import {
   resolvePurchaserName,
   syncServicePersonsForOrder,
 } from "./service-persons-store.js";
-const GOOGLE_SHEET_WEBHOOK =
-  "https://script.google.com/macros/s/AKfycbyhmp4MP7urN_PcRpaLYq1KCX137s-qtGIMvMaHO5AyKf2bIQeVpF-pYW1DZRggxzXWcA/exec";
 
 export type FulfillPaymentInput = {
   razorpay_order_id: string;
@@ -357,44 +373,15 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
 
   await saveOrderMetadata(orderId, formData);
 
-  try {
-  // FIX (2026-08-05): this payload previously only ever sent the fixed
-  // columns below — none of the service-specific form fields (Person 1
-  // Name/DOB, Hospital Name, Expected Delivery, etc.) were included at
-  // all, for any service. This reuses the same labeled-field logic now
-  // used for the invoice PDF/email, so the Sheet gets the same data.
-  const formFieldRows = getOrderFormRows({ metadata: { formSnapshot: formData } });
-  const formFieldsText = formFieldRows
-    .map((row) => (row.kind === 'section' ? `— ${row.title} —` : `${row.label}: ${row.value}`))
-    .join('\n');
-
-  await fetch(GOOGLE_SHEET_WEBHOOK, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-  website: sourceWebsite,
-  name: customer_name,
-  email: customer_email,
-  phone: customer_phone,
-  service,
-  amount,
-  status: "Paid",
-  orderId,
-  paymentId: razorpay_payment_id,
-  createdAt: new Date().toISOString(),
-  // New: service-specific fields, in both forms —
-  // formFields (plain text, one "Label: value" per line — easiest to drop
-  // straight into a single Sheet column) and formFieldsList (structured
-  // array, if the Apps Script would rather build its own columns).
-  formFields: formFieldsText,
-  formFieldsList: formFieldRows,
-}),
-  });
-} catch (err) {
-  console.error("Google Sheet Sync Failed:", err);
-}
+  // NOTE (2026-08-08): the Google Sheet sync used to happen here, but that
+  // meant only Ankshaastra's own checkout (which calls fulfillPayment())
+  // ever reached it — Empower and Miracle Baby have their own separate
+  // payment-webhook code in their own repos that never called this. Moved
+  // to invoice-engine.ts's deliverInvoice(), which is the one place all
+  // three sites' orders actually pass through (Ankshaastra directly, the
+  // other two via /api/operations/trigger-invoice), so the Sheet now gets
+  // every site's data from a single spot instead of needing the same fetch
+  // call copy-pasted into 3 separate codebases.
 
   try {
     const { data: updatedOrder } = await supabase
