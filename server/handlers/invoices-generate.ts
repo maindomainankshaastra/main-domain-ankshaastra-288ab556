@@ -1,6 +1,7 @@
 // import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { processInvoiceJob } from '../lib/invoice-engine.js';
+import { logAuditForUser } from '../lib/audit-log.js';
 
 type Req = {
   method?: string;
@@ -36,6 +37,12 @@ export default async function handler(req: Req, res: Res) {
     if (!result.invoiceId || !result.invoiceNumber) {
       throw new Error('Invoice could not be generated for this order.');
     }
+    await logAuditForUser(user, {
+      actionType: 'invoice_generated',
+      module: 'invoices',
+      recordId: result.invoiceId,
+      recordName: result.invoiceNumber,
+    });
 
     return res.status(200).json({
       ok: true,
