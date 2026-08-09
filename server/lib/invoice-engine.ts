@@ -661,7 +661,7 @@ import { downloadInvoicePdfBuffer, invoiceStoragePath, uploadInvoicePdf } from '
 
 import { wrapEmailLayout } from './templates/email-layout.js';
 import { buildInvoicePaymentEmailHtml } from './templates/invoice-email.js';
-import { buildOrderDetailsHtml, getOrderFormRows } from './order-form-details.js';
+import { buildOrderDetailsHtml, formatServiceDisplayName, getOrderFormRows } from './order-form-details.js';
 import { buildInvoiceEmailSubject } from './schedule-invoice.js';
 import { resolveGstConfigBillingTexts } from './gst-config-fields.js';
 import {
@@ -1079,7 +1079,10 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
 
     await supabase.from('invoice_items').insert({
       invoice_id: invoiceId,
-      description: order.service_title,
+      // Same readable name as the PDF's "Item" column (see build-invoice-
+      // template.ts) instead of the raw order.service_title slug, so the
+      // stored invoice record matches what the customer actually saw.
+      description: formatServiceDisplayName(order),
       quantity: 1,
       unit_price: gst.subtotal,
       hsn_sac_code: sacCode,
