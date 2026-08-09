@@ -996,7 +996,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
       sac_code: sacCode,
       hsn_sac_code: sacCode,
       billing_address: billing.billingAddress || null,
-      service_title: order.service_title,
+      service_title: formatServiceDisplayName(order),
       invoice_date: invoiceDate,
       base_amount: gst.subtotal,
       subtotal: gst.subtotal,
