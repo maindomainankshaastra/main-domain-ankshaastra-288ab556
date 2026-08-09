@@ -527,6 +527,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
 import { Badge } from "@/components/ui/badge";
@@ -566,7 +567,13 @@ import { exportRowsAsCsv } from "@/lib/csv-export";
 // the write is attempted before the success toast fires, but a failure here
 // must never block or throw into the calling action (the delete has already
 // succeeded by the time this runs).
-async function logAudit(actionType: string, targetId: string, targetName: string) {
+async function logAudit(
+  actionType: string,
+  targetId: string,
+  targetName: string,
+  actorRole?: string | null,
+  sourceWebsite?: string | null,
+) {
   try {
     const { data } = await supabase.auth.getUser();
     const actor = data.user;
@@ -574,10 +581,12 @@ async function logAudit(actionType: string, targetId: string, targetName: string
       user_id: actor?.id ?? null,
       user_name: actor?.user_metadata?.full_name || actor?.email || null,
       user_email: actor?.email ?? null,
+      user_role: actorRole ?? null,
       action_type: actionType,
       module: "orders",
       record_id: targetId,
       record_name: targetName,
+      source_website: sourceWebsite ?? null,
     });
     if (error) {
       console.warn("[audit-log] failed to write orders entry:", error.message);
@@ -703,6 +712,7 @@ function formatDateTime(iso: string) {
 
 export default function OrdersModule() {
   const { rows, loading, reload } = useAdminTable<Order>("orders");
+  const { role } = useAuth();
   const [siteFilter, setSiteFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
@@ -817,12 +827,19 @@ export default function OrdersModule() {
   const confirmDeleteOrder = async () => {
     if (!deleteOrderId) return;
     setDeleting(true);
+    const orderBeingDeleted = rows.find((o) => o.id === deleteOrderId);
     try {
       const { error } = await supabase.from("orders").delete().eq("id", deleteOrderId);
       if (error) {
         toast.error(error.message || "Failed to delete order");
       } else {
-        await logAudit("delete", deleteOrderId, deleteOrderId);
+        await logAudit(
+          "delete",
+          deleteOrderId,
+          orderBeingDeleted?.service_title || deleteOrderId,
+          role,
+          orderBeingDeleted?.source_website,
+        );
         toast.success("Order deleted successfully");
         reload();
       }
