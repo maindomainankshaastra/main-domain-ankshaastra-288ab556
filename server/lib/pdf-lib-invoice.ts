@@ -403,7 +403,7 @@ function drawRightText(page: PDFPage, text: string, xRight: number, y: number, s
 // alone while the following "9. Customers..." still starts a new line).
 function splitNumberedClauses(text: string): string[] {
   return sanitizePdfText(text)
-    .split(/\s*(?=\d{1,2}\.\s+[A-Z])/)
+    .split(/\s*(?=(?<!\d)\d{1,2}\.\s+[A-Z])/)
     .map((clause) => clause.trim())
     .filter(Boolean);
 }
