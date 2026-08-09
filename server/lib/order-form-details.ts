@@ -2403,7 +2403,7 @@ export function buildOrderDetailsHtml(order: Record<string, unknown>): string {
   const orderInfoRows: Array<[string, string]> = [];
   const orderIdValue = order.id || order.razorpay_order_id;
   if (orderIdValue) orderInfoRows.push(['Order ID', String(orderIdValue)]);
-  if (order.service_title) orderInfoRows.push(['Package', String(order.service_title)]);
+  if (order.service_title) orderInfoRows.push(['Package', formatServiceDisplayName(order)]);
   const amountValue = order.total_amount ?? order.amount;
   if (amountValue !== undefined && amountValue !== null && amountValue !== '') {
     orderInfoRows.push(['Amount', `₹${Number(amountValue).toLocaleString('en-IN')}`]);
