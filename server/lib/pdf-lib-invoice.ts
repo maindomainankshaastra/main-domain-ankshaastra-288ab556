@@ -1,4 +1,3 @@
-
 // import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont } from 'pdf-lib';
 // import { loadInvoiceLogoBytes } from './invoice-logo.js';
 // import type { InvoiceTemplateData } from './templates/invoice-html.js';
@@ -390,6 +389,25 @@ function drawRightText(page: PDFPage, text: string, xRight: number, y: number, s
   page.drawText(text, { x: xRight - width, y, size, font, color });
 }
 
+// FIX (per client report 2026-08-09): the "Terms & Conditions" text saved
+// in GST Configuration is one continuous paragraph ("1. ... 2. ... 3.
+// ..."), not one line per clause. wrapLines() only breaks on existing
+// newlines (there aren't any) or at the character-width limit, so every
+// clause ran together into one flowing block instead of each numbered
+// point starting on its own line. This splits the paragraph into separate
+// clauses right before each clause number, so each one gets its own set of
+// wrapped lines below. Only breaks before a 1-2 digit number followed by
+// ". " and a capital letter — on purpose, so it doesn't also break in the
+// middle of an ordinary number inside a clause (e.g. the 6-digit SAC code
+// "999799." in clause 8, right before clause 9 — that "999799." is left
+// alone while the following "9. Customers..." still starts a new line).
+function splitNumberedClauses(text: string): string[] {
+  return sanitizePdfText(text)
+    .split(/\s*(?=\d{1,2}\.\s+[A-Z])/)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+}
+
 const MANDATORY_TERMS = [
   '1. Services provided by Ankshaastra Occult Experts LLP are digital consultation and advisory services in nature.',
   '2. Payment once made is non-refundable and non-transferable unless otherwise stated in writing by Ankshaastra Occult Experts LLP.',
@@ -575,10 +593,23 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   }
   drawTotal('Total', fmt(data.gst.grandTotal), true);
 
+  // FIX (per client report 2026-08-09): this line was hard-cut at 95
+  // characters (.slice(0, 95)) but drawn starting near the right-hand totals
+  // box (x = totalsX - 40), which only leaves ~210pt of page width — not
+  // enough room for a 95-character line at this font size, so long amounts
+  // (e.g. "INR Six Thousand, Six Hundred Ninety Four Rupees Only") ran off
+  // the right edge of the page instead of wrapping. Drawn from the left
+  // margin instead (nothing else occupies this row at this point — the
+  // totals block above it is already fully drawn) and wrapped by actual
+  // width instead of an arbitrary character cutoff, so it always stays on
+  // the page no matter how long the amount-in-words text is.
   if (data.amountInWords) {
     y -= 4;
-    page.drawText(sanitizePdfText(`Total amount (in words): ${data.amountInWords}`).slice(0, 95), { x: totalsX - 40, y, size: 7, font, color: gray });
-    y -= 14;
+    const wordsLine = sanitizePdfText(`Total amount (in words): ${data.amountInWords}`);
+    for (const wrapped of wrapLines(wordsLine, 100)) {
+      page.drawText(wrapped, { x: margin, y, size: 7, font, color: gray });
+      y -= 10;
+    }
   }
   page.drawText('Amount Paid', { x: totalsX, y, size: 9, font: fontBold, color: rgb(0.12, 0.48, 0.12) });
   y -= 30;
@@ -636,9 +667,8 @@ export async function generateInvoicePdfWithPdfLib(data: InvoiceTemplateData): P
   // Uses data.termsConditions from GST config when present (so it stays
   // editable from GST Configuration), falling back to the mandatory
   // clauses only if that config value is ever empty — never blank.
-  const termsSource = data.termsConditions
-    ? wrapLines(data.termsConditions, 130)
-    : MANDATORY_TERMS.flatMap((clause) => wrapLines(clause, 130));
+  const termsClauses = data.termsConditions ? splitNumberedClauses(data.termsConditions) : MANDATORY_TERMS;
+  const termsSource = termsClauses.flatMap((clause) => wrapLines(clause, 130));
 
   ensureSpace(24);
   page.drawText('Terms & Conditions', { x: margin, y, size: 9, font: fontBold, color: black });
