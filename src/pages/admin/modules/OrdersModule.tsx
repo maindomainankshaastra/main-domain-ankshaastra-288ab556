@@ -30,12 +30,10 @@
 //   DropdownMenu,
 //   DropdownMenuContent,
 //   DropdownMenuItem,
-//   DropdownMenuSeparator,
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 // import { toast } from "sonner";
-// import { FileText, Loader2, Eye, Trash2, MoreVertical, Download } from "lucide-react";
-// import { generateInvoiceForOrder } from "@/lib/invoice-admin";
+// import { Loader2, Eye, Trash2, MoreVertical, Download } from "lucide-react";
 // import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
 // import { cn } from "@/lib/utils";
 // import { exportRowsAsCsv } from "@/lib/csv-export";
@@ -103,9 +101,9 @@
 //   cancelled: "bg-slate-200 text-slate-600",
 // };
 
-// // Whether an order is in a paid/completed state — used both to decide if
-// // "Generate Invoice" should be offered, and to filter the list below so
-// // Orders & Bookings only ever shows orders that have actually been paid.
+// // Whether an order is in a paid/completed state — used to filter the list
+// // below so Orders & Bookings only ever shows orders that have actually been
+// // paid.
 // function isPaidStatus(status: string) {
 //   return status === "payment_received" || status === "completed" || status === "paid";
 // }
@@ -156,7 +154,6 @@
 
 // export default function OrdersModule() {
 //   const { rows, loading, reload } = useAdminTable<Order>("orders");
-//   const [generatingId, setGeneratingId] = useState<string | null>(null);
 //   const [siteFilter, setSiteFilter] = useState("all");
 //   const [search, setSearch] = useState("");
 //   const [searchParams, setSearchParams] = useSearchParams();
@@ -167,7 +164,7 @@
 //   // Deep-link support: Global Search sends ?open=<order id>. Instead of
 //   // auto-opening a read-only dialog, scroll to and briefly highlight that
 //   // exact row in the list, so the admin can use any action on it (View,
-//   // Generate Invoice, Delete) themselves — not just see a static popup.
+//   // Delete) themselves — not just see a static popup.
 //   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 //   useEffect(() => {
 //     const openId = searchParams.get("open");
@@ -268,23 +265,6 @@
 //     ]);
 //   };
 
-//   const runGenerateInvoice = async (orderId: string) => {
-//     setGeneratingId(orderId);
-//     try {
-//       const result = await generateInvoiceForOrder(orderId);
-//       toast.success(
-//         result.invoice_number
-//           ? `Invoice ${result.invoice_number} generated and emailed`
-//           : "Invoice generated and emailed",
-//       );
-//       reload();
-//     } catch (e: unknown) {
-//       toast.error(e instanceof Error ? e.message : "Failed to generate invoice");
-//     } finally {
-//       setGeneratingId(null);
-//     }
-//   };
-
 //   const confirmDeleteOrder = async () => {
 //     if (!deleteOrderId) return;
 //     setDeleting(true);
@@ -381,9 +361,11 @@
 //                 <Eye className="w-4 h-4" />
 //               </Button>
 
-//               {/* Less-frequent / destructive actions live behind a kebab menu so
-//                   Delete no longer sits at the same size and prominence as every
-//                   other action on the row. */}
+//               {/* Only action left behind the kebab menu is Delete —
+//                   "Generate Invoice" was removed from here. Invoice
+//                   creation now happens exclusively via Invoice Manager,
+//                   so there's one source of truth for invoice numbers and
+//                   GST/PDF generation instead of two entry points. */}
 //               <DropdownMenu>
 //                 <DropdownMenuTrigger asChild>
 //                   <Button
@@ -396,22 +378,6 @@
 //                   </Button>
 //                 </DropdownMenuTrigger>
 //                 <DropdownMenuContent align="end">
-//                   {isPaidStatus(o.status) && (
-//                     <>
-//                       <DropdownMenuItem
-//                         disabled={generatingId === o.id}
-//                         onClick={() => runGenerateInvoice(o.id)}
-//                       >
-//                         {generatingId === o.id ? (
-//                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-//                         ) : (
-//                           <FileText className="w-4 h-4 mr-2" />
-//                         )}
-//                         Generate Invoice
-//                       </DropdownMenuItem>
-//                       <DropdownMenuSeparator />
-//                     </>
-//                   )}
 //                   <DropdownMenuItem
 //                     onClick={() => setDeleteOrderId(o.id)}
 //                     className="text-destructive focus:text-destructive"
@@ -557,6 +523,7 @@
 //   );
 // }
 
+
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -594,6 +561,31 @@ import { Loader2, Eye, Trash2, MoreVertical, Download } from "lucide-react";
 import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
 import { cn } from "@/lib/utils";
 import { exportRowsAsCsv } from "@/lib/csv-export";
+
+// Writes one row to audit_logs for an Orders action. Callers `await` this so
+// the write is attempted before the success toast fires, but a failure here
+// must never block or throw into the calling action (the delete has already
+// succeeded by the time this runs).
+async function logAudit(actionType: string, targetId: string, targetName: string) {
+  try {
+    const { data } = await supabase.auth.getUser();
+    const actor = data.user;
+    const { error } = await supabase.from("audit_logs").insert({
+      user_id: actor?.id ?? null,
+      user_name: actor?.user_metadata?.full_name || actor?.email || null,
+      user_email: actor?.email ?? null,
+      action_type: actionType,
+      module: "orders",
+      record_id: targetId,
+      record_name: targetName,
+    });
+    if (error) {
+      console.warn("[audit-log] failed to write orders entry:", error.message);
+    }
+  } catch (err) {
+    console.warn("[audit-log] unexpected error writing orders entry:", err);
+  }
+}
 
 type Order = {
   id: string;
@@ -830,6 +822,7 @@ export default function OrdersModule() {
       if (error) {
         toast.error(error.message || "Failed to delete order");
       } else {
+        await logAudit("delete", deleteOrderId, deleteOrderId);
         toast.success("Order deleted successfully");
         reload();
       }
