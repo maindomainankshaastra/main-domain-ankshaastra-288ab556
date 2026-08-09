@@ -278,7 +278,7 @@ import {
 } from './indian-states.js';
 import { resolveGstConfigBillingTexts, resolveGstConfigExtras } from './gst-config-fields.js';
 import { getInvoiceLogoUrl } from './invoice-logo.js';
-import { getOrderFormRows } from './order-form-details.js';
+import { formatServiceDisplayName, getOrderFormRows } from './order-form-details.js';
 import type { InvoiceTemplateData } from './templates/invoice-html.js';
 
 type GstConfigRow = Record<string, unknown>;
@@ -450,7 +450,14 @@ export function buildInvoiceTemplateData(input: {
     year: 'numeric',
   });
 
-  const serviceTitle = String(order.service_title || 'Service');
+  // FIX (per client report 2026-08-09): this used to be the raw
+  // order.service_title, so whatever internal slug the source website
+  // happened to save (e.g. Empower's "premium"/"single" package codes)
+  // printed as-is in the "Item" column and the "Package" row — instead of
+  // a name the customer would recognize. formatServiceDisplayName() already
+  // existed for exactly this (it turns Empower's "namecheck-1" into "Name
+  // Check - 1", etc.) but was never actually wired in here. Now it is.
+  const serviceTitle = formatServiceDisplayName(order);
   const siteUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://ankshaastra.com').replace(/\/$/, '');
   const configExtras = resolveGstConfigExtras(gstConfig);
   const billingTexts = resolveGstConfigBillingTexts(gstConfig);
