@@ -1839,14 +1839,14 @@ function sectionTable(rows: FormRow[]): string {
   return rows
     .map((row) =>
       row.kind === 'section'
-        ? `<p style="margin:16px 0 6px;font-size:13px;font-weight:700;color:#4b77be;">${escapeHtml(row.title)}</p>`
-        : `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;"><strong style="color:#444;">${escapeHtml(row.label)}:</strong> ${escapeHtml(row.value)}</p>`,
+        ? `<p style="margin:10px 0 4px;font-size:13px;font-weight:700;color:#4b77be;">${escapeHtml(row.title)}</p>`
+        : `<p style="margin:0 0 4px;font-size:14px;line-height:1.5;"><strong style="color:#444;">${escapeHtml(row.label)}:</strong> ${escapeHtml(row.value)}</p>`,
     )
     .join('');
 }
 
 function sectionHeading(title: string): string {
-  return `<h3 style="margin:20px 0 8px;font-size:15px;color:#4b77be;border-bottom:1px solid #e5e7eb;padding-bottom:6px;">${escapeHtml(title)}</h3>`;
+  return `<h3 style="margin:14px 0 6px;font-size:15px;color:#4b77be;border-bottom:1px solid #e5e7eb;padding-bottom:6px;">${escapeHtml(title)}</h3>`;
 }
 
 // Splits Empower's combined "nameOptions" free-text field — which bundles
