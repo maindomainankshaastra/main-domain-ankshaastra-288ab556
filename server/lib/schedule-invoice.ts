@@ -61,5 +61,5 @@ export async function scheduleInvoiceGeneration(orderId: string, paymentId?: str
 
 export function buildInvoiceEmailSubject(serviceTitle: string, invoiceNumber: string): string {
   const service = serviceTitle.trim() || "Service";
-  return `Ankshaastra Payment ${service} ${invoiceNumber}`;
+  return `${service} ${invoiceNumber}`;
 }
