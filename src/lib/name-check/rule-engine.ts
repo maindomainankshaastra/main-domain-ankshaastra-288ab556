@@ -1,24 +1,30 @@
-
 /**
  * RULE ENGINE
  * 1. computeFacts() — runs all calculations once for a given input.
  * 2. matchRule() — priority-matches the computed facts against the 39
  *    HR/OA/NR rules and returns the one that applies.
  *
- * ⚠️ IMPORTANT — PRIORITY ORDER IS NOT CLIENT-CONFIRMED YET.
- * The docx does not specify what happens when a customer's data matches
- * more than one rule (e.g. Enemy relation AND Lo Shu repetition AND a bad
- * compound, all at once). The order below is OUR best-guess design:
- * most-specific / most-severe condition wins, checked before more general
- * ones. Treat this as a DRAFT for client review, not a final spec —
- * see the "PRIORITY DESIGN" comment block below for the reasoning, so it
- * can be reviewed rule-by-rule rather than accepted as a black box.
+ * CLIENT CONFIRMATIONS APPLIED HERE:
+ *  - Lo Shu over-amplification threshold: 2+ occurrences (already the default).
+ *  - Compound numbers > 100: reduced to a double-digit number before lookup
+ *    (see compound-table.ts).
+ *  - HR-16 "weak friendly" = friendly relation on number 2 or 7. Implemented.
+ *  - HR-20 "Rajyog Potential": client said SKIP — not implemented, never matched.
+ *  - HR-22 "powerful number" = Mulank, Bhagyank, First Name Number, and Full
+ *    Name Number all equal. Implemented.
+ *  - Restricted numbers (4/8/9) override every other rule — Tier 1 below.
+ *  - Client confirmed a real customer will only ever match ONE rule in
+ *    practice (no real-world overlaps), so the tiered order below is a
+ *    safety net rather than something actively relied upon — but it's kept
+ *    "most specific/severe first" regardless, as sane default behaviour.
+ *  - NR fallback should never trigger per client (NR only via the 4 defined
+ *    rules) — the fallback path still exists defensively but logs a warning
+ *    if hit, since that would mean a real, unexpected gap.
  *
- * Rules that depend on undefined criteria (HR-16 "weak", HR-20 "Rajyog
- * Potential", HR-22 "powerful number") are NOT matchable yet — matchRule()
- * will simply never select them until their conditions are implemented,
- * once client clarifies. They will currently fall through to whichever
- * rule is next in priority (e.g. plain OA-07 style compound rule).
+ * NOTE: HR-18 ("First Name Friendly + Full Name Friendly, same number
+ * repeating between the two names") was in the docx but missed in the first
+ * draft of this engine — it doesn't depend on any open question, so it's
+ * implemented here now too.
  */
 
 import { getRelation, type Relation } from "./friendship-table";
@@ -69,8 +75,27 @@ export function computeFacts(input: NameCheckInput): NameCheckFacts {
 
     firstNameEqualsMulank: firstNameNumber === mulank,
     fullNameEqualsBhagyank: fullNameNumber === bhagyank,
+
+    // CONFIRMED: weak friendly = friendly to both Mulank and Bhagyank, AND
+    // the name number itself is 2 or 7.
+    firstNameIsWeakFriendly:
+      getRelation(mulank, firstNameNumber) === "friendly" &&
+      getRelation(bhagyank, firstNameNumber) === "friendly" &&
+      WEAK_FRIENDLY_NUMBERS.includes(firstNameNumber),
+    fullNameIsWeakFriendly:
+      getRelation(mulank, fullNameNumber) === "friendly" &&
+      getRelation(bhagyank, fullNameNumber) === "friendly" &&
+      WEAK_FRIENDLY_NUMBERS.includes(fullNameNumber),
+
+    // CONFIRMED: powerful number = Mulank, Bhagyank, First Name Number and
+    // Full Name Number are all the same single number.
+    isPowerfulNumberMatch:
+      mulank === bhagyank && bhagyank === firstNameNumber && firstNameNumber === fullNameNumber,
   };
 }
+
+// CONFIRMED by client: weak friendly numbers are 2 and 7.
+const WEAK_FRIENDLY_NUMBERS = [2, 7];
 
 // Helper: relation code letter, F/N/E — mirrors comboKey() in content-blocks.ts
 function code(r: Relation): "F" | "N" | "E" {
@@ -157,6 +182,21 @@ export function matchRule(facts: NameCheckFacts): { ruleId: string; verdict: "HR
   if (comboCode === "F-N" && isGoodCompound(facts)) return { ruleId: "OA-06", verdict: "OA", isFallback: false };
   if (comboCode === "F-F" && isModerateCompound(facts)) return { ruleId: "OA-07", verdict: "OA", isFallback: false };
 
+  // --- Tier 4b: F-F combo special cases (powerful number, weak friendly, --
+  //              repeated number) — checked in this order: most specific
+  //              (powerful number + Lo Shu repetition) first, then weak
+  //              friendly, then plain same-number repetition. ------------
+  if (comboCode === "F-F" && facts.isPowerfulNumberMatch && (facts.firstNameOverAmplified || facts.fullNameOverAmplified)) {
+    return { ruleId: "HR-22", verdict: "HR", isFallback: false };
+  }
+  if (comboCode === "F-F" && facts.firstNameIsWeakFriendly && facts.fullNameIsWeakFriendly) {
+    return { ruleId: "HR-16", verdict: "HR", isFallback: false };
+  }
+  if (comboCode === "F-F" && facts.firstNameNumber === facts.fullNameNumber) {
+    return { ruleId: "HR-18", verdict: "HR", isFallback: false };
+  }
+  // HR-20 (Rajyog Potential) intentionally not implemented — client said skip.
+
   // --- Tier 5: plain Friendly/Neutral combos (OA-01 to OA-04) ---------------
   if (comboCode === "E-F") return { ruleId: "OA-01", verdict: "OA", isFallback: false };
   if (comboCode === "N-N") return { ruleId: "OA-02", verdict: "OA", isFallback: false };
@@ -187,11 +227,11 @@ export function matchRule(facts: NameCheckFacts): { ruleId: string; verdict: "HR
   if (comboCode === "F-F" && isConditionalCompound(facts)) return { ruleId: "NR-04", verdict: "NR", isFallback: false };
 
   // --- Fallback: nothing matched ---------------------------------------------
-  // This is the open "NR fallback" question from the client list — what to
-  // show when a genuinely clean case doesn't hit one of the 4 defined NR
-  // rules. Until confirmed, default to NR-02's text as the closest generic
-  // "no correction needed" message, but flag it as a fallback so it can be
-  // audited/reviewed rather than silently treated as a real match.
+  // CLIENT CONFIRMED this should never happen — NR only applies to the 4
+  // defined conditions above. If this path is ever hit in practice, it
+  // means a real, unaccounted-for combination exists and needs review —
+  // hence the console.warn in runNameCheck() below whenever isFallback is
+  // true. Defaulting to NR-02's text here purely as a non-crashing default.
   return { ruleId: "NR-02", verdict: "NR", isFallback: true };
 }
 
