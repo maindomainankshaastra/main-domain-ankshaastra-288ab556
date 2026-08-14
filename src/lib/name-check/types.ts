@@ -1,4 +1,3 @@
-
 /**
  * SHARED TYPES for the name-check engine.
  */
@@ -37,6 +36,14 @@ export interface NameCheckFacts {
 
   firstNameEqualsMulank: boolean;
   fullNameEqualsBhagyank: boolean;
+
+  // CONFIRMED by client: "weak friendly" = friendly relation on number 2 or 7.
+  firstNameIsWeakFriendly: boolean;
+  fullNameIsWeakFriendly: boolean;
+
+  // CONFIRMED by client: "powerful number" = Mulank, Bhagyank, First Name
+  // Number, and Full Name Number are ALL the same number.
+  isPowerfulNumberMatch: boolean;
 }
 
 export interface NameCheckResult {
