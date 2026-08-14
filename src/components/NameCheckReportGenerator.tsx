@@ -29,6 +29,10 @@
  */
 
 import { PDFDocument, PDFPage, PDFFont, StandardFonts, rgb, RGB } from "pdf-lib";
+import { runNameCheck } from "@/lib/name-check/rule-engine";
+import { chaldeanRawSum, getFullNameCompoundNumber } from "@/lib/name-check/numerology";
+import { FIRST_NAME_BLOCKS, FULL_NAME_BLOCKS, COMPOUND_BLOCKS, comboKey } from "@/lib/name-check/content-blocks";
+import { ALL_RULES } from "@/lib/name-check/hr-oa-nr-blocks";
 
 /* ------------------------------------------------------------------ */
 /*  Public data contract                                               */
@@ -71,52 +75,10 @@ const DEFAULT_BRAND: BrandConfig = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Chaldean Numerology engine                                         */
+/*  Numerology engine — now lives in src/lib/name-check/*              */
+/*  (friendship-table.ts, compound-table.ts, lo-shu.ts, numerology.ts, */
+/*  rule-engine.ts). Only name-splitting stays local to this file.     */
 /* ------------------------------------------------------------------ */
-
-const CHALDEAN_VALUES: Record<string, number> = {
-  A: 1, I: 1, J: 1, Q: 1, Y: 1,
-  B: 2, K: 2, R: 2,
-  C: 3, G: 3, L: 3, S: 3,
-  D: 4, M: 4, T: 4,
-  E: 5, H: 5, N: 5, X: 5,
-  U: 6, V: 6, W: 6,
-  O: 7, Z: 7,
-  F: 8, P: 8,
-};
-
-/** Chaldean reduces every total fully to a single digit — no Master Numbers retained. */
-function reduceToSingleDigit(value: number): number {
-  let n = Math.abs(value);
-  while (n > 9) {
-    n = String(n)
-      .split("")
-      .reduce((sum, d) => sum + parseInt(d, 10), 0);
-  }
-  return n;
-}
-
-/** Raw Chaldean letter-sum of a name (the "Compound Number"). */
-function computeChaldeanSum(name: string): number {
-  return name
-    .toUpperCase()
-    .split("")
-    .filter((ch) => CHALDEAN_VALUES[ch] !== undefined)
-    .reduce((sum, ch) => sum + CHALDEAN_VALUES[ch], 0);
-}
-
-/** Mulank — reduced day of birth. */
-function computeMulank(dob: Date): number {
-  return reduceToSingleDigit(dob.getDate());
-}
-
-/** Bhagyank — reduced sum of every digit in the full date of birth. */
-function computeBhagyank(dob: Date): number {
-  const digits = `${dob.getDate()}${dob.getMonth() + 1}${dob.getFullYear()}`
-    .split("")
-    .reduce((sum, d) => sum + parseInt(d, 10), 0);
-  return reduceToSingleDigit(digits);
-}
 
 /** Splits a full name into first / middle / last, best-effort. */
 function splitName(fullName: string): { first: string; middle: string; last: string } {
@@ -126,19 +88,6 @@ function splitName(fullName: string): { first: string; middle: string; last: str
   if (parts.length === 2) return { first: parts[0], middle: "", last: parts[1] };
   return { first: parts[0], middle: parts.slice(1, -1).join(" "), last: parts[parts.length - 1] };
 }
-
-function relationToCore(nameNumber: number, mulank: number, bhagyank: number): "friendly" | "neutral" | "unfriendly" {
-  // Simplified compatibility heuristic: same number or adjacent-cycle number = friendly,
-  // opposite-parity distant number = unfriendly, else neutral.
-  const diffMulank = Math.abs(nameNumber - mulank);
-  const diffBhagyank = Math.abs(nameNumber - bhagyank);
-  if (nameNumber === mulank || nameNumber === bhagyank) return "friendly";
-  if (diffMulank <= 1 || diffBhagyank <= 1) return "friendly";
-  if (diffMulank >= 5 && diffBhagyank >= 5) return "unfriendly";
-  return "neutral";
-}
-
-const RESTRICTED_NUMBERS = new Set([8]); // Saturn-governed, per client template's "8 is restricted" logic
 
 const NUMBER_KEYWORDS: Record<number, string> = {
   1: "leadership, independence and pioneering drive, governed by the Sun",
@@ -776,31 +725,35 @@ function drawCurrentNameBreakdownPage(
   });
 }
 
+const VERDICT_LABEL: Record<"HR" | "OA" | "NR", string> = {
+  HR: "Highly Recommended",
+  OA: "Optional / Advisable",
+  NR: "Not Required",
+};
+
+/**
+ * Renders the actual matched HR/OA/NR rule (from src/lib/name-check/rule-engine.ts
+ * + hr-oa-nr-blocks.ts) — replaces the old hardcoded "restricted number only" logic.
+ */
 function drawWhyCriticalPage(
   page: PDFPage,
   fonts: Fonts,
   data: Required<NameCheckReportInput>,
-  numbers: { fullNameNumber: number },
+  matched: { ruleId: string; verdict: "HR" | "OA" | "NR"; isFallback: boolean },
   pageNumber: number,
   totalPages: number
 ) {
   drawPageChrome(page, fonts, { title: "Current Name Breakdown", subtitle: "Why This Is Critical", pageNumber, totalPages, brand: data.brand });
 
-  const isRestricted = RESTRICTED_NUMBERS.has(numbers.fullNameNumber);
+  const rule = ALL_RULES.find((r) => r.id === matched.ruleId);
   let y = PAGE_HEIGHT - 150;
 
   drawMaroonBanner(page, fonts, "Why This Is Critical", 44, y, PAGE_WIDTH - 88);
   y -= 44;
 
-  const bullets = isRestricted
-    ? [
-        `Your full name vibrates on Number ${numbers.fullNameNumber}, governed by Saturn — whose restrictive energy consistently brings delays, burdens and slow progress, regardless of the combination with your core numbers.`,
-        `Carrying Number ${numbers.fullNameNumber} in the name activates Saturn's heavy energy daily, creating a cumulative weight that makes consistent forward movement feel disproportionately difficult over time.`,
-      ]
-    : [
-        `Your full name vibrates on Number ${numbers.fullNameNumber} — ${NUMBER_KEYWORDS[numbers.fullNameNumber] ?? "a distinctive individual energy"}.`,
-        `This vibration interacts with your core Mulank and Bhagyank numbers daily, subtly shaping how consistently opportunities are met with follow-through.`,
-      ];
+  const bullets = rule?.paragraphs ?? [
+    "Name correction guidance could not be determined for this combination — please review this report manually before sending it to the customer.",
+  ];
 
   y = drawBulletList(page, bullets, {
     x: 54,
@@ -814,19 +767,15 @@ function drawWhyCriticalPage(
   });
 
   y -= 20;
-  const verdict = isRestricted
-    ? `Name correction is highly recommended. Number ${numbers.fullNameNumber} is a restricted vibration for both first name and full name without exception. Correction to a lighter, supportive number is essential.`
-    : `Your current name carries a workable vibration. Periodic review is still recommended as life circumstances evolve, to confirm continued alignment with your core numbers.`;
+  const verdictLabel = `${VERDICT_LABEL[matched.verdict]}${matched.isFallback ? " (fallback — review recommended)" : ""}`;
 
-  const boxHeight = 90;
+  const boxHeight = 60;
   page.drawRectangle({ x: 44, y: y - boxHeight, width: PAGE_WIDTH - 88, height: boxHeight, color: COLOR.maroon });
-  drawWrappedText(page, verdict, {
-    x: 60,
-    y: y - 24,
+  page.drawText(verdictLabel, {
+    x: 44 + (PAGE_WIDTH - 88) / 2 - fonts.sansBold.widthOfTextAtSize(verdictLabel, 13) / 2,
+    y: y - boxHeight / 2 - 5,
+    size: 13,
     font: fonts.sansBold,
-    size: 11,
-    maxWidth: PAGE_WIDTH - 88 - 32,
-    lineHeight: 16,
     color: COLOR.white,
   });
 }
@@ -915,69 +864,11 @@ function drawContactPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRe
 }
 
 /* ------------------------------------------------------------------ */
-/*  "What This Represents" copy generators                             */
+/*  "What This Represents" copy — now sourced verbatim from             */
+/*  src/lib/name-check/content-blocks.ts (client's exact wording),      */
+/*  looked up via FIRST_NAME_BLOCKS / FULL_NAME_BLOCKS / COMPOUND_BLOCKS*/
+/*  directly inside generateNameCheckReportPdf() below.                */
 /* ------------------------------------------------------------------ */
-
-function firstNameRepresents(relation: "friendly" | "neutral" | "unfriendly", nameNumber: number): string[] {
-  if (relation === "friendly") {
-    return [
-      `Your first name is supportive of your core numbers — it actively reinforces the energy of your Mulank and Bhagyank.`,
-      `This alignment tends to smooth day-to-day self-expression and how quickly others warm to you.`,
-      `No correction is required at the first-name level; the current spelling is working in your favour.`,
-    ];
-  }
-  if (relation === "unfriendly") {
-    return [
-      `Your first name works against your core numbers — it introduces friction with both your Mulank and Bhagyank.`,
-      `This can show up as recurring small obstacles in self-expression, first impressions and everyday confidence.`,
-      `A correction to a name Friendly to both your Mulank and Bhagyank would meaningfully ease this tension.`,
-    ];
-  }
-  return [
-    `Your first name neither supports nor conflicts with either your Mulank or Bhagyank — it sits in a completely neutral position with respect to both core numbers.`,
-    `The name is not causing active harm, but it also provides no vibrational uplift, support or amplification — you are moving without the benefit of a name that energetically works in your favour.`,
-    `Upgrading to a name Friendly to both your Mulank and Bhagyank would introduce meaningful positive energy that is currently entirely absent.`,
-  ];
-}
-
-function fullNameRepresents(relation: "friendly" | "neutral" | "unfriendly"): string[] {
-  if (relation === "friendly") {
-    return [
-      `Your full name is actively supportive at the most consequential level of your chart — reinforcing both your Mulank and your Bhagyank.`,
-      `Career, finances, long-term relationships and life path benefit from a name that is energetically working alongside you.`,
-      `This is a strong foundation; periodic review is still worthwhile as life circumstances evolve.`,
-    ];
-  }
-  if (relation === "unfriendly") {
-    return [
-      `Your full name works against the most consequential level of your chart — creating friction with both your Mulank and your Bhagyank.`,
-      `Career, finances, long-term relationships and life path may feel disproportionately effortful under this combination.`,
-      `Correcting to a Friendly full name would meaningfully improve the quality and consistency of long-term outcomes across the most important areas of life.`,
-    ];
-  }
-  return [
-    `Your full name is silent at the most consequential level of your chart — providing no active energy, support or amplification to either your Mulank or your Bhagyank.`,
-    `Career, finances, long-term relationships and life path are navigated without the benefit of a name that is energetically working alongside you — stable yet consistently unsupported.`,
-    `Upgrading to a Friendly full name would meaningfully improve the quality and consistency of long-term outcomes across the most important areas of life.`,
-  ];
-}
-
-function compoundRepresents(isAuspicious: boolean): string[] {
-  if (isAuspicious) {
-    return [
-      `Your name carries a Favourable Compound Number, supporting steady, positive undertones beneath the surface of the name.`,
-      `This background vibration continues to gently support experiences, relationships, decision-making and long-term outcomes.`,
-      `No correction is required at the compound level.`,
-    ];
-  }
-  return [
-    `Your name carries an Unfavourable Compound Number that introduces hidden challenges, karmic lessons or recurring patterns of instability beneath the surface of the name.`,
-    `This background vibration continues to influence experiences, relationships, decision-making and long-term outcomes, even when other aspects of the name appear favourable.`,
-    `Even if the Base Name Number is Friendly and well-aligned, an unfavourable compound acts as a hidden limiting factor. Correcting it allows the name to function with greater harmony, consistency and its full positive potential.`,
-  ];
-}
-
-const AUSPICIOUS_COMPOUNDS = new Set([1, 3, 5, 6, 15, 24, 33, 41, 51]);
 
 /* ------------------------------------------------------------------ */
 /*  Main entry point                                                    */
@@ -995,20 +886,30 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   };
 
   const dobDate = new Date(data.dob);
-  const mulank = computeMulank(dobDate);
-  const bhagyank = computeBhagyank(dobDate);
-
-  const firstNameSum = computeChaldeanSum(data.firstName);
-  const firstNameNumber = reduceToSingleDigit(firstNameSum);
-
   const fullName = `${data.firstName} ${data.lastName}`.trim();
-  const fullNameSum = computeChaldeanSum(fullName);
-  const fullNameNumber = reduceToSingleDigit(fullNameSum);
-  const fullNameCompound = fullNameSum; // un-reduced, per client template
 
-  const firstNameRelation = relationToCore(firstNameNumber, mulank, bhagyank);
-  const fullNameRelation = relationToCore(fullNameNumber, mulank, bhagyank);
-  const compoundIsAuspicious = AUSPICIOUS_COMPOUNDS.has(fullNameCompound) || AUSPICIOUS_COMPOUNDS.has(reduceToSingleDigit(fullNameCompound));
+  const { facts, verdict, matchedRuleId, isFallback } = runNameCheck({
+    dob: { day: dobDate.getDate(), month: dobDate.getMonth() + 1, year: dobDate.getFullYear() },
+    firstName: data.firstName,
+    fullName,
+  });
+
+  if (isFallback) {
+    console.warn(
+      `Name Check PDF: rule engine hit FALLBACK for "${data.customerName}" (report ${data.reportId}) — ` +
+        `matched ${matchedRuleId} by default. Recommend manual review before sending to customer.`
+    );
+  }
+
+  const mulank = facts.mulank;
+  const bhagyank = facts.bhagyank;
+  const firstNameNumber = facts.firstNameNumber;
+  const firstNameSum = chaldeanRawSum(data.firstName); // raw total, for display on the breakdown page
+  const fullNameNumber = facts.fullNameNumber;
+  const fullNameSum = getFullNameCompoundNumber(fullName); // raw total, same as fullNameCompound below
+  const fullNameCompound = facts.fullNameCompoundNumber;
+
+  const compoundTier = facts.compoundTier; // "excellent" | "good" | "neutral" | "conditional" | "avoid"
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.setTitle(`Name Check Report - ${data.customerName}`);
@@ -1051,7 +952,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
       nameValue: data.firstName,
       total: firstNameSum,
       reducedTo: firstNameNumber,
-      bullets: firstNameRepresents(firstNameRelation, firstNameNumber),
+      bullets: FIRST_NAME_BLOCKS[comboKey(facts.firstNameToMulank, facts.firstNameToBhagyank)],
     },
     8,
     TOTAL_PAGES
@@ -1067,7 +968,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
       nameValue: fullName,
       total: fullNameSum,
       reducedTo: fullNameNumber,
-      bullets: fullNameRepresents(fullNameRelation),
+      bullets: FULL_NAME_BLOCKS[comboKey(facts.fullNameToMulank, facts.fullNameToBhagyank)],
     },
     9,
     TOTAL_PAGES
@@ -1082,13 +983,13 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
       nameLabel: "First Name",
       nameValue: fullName,
       total: fullNameCompound,
-      bullets: compoundRepresents(compoundIsAuspicious),
+      bullets: COMPOUND_BLOCKS[compoundTier],
     },
     10,
     TOTAL_PAGES
   );
-  // 11. Why This Is Critical
-  drawWhyCriticalPage(addPage(), fonts, data, { fullNameNumber }, 11, TOTAL_PAGES);
+  // 11. Why This Is Critical — now shows the actual matched HR/OA/NR rule
+  drawWhyCriticalPage(addPage(), fonts, data, { ruleId: matchedRuleId, verdict, isFallback }, 11, TOTAL_PAGES);
   // 12. Services / Contact
   drawServicesPage(addPage(), fonts, data, 12, TOTAL_PAGES);
 
@@ -1115,13 +1016,11 @@ export function nameCheckReportPdfToBlob(bytes: Uint8Array): Blob {
 
 // Exported for reuse/testing elsewhere in the app (e.g. showing a live
 // preview of the computed numbers before the PDF is generated).
+// Core calculations now live in src/lib/name-check/* — re-exported here
+// only for convenience/backwards-compatibility with existing call sites.
+export { runNameCheck } from "@/lib/name-check/rule-engine";
+export { chaldeanRawSum, getFullNameCompoundNumber } from "@/lib/name-check/numerology";
 export const numerology = {
-  reduceToSingleDigit,
-  computeChaldeanSum,
-  computeMulank,
-  computeBhagyank,
   splitName,
-  relationToCore,
-  CHALDEAN_VALUES,
   NUMBER_KEYWORDS,
 };
