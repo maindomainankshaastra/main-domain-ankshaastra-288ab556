@@ -1,4 +1,3 @@
-
 /**
  * HR / OA / NR RULE TEXT BLOCKS
  * Exact wording transcribed from the client's "Name Check Output" doc,
@@ -10,13 +9,20 @@
  * matching logic in rule-engine.ts will need to check for. The condition
  * is NOT auto-evaluated here; this file is text + metadata only.
  *
- * OPEN QUESTIONS not yet answered by client (see rule-engine.ts for where
- * these matter):
- *  - HR-16 "Friendly & Weak" — what makes a friendly number "weak" vs "strong"?
- *  - HR-20 "Rajyog Potential" — exact trigger condition undefined.
- *  - HR-22 "Powerful Number" — definition undefined.
- *  - Priority order when multiple rules match the same customer.
- *  - Fallback text/verdict when a case doesn't match any of the 4 NR rules.
+ * CLIENT CONFIRMATIONS (received):
+ *  - HR-16 "weak friendly" = friendly relation on number 2 or 7.
+ *  - HR-20 "Rajyog Potential" — client said SKIP this rule for now, not implemented.
+ *  - HR-22 "powerful number" = Mulank, Bhagyank, First Name Number, and
+ *    Full Name Number are all the same number.
+ *  - Priority order: client confirmed a single customer will only ever
+ *    match ONE rule in practice (conditions don't overlap in real data),
+ *    so the tiered priority order in rule-engine.ts is a safety net only.
+ *  - NR fallback: client confirmed this should never trigger — NR only
+ *    applies to exactly these 4 defined conditions. rule-engine.ts still
+ *    has a defensive fallback, but it logs a warning if hit since that
+ *    would indicate a genuine gap worth investigating.
+ *  - Restricted numbers (4/8/9): CONFIRMED to override every other rule —
+ *    already implemented as Tier 1 (checked first) in rule-engine.ts.
  */
 
 export type Verdict = "HR" | "OA" | "NR";
@@ -186,7 +192,7 @@ export const HR_RULES: RuleBlock[] = [
   {
     id: "HR-16",
     verdict: "HR",
-    conditionLabel: "First Name (Friendly & Weak) + Full Name (Friendly & Weak) — [needs client definition of 'weak']",
+    conditionLabel: "First Name (Friendly & Weak) + Full Name (Friendly & Weak) — CONFIRMED: weak friendly = number 2 or 7",
     paragraphs: [
       "Your first name and full name both vibrate on friendly numbers, so there is no direct conflict with your core birth energies present anywhere in the chart.",
       "However, the planetary energies these numbers carry are among the weaker expressions of compatibility, so friendly doesn't always translate into genuinely powerful vibrational support for you.",
@@ -226,7 +232,7 @@ export const HR_RULES: RuleBlock[] = [
   {
     id: "HR-20",
     verdict: "HR",
-    conditionLabel: "First Name (Friendly) + Full Name (Friendly, Rajyog Potential) — [needs client definition of 'Rajyog Potential']",
+    conditionLabel: "First Name (Friendly) + Full Name (Friendly, Rajyog Potential) — SKIPPED per client instruction, not matched by rule-engine.ts",
     paragraphs: [
       "Your first name vibrates on a friendly number aligned with your birth energies, and your full name also carries a friendly vibration, a stable, supportive nameprint overall.",
       "However, the full name number holds the potential to form a Rajyog combination, one of the most powerful configurations in numerology, built for accelerated growth and success.",
@@ -246,7 +252,7 @@ export const HR_RULES: RuleBlock[] = [
   {
     id: "HR-22",
     verdict: "HR",
-    conditionLabel: "First Name & Full Name Friendly on the Same Powerful Number, Repeating in Lo Shu — [needs client definition of 'powerful number']",
+    conditionLabel: "First Name & Full Name Friendly on the Same Powerful Number, Repeating in Lo Shu — CONFIRMED: 'powerful number' = Mulank, Bhagyank, First Name Number and Full Name Number all equal",
     paragraphs: [
       "Your first name and full name both vibrate on the same powerful Friendly number, which is a genuinely strong foundation for your chart on its own merit.",
       "However, this exact planetary energy already repeats more than twice in your Lo Shu Grid, pushing an otherwise strong number into over-amplification and overall chart imbalance.",
