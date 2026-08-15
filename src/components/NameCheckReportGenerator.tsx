@@ -110,12 +110,12 @@ const PAGE_WIDTH = 595.28; // A4 portrait, points
 const PAGE_HEIGHT = 841.89;
 
 const COLOR = {
-  blush: rgb(0.976, 0.933, 0.925), // pale rose page background
+  blush: rgb(0.988, 0.945, 0.925), // pale rose page background — sampled directly from the reference PDF
   blushPanel: rgb(0.965, 0.902, 0.89), // slightly deeper rose panel fill
-  maroon: rgb(0.545, 0.161, 0.176), // primary brand maroon/red
-  maroonDark: rgb(0.42, 0.11, 0.13),
-  ink: rgb(0.2, 0.13, 0.13),
-  muted: rgb(0.5, 0.4, 0.4),
+  maroon: rgb(0.686, 0.271, 0.259), // primary brand maroon — exact match, sampled from reference (RGB 175,69,66)
+  maroonDark: rgb(0.6, 0.22, 0.21),
+  ink: rgb(0.686, 0.271, 0.259), // body text — the reference uses the SAME maroon for body copy, not a neutral black/gray
+  muted: rgb(0.62, 0.42, 0.4),
   white: rgb(1, 1, 1),
   cream: rgb(0.99, 0.97, 0.95),
   green: rgb(0.15, 0.45, 0.2),
@@ -139,7 +139,7 @@ const ASSET_PATHS = {
   logo: "/name-check-assets/logo-ankshaastra.png",
   loshuGrid: "/name-check-assets/loshu-turtle-grid.png",
   starIcon: "/name-check-assets/star-icon.png",
-  handsPraying: "/name-check-assets/praying-hands.png",
+  handsPraying: "/name-check-assets/hands-praying.png",
   fonts: {
     quicksandRegular: "/name-check-assets/fonts/Quicksand-Regular.ttf",
     quicksandBold: "/name-check-assets/fonts/Quicksand-Bold.ttf",
@@ -346,9 +346,11 @@ function drawWrappedTextCentered(
 
 /** Small 4-point sparkle/star glyph, drawn with two crossed diamonds (used in the centered title divider). */
 function drawStarGlyph(page: PDFPage, cx: number, cy: number, r: number, color: RGB) {
-  page.drawSvgPath(`M ${cx} ${cy - r} L ${cx + r * 0.32} ${cy - r * 0.32} L ${cx + r} ${cy} L ${cx + r * 0.32} ${cy + r * 0.32} L ${cx} ${cy + r} L ${cx - r * 0.32} ${cy + r * 0.32} L ${cx - r} ${cy} L ${cx - r * 0.32} ${cy - r * 0.32} Z`, {
-    color,
-  });
+  // Path built in LOCAL coordinates (0..2r, y-down) then offset via x/y — drawSvgPath treats
+  // path coordinates as relative to the given origin, so passing absolute page coordinates
+  // straight into the path string (with no x/y offset) was placing this off-page/invisible.
+  const path = `M ${r} 0 L ${r * 1.32} ${r * 0.68} L ${r * 2} ${r} L ${r * 1.32} ${r * 1.32} L ${r} ${r * 2} L ${r * 0.68} ${r * 1.32} L 0 ${r} L ${r * 0.68} ${r * 0.68} Z`;
+  page.drawSvgPath(path, { x: cx - r, y: cy + r, color });
 }
 
 /**
@@ -516,71 +518,52 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
 
   const centerX = PAGE_WIDTH / 2;
 
-  // Logo (real wordmark image, replaces the old text-drawn brand name)
-  const logoDims = assets.logo.scale(0.42);
-  page.drawImage(assets.logo, {
-    x: centerX - logoDims.width / 2,
-    y: PAGE_HEIGHT - 70 - logoDims.height,
-    width: logoDims.width,
-    height: logoDims.height,
-  });
+  // Logo (real wordmark image) — sized to a fixed TARGET width, not a raw scale factor.
+  // (A raw .scale(0.42) on the native asset pixel size was the bug that made the cover
+  // page's Loshu grid balloon to nearly the full page and overlap the title text below it.)
+  const LOGO_TARGET_WIDTH = 210;
+  const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
+  const logoDims = assets.logo.scale(logoScale);
+  let y = PAGE_HEIGHT - 66;
+  page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: y - logoDims.height, width: logoDims.width, height: logoDims.height });
+  y -= logoDims.height + 60;
 
-  // Real turtle-grid illustration (static template graphic, matches client's cover exactly)
-  const gridDims = assets.loshuGrid.scale(0.62);
-  page.drawImage(assets.loshuGrid, {
-    x: centerX - gridDims.width / 2,
-    y: PAGE_HEIGHT - 300 - gridDims.height,
-    width: gridDims.width,
-    height: gridDims.height,
-  });
+  // Real turtle-grid illustration, also sized to a fixed target width.
+  const GRID_TARGET_WIDTH = 230;
+  const gridScale = GRID_TARGET_WIDTH / assets.loshuGrid.width;
+  const gridDims = assets.loshuGrid.scale(gridScale);
+  page.drawImage(assets.loshuGrid, { x: centerX - gridDims.width / 2, y: y - gridDims.height, width: gridDims.width, height: gridDims.height });
+  y -= gridDims.height + 56;
 
   page.drawText("NAME CHECK", {
     x: centerX - fonts.heading.widthOfTextAtSize("NAME CHECK", 30) / 2,
-    y: PAGE_HEIGHT - 480,
+    y,
     size: 30,
     font: fonts.heading,
     color: COLOR.maroon,
   });
+  y -= 38;
   page.drawText("REPORT", {
     x: centerX - fonts.heading.widthOfTextAtSize("REPORT", 30) / 2,
-    y: PAGE_HEIGHT - 518,
+    y,
     size: 30,
     font: fonts.heading,
     color: COLOR.maroon,
   });
+  y -= 46;
 
   const nameStr = data.customerName.toUpperCase();
   page.drawText(nameStr, {
     x: centerX - fonts.heading.widthOfTextAtSize(nameStr, 18) / 2,
-    y: PAGE_HEIGHT - 565,
+    y,
     size: 18,
     font: fonts.heading,
     color: COLOR.maroonDark,
   });
-  page.drawLine({
-    start: { x: centerX - 60, y: PAGE_HEIGHT - 558 },
-    end: { x: centerX + 60, y: PAGE_HEIGHT - 558 },
-    thickness: 1,
-    color: COLOR.maroon,
-  });
+  y -= 14;
+  page.drawLine({ start: { x: centerX - 60, y }, end: { x: centerX + 60, y }, thickness: 1, color: COLOR.maroon });
 
-  // Website pill at the bottom
-  const pill = `WWW.${data.brand.website.replace(/^www\./i, "").toUpperCase()}`;
-  const pillWidth = fonts.sansBold.widthOfTextAtSize(pill, 10) + 40;
-  page.drawRectangle({
-    x: centerX - pillWidth / 2,
-    y: 70,
-    width: pillWidth,
-    height: 26,
-    color: COLOR.maroon,
-  });
-  page.drawText(pill, {
-    x: centerX - fonts.sansBold.widthOfTextAtSize(pill, 10) / 2,
-    y: 79,
-    size: 10,
-    font: fonts.sansBold,
-    color: COLOR.white,
-  });
+  drawFooterPill(page, fonts, data.brand);
 }
 
 function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
@@ -1097,24 +1080,20 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   const colGap = 16;
   const colWidth = (PAGE_WIDTH - 88 - colGap) / 2;
   const colTop = dividerY - 30;
-  const colBottom = 105;
-  const colHeight = colTop - colBottom;
 
   offers.forEach((offer, i) => {
     const cx = 44 + i * (colWidth + colGap);
-    drawRoundedRect(page, { x: cx, y: colBottom, width: colWidth, height: colHeight, radius: 18, borderColor: COLOR.maroon, borderWidth: 1 });
 
-    // Price pill straddling the top edge
-    const priceWidth = fonts.heading.widthOfTextAtSize(offer.price, 19) + 44;
+    // Price pill straddling the top edge. The rupee sign (₹) isn't present in the Cinzel
+    // Decorative font file, so it's drawn separately with Quicksand (which does have it)
+    // and the numeral stays in the heading font — otherwise the ₹ silently disappears.
+    const priceDigits = offer.price.replace(/^\D*/, "");
+    const rupeeSize = 17;
+    const digitsSize = 19;
+    const rupeeWidth = fonts.sansBold.widthOfTextAtSize("₹", rupeeSize);
+    const digitsWidth = fonts.heading.widthOfTextAtSize(priceDigits, digitsSize);
+    const priceWidth = rupeeWidth + digitsWidth + 50;
     const priceH = 40;
-    drawRoundedRect(page, { x: cx + colWidth / 2 - priceWidth / 2, y: colTop - priceH / 2, width: priceWidth, height: priceH, radius: priceH / 2, color: COLOR.maroon });
-    page.drawText(offer.price, {
-      x: cx + colWidth / 2 - fonts.heading.widthOfTextAtSize(offer.price, 19) / 2,
-      y: colTop - priceH / 2 + 13,
-      size: 19,
-      font: fonts.heading,
-      color: COLOR.white,
-    });
 
     let iy = colTop - priceH - 22;
     const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, 10);
@@ -1128,14 +1107,16 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     page.drawLine({ start: { x: cx + colWidth / 2 - 46, y: iy }, end: { x: cx + colWidth / 2 + 46, y: iy }, thickness: 0.75, color: COLOR.maroon });
     iy -= 22;
 
+    const bulletTextX = 44; // offset from the row's left edge (cx + 14) to where text starts
     offer.bullets.forEach((b) => {
-      const lines = wrapText(b, fonts.sans, 9, colWidth - 56);
+      const textWidth = colWidth - 28 - bulletTextX - 14; // row width minus text-start offset minus right padding
+      const lines = wrapText(b, fonts.sans, 9, textWidth);
       const rowH = 22 + Math.max(0, lines.length - 1) * 12;
       drawRoundedRect(page, { x: cx + 14, y: iy - rowH, width: colWidth - 28, height: rowH, radius: 12, borderColor: COLOR.maroon, borderWidth: 0.75 });
       page.drawCircle({ x: cx + 14 + 20, y: iy - rowH / 2, size: 13, color: COLOR.maroon });
       let ty = iy - rowH / 2 + (lines.length - 1) * 6 + 3;
       lines.forEach((line) => {
-        page.drawText(line, { x: cx + 14 + 44, y: ty, size: 9, font: fonts.sans, color: COLOR.maroonDark });
+        page.drawText(line, { x: cx + 14 + bulletTextX, y: ty, size: 9, font: fonts.sans, color: COLOR.maroonDark });
         ty -= 12;
       });
       iy -= rowH + 8;
@@ -1147,8 +1128,18 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
       iy -= 12;
     });
 
+    // Button + card border both hug the content that was just measured out above —
+    // no more big empty gap at the bottom of the card like the previous fixed-height version.
+    iy -= 6; // small buffer so the button never overlaps the last note line's descender
     const btnH = 34;
-    const btnY = colBottom + 14;
+    const btnY = iy - 20;
+    const cardBottom = btnY - 14;
+    drawRoundedRect(page, { x: cx, y: cardBottom, width: colWidth, height: colTop - cardBottom, radius: 18, borderColor: COLOR.maroon, borderWidth: 1 });
+    drawRoundedRect(page, { x: cx + colWidth / 2 - priceWidth / 2, y: colTop - priceH / 2, width: priceWidth, height: priceH, radius: priceH / 2, color: COLOR.maroon });
+    const priceStartX = cx + colWidth / 2 - (rupeeWidth + digitsWidth) / 2;
+    page.drawText("₹", { x: priceStartX, y: colTop - priceH / 2 + 14, size: rupeeSize, font: fonts.sansBold, color: COLOR.white });
+    page.drawText(priceDigits, { x: priceStartX + rupeeWidth, y: colTop - priceH / 2 + 13, size: digitsSize, font: fonts.heading, color: COLOR.white });
+
     drawRoundedRect(page, { x: cx + 12, y: btnY, width: colWidth - 24, height: btnH, radius: btnH / 2, color: COLOR.maroon });
     const btnLabel = "CLICK NOW";
     page.drawText(btnLabel, {
@@ -1179,11 +1170,13 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 
   const platforms = ["IG", "in", "YT", "f"];
   const colXs = [centerX - 155, centerX + 155];
-  const rowYs = [PAGE_HEIGHT - 330, PAGE_HEIGHT - 480];
+  const rowYs = [PAGE_HEIGHT - 300, PAGE_HEIGHT - 430];
   let idx = 0;
   rowYs.forEach((ry) => {
     colXs.forEach((cx) => {
       const label = platforms[idx++];
+      // Outlined circle (maroon ring, pale fill) with the platform initials in maroon —
+      // matches the reference's icon-badge style more closely than a solid-fill circle.
       page.drawCircle({ x: cx, y: ry, size: 34, borderColor: COLOR.maroon, borderWidth: 1.5 });
       page.drawText(label, { x: cx - fonts.sansBold.widthOfTextAtSize(label, 13) / 2, y: ry - 5, size: 13, font: fonts.sansBold, color: COLOR.maroon });
       const btnW = 96;
@@ -1194,7 +1187,7 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     });
   });
 
-  const closingY = PAGE_HEIGHT - 590;
+  const closingY = PAGE_HEIGHT - 500;
   ["STAY CONNECTED FOR", "ONGOING GUIDANCE & SUPPORT"].forEach((line, i) => {
     page.drawText(line, { x: centerX - fonts.sansBold.widthOfTextAtSize(line, 13) / 2, y: closingY - i * 20, size: 13, font: fonts.sansBold, color: COLOR.maroonDark });
   });
@@ -1319,7 +1312,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     quote: await pdfDoc.embedFont(cardoRegularBytes),
   };
 
-  const TOTAL_PAGES = 12;
+  const TOTAL_PAGES = 15;
   const addPage = () => pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
   // 1. Cover
@@ -1388,8 +1381,14 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   );
   // 11. Why This Is Critical — now shows the actual matched HR/OA/NR rule
   drawWhyCriticalPage(addPage(), fonts, assets, data, { ruleId: matchedRuleId, verdict, isFallback }, 11, TOTAL_PAGES);
-  // 12. Services / Contact
-  drawServicesPage(addPage(), fonts, assets, data, 12, TOTAL_PAGES);
+  // 12. Pricing / upsell offers
+  drawPricingPage(addPage(), fonts, assets, data, 12, TOTAL_PAGES);
+  // 13. Connect With Me (social)
+  drawConnectPage(addPage(), fonts, assets, data, 13, TOTAL_PAGES);
+  // 14. Services Offered
+  drawServicesPage(addPage(), fonts, assets, data, 14, TOTAL_PAGES);
+  // 15. Back cover
+  drawBackCoverPage(addPage(), fonts, assets, data);
 
   return pdfDoc.save();
 }
