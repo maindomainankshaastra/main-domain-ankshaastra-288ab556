@@ -526,24 +526,27 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   });
 
   // Real turtle-grid illustration (static template graphic, matches client's cover exactly)
+// Real turtle-grid illustration (static template graphic, matches client's cover exactly)
   const gridDims = assets.loshuGrid.scale(0.62);
+  const gridTopY = PAGE_HEIGHT - 230; // top edge of the grid image
+  const gridBottomY = gridTopY - gridDims.height; // bottom edge — everything below is placed relative to THIS
   page.drawImage(assets.loshuGrid, {
     x: centerX - gridDims.width / 2,
-    y: PAGE_HEIGHT - 300 - gridDims.height,
+    y: gridBottomY,
     width: gridDims.width,
     height: gridDims.height,
   });
 
   page.drawText("NAME CHECK", {
     x: centerX - fonts.heading.widthOfTextAtSize("NAME CHECK", 30) / 2,
-    y: PAGE_HEIGHT - 480,
+    y: gridBottomY - 55,
     size: 30,
     font: fonts.heading,
     color: COLOR.maroon,
   });
   page.drawText("REPORT", {
     x: centerX - fonts.heading.widthOfTextAtSize("REPORT", 30) / 2,
-    y: PAGE_HEIGHT - 518,
+    y: gridBottomY - 95,
     size: 30,
     font: fonts.heading,
     color: COLOR.maroon,
@@ -552,18 +555,17 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   const nameStr = data.customerName.toUpperCase();
   page.drawText(nameStr, {
     x: centerX - fonts.heading.widthOfTextAtSize(nameStr, 18) / 2,
-    y: PAGE_HEIGHT - 565,
+    y: gridBottomY - 145,
     size: 18,
     font: fonts.heading,
     color: COLOR.maroonDark,
   });
   page.drawLine({
-    start: { x: centerX - 60, y: PAGE_HEIGHT - 558 },
-    end: { x: centerX + 60, y: PAGE_HEIGHT - 558 },
+    start: { x: centerX - 60, y: gridBottomY - 162 },
+    end: { x: centerX + 60, y: gridBottomY - 162 },
     thickness: 1,
     color: COLOR.maroon,
   });
-
   // Website pill at the bottom
   const pill = `WWW.${data.brand.website.replace(/^www\./i, "").toUpperCase()}`;
   const pillWidth = fonts.sansBold.widthOfTextAtSize(pill, 10) + 40;
