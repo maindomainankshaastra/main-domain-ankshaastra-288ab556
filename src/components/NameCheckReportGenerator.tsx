@@ -29,6 +29,7 @@
  */
 
 import { PDFDocument, PDFPage, PDFFont, StandardFonts, rgb, RGB } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import { runNameCheck } from "@/lib/name-check/rule-engine";
 import { chaldeanRawSum, getFullNameCompoundNumber } from "@/lib/name-check/numerology";
 import { FIRST_NAME_BLOCKS, FULL_NAME_BLOCKS, COMPOUND_BLOCKS, comboKey } from "@/lib/name-check/content-blocks";
@@ -122,10 +123,39 @@ const COLOR = {
 };
 
 interface Fonts {
-  serif: PDFFont;
-  serifBold: PDFFont;
-  sans: PDFFont;
-  sansBold: PDFFont;
+  sans: PDFFont; // Quicksand Regular — all body text, labels, bullets
+  sansBold: PDFFont; // Quicksand Bold — bold labels, table headers, banners
+  heading: PDFFont; // Cinzel Decorative Bold — big decorative section/report titles
+  quote: PDFFont; // Cardo Regular — italic-style welcome message quote only
+}
+
+/**
+ * Design assets extracted from the client's reference PDF (Bindhu Sree Reddy
+ * sample). Must be uploaded to the project's /public folder at these exact
+ * paths — see design-assets/ handoff for the source files.
+ */
+const ASSET_PATHS = {
+  background: "/name-check-assets/background-border.png",
+  logo: "/name-check-assets/logo-ankshaastra.png",
+  loshuGrid: "/name-check-assets/loshu-turtle-grid.png",
+  starIcon: "/name-check-assets/star-icon.png",
+  fonts: {
+    quicksandRegular: "/name-check-assets/fonts/Quicksand-Regular.ttf",
+    quicksandBold: "/name-check-assets/fonts/Quicksand-Bold.ttf",
+    cinzelDecorativeBold: "/name-check-assets/fonts/CinzelDecorative-Bold.ttf",
+    cardoRegular: "/name-check-assets/fonts/Cardo-Regular.ttf",
+    // NotoSans-Regular.ttf is fetched too but currently unused directly —
+    // reserved as a fallback for any glyph Quicksand/Cardo don't cover.
+  },
+};
+
+/** Fetches a static asset from /public and returns its raw bytes. */
+async function fetchAssetBytes(path: string): Promise<Uint8Array> {
+  const res = await fetch(path);
+  if (!res.ok) {
+    throw new Error(`Name Check PDF: failed to fetch design asset "${path}" (${res.status}). Check it was uploaded to /public${path}.`);
+  }
+  return new Uint8Array(await res.arrayBuffer());
 }
 
 /* ------------------------------------------------------------------ */
@@ -187,6 +217,18 @@ function drawBulletList(
   return y;
 }
 
+interface Assets {
+  background: import("pdf-lib").PDFImage;
+  logo: import("pdf-lib").PDFImage;
+  loshuGrid: import("pdf-lib").PDFImage;
+  starIcon: import("pdf-lib").PDFImage;
+}
+
+/** Draws the real background/border image full-bleed — replaces the old flat COLOR.blush + drawFrame(). */
+function drawPageBackground(page: PDFPage, assets: Assets) {
+  page.drawImage(assets.background, { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT });
+}
+
 function drawFrame(page: PDFPage) {
   const inset = 16;
   page.drawRectangle({
@@ -211,32 +253,36 @@ function drawMaroonBanner(page: PDFPage, fonts: Fonts, text: string, x: number, 
   });
 }
 
-/** Standard page chrome: blush background, maroon frame, header title, footer. */
+/** Standard page chrome: real background image, small logo, header title, footer. */
 function drawPageChrome(
   page: PDFPage,
   fonts: Fonts,
+  assets: Assets,
   opts: { title: string; subtitle?: string; pageNumber: number; totalPages: number; brand: BrandConfig }
 ) {
-  page.drawRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: COLOR.blush });
-  drawFrame(page);
+  drawPageBackground(page, assets);
+
+  // Small logo, top-left, on every interior page (matches client's repeated header treatment)
+  const logoDims = assets.logo.scale(0.16);
+  page.drawImage(assets.logo, { x: 44, y: PAGE_HEIGHT - 44 - logoDims.height, width: logoDims.width, height: logoDims.height });
 
   page.drawText(opts.title, {
     x: 44,
-    y: PAGE_HEIGHT - 80,
-    size: 22,
-    font: fonts.serifBold,
+    y: PAGE_HEIGHT - 80 - logoDims.height,
+    size: 20,
+    font: fonts.heading,
     color: COLOR.maroon,
   });
   page.drawLine({
-    start: { x: 44, y: PAGE_HEIGHT - 92 },
-    end: { x: 44 + 70, y: PAGE_HEIGHT - 92 },
+    start: { x: 44, y: PAGE_HEIGHT - 92 - logoDims.height },
+    end: { x: 44 + 70, y: PAGE_HEIGHT - 92 - logoDims.height },
     thickness: 1.5,
     color: COLOR.maroon,
   });
   if (opts.subtitle) {
     page.drawText(opts.subtitle, {
       x: 44,
-      y: PAGE_HEIGHT - 108,
+      y: PAGE_HEIGHT - 108 - logoDims.height,
       size: 10.5,
       font: fonts.sans,
       color: COLOR.muted,
@@ -293,7 +339,7 @@ function drawDataTable(
       x: opts.x + opts.width / 2 + 12,
       y: y - rowHeight / 2 - 4,
       size: 11,
-      font: fonts.serif,
+      font: fonts.sans,
       color: COLOR.ink,
     });
     // Divider between label/value columns
@@ -332,10 +378,10 @@ function drawLoshuGrid(page: PDFPage, fonts: Fonts, centerX: number, topY: numbe
       });
       const s = String(val);
       page.drawText(s, {
-        x: cx + cellSize / 2 - fonts.serifBold.widthOfTextAtSize(s, 20) / 2,
+        x: cx + cellSize / 2 - fonts.sansBold.widthOfTextAtSize(s, 20) / 2,
         y: cy - cellSize / 2 - 7,
         size: 20,
-        font: fonts.serifBold,
+        font: fonts.sansBold,
         color: COLOR.maroon,
       });
     });
@@ -352,50 +398,50 @@ function formatDate(iso: string): string {
 /*  Page builders                                                       */
 /* ------------------------------------------------------------------ */
 
-function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>) {
-  page.drawRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: COLOR.blush });
-  drawFrame(page);
+function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, assets: Assets) {
+  drawPageBackground(page, assets);
 
   const centerX = PAGE_WIDTH / 2;
 
-  page.drawText(data.brand.companyName.toUpperCase(), {
-    x: centerX - fonts.serifBold.widthOfTextAtSize(data.brand.companyName.toUpperCase(), 30) / 2,
-    y: PAGE_HEIGHT - 110,
-    size: 30,
-    font: fonts.serifBold,
-    color: COLOR.maroon,
-  });
-  page.drawText(data.brand.tagline.toUpperCase(), {
-    x: centerX - fonts.sansBold.widthOfTextAtSize(data.brand.tagline.toUpperCase(), 10) / 2,
-    y: PAGE_HEIGHT - 128,
-    size: 10,
-    font: fonts.sansBold,
-    color: COLOR.muted,
+  // Logo (real wordmark image, replaces the old text-drawn brand name)
+  const logoDims = assets.logo.scale(0.42);
+  page.drawImage(assets.logo, {
+    x: centerX - logoDims.width / 2,
+    y: PAGE_HEIGHT - 70 - logoDims.height,
+    width: logoDims.width,
+    height: logoDims.height,
   });
 
-  drawLoshuGrid(page, fonts, centerX, PAGE_HEIGHT - 220, 46);
+  // Real turtle-grid illustration (static template graphic, matches client's cover exactly)
+  const gridDims = assets.loshuGrid.scale(0.62);
+  page.drawImage(assets.loshuGrid, {
+    x: centerX - gridDims.width / 2,
+    y: PAGE_HEIGHT - 300 - gridDims.height,
+    width: gridDims.width,
+    height: gridDims.height,
+  });
 
   page.drawText("NAME CHECK", {
-    x: centerX - fonts.serifBold.widthOfTextAtSize("NAME CHECK", 32) / 2,
-    y: PAGE_HEIGHT - 460,
-    size: 32,
-    font: fonts.serifBold,
+    x: centerX - fonts.heading.widthOfTextAtSize("NAME CHECK", 30) / 2,
+    y: PAGE_HEIGHT - 480,
+    size: 30,
+    font: fonts.heading,
     color: COLOR.maroon,
   });
   page.drawText("REPORT", {
-    x: centerX - fonts.serifBold.widthOfTextAtSize("REPORT", 32) / 2,
-    y: PAGE_HEIGHT - 498,
-    size: 32,
-    font: fonts.serifBold,
+    x: centerX - fonts.heading.widthOfTextAtSize("REPORT", 30) / 2,
+    y: PAGE_HEIGHT - 518,
+    size: 30,
+    font: fonts.heading,
     color: COLOR.maroon,
   });
 
   const nameStr = data.customerName.toUpperCase();
   page.drawText(nameStr, {
-    x: centerX - fonts.serifBold.widthOfTextAtSize(nameStr, 20) / 2,
-    y: PAGE_HEIGHT - 545,
-    size: 20,
-    font: fonts.serifBold,
+    x: centerX - fonts.heading.widthOfTextAtSize(nameStr, 18) / 2,
+    y: PAGE_HEIGHT - 565,
+    size: 18,
+    font: fonts.heading,
     color: COLOR.maroonDark,
   });
   page.drawLine({
@@ -424,8 +470,8 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   });
 }
 
-function drawIndexPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, { title: "Index", pageNumber, totalPages, brand: data.brand });
+function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+  drawPageChrome(page, fonts, assets, { title: "Index", pageNumber, totalPages, brand: data.brand });
 
   const rows: { no: string; title: string; items: string[] }[] = [
     { no: "01", title: "Personal Information &\nIntroduction", items: ["Your Personal Profile", "Welcome Message"] },
@@ -474,10 +520,10 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
       color: COLOR.maroon,
     });
     page.drawText(row.no, {
-      x: tableX + numColW / 2 - fonts.serifBold.widthOfTextAtSize(row.no, 24) / 2,
+      x: tableX + numColW / 2 - fonts.sansBold.widthOfTextAtSize(row.no, 24) / 2,
       y: y - rowHeight / 2 - 8,
       size: 24,
-      font: fonts.serifBold,
+      font: fonts.sansBold,
       color: COLOR.maroon,
     });
     let titleY = y - 24;
@@ -500,8 +546,8 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   });
 }
 
-function drawWelcomePage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, { title: `"Namaskar ${data.firstName || data.customerName} Ji"`, pageNumber, totalPages, brand: data.brand });
+function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+  drawPageChrome(page, fonts, assets, { title: `"Namaskar ${data.firstName || data.customerName} Ji"`, pageNumber, totalPages, brand: data.brand });
 
   let y = PAGE_HEIGHT - 150;
   const message = `"This personalised Name Check Report has been prepared after careful analysis of your birth date and current name by celebrity Astro-Numerologist ${data.brand.numerologistName}. The name analysis is rooted in the approach of Chaldean Numerology and the Loshu Grid. The purpose of this report is to identify how the cosmic energies influencing your life align with your current name. Please approach these insights with faith, consistency and pure intention. May this guide illuminate your path towards prosperity, peace and spiritual growth."`;
@@ -509,7 +555,7 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRe
   y = drawWrappedText(page, message, {
     x: 54,
     y,
-    font: fonts.serif,
+    font: fonts.quote,
     size: 12,
     maxWidth: PAGE_WIDTH - 108,
     lineHeight: 19,
@@ -520,10 +566,10 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRe
   page.drawCircle({ x: PAGE_WIDTH / 2, y: y - 40, size: 48, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
   const namasteText = "Namaste";
   page.drawText(namasteText, {
-    x: PAGE_WIDTH / 2 - fonts.serifBold.widthOfTextAtSize(namasteText, 13) / 2,
+    x: PAGE_WIDTH / 2 - fonts.sansBold.widthOfTextAtSize(namasteText, 13) / 2,
     y: y - 45,
     size: 13,
-    font: fonts.serifBold,
+    font: fonts.sansBold,
     color: COLOR.maroon,
   });
 }
@@ -531,12 +577,13 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRe
 function drawBlueprintPage(
   page: PDFPage,
   fonts: Fonts,
+  assets: Assets,
   data: Required<NameCheckReportInput>,
   numbers: { mulank: number; bhagyank: number; firstNameNumber: number; fullNameNumber: number; fullNameCompound: number },
   pageNumber: number,
   totalPages: number
 ) {
-  drawPageChrome(page, fonts, { title: "Numerological Blueprint", pageNumber, totalPages, brand: data.brand });
+  drawPageChrome(page, fonts, assets, { title: "Numerological Blueprint", pageNumber, totalPages, brand: data.brand });
 
   drawMaroonBanner(page, fonts, "Personal Information", 44, PAGE_HEIGHT - 140, PAGE_WIDTH - 88);
 
@@ -556,8 +603,8 @@ function drawBlueprintPage(
   drawDataTable(page, fonts, rows, { x: 44, y: PAGE_HEIGHT - 150, width: PAGE_WIDTH - 88, rowHeight: 30 });
 }
 
-function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, { title: "The Science of Name Numbers", pageNumber, totalPages, brand: data.brand });
+function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+  drawPageChrome(page, fonts, assets, { title: "The Science of Name Numbers", pageNumber, totalPages, brand: data.brand });
 
   let y = PAGE_HEIGHT - 140;
   drawMaroonBanner(page, fonts, "What Is Name Numerology", 44, y, PAGE_WIDTH - 88);
@@ -565,7 +612,7 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, data: Required<Name
   y = drawWrappedText(
     page,
     "Every letter in the alphabet carries a specific numeric vibration. When combined, the letters of a name create unique energy patterns that influence:",
-    { x: 54, y, font: fonts.serif, size: 11, maxWidth: PAGE_WIDTH - 108, lineHeight: 15, color: COLOR.ink }
+    { x: 54, y, font: fonts.sans, size: 11, maxWidth: PAGE_WIDTH - 108, lineHeight: 15, color: COLOR.ink }
   );
   y -= 8;
   y = drawBulletList(
@@ -578,7 +625,7 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, data: Required<Name
       "Mental and emotional patterns",
       "Life challenges and lessons",
     ],
-    { x: 54, y, font: fonts.serif, size: 11, maxWidth: PAGE_WIDTH - 108, lineHeight: 15, gap: 4, color: COLOR.ink }
+    { x: 54, y, font: fonts.sans, size: 11, maxWidth: PAGE_WIDTH - 108, lineHeight: 15, gap: 4, color: COLOR.ink }
   );
 
   y -= 30;
@@ -587,12 +634,12 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, data: Required<Name
   drawWrappedText(
     page,
     "You hear and respond to your name thousands of times throughout life. Each utterance reinforces the vibrational pattern, making your name a constant affirmation — positive or negative — depending on its alignment with your destiny.",
-    { x: 54, y, font: fonts.serif, size: 11, maxWidth: PAGE_WIDTH - 108, lineHeight: 15, color: COLOR.ink }
+    { x: 54, y, font: fonts.sans, size: 11, maxWidth: PAGE_WIDTH - 108, lineHeight: 15, color: COLOR.ink }
   );
 }
 
-function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, { title: "Numerological Systems Used", pageNumber, totalPages, brand: data.brand });
+function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+  drawPageChrome(page, fonts, assets, { title: "Numerological Systems Used", pageNumber, totalPages, brand: data.brand });
 
   let y = PAGE_HEIGHT - 140;
   drawMaroonBanner(page, fonts, "Chaldean Numerology", 44, y, PAGE_WIDTH - 88);
@@ -604,7 +651,7 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, data: Required<Name
       "Values run 1 to 8 (9 is considered sacred and is never assigned to a letter).",
       "Focuses on the sound vibration and energy of each letter, rather than its position in the alphabet.",
     ],
-    { x: 54, y, font: fonts.serif, size: 10.5, maxWidth: PAGE_WIDTH - 108, lineHeight: 14, gap: 6, color: COLOR.ink }
+    { x: 54, y, font: fonts.sans, size: 10.5, maxWidth: PAGE_WIDTH - 108, lineHeight: 14, gap: 6, color: COLOR.ink }
   );
 
   y -= 26;
@@ -638,10 +685,10 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, data: Required<Name
     });
     const numStr = String(num);
     page.drawText(numStr, {
-      x: cx + (colWidth - 8) / 2 - fonts.serifBold.widthOfTextAtSize(numStr, 22) / 2,
+      x: cx + (colWidth - 8) / 2 - fonts.sansBold.widthOfTextAtSize(numStr, 22) / 2,
       y: cy - 34,
       size: 22,
-      font: fonts.serifBold,
+      font: fonts.sansBold,
       color: COLOR.maroon,
     });
     page.drawText(letters, {
@@ -654,8 +701,8 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, data: Required<Name
   });
 }
 
-function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, { title: "What We'll Analyze", pageNumber, totalPages, brand: data.brand });
+function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+  drawPageChrome(page, fonts, assets, { title: "What We'll Analyze", pageNumber, totalPages, brand: data.brand });
 
   let y = PAGE_HEIGHT - 150;
   const items = [
@@ -667,7 +714,7 @@ function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, data: Required<Nam
   drawBulletList(page, items, {
     x: 54,
     y,
-    font: fonts.serif,
+    font: fonts.sans,
     size: 11.5,
     maxWidth: PAGE_WIDTH - 108,
     lineHeight: 16,
@@ -679,6 +726,7 @@ function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, data: Required<Nam
 function drawCurrentNameBreakdownPage(
   page: PDFPage,
   fonts: Fonts,
+  assets: Assets,
   data: Required<NameCheckReportInput>,
   opts: {
     heading: string;
@@ -691,7 +739,7 @@ function drawCurrentNameBreakdownPage(
   pageNumber: number,
   totalPages: number
 ) {
-  drawPageChrome(page, fonts, { title: "Current Name Breakdown", subtitle: opts.heading, pageNumber, totalPages, brand: data.brand });
+  drawPageChrome(page, fonts, assets, { title: "Current Name Breakdown", subtitle: opts.heading, pageNumber, totalPages, brand: data.brand });
 
   let y = PAGE_HEIGHT - 150;
   const tableRows: [string, string][] = [[opts.nameLabel, opts.nameValue]];
@@ -703,10 +751,10 @@ function drawCurrentNameBreakdownPage(
     : `Total: ${opts.total}`;
   page.drawRectangle({ x: 44, y: y - 32, width: PAGE_WIDTH - 88, height: 32, color: COLOR.blushPanel, borderColor: rgb(0.86, 0.76, 0.74), borderWidth: 0.5 });
   page.drawText(summaryRow, {
-    x: 44 + (PAGE_WIDTH - 88) / 2 - fonts.serifBold.widthOfTextAtSize(summaryRow, 12) / 2,
+    x: 44 + (PAGE_WIDTH - 88) / 2 - fonts.sansBold.widthOfTextAtSize(summaryRow, 12) / 2,
     y: y - 20,
     size: 12,
-    font: fonts.serifBold,
+    font: fonts.sansBold,
     color: COLOR.maroonDark,
   });
   y -= 60;
@@ -716,7 +764,7 @@ function drawCurrentNameBreakdownPage(
   drawBulletList(page, opts.bullets, {
     x: 54,
     y,
-    font: fonts.serif,
+    font: fonts.sans,
     size: 10.5,
     maxWidth: PAGE_WIDTH - 108,
     lineHeight: 14.5,
@@ -738,12 +786,13 @@ const VERDICT_LABEL: Record<"HR" | "OA" | "NR", string> = {
 function drawWhyCriticalPage(
   page: PDFPage,
   fonts: Fonts,
+  assets: Assets,
   data: Required<NameCheckReportInput>,
   matched: { ruleId: string; verdict: "HR" | "OA" | "NR"; isFallback: boolean },
   pageNumber: number,
   totalPages: number
 ) {
-  drawPageChrome(page, fonts, { title: "Current Name Breakdown", subtitle: "Why This Is Critical", pageNumber, totalPages, brand: data.brand });
+  drawPageChrome(page, fonts, assets, { title: "Current Name Breakdown", subtitle: "Why This Is Critical", pageNumber, totalPages, brand: data.brand });
 
   const rule = ALL_RULES.find((r) => r.id === matched.ruleId);
   let y = PAGE_HEIGHT - 150;
@@ -758,7 +807,7 @@ function drawWhyCriticalPage(
   y = drawBulletList(page, bullets, {
     x: 54,
     y,
-    font: fonts.serif,
+    font: fonts.sans,
     size: 11,
     maxWidth: PAGE_WIDTH - 108,
     lineHeight: 15.5,
@@ -780,8 +829,8 @@ function drawWhyCriticalPage(
   });
 }
 
-function drawServicesPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, { title: "Services Offered", subtitle: "Illuminating Lives Through Ancient Wisdom", pageNumber, totalPages, brand: data.brand });
+function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+  drawPageChrome(page, fonts, assets, { title: "Services Offered", subtitle: "Illuminating Lives Through Ancient Wisdom", pageNumber, totalPages, brand: data.brand });
 
   const services = [
     "Complete Numerology Analysis",
@@ -800,7 +849,7 @@ function drawServicesPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckR
   drawBulletList(page, services, {
     x: 60,
     y: PAGE_HEIGHT - 150,
-    font: fonts.serif,
+    font: fonts.sans,
     size: 11.5,
     maxWidth: PAGE_WIDTH - 120,
     lineHeight: 16,
@@ -816,10 +865,10 @@ function drawContactPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRe
   const centerX = PAGE_WIDTH / 2;
 
   page.drawText(data.brand.companyName.toUpperCase(), {
-    x: centerX - fonts.serifBold.widthOfTextAtSize(data.brand.companyName.toUpperCase(), 30) / 2,
+    x: centerX - fonts.sansBold.widthOfTextAtSize(data.brand.companyName.toUpperCase(), 30) / 2,
     y: PAGE_HEIGHT - 340,
     size: 30,
-    font: fonts.serifBold,
+    font: fonts.sansBold,
     color: COLOR.maroon,
   });
   page.drawText(data.brand.tagline.toUpperCase(), {
@@ -917,34 +966,58 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   pdfDoc.setProducer(data.brand.companyName);
   pdfDoc.setCreator(data.brand.companyName);
 
+  // Custom TTF embedding requires fontkit to be registered first.
+  pdfDoc.registerFontkit(fontkit);
+
+  // Fetch all design assets (images + fonts) from /public in parallel.
+  const [backgroundBytes, logoBytes, loshuGridBytes, starIconBytes, quicksandRegularBytes, quicksandBoldBytes, cinzelDecorativeBoldBytes, cardoRegularBytes] =
+    await Promise.all([
+      fetchAssetBytes(ASSET_PATHS.background),
+      fetchAssetBytes(ASSET_PATHS.logo),
+      fetchAssetBytes(ASSET_PATHS.loshuGrid),
+      fetchAssetBytes(ASSET_PATHS.starIcon),
+      fetchAssetBytes(ASSET_PATHS.fonts.quicksandRegular),
+      fetchAssetBytes(ASSET_PATHS.fonts.quicksandBold),
+      fetchAssetBytes(ASSET_PATHS.fonts.cinzelDecorativeBold),
+      fetchAssetBytes(ASSET_PATHS.fonts.cardoRegular),
+    ]);
+
+  const assets: Assets = {
+    background: await pdfDoc.embedPng(backgroundBytes),
+    logo: await pdfDoc.embedPng(logoBytes),
+    loshuGrid: await pdfDoc.embedPng(loshuGridBytes),
+    starIcon: await pdfDoc.embedPng(starIconBytes),
+  };
+
   const fonts: Fonts = {
-    serif: await pdfDoc.embedFont(StandardFonts.TimesRoman),
-    serifBold: await pdfDoc.embedFont(StandardFonts.TimesRomanBold),
-    sans: await pdfDoc.embedFont(StandardFonts.Helvetica),
-    sansBold: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+    sans: await pdfDoc.embedFont(quicksandRegularBytes),
+    sansBold: await pdfDoc.embedFont(quicksandBoldBytes),
+    heading: await pdfDoc.embedFont(cinzelDecorativeBoldBytes),
+    quote: await pdfDoc.embedFont(cardoRegularBytes),
   };
 
   const TOTAL_PAGES = 12;
   const addPage = () => pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
   // 1. Cover
-  drawCoverPage(addPage(), fonts, data);
+  drawCoverPage(addPage(), fonts, data, assets);
   // 2. Index
-  drawIndexPage(addPage(), fonts, data, 2, TOTAL_PAGES);
+  drawIndexPage(addPage(), fonts, assets, data, 2, TOTAL_PAGES);
   // 3. Welcome message
-  drawWelcomePage(addPage(), fonts, data, 3, TOTAL_PAGES);
+  drawWelcomePage(addPage(), fonts, assets, data, 3, TOTAL_PAGES);
   // 4. Numerological Blueprint
-  drawBlueprintPage(addPage(), fonts, data, { mulank, bhagyank, firstNameNumber, fullNameNumber, fullNameCompound }, 4, TOTAL_PAGES);
+  drawBlueprintPage(addPage(), fonts, assets, data, { mulank, bhagyank, firstNameNumber, fullNameNumber, fullNameCompound }, 4, TOTAL_PAGES);
   // 5. Science of Name Numbers
-  drawScienceOfNamesPage(addPage(), fonts, data, 5, TOTAL_PAGES);
+  drawScienceOfNamesPage(addPage(), fonts, assets, data, 5, TOTAL_PAGES);
   // 6. Chaldean System + Chart
-  drawChaldeanSystemPage(addPage(), fonts, data, 6, TOTAL_PAGES);
+  drawChaldeanSystemPage(addPage(), fonts, assets, data, 6, TOTAL_PAGES);
   // 7. What We'll Analyze
-  drawWhatWellAnalyzePage(addPage(), fonts, data, 7, TOTAL_PAGES);
+  drawWhatWellAnalyzePage(addPage(), fonts, assets, data, 7, TOTAL_PAGES);
   // 8. Current Name Breakdown — First Name Number
   drawCurrentNameBreakdownPage(
     addPage(),
     fonts,
+    assets,
     data,
     {
       heading: "First Name Number",
@@ -961,6 +1034,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   drawCurrentNameBreakdownPage(
     addPage(),
     fonts,
+    assets,
     data,
     {
       heading: "Full Name Number",
@@ -977,6 +1051,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   drawCurrentNameBreakdownPage(
     addPage(),
     fonts,
+    assets,
     data,
     {
       heading: "Full Name Compound Number",
@@ -989,9 +1064,9 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     TOTAL_PAGES
   );
   // 11. Why This Is Critical — now shows the actual matched HR/OA/NR rule
-  drawWhyCriticalPage(addPage(), fonts, data, { ruleId: matchedRuleId, verdict, isFallback }, 11, TOTAL_PAGES);
+  drawWhyCriticalPage(addPage(), fonts, assets, data, { ruleId: matchedRuleId, verdict, isFallback }, 11, TOTAL_PAGES);
   // 12. Services / Contact
-  drawServicesPage(addPage(), fonts, data, 12, TOTAL_PAGES);
+  drawServicesPage(addPage(), fonts, assets, data, 12, TOTAL_PAGES);
 
   return pdfDoc.save();
 }
