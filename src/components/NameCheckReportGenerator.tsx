@@ -1393,7 +1393,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   pdfDoc.registerFontkit(fontkit);
 
   // Fetch all design assets (images + fonts) from /public in parallel.
-  const [
+ const [
     backgroundBytes,
     logoBytes,
     loshuGridBytes,
@@ -1403,6 +1403,8 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     socialLinkedinBytes,
     socialYoutubeBytes,
     socialFacebookBytes,
+    offerIconPenBytes,
+    offerIconDigitsBytes,
     quicksandRegularBytes,
     quicksandBoldBytes,
     cinzelDecorativeBoldBytes,
@@ -1417,6 +1419,8 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     fetchAssetBytes(ASSET_PATHS.socialLinkedin),
     fetchAssetBytes(ASSET_PATHS.socialYoutube),
     fetchAssetBytes(ASSET_PATHS.socialFacebook),
+    fetchAssetBytes(ASSET_PATHS.offerIconPen),
+    fetchAssetBytes(ASSET_PATHS.offerIconDigits),
     fetchAssetBytes(ASSET_PATHS.fonts.quicksandRegular),
     fetchAssetBytes(ASSET_PATHS.fonts.quicksandBold),
     fetchAssetBytes(ASSET_PATHS.fonts.cinzelDecorativeBold),
@@ -1433,6 +1437,8 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     socialLinkedin: await pdfDoc.embedPng(socialLinkedinBytes),
     socialYoutube: await pdfDoc.embedPng(socialYoutubeBytes),
     socialFacebook: await pdfDoc.embedPng(socialFacebookBytes),
+    offerIconPen: await pdfDoc.embedPng(offerIconPenBytes),
+    offerIconDigits: await pdfDoc.embedPng(offerIconDigitsBytes),
   };
 
   const fonts: Fonts = {
