@@ -2,29 +2,11 @@
  * NameCheckReportGenerator.tsx
  * -----------------------------------------------------------------------
  * Ankshaastra-branded Name Check Report PDF generator.
- *
- * Rebuilt to match the client-supplied "Ankshaastra — Empower Your Name"
- * template: Chaldean Numerology (not Pythagorean), Mulank / Bhagyank /
- * First Name Number / Full Name Number / Full Name Compound Number, and
- * the same page-by-page structure and rose/maroon branding as the
- * reference PDF. Built on pdf-lib only — runs in the browser (admin
+ * Built on pdf-lib + @pdf-lib/fontkit. Runs in the browser (admin
  * "Generate PDF" action) or in a Supabase Edge Function / Node script.
  *
  * Install:
- *   npm install pdf-lib
- *
- * Usage (unchanged from before — same public API):
- *   import { generateNameCheckReportPdf, nameCheckReportPdfToBlob } from "@/components/NameCheckReportGenerator";
- *
- *   const bytes = await generateNameCheckReportPdf({
- *     reportId: report.report_id,
- *     customerName: report.customer_name,   // "Vivaan Amey Madye" — auto split into first/middle/last
- *     email: report.email,
- *     phone: report.phone,
- *     dob: report.dob,
- *     gender: report.gender,
- *     generatedDate: new Date().toISOString(),
- *   });
+ *   npm install pdf-lib @pdf-lib/fontkit
  * -----------------------------------------------------------------------
  */
 
@@ -44,16 +26,12 @@ export interface NameCheckReportInput {
   customerName: string;
   email: string;
   phone: string;
-  /** ISO date string, e.g. "2016-08-25" */
   dob: string;
   gender: string;
-  /** ISO datetime string. Defaults to "now" if omitted. */
   generatedDate?: string;
-  /** Optional explicit name-parts override (else auto-split from customerName). */
   firstName?: string;
   middleName?: string;
   lastName?: string;
-  /** Optional branding overrides. */
   brand?: Partial<BrandConfig>;
 }
 
@@ -74,12 +52,6 @@ const DEFAULT_BRAND: BrandConfig = {
   phone: "+91 98765 43210",
   website: "www.ankshaastra.com",
 };
-
-/* ------------------------------------------------------------------ */
-/*  Numerology engine — now lives in src/lib/name-check/*              */
-/*  (friendship-table.ts, compound-table.ts, lo-shu.ts, numerology.ts, */
-/*  rule-engine.ts). Only name-splitting stays local to this file.     */
-/* ------------------------------------------------------------------ */
 
 /** Splits a full name into first / middle / last, best-effort. */
 function splitName(fullName: string): { first: string; middle: string; last: string } {
@@ -102,19 +74,15 @@ const NUMBER_KEYWORDS: Record<number, string> = {
   9: "compassion, courage and humanitarian drive, governed by Mars",
 };
 
-/* ------------------------------------------------------------------ */
-/*  Layout constants — rose / maroon Ankshaastra palette                */
-/* ------------------------------------------------------------------ */
-
-const PAGE_WIDTH = 595.28; // A4 portrait, points
+const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
 
 const COLOR = {
-  blush: rgb(0.988, 0.945, 0.925), // pale rose page background — sampled directly from the reference PDF
-  blushPanel: rgb(0.965, 0.902, 0.89), // slightly deeper rose panel fill
-  maroon: rgb(0.686, 0.271, 0.259), // primary brand maroon — exact match, sampled from reference (RGB 175,69,66)
+  blush: rgb(0.988, 0.945, 0.925),
+  blushPanel: rgb(0.965, 0.902, 0.89),
+  maroon: rgb(0.686, 0.271, 0.259),
   maroonDark: rgb(0.6, 0.22, 0.21),
-  ink: rgb(0.686, 0.271, 0.259), // body text — the reference uses the SAME maroon for body copy, not a neutral black/gray
+  ink: rgb(0.686, 0.271, 0.259),
   muted: rgb(0.62, 0.42, 0.4),
   white: rgb(1, 1, 1),
   cream: rgb(0.99, 0.97, 0.95),
@@ -123,34 +91,26 @@ const COLOR = {
 };
 
 interface Fonts {
-  sans: PDFFont; // Quicksand Regular — all body text, labels, bullets
-  sansBold: PDFFont; // Quicksand Bold — bold labels, table headers, banners
-  heading: PDFFont; // Cinzel Decorative Bold — big decorative section/report titles
-  quote: PDFFont; // Cardo Regular — italic-style welcome message quote only
+  sans: PDFFont;
+  sansBold: PDFFont;
+  heading: PDFFont;
+  quote: PDFFont;
 }
 
-/**
- * Design assets extracted from the client's reference PDF (Bindhu Sree Reddy
- * sample). Must be uploaded to the project's /public folder at these exact
- * paths — see design-assets/ handoff for the source files.
- */
 const ASSET_PATHS = {
   background: "/name-check-assets/background-border.png",
   logo: "/name-check-assets/logo-ankshaastra.png",
   loshuGrid: "/name-check-assets/loshu-turtle-grid.png",
   starIcon: "/name-check-assets/star-icon.png",
-  handsPraying: "/name-check-assets/hands-praying.png",
+  handsPraying: "/name-check-assets/praying-hands.png",
   fonts: {
     quicksandRegular: "/name-check-assets/fonts/Quicksand-Regular.ttf",
     quicksandBold: "/name-check-assets/fonts/Quicksand-Bold.ttf",
     cinzelDecorativeBold: "/name-check-assets/fonts/CinzelDecorative-Bold.ttf",
     cardoRegular: "/name-check-assets/fonts/Cardo-Regular.ttf",
-    // NotoSans-Regular.ttf is fetched too but currently unused directly —
-    // reserved as a fallback for any glyph Quicksand/Cardo don't cover.
   },
 };
 
-/** Fetches a static asset from /public and returns its raw bytes. */
 async function fetchAssetBytes(path: string): Promise<Uint8Array> {
   const res = await fetch(path);
   if (!res.ok) {
@@ -159,15 +119,10 @@ async function fetchAssetBytes(path: string): Promise<Uint8Array> {
   return new Uint8Array(await res.arrayBuffer());
 }
 
-/* ------------------------------------------------------------------ */
-/*  Drawing helpers                                                    */
-/* ------------------------------------------------------------------ */
-
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(/\s+/);
   const lines: string[] = [];
   let current = "";
-
   for (const word of words) {
     const trial = current ? `${current} ${word}` : word;
     if (font.widthOfTextAtSize(trial, size) > maxWidth && current) {
@@ -195,7 +150,6 @@ function drawWrappedText(
   return cursorY;
 }
 
-/** Bulleted list helper — small maroon dot + wrapped text, returns new Y. */
 function drawBulletList(
   page: PDFPage,
   items: string[],
@@ -226,24 +180,10 @@ interface Assets {
   handsPraying: import("pdf-lib").PDFImage;
 }
 
-/** Draws the real background/border image full-bleed — replaces the old flat COLOR.blush + drawFrame(). */
 function drawPageBackground(page: PDFPage, assets: Assets) {
   page.drawImage(assets.background, { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT });
 }
 
-function drawFrame(page: PDFPage) {
-  const inset = 16;
-  page.drawRectangle({
-    x: inset,
-    y: inset,
-    width: PAGE_WIDTH - inset * 2,
-    height: PAGE_HEIGHT - inset * 2,
-    borderColor: COLOR.maroon,
-    borderWidth: 1,
-  });
-}
-
-/** Builds an SVG path string for a rounded rectangle (top-left origin, y-down SVG convention). */
 function roundedRectSvgPath(width: number, height: number, radius: number): string {
   const r = Math.min(radius, width / 2, height / 2);
   return [
@@ -260,8 +200,6 @@ function roundedRectSvgPath(width: number, height: number, radius: number): stri
   ].join(" ");
 }
 
-/** Rounded rect with only the TOP two corners rounded (bottom stays square) — used for a maroon header
- *  row that sits flush on top of an otherwise-rounded card, e.g. the name/value row on breakdown pages. */
 function roundedTopRectSvgPath(width: number, height: number, radius: number): string {
   const r = Math.min(radius, width / 2, height);
   return [
@@ -276,7 +214,6 @@ function roundedTopRectSvgPath(width: number, height: number, radius: number): s
   ].join(" ");
 }
 
-/** Draws a rounded rectangle (fill and/or border) — pdf-lib has no native rounded rect, so this uses drawSvgPath. */
 function drawRoundedRect(
   page: PDFPage,
   opts: { x: number; y: number; width: number; height: number; radius: number; color?: RGB; borderColor?: RGB; borderWidth?: number }
@@ -291,7 +228,6 @@ function drawRoundedRect(
   });
 }
 
-/** Fully-rounded maroon pill banner used for section headers, floating centered over a content box's top edge. */
 function drawMaroonBanner(page: PDFPage, fonts: Fonts, text: string, boxX: number, boxTopY: number, boxWidth: number, height = 34) {
   const label = text.toUpperCase();
   const textWidth = fonts.sansBold.widthOfTextAtSize(label, 10.5);
@@ -308,7 +244,6 @@ function drawMaroonBanner(page: PDFPage, fonts: Fonts, text: string, boxX: numbe
   });
 }
 
-/** A rounded-rect content box (matches the client's card treatment) — returns the inner top-Y to start drawing content at. */
 function drawContentBox(page: PDFPage, opts: { x: number; y: number; width: number; height: number }): number {
   drawRoundedRect(page, {
     x: opts.x,
@@ -323,7 +258,6 @@ function drawContentBox(page: PDFPage, opts: { x: number; y: number; width: numb
   return opts.y;
 }
 
-/** Wrapped body text, each line horizontally centered within maxWidth (matches the reference's centered paragraphs). */
 function drawWrappedTextCentered(
   page: PDFPage,
   text: string,
@@ -344,21 +278,11 @@ function drawWrappedTextCentered(
   return cursorY;
 }
 
-/** Small 4-point sparkle/star glyph, drawn with two crossed diamonds (used in the centered title divider). */
 function drawStarGlyph(page: PDFPage, cx: number, cy: number, r: number, color: RGB) {
-  // Path built in LOCAL coordinates (0..2r, y-down) then offset via x/y — drawSvgPath treats
-  // path coordinates as relative to the given origin, so passing absolute page coordinates
-  // straight into the path string (with no x/y offset) was placing this off-page/invisible.
   const path = `M ${r} 0 L ${r * 1.32} ${r * 0.68} L ${r * 2} ${r} L ${r * 1.32} ${r * 1.32} L ${r} ${r * 2} L ${r * 0.68} ${r * 1.32} L 0 ${r} L ${r * 0.68} ${r * 0.68} Z`;
   page.drawSvgPath(path, { x: cx - r, y: cy + r, color });
 }
 
-/**
- * Standard page chrome, rebuilt to match the reference design: real background border image,
- * a big centered decorative title (optionally two lines) with a centered underline + star divider,
- * and a centered website pill footer. No stray top-left logo and no page-number footer — the
- * reference template doesn't carry either on interior pages.
- */
 function drawPageChrome(
   page: PDFPage,
   fonts: Fonts,
@@ -376,7 +300,6 @@ function drawPageChrome(
     const isLast = i === titleLines.length - 1;
     let size = isLast ? 24 : 15;
     const font = fonts.heading;
-    // Auto-shrink to fit (e.g. long customer names on the welcome page) instead of overflowing.
     while (font.widthOfTextAtSize(line, size) > maxTitleWidth && size > 11) size -= 1;
     page.drawText(line, {
       x: centerX - font.widthOfTextAtSize(line, size) / 2,
@@ -388,7 +311,6 @@ function drawPageChrome(
     titleY -= isLast ? 34 : 26;
   });
 
-  // Centered underline + star divider (matches every reference section header)
   const dividerY = titleY + 12;
   page.drawLine({ start: { x: centerX - 165, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
   page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 165, y: dividerY }, thickness: 1, color: COLOR.maroon });
@@ -407,7 +329,6 @@ function drawPageChrome(
   drawFooterPill(page, fonts, opts.brand);
 }
 
-/** Centered rounded maroon website pill, used as the footer on every interior page (matches the reference exactly). */
 function drawFooterPill(page: PDFPage, fonts: Fonts, brand: BrandConfig) {
   const centerX = PAGE_WIDTH / 2;
   const pill = `WWW.${brand.website.replace(/^www\./i, "").toUpperCase()}`;
@@ -423,7 +344,6 @@ function drawFooterPill(page: PDFPage, fonts: Fonts, brand: BrandConfig) {
   });
 }
 
-/** Two-column data table: label left, value right, both centered, wrapped in one rounded card (matches the reference). */
 function drawDataTable(
   page: PDFPage,
   fonts: Fonts,
@@ -457,7 +377,6 @@ function drawDataTable(
       font: fonts.sansBold,
       color: COLOR.ink,
     });
-    // Divider between label/value columns
     page.drawLine({
       start: { x: opts.x + opts.width / 2, y },
       end: { x: opts.x + opts.width / 2, y: y - rowHeight },
@@ -469,58 +388,17 @@ function drawDataTable(
   return opts.y - totalHeight;
 }
 
-/** Simple 3x3 Loshu-style number grid (approximates the turtle illustration). */
-function drawLoshuGrid(page: PDFPage, fonts: Fonts, centerX: number, topY: number, cellSize = 46) {
-  const grid = [
-    [4, 9, 2],
-    [3, 5, 7],
-    [8, 1, 6],
-  ];
-  const gridWidth = cellSize * 3;
-  const startX = centerX - gridWidth / 2;
-  grid.forEach((row, r) => {
-    row.forEach((val, c) => {
-      const cx = startX + c * cellSize;
-      const cy = topY - r * cellSize;
-      page.drawRectangle({
-        x: cx,
-        y: cy - cellSize,
-        width: cellSize,
-        height: cellSize,
-        color: COLOR.blushPanel,
-        borderColor: COLOR.maroon,
-        borderWidth: 1,
-      });
-      const s = String(val);
-      page.drawText(s, {
-        x: cx + cellSize / 2 - fonts.sansBold.widthOfTextAtSize(s, 20) / 2,
-        y: cy - cellSize / 2 - 7,
-        size: 20,
-        font: fonts.sansBold,
-        color: COLOR.maroon,
-      });
-    });
-  });
-}
-
 function formatDate(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-/* ------------------------------------------------------------------ */
-/*  Page builders                                                       */
-/* ------------------------------------------------------------------ */
-
 function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, assets: Assets) {
   drawPageBackground(page, assets);
 
   const centerX = PAGE_WIDTH / 2;
 
-  // Logo (real wordmark image) — sized to a fixed TARGET width, not a raw scale factor.
-  // (A raw .scale(0.42) on the native asset pixel size was the bug that made the cover
-  // page's Loshu grid balloon to nearly the full page and overlap the title text below it.)
   const LOGO_TARGET_WIDTH = 210;
   const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
   const logoDims = assets.logo.scale(logoScale);
@@ -528,7 +406,6 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: y - logoDims.height, width: logoDims.width, height: logoDims.height });
   y -= logoDims.height + 60;
 
-  // Real turtle-grid illustration, also sized to a fixed target width.
   const GRID_TARGET_WIDTH = 230;
   const gridScale = GRID_TARGET_WIDTH / assets.loshuGrid.width;
   const gridDims = assets.loshuGrid.scale(gridScale);
@@ -571,20 +448,8 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
 
   const rows: { no: string; title: string; items: string[] }[] = [
     { no: "01", title: "Personal Information &\nIntroduction", items: ["Your Personal Profile", "Welcome Message"] },
-    {
-      no: "02",
-      title: "Understanding Name\nNumerology",
-      items: ["The Science of Name Numbers", "The Chaldean Number Chart", "What We'll Analyze"],
-    },
-    {
-      no: "03",
-      title: "Current Name\nBreakdown",
-      items: [
-        "Part 1: First Name Number",
-        "Part 2: Full Name Number",
-        "Part 3: Full Name Compound Number",
-      ],
-    },
+    { no: "02", title: "Understanding Name\nNumerology", items: ["The Science of Name Numbers", "The Chaldean Number Chart", "What We'll Analyze"] },
+    { no: "03", title: "Current Name\nBreakdown", items: ["Part 1: First Name Number", "Part 2: Full Name Number", "Part 3: Full Name Compound Number"] },
   ];
 
   let y = PAGE_HEIGHT - 170;
@@ -595,26 +460,9 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
 
   rows.forEach((row) => {
     const rowHeight = 22 + row.items.length * 16 + 16;
-    page.drawRectangle({
-      x: tableX,
-      y: y - rowHeight,
-      width: tableWidth,
-      height: rowHeight,
-      borderColor: COLOR.maroon,
-      borderWidth: 0.75,
-    });
-    page.drawLine({
-      start: { x: tableX + numColW, y },
-      end: { x: tableX + numColW, y: y - rowHeight },
-      thickness: 0.5,
-      color: COLOR.maroon,
-    });
-    page.drawLine({
-      start: { x: tableX + numColW + titleColW, y },
-      end: { x: tableX + numColW + titleColW, y: y - rowHeight },
-      thickness: 0.5,
-      color: COLOR.maroon,
-    });
+    page.drawRectangle({ x: tableX, y: y - rowHeight, width: tableWidth, height: rowHeight, borderColor: COLOR.maroon, borderWidth: 0.75 });
+    page.drawLine({ start: { x: tableX + numColW, y }, end: { x: tableX + numColW, y: y - rowHeight }, thickness: 0.5, color: COLOR.maroon });
+    page.drawLine({ start: { x: tableX + numColW + titleColW, y }, end: { x: tableX + numColW + titleColW, y: y - rowHeight }, thickness: 0.5, color: COLOR.maroon });
     page.drawText(row.no, {
       x: tableX + numColW / 2 - fonts.sansBold.widthOfTextAtSize(row.no, 24) / 2,
       y: y - rowHeight / 2 - 8,
@@ -629,13 +477,7 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
     });
     let itemY = y - 24;
     row.items.forEach((item) => {
-      page.drawText(`• ${item}`, {
-        x: tableX + numColW + titleColW + 10,
-        y: itemY,
-        size: 9.5,
-        font: fonts.sans,
-        color: COLOR.ink,
-      });
+      page.drawText(`• ${item}`, { x: tableX + numColW + titleColW + 10, y: itemY, size: 9.5, font: fonts.sans, color: COLOR.ink });
       itemY -= 15;
     });
     y -= rowHeight;
@@ -655,16 +497,13 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     size: 12,
     maxWidth: PAGE_WIDTH - 140,
     lineHeight: 20,
-  color: COLOR.maroonDark,
+    color: COLOR.maroonDark,
   });
 
-  // Real praying-hands illustration, sized modestly (matches the reference: a small
-  // centered accent well below the quote, NOT a page-filling image — this is the
-  // exact fix for the oversized version currently in production).
-  const HANDS_TARGET_WIDTH = 130; // pt — keep deliberately small; the source art is ~1:1
+  const HANDS_TARGET_WIDTH = 130;
   const handsScale = HANDS_TARGET_WIDTH / assets.handsPraying.width;
   const handsDims = assets.handsPraying.scale(handsScale);
-  const HANDS_BOTTOM_Y = 190; // fixed anchor, well above the footer pill
+  const HANDS_BOTTOM_Y = 190;
   const handsTop = Math.min(y - 30, HANDS_BOTTOM_Y + handsDims.height);
   page.drawImage(assets.handsPraying, {
     x: PAGE_WIDTH / 2 - handsDims.width / 2,
@@ -723,14 +562,7 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
   cy -= 8;
   drawBulletList(
     page,
-    [
-      "How others perceive you",
-      "Your natural talents and abilities",
-      "Career and financial opportunities",
-      "Relationship dynamics",
-      "Mental and emotional patterns",
-      "Life challenges and lessons",
-    ],
+    ["How others perceive you", "Your natural talents and abilities", "Career and financial opportunities", "Relationship dynamics", "Mental and emotional patterns", "Life challenges and lessons"],
     { x: 62, y: cy, font: fonts.sans, size: 11, maxWidth: boxWidth - 36, lineHeight: 15, gap: 4, color: COLOR.ink }
   );
 
@@ -768,8 +600,6 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
   const chartTop = boxTop - boxHeight - 32;
   drawMaroonBanner(page, fonts, "The Chaldean Number Chart", boxX, chartTop, boxWidth);
 
-  // Reference-accurate 8-column x 6-row letter grid: row 0 = digits 1-8, rows 1-5 = the
-  // letters that carry that Chaldean value (padded with "-" so every column is even).
   const columns = [
     ["A", "I", "J", "Q", "Y"],
     ["B", "K", "R"],
@@ -833,16 +663,7 @@ function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, assets: Assets, da
     "Full Name Compound Number — hidden influences and karmic patterns.",
     "Complete Date of Birth — its influence on your name number, via Mulank and Bhagyank.",
   ];
-  drawBulletList(page, items, {
-    x: 62,
-    y: boxTop - 46,
-    font: fonts.sans,
-    size: 11,
-    maxWidth: boxWidth - 36,
-    lineHeight: 15.5,
-    gap: 16,
-    color: COLOR.ink,
-  });
+  drawBulletList(page, items, { x: 62, y: boxTop - 46, font: fonts.sans, size: 11, maxWidth: boxWidth - 36, lineHeight: 15.5, gap: 16, color: COLOR.ink });
 }
 
 function drawCurrentNameBreakdownPage(
@@ -850,14 +671,7 @@ function drawCurrentNameBreakdownPage(
   fonts: Fonts,
   assets: Assets,
   data: Required<NameCheckReportInput>,
-  opts: {
-    heading: string;
-    nameLabel: string;
-    nameValue: string;
-    total: number;
-    reducedTo?: number;
-    bullets: string[];
-  },
+  opts: { heading: string; nameLabel: string; nameValue: string; total: number; reducedTo?: number; bullets: string[] },
   pageNumber: number,
   totalPages: number
 ) {
@@ -869,7 +683,6 @@ function drawCurrentNameBreakdownPage(
   const totalsRowH = 34;
   let y = PAGE_HEIGHT - 195;
 
-  // Name/value + Total(/Reduced To) card — rounded outer shell, solid-maroon name row on top.
   drawRoundedRect(page, { x: boxX, y: y - nameRowH - totalsRowH, width: boxWidth, height: nameRowH + totalsRowH, radius: 16, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
   page.drawSvgPath(roundedTopRectSvgPath(boxWidth, nameRowH, 16), { x: boxX, y, color: COLOR.maroon });
   page.drawText(opts.nameLabel.toUpperCase(), {
@@ -899,7 +712,7 @@ function drawCurrentNameBreakdownPage(
       const isLabel = i % 2 === 0;
       const cx = boxX + colW * i + colW / 2;
       page.drawText(txt, {
-        x: cx - (isLabel ? fonts.sansBold : fonts.sansBold).widthOfTextAtSize(txt, isLabel ? 10 : 13) / 2,
+        x: cx - fonts.sansBold.widthOfTextAtSize(txt, isLabel ? 10 : 13) / 2,
         y: totalsY - totalsRowH / 2 - 4,
         size: isLabel ? 10 : 13,
         font: fonts.sansBold,
@@ -925,16 +738,7 @@ function drawCurrentNameBreakdownPage(
   const contentBoxHeight = 230;
   drawContentBox(page, { x: boxX, y: contentBoxTop, width: boxWidth, height: contentBoxHeight });
   drawMaroonBanner(page, fonts, "What This Represents", boxX, contentBoxTop, boxWidth);
-  drawBulletList(page, opts.bullets, {
-    x: 62,
-    y: contentBoxTop - 46,
-    font: fonts.sans,
-    size: 10.5,
-    maxWidth: boxWidth - 36,
-    lineHeight: 14.5,
-    gap: 12,
-    color: COLOR.ink,
-  });
+  drawBulletList(page, opts.bullets, { x: 62, y: contentBoxTop - 46, font: fonts.sans, size: 10.5, maxWidth: boxWidth - 36, lineHeight: 14.5, gap: 12, color: COLOR.ink });
 }
 
 const VERDICT_LABEL: Record<"HR" | "OA" | "NR", string> = {
@@ -943,10 +747,6 @@ const VERDICT_LABEL: Record<"HR" | "OA" | "NR", string> = {
   NR: "Not Required",
 };
 
-/**
- * Renders the actual matched HR/OA/NR rule (from src/lib/name-check/rule-engine.ts
- * + hr-oa-nr-blocks.ts) — replaces the old hardcoded "restricted number only" logic.
- */
 function drawWhyCriticalPage(
   page: PDFPage,
   fonts: Fonts,
@@ -970,18 +770,8 @@ function drawWhyCriticalPage(
   const bullets = rule?.paragraphs ?? [
     "Name correction guidance could not be determined for this combination — please review this report manually before sending it to the customer.",
   ];
-  drawBulletList(page, bullets, {
-    x: 62,
-    y: boxTop - 46,
-    font: fonts.sans,
-    size: 11,
-    maxWidth: boxWidth - 36,
-    lineHeight: 15.5,
-    gap: 14,
-    color: COLOR.ink,
-  });
+  drawBulletList(page, bullets, { x: 62, y: boxTop - 46, font: fonts.sans, size: 11, maxWidth: boxWidth - 36, lineHeight: 15.5, gap: 14, color: COLOR.ink });
 
-  // Verdict pill — solid maroon rounded card with a small circular star badge straddling the top border.
   const verdictLabel = `${VERDICT_LABEL[matched.verdict]}${matched.isFallback ? " (fallback — review recommended)" : ""}`;
   const verdictTop = boxTop - boxHeight - 46;
   const verdictHeight = 78;
@@ -995,7 +785,6 @@ function drawWhyCriticalPage(
     lineHeight: 17,
     color: COLOR.white,
   });
-  // Small circular star badge centered on the box's top edge (matches the reference).
   const badgeR = 15;
   page.drawCircle({ x: boxX + boxWidth / 2, y: verdictTop, size: badgeR, color: COLOR.blush, borderColor: COLOR.maroon, borderWidth: 1.5 });
   drawStarGlyph(page, boxX + boxWidth / 2, verdictTop, 7, COLOR.maroon);
@@ -1028,7 +817,6 @@ function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Req
   });
 }
 
-/** Page 12 (reference) — the two upsell offer cards, side by side. */
 function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
@@ -1037,21 +825,9 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: PAGE_HEIGHT - 56 - logoDims.height, width: logoDims.width, height: logoDims.height });
 
   let titleY = PAGE_HEIGHT - 100 - logoDims.height;
-  page.drawText("YOUR NAME DECIDES", {
-    x: centerX - fonts.heading.widthOfTextAtSize("YOUR NAME DECIDES", 14) / 2,
-    y: titleY,
-    size: 14,
-    font: fonts.heading,
-    color: COLOR.maroon,
-  });
+  page.drawText("YOUR NAME DECIDES", { x: centerX - fonts.heading.widthOfTextAtSize("YOUR NAME DECIDES", 14) / 2, y: titleY, size: 14, font: fonts.heading, color: COLOR.maroon });
   titleY -= 26;
-  page.drawText("YOUR SPEED IN LIFE", {
-    x: centerX - fonts.heading.widthOfTextAtSize("YOUR SPEED IN LIFE", 21) / 2,
-    y: titleY,
-    size: 21,
-    font: fonts.heading,
-    color: COLOR.maroon,
-  });
+  page.drawText("YOUR SPEED IN LIFE", { x: centerX - fonts.heading.widthOfTextAtSize("YOUR SPEED IN LIFE", 21) / 2, y: titleY, size: 21, font: fonts.heading, color: COLOR.maroon });
   const dividerY = titleY - 16;
   page.drawLine({ start: { x: centerX - 150, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
   page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 150, y: dividerY }, thickness: 1, color: COLOR.maroon });
@@ -1084,9 +860,6 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   offers.forEach((offer, i) => {
     const cx = 44 + i * (colWidth + colGap);
 
-    // Price pill straddling the top edge. The rupee sign (₹) isn't present in the Cinzel
-    // Decorative font file, so it's drawn separately with Quicksand (which does have it)
-    // and the numeral stays in the heading font — otherwise the ₹ silently disappears.
     const priceDigits = offer.price.replace(/^\D*/, "");
     const rupeeSize = 17;
     const digitsSize = 19;
@@ -1107,9 +880,9 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     page.drawLine({ start: { x: cx + colWidth / 2 - 46, y: iy }, end: { x: cx + colWidth / 2 + 46, y: iy }, thickness: 0.75, color: COLOR.maroon });
     iy -= 22;
 
-    const bulletTextX = 44; // offset from the row's left edge (cx + 14) to where text starts
+    const bulletTextX = 44;
     offer.bullets.forEach((b) => {
-      const textWidth = colWidth - 28 - bulletTextX - 14; // row width minus text-start offset minus right padding
+      const textWidth = colWidth - 28 - bulletTextX - 14;
       const lines = wrapText(b, fonts.sans, 9, textWidth);
       const rowH = 22 + Math.max(0, lines.length - 1) * 12;
       drawRoundedRect(page, { x: cx + 14, y: iy - rowH, width: colWidth - 28, height: rowH, radius: 12, borderColor: COLOR.maroon, borderWidth: 0.75 });
@@ -1128,9 +901,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
       iy -= 12;
     });
 
-    // Button + card border both hug the content that was just measured out above —
-    // no more big empty gap at the bottom of the card like the previous fixed-height version.
-    iy -= 6; // small buffer so the button never overlaps the last note line's descender
+    iy -= 6;
     const btnH = 34;
     const btnY = iy - 20;
     const cardBottom = btnY - 14;
@@ -1142,31 +913,18 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 
     drawRoundedRect(page, { x: cx + 12, y: btnY, width: colWidth - 24, height: btnH, radius: btnH / 2, color: COLOR.maroon });
     const btnLabel = "CLICK NOW";
-    page.drawText(btnLabel, {
-      x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(btnLabel, 11) / 2,
-      y: btnY + btnH / 2 - 4,
-      size: 11,
-      font: fonts.sansBold,
-      color: COLOR.white,
-    });
+    page.drawText(btnLabel, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(btnLabel, 11) / 2, y: btnY + btnH / 2 - 4, size: 11, font: fonts.sansBold, color: COLOR.white });
   });
 
   drawFooterPill(page, fonts, data.brand);
 }
 
-/** Page 13 (reference) — social follow icons. */
 function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageChrome(page, fonts, assets, { title: "Connect With Me", pageNumber, totalPages, brand: data.brand });
 
   const centerX = PAGE_WIDTH / 2;
   const subtitle = "FOLLOW FOR DAILY WISDOM, TIPS, AND INSPIRATION";
-  page.drawText(subtitle, {
-    x: centerX - fonts.sansBold.widthOfTextAtSize(subtitle, 11) / 2,
-    y: PAGE_HEIGHT - 210,
-    size: 11,
-    font: fonts.sansBold,
-    color: COLOR.maroonDark,
-  });
+  page.drawText(subtitle, { x: centerX - fonts.sansBold.widthOfTextAtSize(subtitle, 11) / 2, y: PAGE_HEIGHT - 210, size: 11, font: fonts.sansBold, color: COLOR.maroonDark });
 
   const platforms = ["IG", "in", "YT", "f"];
   const colXs = [centerX - 155, centerX + 155];
@@ -1175,8 +933,6 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   rowYs.forEach((ry) => {
     colXs.forEach((cx) => {
       const label = platforms[idx++];
-      // Outlined circle (maroon ring, pale fill) with the platform initials in maroon —
-      // matches the reference's icon-badge style more closely than a solid-fill circle.
       page.drawCircle({ x: cx, y: ry, size: 34, borderColor: COLOR.maroon, borderWidth: 1.5 });
       page.drawText(label, { x: cx - fonts.sansBold.widthOfTextAtSize(label, 13) / 2, y: ry - 5, size: 13, font: fonts.sansBold, color: COLOR.maroon });
       const btnW = 96;
@@ -1193,36 +949,17 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   });
 }
 
-/** Page 15 (reference) — minimal logo-only back cover, plus the internal report ID for support lookups. */
 function drawBackCoverPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
   const logoDims = assets.logo.scale(0.5);
-  page.drawImage(assets.logo, {
-    x: centerX - logoDims.width / 2,
-    y: PAGE_HEIGHT / 2 - logoDims.height / 2 + 30,
-    width: logoDims.width,
-    height: logoDims.height,
-  });
+  page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: PAGE_HEIGHT / 2 - logoDims.height / 2 + 30, width: logoDims.width, height: logoDims.height });
 
   drawFooterPill(page, fonts, data.brand);
   const reportIdText = `Report ID: ${data.reportId}`;
-  page.drawText(reportIdText, {
-    x: centerX - fonts.sans.widthOfTextAtSize(reportIdText, 8) / 2,
-    y: 20,
-    size: 8,
-    font: fonts.sans,
-    color: COLOR.muted,
-  });
+  page.drawText(reportIdText, { x: centerX - fonts.sans.widthOfTextAtSize(reportIdText, 8) / 2, y: 20, size: 8, font: fonts.sans, color: COLOR.muted });
 }
-
-/* ------------------------------------------------------------------ */
-/*  "What This Represents" copy — now sourced verbatim from             */
-/*  src/lib/name-check/content-blocks.ts (client's exact wording),      */
-/*  looked up via FIRST_NAME_BLOCKS / FULL_NAME_BLOCKS / COMPOUND_BLOCKS*/
-/*  directly inside generateNameCheckReportPdf() below.                */
-/* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
 /*  Main entry point                                                    */
@@ -1258,12 +995,11 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   const mulank = facts.mulank;
   const bhagyank = facts.bhagyank;
   const firstNameNumber = facts.firstNameNumber;
-  const firstNameSum = chaldeanRawSum(data.firstName); // raw total, for display on the breakdown page
+  const firstNameSum = chaldeanRawSum(data.firstName);
   const fullNameNumber = facts.fullNameNumber;
-  const fullNameSum = getFullNameCompoundNumber(fullName); // raw total, same as fullNameCompound below
+  const fullNameSum = getFullNameCompoundNumber(fullName);
   const fullNameCompound = facts.fullNameCompoundNumber;
-
-  const compoundTier = facts.compoundTier; // "excellent" | "good" | "neutral" | "conditional" | "avoid"
+  const compoundTier = facts.compoundTier;
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.setTitle(`Name Check Report - ${data.customerName}`);
@@ -1271,65 +1007,66 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   pdfDoc.setProducer(data.brand.companyName);
   pdfDoc.setCreator(data.brand.companyName);
 
-  // Custom TTF embedding requires fontkit to be registered first.
   pdfDoc.registerFontkit(fontkit);
 
-  // Fetch all design assets (images + fonts) from /public in parallel.
-  const [
-    backgroundBytes,
-    logoBytes,
-    loshuGridBytes,
-    starIconBytes,
-    handsPrayingBytes,
-    quicksandRegularBytes,
-    quicksandBoldBytes,
-    cinzelDecorativeBoldBytes,
-    cardoRegularBytes,
-  ] = await Promise.all([
-    fetchAssetBytes(ASSET_PATHS.background),
-    fetchAssetBytes(ASSET_PATHS.logo),
-    fetchAssetBytes(ASSET_PATHS.loshuGrid),
-    fetchAssetBytes(ASSET_PATHS.starIcon),
-    fetchAssetBytes(ASSET_PATHS.handsPraying),
-    fetchAssetBytes(ASSET_PATHS.fonts.quicksandRegular),
-    fetchAssetBytes(ASSET_PATHS.fonts.quicksandBold),
-    fetchAssetBytes(ASSET_PATHS.fonts.cinzelDecorativeBold),
-    fetchAssetBytes(ASSET_PATHS.fonts.cardoRegular),
-  ]);
+  async function loadAsset(label: string, path: string): Promise<Uint8Array> {
+    try {
+      return await fetchAssetBytes(path);
+    } catch (err) {
+      throw new Error(`[Name Check PDF] Failed loading "${label}" from ${path}: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
+  const backgroundBytes = await loadAsset("background", ASSET_PATHS.background);
+  const logoBytes = await loadAsset("logo", ASSET_PATHS.logo);
+  const loshuGridBytes = await loadAsset("loshuGrid", ASSET_PATHS.loshuGrid);
+  const starIconBytes = await loadAsset("starIcon", ASSET_PATHS.starIcon);
+  const handsPrayingBytes = await loadAsset("handsPraying", ASSET_PATHS.handsPraying);
+  const quicksandRegularBytes = await loadAsset("Quicksand-Regular font", ASSET_PATHS.fonts.quicksandRegular);
+  const quicksandBoldBytes = await loadAsset("Quicksand-Bold font", ASSET_PATHS.fonts.quicksandBold);
+  const cinzelDecorativeBoldBytes = await loadAsset("CinzelDecorative-Bold font", ASSET_PATHS.fonts.cinzelDecorativeBold);
+  const cardoRegularBytes = await loadAsset("Cardo-Regular font", ASSET_PATHS.fonts.cardoRegular);
+
+  async function embedImg(label: string, bytes: Uint8Array) {
+    try {
+      return await pdfDoc.embedPng(bytes);
+    } catch (err) {
+      throw new Error(`[Name Check PDF] Failed embedding image "${label}" (is it a valid PNG?): ${err instanceof Error ? err.message : err}`);
+    }
+  }
+  async function embedFontSafe(label: string, bytes: Uint8Array) {
+    try {
+      return await pdfDoc.embedFont(bytes, { subset: true });
+    } catch (err) {
+      throw new Error(`[Name Check PDF] Failed embedding font "${label}" (may be a Variable Font — needs a Static font file instead): ${err instanceof Error ? err.message : err}`);
+    }
+  }
 
   const assets: Assets = {
-    background: await pdfDoc.embedPng(backgroundBytes),
-    logo: await pdfDoc.embedPng(logoBytes),
-    loshuGrid: await pdfDoc.embedPng(loshuGridBytes),
-    starIcon: await pdfDoc.embedPng(starIconBytes),
-    handsPraying: await pdfDoc.embedPng(handsPrayingBytes),
+    background: await embedImg("background", backgroundBytes),
+    logo: await embedImg("logo", logoBytes),
+    loshuGrid: await embedImg("loshuGrid", loshuGridBytes),
+    starIcon: await embedImg("starIcon", starIconBytes),
+    handsPraying: await embedImg("handsPraying", handsPrayingBytes),
   };
 
   const fonts: Fonts = {
-    sans: await pdfDoc.embedFont(quicksandRegularBytes),
-    sansBold: await pdfDoc.embedFont(quicksandBoldBytes),
-    heading: await pdfDoc.embedFont(cinzelDecorativeBoldBytes),
-    quote: await pdfDoc.embedFont(cardoRegularBytes),
+    sans: await embedFontSafe("Quicksand-Regular", quicksandRegularBytes),
+    sansBold: await embedFontSafe("Quicksand-Bold", quicksandBoldBytes),
+    heading: await embedFontSafe("CinzelDecorative-Bold", cinzelDecorativeBoldBytes),
+    quote: await embedFontSafe("Cardo-Regular", cardoRegularBytes),
   };
 
   const TOTAL_PAGES = 15;
   const addPage = () => pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
-  // 1. Cover
   drawCoverPage(addPage(), fonts, data, assets);
-  // 2. Index
   drawIndexPage(addPage(), fonts, assets, data, 2, TOTAL_PAGES);
-  // 3. Welcome message
   drawWelcomePage(addPage(), fonts, assets, data, 3, TOTAL_PAGES);
-  // 4. Numerological Blueprint
   drawBlueprintPage(addPage(), fonts, assets, data, { mulank, bhagyank, firstNameNumber, fullNameNumber, fullNameCompound }, 4, TOTAL_PAGES);
-  // 5. Science of Name Numbers
   drawScienceOfNamesPage(addPage(), fonts, assets, data, 5, TOTAL_PAGES);
-  // 6. Chaldean System + Chart
   drawChaldeanSystemPage(addPage(), fonts, assets, data, 6, TOTAL_PAGES);
-  // 7. What We'll Analyze
   drawWhatWellAnalyzePage(addPage(), fonts, assets, data, 7, TOTAL_PAGES);
-  // 8. Current Name Breakdown — First Name Number
   drawCurrentNameBreakdownPage(
     addPage(),
     fonts,
@@ -1346,7 +1083,6 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     8,
     TOTAL_PAGES
   );
-  // 9. Current Name Breakdown — Full Name Number
   drawCurrentNameBreakdownPage(
     addPage(),
     fonts,
@@ -1363,37 +1099,24 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     9,
     TOTAL_PAGES
   );
-  // 10. Current Name Breakdown — Full Name Compound Number
   drawCurrentNameBreakdownPage(
     addPage(),
     fonts,
     assets,
     data,
-    {
-      heading: "Full Name Compound Number",
-      nameLabel: "First Name",
-      nameValue: fullName,
-      total: fullNameCompound,
-      bullets: COMPOUND_BLOCKS[compoundTier],
-    },
+    { heading: "Full Name Compound Number", nameLabel: "First Name", nameValue: fullName, total: fullNameCompound, bullets: COMPOUND_BLOCKS[compoundTier] },
     10,
     TOTAL_PAGES
   );
-  // 11. Why This Is Critical — now shows the actual matched HR/OA/NR rule
   drawWhyCriticalPage(addPage(), fonts, assets, data, { ruleId: matchedRuleId, verdict, isFallback }, 11, TOTAL_PAGES);
-  // 12. Pricing / upsell offers
   drawPricingPage(addPage(), fonts, assets, data, 12, TOTAL_PAGES);
-  // 13. Connect With Me (social)
   drawConnectPage(addPage(), fonts, assets, data, 13, TOTAL_PAGES);
-  // 14. Services Offered
   drawServicesPage(addPage(), fonts, assets, data, 14, TOTAL_PAGES);
-  // 15. Back cover
   drawBackCoverPage(addPage(), fonts, assets, data);
 
   return pdfDoc.save();
 }
 
-/** Convenience helper for client-side "Download PDF" buttons. */
 export function downloadNameCheckReportPdf(bytes: Uint8Array, filename: string) {
   const blob = new Blob([bytes], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
@@ -1406,15 +1129,10 @@ export function downloadNameCheckReportPdf(bytes: Uint8Array, filename: string) 
   URL.revokeObjectURL(url);
 }
 
-/** Convenience helper to get a Blob directly (e.g. for Supabase Storage upload). */
 export function nameCheckReportPdfToBlob(bytes: Uint8Array): Blob {
   return new Blob([bytes], { type: "application/pdf" });
 }
 
-// Exported for reuse/testing elsewhere in the app (e.g. showing a live
-// preview of the computed numbers before the PDF is generated).
-// Core calculations now live in src/lib/name-check/* — re-exported here
-// only for convenience/backwards-compatibility with existing call sites.
 export { runNameCheck } from "@/lib/name-check/rule-engine";
 export { chaldeanRawSum, getFullNameCompoundNumber } from "@/lib/name-check/numerology";
 export const numerology = {
