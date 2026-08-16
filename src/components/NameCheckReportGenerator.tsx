@@ -1274,56 +1274,28 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   // Custom TTF embedding requires fontkit to be registered first.
   pdfDoc.registerFontkit(fontkit);
 
- // Fetch all design assets (images + fonts) from /public — one at a time with
-  // labeled error wrapping, so if something fails we know EXACTLY which asset
-  // and why, instead of a generic "unexpected error".
-  async function loadAsset(label: string, path: string): Promise<Uint8Array> {
-    try {
-      return await fetchAssetBytes(path);
-    } catch (err) {
-      throw new Error(`[Name Check PDF] Failed loading "${label}" from ${path}: ${err instanceof Error ? err.message : err}`);
-    }
-  }
-
-  const backgroundBytes = await loadAsset("background", ASSET_PATHS.background);
-  const logoBytes = await loadAsset("logo", ASSET_PATHS.logo);
-  const loshuGridBytes = await loadAsset("loshuGrid", ASSET_PATHS.loshuGrid);
-  const starIconBytes = await loadAsset("starIcon", ASSET_PATHS.starIcon);
-  const handsPrayingBytes = await loadAsset("handsPraying", ASSET_PATHS.handsPraying);
-  const quicksandRegularBytes = await loadAsset("Quicksand-Regular font", ASSET_PATHS.fonts.quicksandRegular);
-  const quicksandBoldBytes = await loadAsset("Quicksand-Bold font", ASSET_PATHS.fonts.quicksandBold);
-  const cinzelDecorativeBoldBytes = await loadAsset("CinzelDecorative-Bold font", ASSET_PATHS.fonts.cinzelDecorativeBold);
-  const cardoRegularBytes = await loadAsset("Cardo-Regular font", ASSET_PATHS.fonts.cardoRegular);
-
-  async function embedImg(label: string, bytes: Uint8Array) {
-    try {
-      return await pdfDoc.embedPng(bytes);
-    } catch (err) {
-      throw new Error(`[Name Check PDF] Failed embedding image "${label}" (is it a valid PNG?): ${err instanceof Error ? err.message : err}`);
-    }
-  }
-  async function embedFontSafe(label: string, bytes: Uint8Array) {
-    try {
-      return await pdfDoc.embedFont(bytes, { subset: true });
-    } catch (err) {
-      throw new Error(`[Name Check PDF] Failed embedding font "${label}" (may be a Variable Font — needs a Static font file instead): ${err instanceof Error ? err.message : err}`);
-    }
-  }
-
-  const assets: Assets = {
-    background: await embedImg("background", backgroundBytes),
-    logo: await embedImg("logo", logoBytes),
-    loshuGrid: await embedImg("loshuGrid", loshuGridBytes),
-    starIcon: await embedImg("starIcon", starIconBytes),
-    handsPraying: await embedImg("handsPraying", handsPrayingBytes),
-  };
-
-  const fonts: Fonts = {
-    sans: await embedFontSafe("Quicksand-Regular", quicksandRegularBytes),
-    sansBold: await embedFontSafe("Quicksand-Bold", quicksandBoldBytes),
-    heading: await embedFontSafe("CinzelDecorative-Bold", cinzelDecorativeBoldBytes),
-    quote: await embedFontSafe("Cardo-Regular", cardoRegularBytes),
-  };
+  // Fetch all design assets (images + fonts) from /public in parallel.
+  const [
+    backgroundBytes,
+    logoBytes,
+    loshuGridBytes,
+    starIconBytes,
+    handsPrayingBytes,
+    quicksandRegularBytes,
+    quicksandBoldBytes,
+    cinzelDecorativeBoldBytes,
+    cardoRegularBytes,
+  ] = await Promise.all([
+    fetchAssetBytes(ASSET_PATHS.background),
+    fetchAssetBytes(ASSET_PATHS.logo),
+    fetchAssetBytes(ASSET_PATHS.loshuGrid),
+    fetchAssetBytes(ASSET_PATHS.starIcon),
+    fetchAssetBytes(ASSET_PATHS.handsPraying),
+    fetchAssetBytes(ASSET_PATHS.fonts.quicksandRegular),
+    fetchAssetBytes(ASSET_PATHS.fonts.quicksandBold),
+    fetchAssetBytes(ASSET_PATHS.fonts.cinzelDecorativeBold),
+    fetchAssetBytes(ASSET_PATHS.fonts.cardoRegular),
+  ]);
 
   const assets: Assets = {
     background: await pdfDoc.embedPng(backgroundBytes),
