@@ -139,7 +139,7 @@ const ASSET_PATHS = {
   logo: "/name-check-assets/logo-ankshaastra.png",
   loshuGrid: "/name-check-assets/loshu-turtle-grid.png",
   starIcon: "/name-check-assets/star-icon.png",
-  handsPraying: "/name-check-assets/praying-hands.png",
+  handsPraying: "/name-check-assets/hands-praying.png",
   fonts: {
     quicksandRegular: "/name-check-assets/fonts/Quicksand-Regular.ttf",
     quicksandBold: "/name-check-assets/fonts/Quicksand-Bold.ttf",
