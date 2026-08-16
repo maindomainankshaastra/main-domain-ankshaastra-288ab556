@@ -69,12 +69,8 @@ const PAGE_HEIGHT = 841.89;
 
 /**
  * Canva → PDF unit conversion. The client's reference file was designed on a
- * 1860 x 2631 px Canva canvas (confirmed from the exported reference PDF's page
- * size) and our PDF page is standard A4 (595.28 x 841.89 pt) — same aspect ratio,
- * so any font size the client reads off Canva's toolbar converts straight to
- * PDF points by multiplying by this factor. All page builders below use exact
- * px values the client read off Canva, run through this constant — so if a
- * size still looks off, it's the px number that needs re-checking, not the code.
+ * 1860 x 2631 px Canva canvas — same aspect ratio as A4 — so any font size
+ * read off Canva's toolbar converts straight to PDF points via this factor.
  */
 const CANVA_SCALE = PAGE_WIDTH / 1860; // ≈ 0.32005
 const px = (v: number) => Math.round(v * CANVA_SCALE * 10) / 10;
@@ -109,6 +105,10 @@ const ASSET_PATHS = {
   socialLinkedin: "/name-check-assets/social-linkedin.png",
   socialYoutube: "/name-check-assets/social-youtube.png",
   socialFacebook: "/name-check-assets/social-facebook.png",
+  // Real icons extracted straight from the client's reference PDF (pdfimages) —
+  // NOT drawn/approximated. offer-icon-pen = "edit/pencil on document" glyph used
+  // for the first bullet row of both pricing cards. offer-icon-digits = the
+  // pastel "0123 / 456 / 789" scatter badge used for the compound/number bullet row.
   offerIconPen: "/name-check-assets/offer-icon-pen.png",
   offerIconDigits: "/name-check-assets/offer-icon-digits.png",
   fonts: {
@@ -142,6 +142,21 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): 
   }
   if (current) lines.push(current);
   return lines;
+}
+
+/** Pure measurement (no drawing) — mirrors drawWrappedText's line count, for pre-sizing boxes. */
+function measureWrappedTextHeight(text: string, font: PDFFont, size: number, maxWidth: number, lineHeight: number): number {
+  return wrapText(text, font, size, maxWidth).length * lineHeight;
+}
+
+/** Pure measurement (no drawing) — mirrors drawBulletList's total consumed height, for pre-sizing boxes. */
+function measureBulletListHeight(items: string[], font: PDFFont, size: number, maxWidth: number, lineHeight: number, gap: number): number {
+  let total = 0;
+  items.forEach((item) => {
+    const lineCount = wrapText(item, font, size, maxWidth - 14).length;
+    total += lineCount * lineHeight + gap;
+  });
+  return total;
 }
 
 function drawWrappedText(
@@ -178,6 +193,69 @@ function drawBulletList(
     y -= opts.gap;
   });
   return y;
+}
+
+/**
+ * Rich-text centered wrap: a sequence of {text, bold} word-tokens, wrapped to maxWidth
+ * and horizontally centered per line, switching between opts.font (regular) and
+ * opts.boldFont for individual words. Used for the Welcome-page quote, where the
+ * numerologist's credential phrase must render bold mid-paragraph.
+ */
+function drawRichWrappedTextCentered(
+  page: PDFPage,
+  tokens: { text: string; bold: boolean }[],
+  opts: { centerX: number; y: number; font: PDFFont; boldFont: PDFFont; size: number; maxWidth: number; lineHeight: number; color: RGB }
+): number {
+  // Break tokens into lines respecting maxWidth.
+  const lines: { text: string; bold: boolean }[][] = [];
+  let currentLine: { text: string; bold: boolean }[] = [];
+  let currentWidth = 0;
+  const spaceWidth = opts.font.widthOfTextAtSize(" ", opts.size);
+
+  tokens.forEach((tok) => {
+    const font = tok.bold ? opts.boldFont : opts.font;
+    const wordWidth = font.widthOfTextAtSize(tok.text, opts.size);
+    const addWidth = (currentLine.length > 0 ? spaceWidth : 0) + wordWidth;
+    if (currentWidth + addWidth > opts.maxWidth && currentLine.length > 0) {
+      lines.push(currentLine);
+      currentLine = [tok];
+      currentWidth = wordWidth;
+    } else {
+      currentLine.push(tok);
+      currentWidth += addWidth;
+    }
+  });
+  if (currentLine.length > 0) lines.push(currentLine);
+
+  let cursorY = opts.y;
+  lines.forEach((line) => {
+    const lineWidth = line.reduce((sum, tok, i) => {
+      const font = tok.bold ? opts.boldFont : opts.font;
+      return sum + font.widthOfTextAtSize(tok.text, opts.size) + (i > 0 ? spaceWidth : 0);
+    }, 0);
+    let x = opts.centerX - lineWidth / 2;
+    line.forEach((tok) => {
+      const font = tok.bold ? opts.boldFont : opts.font;
+      page.drawText(tok.text, { x, y: cursorY, size: opts.size, font, color: opts.color });
+      x += font.widthOfTextAtSize(tok.text, opts.size) + spaceWidth;
+    });
+    cursorY -= opts.lineHeight;
+  });
+  return cursorY;
+}
+
+/** Splits "prefix BOLDPHRASE suffix" into word-tokens with a bold flag, for drawRichWrappedTextCentered. */
+function buildBoldPhraseTokens(fullText: string, boldPhrase: string): { text: string; bold: boolean }[] {
+  const idx = fullText.indexOf(boldPhrase);
+  if (idx === -1) return fullText.split(/\s+/).map((w) => ({ text: w, bold: false }));
+  const before = fullText.slice(0, idx);
+  const bold = fullText.slice(idx, idx + boldPhrase.length);
+  const after = fullText.slice(idx + boldPhrase.length);
+  return [
+    ...before.split(/\s+/).filter(Boolean).map((w) => ({ text: w, bold: false })),
+    ...bold.split(/\s+/).filter(Boolean).map((w) => ({ text: w, bold: true })),
+    ...after.split(/\s+/).filter(Boolean).map((w) => ({ text: w, bold: false })),
+  ];
 }
 
 interface Assets {
@@ -254,9 +332,7 @@ function drawRoundedRect(
   });
 }
 
-/** Fully-rounded maroon pill banner used for section headers, floating centered over a content box's top edge.
- *  Text size is fixed at 45px-Canva (≈14.4pt) per the client's confirmed values — every "banner" label
- *  across the whole document (Chaldean Numerology, What We'll Analyze, What This Represents, etc.) uses it. */
+/** Fully-rounded maroon pill banner used for section headers. Text = 45px-Canva ≈14.4pt. */
 function drawMaroonBanner(page: PDFPage, fonts: Fonts, text: string, boxX: number, boxTopY: number, boxWidth: number, height = 34) {
   const label = text.toUpperCase();
   const size = px(45);
@@ -315,81 +391,84 @@ function drawStarGlyph(page: PDFPage, cx: number, cy: number, r: number, color: 
 
 type OfferIconType = "pen" | "grid" | "digits" | "letter" | "document";
 
+/**
+ * Pricing-card bullet-row icon badges. "pen" and "digits" use the REAL glyphs
+ * extracted from the client's reference PDF (see ASSET_PATHS.offerIconPen /
+ * offerIconDigits) — both are fit-to-contain within a box no larger than the
+ * badge circle's inscribed square, so they can never poke outside the circle.
+ * "grid" / "letter" / "document" are vector-drawn to match the reference
+ * exactly (grid: 1 top-left, 8 top-right, 7 center — verified against the
+ * reference PDF pixel-for-pixel; letter: a large single "A" in the heading
+ * font; document: a stack of report pages).
+ */
 function drawOfferIcon(page: PDFPage, fonts: Fonts, assets: Assets, type: OfferIconType, cx: number, cy: number, r: number) {
   const white = COLOR.white;
+  const maxBox = r * 1.3; // inscribed-square-ish bound — keeps every icon safely inside the circle
+
+  const drawContainedImage = (img: PDFImage) => {
+    const scale = Math.min(maxBox / img.width, maxBox / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    page.drawImage(img, { x: cx - w / 2, y: cy - h / 2, width: w, height: h });
+  };
+
   switch (type) {
     case "pen": {
-      const img = assets.offerIconPen;
-      // Kept comfortably inside the badge circle (was overflowing at 1.65x radius).
-      const targetW = r * 1.25;
-      const scale = targetW / img.width;
-      const w = img.width * scale;
-      const h = img.height * scale;
-      page.drawImage(img, { x: cx - w / 2, y: cy - h / 2, width: w, height: h });
+      drawContainedImage(assets.offerIconPen);
       break;
     }
     case "digits": {
-      const img = assets.offerIconDigits;
-      const targetW = r * 1.3;
-      const scale = targetW / img.width;
-      const w = img.width * scale;
-      const h = img.height * scale;
-      page.drawImage(img, { x: cx - w / 2, y: cy - h / 2, width: w, height: h });
+      drawContainedImage(assets.offerIconDigits);
       break;
     }
     case "grid": {
-      const cell = r * 0.52;
-      const gap = r * 0.18;
-      const originX = cx - cell - gap / 2;
-      const originY = cy - cell - gap / 2;
-      [0, 1].forEach((row) => {
-        [0, 1].forEach((col) => {
-          page.drawRectangle({
-            x: originX + col * (cell + gap),
-            y: originY + row * (cell + gap),
-            width: cell,
-            height: cell,
-            borderColor: white,
-            borderWidth: 1,
-          });
-        });
-      });
+      // 3x3 grid, white stroke, numbers only in top-left (1), top-right (8), and
+      // center (7) cells — matches the reference exactly (other 6 cells blank).
+      const gridSize = maxBox;
+      const cell = gridSize / 3;
+      const originX = cx - gridSize / 2;
+      const originY = cy - gridSize / 2;
+      for (let i = 0; i <= 3; i++) {
+        page.drawLine({ start: { x: originX + i * cell, y: originY }, end: { x: originX + i * cell, y: originY + gridSize }, thickness: 0.9, color: white });
+        page.drawLine({ start: { x: originX, y: originY + i * cell }, end: { x: originX + gridSize, y: originY + i * cell }, thickness: 0.9, color: white });
+      }
+      const numSize = cell * 0.62;
+      const placeNum = (label: string, col: number, row: number) => {
+        const ccx = originX + col * cell + cell / 2;
+        const ccy = originY + gridSize - row * cell - cell / 2;
+        page.drawText(label, { x: ccx - fonts.sansBold.widthOfTextAtSize(label, numSize) / 2, y: ccy - numSize * 0.36, size: numSize, font: fonts.sansBold, color: white });
+      };
+      placeNum("1", 0, 0);
+      placeNum("8", 2, 0);
+      placeNum("7", 1, 1);
       break;
     }
     case "letter": {
       const label = "A";
-      page.drawText(label, {
-        x: cx - fonts.sansBold.widthOfTextAtSize(label, 13) / 2,
-        y: cy - 4.5,
-        size: 13,
-        font: fonts.sansBold,
-        color: white,
-      });
+      const size = maxBox * 1.05;
+      page.drawText(label, { x: cx - fonts.heading.widthOfTextAtSize(label, size) / 2, y: cy - size * 0.36, size, font: fonts.heading, color: white });
       break;
     }
     case "document": {
-      const w = r * 0.9;
-      const h = r * 1.15;
-      const x = cx - w / 2;
-      const y = cy - h / 2;
-      const fold = 3.5;
-      const path = `M 0 0 L ${w - fold} 0 L ${w} ${fold} L ${w} ${h} L 0 ${h} Z`;
-      page.drawSvgPath(path, { x, y: y + h, borderColor: white, borderWidth: 1 });
-      [0.38, 0.6].forEach((f) => {
-        page.drawLine({ start: { x: x + 2.5, y: y + h * (1 - f) }, end: { x: x + w - 3.5, y: y + h * (1 - f) }, thickness: 1, color: white });
+      // A small stack of 3 offset report pages with a few horizontal "text" lines.
+      const w = maxBox * 0.62;
+      const h = maxBox * 0.8;
+      const offset = 2.6;
+      for (let i = 2; i >= 0; i--) {
+        const x = cx - w / 2 + i * offset;
+        const y = cy - h / 2 - i * offset;
+        page.drawRectangle({ x, y, width: w, height: h, borderColor: white, borderWidth: 0.9 });
+      }
+      const lineX = cx - w / 2 + 3;
+      const lineW = w - 6;
+      [0.3, 0.5, 0.7].forEach((f) => {
+        page.drawLine({ start: { x: lineX, y: cy - h / 2 + h * f }, end: { x: lineX + lineW, y: cy - h / 2 + h * f }, thickness: 0.8, color: white });
       });
       break;
     }
   }
 }
 
-/**
- * Standard page chrome — real background border image, a CENTERED decorative title
- * (line 1 = 50px-Canva ≈16pt "kicker", line 2 = 80px-Canva ≈26pt main title — this
- * two-size pattern is what the client confirmed for every interior page from
- * Science of Names through the Breakdown pages), centered underline + star divider,
- * and a centered website pill footer.
- */
 function drawPageChrome(
   page: PDFPage,
   fonts: Fonts,
@@ -403,7 +482,6 @@ function drawPageChrome(
   let titleY = PAGE_HEIGHT - 96;
   const maxTitleWidth = PAGE_WIDTH - 96;
 
-  // Client-confirmed: kicker line (if present) = 50px ≈16pt, main title line = 80px ≈26pt.
   const kickerSize = px(50);
   const mainSize = px(80);
 
@@ -442,7 +520,6 @@ function drawPageChrome(
   drawFooterPill(page, fonts, opts.brand);
 }
 
-/** Centered rounded maroon website pill footer. Client-confirmed: 45px-Canva ≈14.5pt. */
 function drawFooterPill(page: PDFPage, fonts: Fonts, brand: BrandConfig) {
   const centerX = PAGE_WIDTH / 2;
   const pill = `WWW.${brand.website.replace(/^www\./i, "").toUpperCase()}`;
@@ -459,7 +536,6 @@ function drawFooterPill(page: PDFPage, fonts: Fonts, brand: BrandConfig) {
   });
 }
 
-/** Two-column data table: label + value, both centered. Client-confirmed: Quicksand, 45px ≈14.4pt. */
 function drawDataTable(
   page: PDFPage,
   fonts: Fonts,
@@ -523,7 +599,8 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   const LOGO_TARGET_WIDTH = 210;
   const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
   const logoDims = assets.logo.scale(logoScale);
-  let y = PAGE_HEIGHT - 66;
+  // Moved up from the previous 66pt top margin — was sitting too low on the page.
+  let y = PAGE_HEIGHT - 40;
   page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: y - logoDims.height, width: logoDims.width, height: logoDims.height });
   y -= logoDims.height + 60;
 
@@ -571,7 +648,6 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
-  // Client-confirmed: "INDEX" title = 100px ≈32pt.
   const titleSize = px(100);
   page.drawText("INDEX", {
     x: centerX - fonts.heading.widthOfTextAtSize("INDEX", titleSize) / 2,
@@ -600,7 +676,6 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
     },
   ];
 
-  // Client-confirmed: "01/02/03" = 160px ≈51pt; row titles & bullet items = 45px ≈14.4pt.
   const numSize = px(160);
   const bodySize = px(45);
 
@@ -630,9 +705,11 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
       font: fonts.sansBold,
       color: COLOR.maroon,
     });
+    // Row titles ("Personal Information & Introduction", etc.) are REGULAR weight,
+    // not bold — matches the reference exactly (only the 01/02/03 numerals are bold).
     let titleY = y - bodySize - 10;
     row.title.split("\n").forEach((line) => {
-      page.drawText(line, { x: tableX + numColW + 10, y: titleY, size: bodySize, font: fonts.sansBold, color: COLOR.maroonDark });
+      page.drawText(line, { x: tableX + numColW + 10, y: titleY, size: bodySize, font: fonts.sans, color: COLOR.maroonDark });
       titleY -= bodySize + 6;
     });
     let itemY = y - bodySize - 10;
@@ -648,32 +725,44 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
-  // Client-confirmed: title = 80px ≈26pt; quote body = 45px ≈14.4pt.
+  // Logo, top center (this page was missing it entirely before).
+  const LOGO_TARGET_WIDTH = 150;
+  const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
+  const logoDims = assets.logo.scale(logoScale);
+  let y = PAGE_HEIGHT - 40;
+  page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: y - logoDims.height, width: logoDims.width, height: logoDims.height });
+  y -= logoDims.height + 34;
+
+  // Two-line heading — "Namaskar" / "Priyanka Ji" — BOTH at 80px Cinzel Decorative
+  // (previously this was jammed onto one auto-shrinking line).
   const titleSize = px(80);
-  const title = `"Namaskar ${data.firstName || data.customerName} Ji"`;
-  let titleFontSize = titleSize;
-  while (fonts.heading.widthOfTextAtSize(title, titleFontSize) > PAGE_WIDTH - 96 && titleFontSize > 14) titleFontSize -= 1;
-  page.drawText(title, {
-    x: centerX - fonts.heading.widthOfTextAtSize(title, titleFontSize) / 2,
-    y: PAGE_HEIGHT - 96,
-    size: titleFontSize,
-    font: fonts.heading,
-    color: COLOR.maroon,
+  const nameStr = data.firstName || data.customerName;
+  const line1 = `"Namaskar`;
+  const line2 = `${nameStr} Ji"`;
+  [line1, line2].forEach((line) => {
+    let size = titleSize;
+    while (fonts.heading.widthOfTextAtSize(line, size) > PAGE_WIDTH - 96 && size > 14) size -= 1;
+    page.drawText(line, { x: centerX - fonts.heading.widthOfTextAtSize(line, size) / 2, y, size, font: fonts.heading, color: COLOR.maroon });
+    y -= size + 10;
   });
-  const dividerY = PAGE_HEIGHT - 96 - titleFontSize + 10;
+
+  const dividerY = y + 6;
   page.drawLine({ start: { x: centerX - 165, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
   page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 165, y: dividerY }, thickness: 1, color: COLOR.maroon });
   drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
   drawFooterPill(page, fonts, data.brand);
 
-  let y = dividerY - 40;
+  let cy = dividerY - 40;
   const bodySize = px(45);
-  const message = `"This personalised Name Check Report has been prepared after careful analysis of your birth date and current name by celebrity Astro-Numerologist ${data.brand.numerologistName}. The name analysis is rooted in the approach of Chaldean Numerology and the Loshu Grid. The purpose of this report is to identify how the cosmic energies influencing your life align with your current name. Please approach these insights with faith, consistency and pure intention. May this guide illuminate your path towards prosperity, peace and spiritual growth."`;
+  const boldPhrase = `Astro-Numerologist ${data.brand.numerologistName}.`;
+  const message = `"This personalised Name Check Report has been prepared after careful analysis of your birth date and current name by celebrity ${boldPhrase} The name analysis is rooted in the approach of Chaldean Numerology and the Loshu Grid. The purpose of this report is to identify how the cosmic energies influencing your life align with your current name. Please approach these insights with faith, consistency and pure intention. May this guide illuminate your path towards prosperity, peace and spiritual growth."`;
 
-  y = drawWrappedTextCentered(page, message, {
+  const tokens = buildBoldPhraseTokens(message, boldPhrase);
+  cy = drawRichWrappedTextCentered(page, tokens, {
     centerX,
-    y,
+    y: cy,
     font: fonts.quote,
+    boldFont: fonts.sansBold, // Cardo has no bold weight loaded — Quicksand Bold stands in for the emphasis
     size: bodySize,
     maxWidth: PAGE_WIDTH - 140,
     lineHeight: bodySize + 8,
@@ -684,7 +773,7 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   const handsScale = HANDS_TARGET_WIDTH / assets.handsPraying.width;
   const handsDims = assets.handsPraying.scale(handsScale);
   const HANDS_BOTTOM_Y = 190;
-  const handsTop = Math.min(y - 30, HANDS_BOTTOM_Y + handsDims.height);
+  const handsTop = Math.min(cy - 30, HANDS_BOTTOM_Y + handsDims.height);
   page.drawImage(assets.handsPraying, {
     x: centerX - handsDims.width / 2,
     y: Math.min(handsTop - handsDims.height, HANDS_BOTTOM_Y),
@@ -705,7 +794,6 @@ function drawBlueprintPage(
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
-  // Client-confirmed: "NUMEROLOGICAL BLUEPRINT" = 80px ≈26pt; "PERSONAL INFORMATION" & table = 45px ≈14.4pt.
   const titleSize = px(80);
   const title = "Numerological Blueprint";
   page.drawText(title, {
@@ -757,35 +845,44 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
   const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
   const bodySize = px(45);
+  const innerWidth = boxWidth - 36;
+  const introText =
+    "Every letter in the alphabet carries a specific numeric vibration. When combined, the letters of a name create unique energy patterns that influence:";
+  const bulletItems = [
+    "How others perceive you",
+    "Your natural talents and abilities",
+    "Career and financial opportunities",
+    "Relationship dynamics",
+    "Mental and emotional patterns",
+    "Life challenges and lessons",
+  ];
+
+  // Box 1 height is now MEASURED from the actual wrapped content instead of a fixed
+  // guess — this is what was letting the last bullet spill outside the box before.
+  const introHeight = measureWrappedTextHeight(introText, fonts.sans, bodySize, innerWidth, bodySize + 4);
+  const bulletsHeight = measureBulletListHeight(bulletItems, fonts.sans, bodySize, innerWidth, bodySize + 4, 4);
+  const box1Height = 44 + introHeight + 8 + bulletsHeight + 22;
 
   let y = PAGE_HEIGHT - 185;
   let boxTop = y;
-  let boxHeight = 208;
-  drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
+  drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: box1Height });
   drawMaroonBanner(page, fonts, "What Is Name Numerology", boxX, boxTop, boxWidth);
   let cy = boxTop - 44;
-  cy = drawWrappedText(
-    page,
-    "Every letter in the alphabet carries a specific numeric vibration. When combined, the letters of a name create unique energy patterns that influence:",
-    { x: 62, y: cy, font: fonts.sans, size: bodySize, maxWidth: boxWidth - 36, lineHeight: bodySize + 4, color: COLOR.ink }
-  );
+  cy = drawWrappedText(page, introText, { x: 62, y: cy, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight: bodySize + 4, color: COLOR.ink });
   cy -= 8;
-  drawBulletList(
-    page,
-    ["How others perceive you", "Your natural talents and abilities", "Career and financial opportunities", "Relationship dynamics", "Mental and emotional patterns", "Life challenges and lessons"],
-    { x: 62, y: cy, font: fonts.sans, size: bodySize, maxWidth: boxWidth - 36, lineHeight: bodySize + 4, gap: 4, color: COLOR.ink }
-  );
+  drawBulletList(page, bulletItems, { x: 62, y: cy, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight: bodySize + 4, gap: 4, color: COLOR.ink });
 
-  y = boxTop - boxHeight - 32;
+  const box2Text =
+    "You hear and respond to your name thousands of times throughout life. Each utterance reinforces the vibrational pattern, making your name a constant affirmation — positive or negative — depending on its alignment with your destiny.";
+  const box2InnerWidth = boxWidth - 64;
+  const box2TextHeight = measureWrappedTextHeight(box2Text, fonts.sans, bodySize, box2InnerWidth, bodySize + 5);
+  const box2Height = 50 + box2TextHeight + 20;
+
+  y = boxTop - box1Height - 32;
   boxTop = y;
-  boxHeight = 118;
-  drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
+  drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: box2Height });
   drawMaroonBanner(page, fonts, "Why Your Name Matters", boxX, boxTop, boxWidth);
-  drawWrappedTextCentered(
-    page,
-    "You hear and respond to your name thousands of times throughout life. Each utterance reinforces the vibrational pattern, making your name a constant affirmation — positive or negative — depending on its alignment with your destiny.",
-    { centerX: boxX + boxWidth / 2, y: boxTop - 50, font: fonts.sans, size: bodySize, maxWidth: boxWidth - 64, lineHeight: bodySize + 5, color: COLOR.ink }
-  );
+  drawWrappedTextCentered(page, box2Text, { centerX: boxX + boxWidth / 2, y: boxTop - 50, font: fonts.sans, size: bodySize, maxWidth: box2InnerWidth, lineHeight: bodySize + 5, color: COLOR.ink });
 }
 
 function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
@@ -821,7 +918,6 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
     ["O", "Z"],
     ["F", "P"],
   ];
-  // Client-confirmed: chart cell numbers/letters = 36.7px ≈11.7pt.
   const cellSize = px(36.7);
   const gridRows = 1 + Math.max(...columns.map((c) => c.length));
   const gridX = boxX;
@@ -950,10 +1046,12 @@ function drawCurrentNameBreakdownPage(
 
   y = totalsY - totalsRowH - 34;
   const contentBoxTop = y;
-  const contentBoxHeight = 230;
+  const innerWidth = boxWidth - 36;
+  const bulletsHeight = measureBulletListHeight(opts.bullets, fonts.sans, bodySize, innerWidth, bodySize + 4, 12);
+  const contentBoxHeight = 46 + bulletsHeight + 22;
   drawContentBox(page, { x: boxX, y: contentBoxTop, width: boxWidth, height: contentBoxHeight });
   drawMaroonBanner(page, fonts, "What This Represents", boxX, contentBoxTop, boxWidth);
-  drawBulletList(page, opts.bullets, { x: 62, y: contentBoxTop - 46, font: fonts.sans, size: bodySize, maxWidth: boxWidth - 36, lineHeight: bodySize + 4, gap: 12, color: COLOR.ink });
+  drawBulletList(page, opts.bullets, { x: 62, y: contentBoxTop - 46, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight: bodySize + 4, gap: 12, color: COLOR.ink });
 }
 
 const VERDICT_LABEL: Record<"HR" | "OA" | "NR", string> = {
@@ -978,15 +1076,20 @@ function drawWhyCriticalPage(
   const boxWidth = PAGE_WIDTH - 88;
   const bodySize = px(45);
   const boxTop = PAGE_HEIGHT - 215;
-  const boxHeight = 220;
-
-  drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
-  drawMaroonBanner(page, fonts, "Why This Is Critical", boxX, boxTop, boxWidth);
+  const innerWidth = boxWidth - 36;
 
   const bullets = rule?.paragraphs ?? [
     "Name correction guidance could not be determined for this combination — please review this report manually before sending it to the customer.",
   ];
-  drawBulletList(page, bullets, { x: 62, y: boxTop - 46, font: fonts.sans, size: bodySize, maxWidth: boxWidth - 36, lineHeight: bodySize + 4.5, gap: 14, color: COLOR.ink });
+
+  // Measured height — this box was the other one where the last bullet point
+  // was spilling past the card's bottom edge.
+  const bulletsHeight = measureBulletListHeight(bullets, fonts.sans, bodySize, innerWidth, bodySize + 4.5, 14);
+  const boxHeight = 46 + bulletsHeight + 22;
+
+  drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
+  drawMaroonBanner(page, fonts, "Why This Is Critical", boxX, boxTop, boxWidth);
+  drawBulletList(page, bullets, { x: 62, y: boxTop - 46, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight: bodySize + 4.5, gap: 14, color: COLOR.ink });
 
   const verdictLabel = `${VERDICT_LABEL[matched.verdict]}${matched.isFallback ? " (fallback — review recommended)" : ""}`;
   const verdictTop = boxTop - boxHeight - 46;
@@ -1136,8 +1239,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   drawFooterPill(page, fonts, data.brand);
 }
 
-/** Page 13 — social follow icons. Client-confirmed: title = 80px ≈26pt (Cinzel Decorative),
- *  "FOLLOW FOR DAILY..." = 45px ≈14.4pt (Quicksand), "STAY CONNECTED..." = 60px ≈19.2pt (Quicksand). */
+/** Page 13 — social follow icons. */
 function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
