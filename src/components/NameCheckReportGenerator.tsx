@@ -363,23 +363,29 @@ function drawPageChrome(
   page: PDFPage,
   fonts: Fonts,
   assets: Assets,
-  opts: { title: string; subtitle?: string; pageNumber: number; totalPages: number; brand: BrandConfig }
+  opts: { title: string; subtitle?: string; pageNumber: number; totalPages: number; brand: BrandConfig; align?: "left" | "center" }
 ) {
   drawPageBackground(page, assets);
 
+  const align = opts.align ?? "center";
   const centerX = PAGE_WIDTH / 2;
+  const leftX = 54;
   const titleLines = opts.title.split("\n");
   let titleY = PAGE_HEIGHT - 96;
 
   const maxTitleWidth = PAGE_WIDTH - 96;
+  let maxLineWidth = 0;
   titleLines.forEach((line, i) => {
     const isLast = i === titleLines.length - 1;
     let size = isLast ? 24 : 15;
     const font = fonts.heading;
     // Auto-shrink to fit (e.g. long customer names on the welcome page) instead of overflowing.
     while (font.widthOfTextAtSize(line, size) > maxTitleWidth && size > 11) size -= 1;
+    const lineWidth = font.widthOfTextAtSize(line, size);
+    maxLineWidth = Math.max(maxLineWidth, lineWidth);
+    const x = align === "left" ? leftX : centerX - lineWidth / 2;
     page.drawText(line, {
-      x: centerX - font.widthOfTextAtSize(line, size) / 2,
+      x,
       y: titleY,
       size,
       font,
@@ -388,15 +394,24 @@ function drawPageChrome(
     titleY -= isLast ? 34 : 26;
   });
 
-  // Centered underline + star divider (matches every reference section header)
+  // Underline + star divider — left-anchored & shorter for the "left" style pages (Index /
+  // Welcome / Blueprint in the reference), full centered version for every other page.
   const dividerY = titleY + 12;
-  page.drawLine({ start: { x: centerX - 165, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
-  page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 165, y: dividerY }, thickness: 1, color: COLOR.maroon });
-  drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
+  if (align === "left") {
+    const dividerWidth = Math.max(160, Math.min(maxLineWidth, 320));
+    page.drawLine({ start: { x: leftX, y: dividerY }, end: { x: leftX + dividerWidth, y: dividerY }, thickness: 1, color: COLOR.maroon });
+    drawStarGlyph(page, leftX + dividerWidth * 0.42, dividerY, 5, COLOR.maroon);
+  } else {
+    page.drawLine({ start: { x: centerX - 165, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
+    page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 165, y: dividerY }, thickness: 1, color: COLOR.maroon });
+    drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
+  }
 
   if (opts.subtitle) {
-    page.drawText(opts.subtitle, {
-      x: centerX - fonts.sansBold.widthOfTextAtSize(opts.subtitle.toUpperCase(), 11) / 2,
+    const subLabel = opts.subtitle.toUpperCase();
+    const subX = align === "left" ? leftX : centerX - fonts.sansBold.widthOfTextAtSize(subLabel, 11) / 2;
+    page.drawText(subLabel, {
+      x: subX,
       y: dividerY - 22,
       size: 11,
       font: fonts.sansBold,
@@ -423,7 +438,8 @@ function drawFooterPill(page: PDFPage, fonts: Fonts, brand: BrandConfig) {
   });
 }
 
-/** Two-column data table: label left, value right, both centered, wrapped in one rounded card (matches the reference). */
+/** Two-column data table: label left, value right, matches the reference's plain bordered-row style
+ *  (Title Case label, left-aligned; value left-aligned in the right half; no forced uppercase). */
 function drawDataTable(
   page: PDFPage,
   fonts: Fonts,
@@ -433,6 +449,8 @@ function drawDataTable(
   const rowHeight = opts.rowHeight ?? 32;
   const totalHeight = rowHeight * rows.length;
   const borderTint = rgb(0.82, 0.68, 0.66);
+  const labelX = opts.x + 20;
+  const valueX = opts.x + opts.width / 2 + 20;
 
   drawRoundedRect(page, { x: opts.x, y: opts.y - totalHeight, width: opts.width, height: totalHeight, radius: 16, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
 
@@ -441,17 +459,16 @@ function drawDataTable(
     if (i > 0) {
       page.drawLine({ start: { x: opts.x, y }, end: { x: opts.x + opts.width, y }, thickness: 0.5, color: borderTint });
     }
-    const labelText = label.toUpperCase();
-    page.drawText(labelText, {
-      x: opts.x + opts.width / 4 - fonts.sansBold.widthOfTextAtSize(labelText, 9.5) / 2,
-      y: y - rowHeight / 2 - 3.5,
-      size: 9.5,
+    page.drawText(label, {
+      x: labelX,
+      y: y - rowHeight / 2 - 4,
+      size: 11,
       font: fonts.sansBold,
       color: COLOR.maroonDark,
     });
     const valueText = value || "—";
     page.drawText(valueText, {
-      x: opts.x + (opts.width * 3) / 4 - fonts.sans.widthOfTextAtSize(valueText, 11) / 2,
+      x: valueX,
       y: y - rowHeight / 2 - 4,
       size: 11,
       font: fonts.sansBold,
@@ -519,8 +536,6 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   const centerX = PAGE_WIDTH / 2;
 
   // Logo (real wordmark image) — sized to a fixed TARGET width, not a raw scale factor.
-  // (A raw .scale(0.42) on the native asset pixel size was the bug that made the cover
-  // page's Loshu grid balloon to nearly the full page and overlap the title text below it.)
   const LOGO_TARGET_WIDTH = 210;
   const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
   const logoDims = assets.logo.scale(logoScale);
@@ -552,9 +567,14 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   });
   y -= 46;
 
-  const nameStr = data.customerName.toUpperCase();
-  page.drawText(nameStr, {
-    x: centerX - fonts.heading.widthOfTextAtSize(nameStr, 18) / 2,
+  // Cover byline is the numerologist's/brand's name — NOT the customer's name.
+  // This matches the reference exactly: every reference cover (regardless of which
+  // customer the report is for) shows "HIMANSSHU AGARWAL" here. The customer is
+  // greeted by name starting on the Welcome page (page 3) and the Blueprint table
+  // (page 4) instead — the cover is a fixed brand/author credit, not a personalization slot.
+  const byline = data.brand.numerologistName.replace(/\s+Ji$/i, "").toUpperCase();
+  page.drawText(byline, {
+    x: centerX - fonts.heading.widthOfTextAtSize(byline, 18) / 2,
     y,
     size: 18,
     font: fonts.heading,
@@ -567,7 +587,7 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
 }
 
 function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, assets, { title: "Index", pageNumber, totalPages, brand: data.brand });
+  drawPageChrome(page, fonts, assets, { title: "Index", pageNumber, totalPages, brand: data.brand, align: "left" });
 
   const rows: { no: string; title: string; items: string[] }[] = [
     { no: "01", title: "Personal Information &\nIntroduction", items: ["Your Personal Profile", "Welcome Message"] },
@@ -643,7 +663,7 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
 }
 
 function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, assets, { title: `"Namaskar ${data.firstName || data.customerName} Ji"`, pageNumber, totalPages, brand: data.brand });
+  drawPageChrome(page, fonts, assets, { title: `"Namaskar ${data.firstName || data.customerName} Ji"`, pageNumber, totalPages, brand: data.brand, align: "left" });
 
   let y = PAGE_HEIGHT - 190;
   const message = `"This personalised Name Check Report has been prepared after careful analysis of your birth date and current name by celebrity Astro-Numerologist ${data.brand.numerologistName}. The name analysis is rooted in the approach of Chaldean Numerology and the Loshu Grid. The purpose of this report is to identify how the cosmic energies influencing your life align with your current name. Please approach these insights with faith, consistency and pure intention. May this guide illuminate your path towards prosperity, peace and spiritual growth."`;
@@ -659,8 +679,7 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   });
 
   // Real praying-hands illustration, sized modestly (matches the reference: a small
-  // centered accent well below the quote, NOT a page-filling image — this is the
-  // exact fix for the oversized version currently in production).
+  // centered accent well below the quote, NOT a page-filling image).
   const HANDS_TARGET_WIDTH = 130; // pt — keep deliberately small; the source art is ~1:1
   const handsScale = HANDS_TARGET_WIDTH / assets.handsPraying.width;
   const handsDims = assets.handsPraying.scale(handsScale);
@@ -683,14 +702,29 @@ function drawBlueprintPage(
   pageNumber: number,
   totalPages: number
 ) {
-  drawPageChrome(page, fonts, assets, { title: "Numerological Blueprint", pageNumber, totalPages, brand: data.brand });
+  drawPageChrome(page, fonts, assets, { title: "Numerological Blueprint", pageNumber, totalPages, brand: data.brand, align: "left" });
 
-  drawMaroonBanner(page, fonts, "Personal Information", 44, PAGE_HEIGHT - 165, PAGE_WIDTH - 88);
+  const boxX = 44;
+  const boxWidth = PAGE_WIDTH - 88;
 
+  // Full-width maroon banner (NOT a small centered pill) — matches the reference exactly.
+  const bannerY = PAGE_HEIGHT - 165;
+  const bannerHeight = 40;
+  drawRoundedRect(page, { x: boxX, y: bannerY - bannerHeight, width: boxWidth, height: bannerHeight, radius: bannerHeight / 2, color: COLOR.maroon });
+  page.drawText("PERSONAL INFORMATION", {
+    x: boxX + 24,
+    y: bannerY - bannerHeight / 2 - 4,
+    size: 11.5,
+    font: fonts.sansBold,
+    color: COLOR.white,
+  });
+
+  // Plain Title Case labels — NOT "(As per Aadhar Card)" and NOT forced uppercase;
+  // the reference just says "First Name", "Middle Name", "Last Name", etc.
   const rows: [string, string][] = [
-    ["First Name (As per Aadhar Card)", data.firstName || "—"],
-    ["Middle Name (As per Aadhar Card)", data.middleName || "—"],
-    ["Last Name (As per Aadhar Card)", data.lastName || "—"],
+    ["First Name", data.firstName || "—"],
+    ["Middle Name", data.middleName || "—"],
+    ["Last Name", data.lastName || "—"],
     ["Date of Birth", formatDate(data.dob)],
     ["Gender", data.gender || "—"],
     ["Mulank", String(numbers.mulank)],
@@ -700,7 +734,7 @@ function drawBlueprintPage(
     ["Full Name Compound Number", String(numbers.fullNameCompound)],
   ];
 
-  drawDataTable(page, fonts, rows, { x: 44, y: PAGE_HEIGHT - 175, width: PAGE_WIDTH - 88, rowHeight: 30 });
+  drawDataTable(page, fonts, rows, { x: boxX, y: bannerY - bannerHeight - 12, width: boxWidth, rowHeight: 32 });
 }
 
 function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
@@ -1128,8 +1162,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
       iy -= 12;
     });
 
-    // Button + card border both hug the content that was just measured out above —
-    // no more big empty gap at the bottom of the card like the previous fixed-height version.
+    // Button + card border both hug the content that was just measured out above.
     iy -= 6; // small buffer so the button never overlaps the last note line's descender
     const btnH = 34;
     const btnY = iy - 20;
@@ -1175,8 +1208,6 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   rowYs.forEach((ry) => {
     colXs.forEach((cx) => {
       const label = platforms[idx++];
-      // Outlined circle (maroon ring, pale fill) with the platform initials in maroon —
-      // matches the reference's icon-badge style more closely than a solid-fill circle.
       page.drawCircle({ x: cx, y: ry, size: 34, borderColor: COLOR.maroon, borderWidth: 1.5 });
       page.drawText(label, { x: cx - fonts.sansBold.widthOfTextAtSize(label, 13) / 2, y: ry - 5, size: 13, font: fonts.sansBold, color: COLOR.maroon });
       const btnW = 96;
