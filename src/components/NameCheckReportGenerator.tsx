@@ -145,6 +145,9 @@ const ASSET_PATHS = {
   socialLinkedin: "/name-check-assets/social-linkedin.png",
   socialYoutube: "/name-check-assets/social-youtube.png",
   socialFacebook: "/name-check-assets/social-facebook.png",
+  // Offer-page bullet badge icons (page 12) — extracted from the client's reference PDF.
+  offerIconPen: "/name-check-assets/offer-icon-pen.png",
+  offerIconDigits: "/name-check-assets/offer-icon-digits.png",
   fonts: {
     quicksandRegular: "/name-check-assets/fonts/Quicksand-Regular.ttf",
     quicksandBold: "/name-check-assets/fonts/Quicksand-Bold.ttf",
@@ -233,6 +236,8 @@ interface Assets {
   socialLinkedin: PDFImage;
   socialYoutube: PDFImage;
   socialFacebook: PDFImage;
+  offerIconPen: PDFImage;
+  offerIconDigits: PDFImage;
 }
 
 /** Draws the real background/border image full-bleed — replaces the old flat COLOR.blush + drawFrame(). */
@@ -360,6 +365,84 @@ function drawStarGlyph(page: PDFPage, cx: number, cy: number, r: number, color: 
   // straight into the path string (with no x/y offset) was placing this off-page/invisible.
   const path = `M ${r} 0 L ${r * 1.32} ${r * 0.68} L ${r * 2} ${r} L ${r * 1.32} ${r * 1.32} L ${r} ${r * 2} L ${r * 0.68} ${r * 1.32} L 0 ${r} L ${r * 0.68} ${r * 0.68} Z`;
   page.drawSvgPath(path, { x: cx - r, y: cy + r, color });
+}
+
+/**
+ * Small white glyph icons drawn INSIDE a filled maroon circle badge — used on the pricing/
+ * offer page (page 12) so each bullet gets a distinct icon instead of a plain blank dot,
+ * matching the reference ("Bindhu") sample: pen/edit, grid, stacked digits, letter, document.
+ */
+type OfferIconType = "pen" | "grid" | "digits" | "letter" | "document";
+
+function drawOfferIcon(page: PDFPage, fonts: Fonts, assets: Assets, type: OfferIconType, cx: number, cy: number, r: number) {
+  const white = COLOR.white;
+  switch (type) {
+    case "pen": {
+      // Real extracted "document + pencil" icon from the reference PDF.
+      const img = assets.offerIconPen;
+      const targetW = r * 1.65;
+      const scale = targetW / img.width;
+      const w = img.width * scale;
+      const h = img.height * scale;
+      page.drawImage(img, { x: cx - w / 2, y: cy - h / 2, width: w, height: h });
+      break;
+    }
+    case "digits": {
+      // Real extracted colorful "0-9 digits" icon from the reference PDF.
+      const img = assets.offerIconDigits;
+      const targetW = r * 1.75;
+      const scale = targetW / img.width;
+      const w = img.width * scale;
+      const h = img.height * scale;
+      page.drawImage(img, { x: cx - w / 2, y: cy - h / 2, width: w, height: h });
+      break;
+    }
+    case "grid": {
+      // 2x2 outlined squares — small "table / spelling options" grid glyph.
+      const cell = r * 0.62;
+      const gap = r * 0.22;
+      const originX = cx - cell - gap / 2;
+      const originY = cy - cell - gap / 2;
+      [0, 1].forEach((row) => {
+        [0, 1].forEach((col) => {
+          page.drawRectangle({
+            x: originX + col * (cell + gap),
+            y: originY + row * (cell + gap),
+            width: cell,
+            height: cell,
+            borderColor: white,
+            borderWidth: 1.1,
+          });
+        });
+      });
+      break;
+    }
+    case "letter": {
+      const label = "A";
+      page.drawText(label, {
+        x: cx - fonts.sansBold.widthOfTextAtSize(label, 14) / 2,
+        y: cy - 5,
+        size: 14,
+        font: fonts.sansBold,
+        color: white,
+      });
+      break;
+    }
+    case "document": {
+      // Simple document/pages glyph — outlined rect with a folded top-right corner + two lines.
+      const w = r * 1.05;
+      const h = r * 1.3;
+      const x = cx - w / 2;
+      const y = cy - h / 2;
+      const fold = 4;
+      const path = `M 0 0 L ${w - fold} 0 L ${w} ${fold} L ${w} ${h} L 0 ${h} Z`;
+      page.drawSvgPath(path, { x, y: y + h, borderColor: white, borderWidth: 1.1 });
+      [0.38, 0.6].forEach((f) => {
+        page.drawLine({ start: { x: x + 3, y: y + h * (1 - f) }, end: { x: x + w - 4, y: y + h * (1 - f) }, thickness: 1, color: white });
+      });
+      break;
+    }
+  }
 }
 
 /**
@@ -1087,7 +1170,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 150, y: dividerY }, thickness: 1, color: COLOR.maroon });
   drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
 
-  type Offer = { price: string; strike: string; off: string; title: string; bullets: string[]; note: string };
+  type Offer = { price: string; strike: string; off: string; title: string; bullets: string[]; icons: OfferIconType[]; note: string };
   const offers: Offer[] = [
     {
       price: "\u20B92,987",
@@ -1095,6 +1178,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
       off: "GET 60% OFF",
       title: "Name Correction Report",
       bullets: ["First Name & Full Name Analysis", "2 Corrected Name Spelling Options", "Compound Number Analysis", "First Alphabet Analysis"],
+      icons: ["pen", "grid", "digits", "letter"],
       note: "Comprehensive report with detailed name correction and analysis.",
     },
     {
@@ -1103,6 +1187,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
       off: "GET 54% OFF",
       title: "Perfect Baby Name Report",
       bullets: ["10+ Numerologically Aligned Names", "Mulank, Bhagyank & Rajyog Analysis", "First, Full & Compound Number Analysis", "45+ Page Report & Call Consultation Included"],
+      icons: ["pen", "grid", "digits", "document"],
       note: "Get 10+ Numerologically Aligned Names for your child.",
     },
   ];
@@ -1138,12 +1223,15 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     iy -= 22;
 
     const bulletTextX = 44; // offset from the row's left edge (cx + 14) to where text starts
-    offer.bullets.forEach((b) => {
+    offer.bullets.forEach((b, bi) => {
       const textWidth = colWidth - 28 - bulletTextX - 14; // row width minus text-start offset minus right padding
       const lines = wrapText(b, fonts.sans, 9, textWidth);
       const rowH = 22 + Math.max(0, lines.length - 1) * 12;
       drawRoundedRect(page, { x: cx + 14, y: iy - rowH, width: colWidth - 28, height: rowH, radius: 12, borderColor: COLOR.maroon, borderWidth: 0.75 });
-      page.drawCircle({ x: cx + 14 + 20, y: iy - rowH / 2, size: 13, color: COLOR.maroon });
+      const badgeCx = cx + 14 + 20;
+      const badgeCy = iy - rowH / 2;
+      page.drawCircle({ x: badgeCx, y: badgeCy, size: 13, color: COLOR.maroon });
+      drawOfferIcon(page, fonts, assets, offer.icons[bi] ?? "letter", badgeCx, badgeCy, 13);
       let ty = iy - rowH / 2 + (lines.length - 1) * 6 + 3;
       lines.forEach((line) => {
         page.drawText(line, { x: cx + 14 + bulletTextX, y: ty, size: 9, font: fonts.sans, color: COLOR.maroonDark });
