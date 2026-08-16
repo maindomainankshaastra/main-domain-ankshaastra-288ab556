@@ -11,7 +11,7 @@
  * "Generate PDF" action) or in a Supabase Edge Function / Node script.
  *
  * Install:
- *   npm install pdf-lib
+ *   npm install pdf-lib @pdf-lib/fontkit
  *
  * Usage (unchanged from before — same public API):
  *   import { generateNameCheckReportPdf, nameCheckReportPdfToBlob } from "@/components/NameCheckReportGenerator";
@@ -28,7 +28,7 @@
  * -----------------------------------------------------------------------
  */
 
-import { PDFDocument, PDFPage, PDFFont, StandardFonts, rgb, RGB } from "pdf-lib";
+import { PDFDocument, PDFPage, PDFFont, PDFImage, StandardFonts, rgb, RGB } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { runNameCheck } from "@/lib/name-check/rule-engine";
 import { chaldeanRawSum, getFullNameCompoundNumber } from "@/lib/name-check/numerology";
@@ -76,7 +76,7 @@ const DEFAULT_BRAND: BrandConfig = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Numerology engine — now lives in src/lib/name-check/*              */
+/*  Numerology engine — lives in src/lib/name-check/*                  */
 /*  (friendship-table.ts, compound-table.ts, lo-shu.ts, numerology.ts, */
 /*  rule-engine.ts). Only name-splitting stays local to this file.     */
 /* ------------------------------------------------------------------ */
@@ -140,6 +140,11 @@ const ASSET_PATHS = {
   loshuGrid: "/name-check-assets/loshu-turtle-grid.png",
   starIcon: "/name-check-assets/star-icon.png",
   handsPraying: "/name-check-assets/praying-hands.png",
+  // Social icons — filled maroon circle + white glyph, drawn on the "Connect With Me" page.
+  socialInstagram: "/name-check-assets/social-instagram.png",
+  socialLinkedin: "/name-check-assets/social-linkedin.png",
+  socialYoutube: "/name-check-assets/social-youtube.png",
+  socialFacebook: "/name-check-assets/social-facebook.png",
   fonts: {
     quicksandRegular: "/name-check-assets/fonts/Quicksand-Regular.ttf",
     quicksandBold: "/name-check-assets/fonts/Quicksand-Bold.ttf",
@@ -219,11 +224,15 @@ function drawBulletList(
 }
 
 interface Assets {
-  background: import("pdf-lib").PDFImage;
-  logo: import("pdf-lib").PDFImage;
-  loshuGrid: import("pdf-lib").PDFImage;
-  starIcon: import("pdf-lib").PDFImage;
-  handsPraying: import("pdf-lib").PDFImage;
+  background: PDFImage;
+  logo: PDFImage;
+  loshuGrid: PDFImage;
+  starIcon: PDFImage;
+  handsPraying: PDFImage;
+  socialInstagram: PDFImage;
+  socialLinkedin: PDFImage;
+  socialYoutube: PDFImage;
+  socialFacebook: PDFImage;
 }
 
 /** Draws the real background/border image full-bleed — replaces the old flat COLOR.blush + drawFrame(). */
@@ -354,38 +363,33 @@ function drawStarGlyph(page: PDFPage, cx: number, cy: number, r: number, color: 
 }
 
 /**
- * Standard page chrome, rebuilt to match the reference design: real background border image,
- * a big centered decorative title (optionally two lines) with a centered underline + star divider,
- * and a centered website pill footer. No stray top-left logo and no page-number footer — the
- * reference template doesn't carry either on interior pages.
+ * Standard page chrome, matching the reference design: real background border image, a big
+ * CENTERED decorative title (optionally two lines) with a centered underline + star divider,
+ * and a centered website pill footer. Every page in the reference — Index, Welcome, Blueprint,
+ * Science, Systems, Breakdown, etc. — uses this same centered treatment; there is no "left"
+ * variant in the client's actual template, so this always centers.
  */
 function drawPageChrome(
   page: PDFPage,
   fonts: Fonts,
   assets: Assets,
-  opts: { title: string; subtitle?: string; pageNumber: number; totalPages: number; brand: BrandConfig; align?: "left" | "center" }
+  opts: { title: string; subtitle?: string; pageNumber: number; totalPages: number; brand: BrandConfig }
 ) {
   drawPageBackground(page, assets);
 
-  const align = opts.align ?? "center";
   const centerX = PAGE_WIDTH / 2;
-  const leftX = 54;
   const titleLines = opts.title.split("\n");
   let titleY = PAGE_HEIGHT - 96;
-
   const maxTitleWidth = PAGE_WIDTH - 96;
-  let maxLineWidth = 0;
+
   titleLines.forEach((line, i) => {
     const isLast = i === titleLines.length - 1;
     let size = isLast ? 24 : 15;
     const font = fonts.heading;
     // Auto-shrink to fit (e.g. long customer names on the welcome page) instead of overflowing.
     while (font.widthOfTextAtSize(line, size) > maxTitleWidth && size > 11) size -= 1;
-    const lineWidth = font.widthOfTextAtSize(line, size);
-    maxLineWidth = Math.max(maxLineWidth, lineWidth);
-    const x = align === "left" ? leftX : centerX - lineWidth / 2;
     page.drawText(line, {
-      x,
+      x: centerX - font.widthOfTextAtSize(line, size) / 2, // always centered — matches every page of the reference
       y: titleY,
       size,
       font,
@@ -394,24 +398,16 @@ function drawPageChrome(
     titleY -= isLast ? 34 : 26;
   });
 
-  // Underline + star divider — left-anchored & shorter for the "left" style pages (Index /
-  // Welcome / Blueprint in the reference), full centered version for every other page.
+  // Centered underline + star divider, matching the reference on every interior page.
   const dividerY = titleY + 12;
-  if (align === "left") {
-    const dividerWidth = Math.max(160, Math.min(maxLineWidth, 320));
-    page.drawLine({ start: { x: leftX, y: dividerY }, end: { x: leftX + dividerWidth, y: dividerY }, thickness: 1, color: COLOR.maroon });
-    drawStarGlyph(page, leftX + dividerWidth * 0.42, dividerY, 5, COLOR.maroon);
-  } else {
-    page.drawLine({ start: { x: centerX - 165, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
-    page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 165, y: dividerY }, thickness: 1, color: COLOR.maroon });
-    drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
-  }
+  page.drawLine({ start: { x: centerX - 165, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
+  page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 165, y: dividerY }, thickness: 1, color: COLOR.maroon });
+  drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
 
   if (opts.subtitle) {
     const subLabel = opts.subtitle.toUpperCase();
-    const subX = align === "left" ? leftX : centerX - fonts.sansBold.widthOfTextAtSize(subLabel, 11) / 2;
     page.drawText(subLabel, {
-      x: subX,
+      x: centerX - fonts.sansBold.widthOfTextAtSize(subLabel, 11) / 2,
       y: dividerY - 22,
       size: 11,
       font: fonts.sansBold,
@@ -438,8 +434,8 @@ function drawFooterPill(page: PDFPage, fonts: Fonts, brand: BrandConfig) {
   });
 }
 
-/** Two-column data table: label left, value right, matches the reference's plain bordered-row style
- *  (Title Case label, left-aligned; value left-aligned in the right half; no forced uppercase). */
+/** Two-column data table: label + value, BOTH CENTERED within their half-column — matches the
+ *  reference's plain bordered-row style exactly (Title Case label, centered; value centered). */
 function drawDataTable(
   page: PDFPage,
   fonts: Fonts,
@@ -449,8 +445,8 @@ function drawDataTable(
   const rowHeight = opts.rowHeight ?? 32;
   const totalHeight = rowHeight * rows.length;
   const borderTint = rgb(0.82, 0.68, 0.66);
-  const labelX = opts.x + 20;
-  const valueX = opts.x + opts.width / 2 + 20;
+  const labelColCenter = opts.x + opts.width / 4;
+  const valueColCenter = opts.x + (opts.width * 3) / 4;
 
   drawRoundedRect(page, { x: opts.x, y: opts.y - totalHeight, width: opts.width, height: totalHeight, radius: 16, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
 
@@ -460,7 +456,7 @@ function drawDataTable(
       page.drawLine({ start: { x: opts.x, y }, end: { x: opts.x + opts.width, y }, thickness: 0.5, color: borderTint });
     }
     page.drawText(label, {
-      x: labelX,
+      x: labelColCenter - fonts.sansBold.widthOfTextAtSize(label, 11) / 2,
       y: y - rowHeight / 2 - 4,
       size: 11,
       font: fonts.sansBold,
@@ -468,7 +464,7 @@ function drawDataTable(
     });
     const valueText = value || "—";
     page.drawText(valueText, {
-      x: valueX,
+      x: valueColCenter - fonts.sansBold.widthOfTextAtSize(valueText, 11) / 2,
       y: y - rowHeight / 2 - 4,
       size: 11,
       font: fonts.sansBold,
@@ -587,7 +583,7 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
 }
 
 function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, assets, { title: "Index", pageNumber, totalPages, brand: data.brand, align: "left" });
+  drawPageChrome(page, fonts, assets, { title: "Index", pageNumber, totalPages, brand: data.brand });
 
   const rows: { no: string; title: string; items: string[] }[] = [
     { no: "01", title: "Personal Information &\nIntroduction", items: ["Your Personal Profile", "Welcome Message"] },
@@ -607,7 +603,7 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
     },
   ];
 
-  let y = PAGE_HEIGHT - 170;
+  let y = PAGE_HEIGHT - 190;
   const tableX = 44;
   const tableWidth = PAGE_WIDTH - 88;
   const numColW = 70;
@@ -663,7 +659,7 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
 }
 
 function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, assets, { title: `"Namaskar ${data.firstName || data.customerName} Ji"`, pageNumber, totalPages, brand: data.brand, align: "left" });
+  drawPageChrome(page, fonts, assets, { title: `"Namaskar ${data.firstName || data.customerName} Ji"`, pageNumber, totalPages, brand: data.brand });
 
   let y = PAGE_HEIGHT - 190;
   const message = `"This personalised Name Check Report has been prepared after careful analysis of your birth date and current name by celebrity Astro-Numerologist ${data.brand.numerologistName}. The name analysis is rooted in the approach of Chaldean Numerology and the Loshu Grid. The purpose of this report is to identify how the cosmic energies influencing your life align with your current name. Please approach these insights with faith, consistency and pure intention. May this guide illuminate your path towards prosperity, peace and spiritual growth."`;
@@ -702,7 +698,7 @@ function drawBlueprintPage(
   pageNumber: number,
   totalPages: number
 ) {
-  drawPageChrome(page, fonts, assets, { title: "Numerological Blueprint", pageNumber, totalPages, brand: data.brand, align: "left" });
+  drawPageChrome(page, fonts, assets, { title: "Numerological Blueprint", pageNumber, totalPages, brand: data.brand });
 
   const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
@@ -1094,16 +1090,16 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   type Offer = { price: string; strike: string; off: string; title: string; bullets: string[]; note: string };
   const offers: Offer[] = [
     {
-      price: "₹2,987",
-      strike: "₹ 7,500",
+      price: "\u20B92,987",
+      strike: "\u20B9 7,500",
       off: "GET 60% OFF",
       title: "Name Correction Report",
       bullets: ["First Name & Full Name Analysis", "2 Corrected Name Spelling Options", "Compound Number Analysis", "First Alphabet Analysis"],
       note: "Comprehensive report with detailed name correction and analysis.",
     },
     {
-      price: "₹3,437",
-      strike: "₹ 7,500",
+      price: "\u20B93,437",
+      strike: "\u20B9 7,500",
       off: "GET 54% OFF",
       title: "Perfect Baby Name Report",
       bullets: ["10+ Numerologically Aligned Names", "Mulank, Bhagyank & Rajyog Analysis", "First, Full & Compound Number Analysis", "45+ Page Report & Call Consultation Included"],
@@ -1187,7 +1183,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   drawFooterPill(page, fonts, data.brand);
 }
 
-/** Page 13 (reference) — social follow icons. */
+/** Page 13 (reference) — social follow icons: filled maroon circle + white glyph + "CLICK ME" pill. */
 function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageChrome(page, fonts, assets, { title: "Connect With Me", pageNumber, totalPages, brand: data.brand });
 
@@ -1201,15 +1197,25 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     color: COLOR.maroonDark,
   });
 
-  const platforms = ["IG", "in", "YT", "f"];
+  // Real extracted icons (white glyph, transparent background) drawn on a filled maroon
+  // circle — matches the reference exactly. Order: Instagram, LinkedIn, YouTube, Facebook.
+  const platforms: { image: PDFImage }[] = [
+    { image: assets.socialInstagram },
+    { image: assets.socialLinkedin },
+    { image: assets.socialYoutube },
+    { image: assets.socialFacebook },
+  ];
   const colXs = [centerX - 155, centerX + 155];
   const rowYs = [PAGE_HEIGHT - 300, PAGE_HEIGHT - 430];
   let idx = 0;
   rowYs.forEach((ry) => {
     colXs.forEach((cx) => {
-      const label = platforms[idx++];
-      page.drawCircle({ x: cx, y: ry, size: 34, borderColor: COLOR.maroon, borderWidth: 1.5 });
-      page.drawText(label, { x: cx - fonts.sansBold.widthOfTextAtSize(label, 13) / 2, y: ry - 5, size: 13, font: fonts.sansBold, color: COLOR.maroon });
+      const { image } = platforms[idx++];
+      page.drawCircle({ x: cx, y: ry, size: 34, color: COLOR.maroon });
+      const iconW = 30;
+      const iconH = (image.height / image.width) * iconW;
+      page.drawImage(image, { x: cx - iconW / 2, y: ry - iconH / 2, width: iconW, height: iconH });
+
       const btnW = 96;
       const btnH = 26;
       drawRoundedRect(page, { x: cx - btnW / 2, y: ry - 60, width: btnW, height: btnH, radius: btnH / 2, color: COLOR.maroon });
@@ -1247,13 +1253,6 @@ function drawBackCoverPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Re
     color: COLOR.muted,
   });
 }
-
-/* ------------------------------------------------------------------ */
-/*  "What This Represents" copy — now sourced verbatim from             */
-/*  src/lib/name-check/content-blocks.ts (client's exact wording),      */
-/*  looked up via FIRST_NAME_BLOCKS / FULL_NAME_BLOCKS / COMPOUND_BLOCKS*/
-/*  directly inside generateNameCheckReportPdf() below.                */
-/* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
 /*  Main entry point                                                    */
@@ -1312,6 +1311,10 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     loshuGridBytes,
     starIconBytes,
     handsPrayingBytes,
+    socialInstagramBytes,
+    socialLinkedinBytes,
+    socialYoutubeBytes,
+    socialFacebookBytes,
     quicksandRegularBytes,
     quicksandBoldBytes,
     cinzelDecorativeBoldBytes,
@@ -1322,6 +1325,10 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     fetchAssetBytes(ASSET_PATHS.loshuGrid),
     fetchAssetBytes(ASSET_PATHS.starIcon),
     fetchAssetBytes(ASSET_PATHS.handsPraying),
+    fetchAssetBytes(ASSET_PATHS.socialInstagram),
+    fetchAssetBytes(ASSET_PATHS.socialLinkedin),
+    fetchAssetBytes(ASSET_PATHS.socialYoutube),
+    fetchAssetBytes(ASSET_PATHS.socialFacebook),
     fetchAssetBytes(ASSET_PATHS.fonts.quicksandRegular),
     fetchAssetBytes(ASSET_PATHS.fonts.quicksandBold),
     fetchAssetBytes(ASSET_PATHS.fonts.cinzelDecorativeBold),
@@ -1334,6 +1341,10 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     loshuGrid: await pdfDoc.embedPng(loshuGridBytes),
     starIcon: await pdfDoc.embedPng(starIconBytes),
     handsPraying: await pdfDoc.embedPng(handsPrayingBytes),
+    socialInstagram: await pdfDoc.embedPng(socialInstagramBytes),
+    socialLinkedin: await pdfDoc.embedPng(socialLinkedinBytes),
+    socialYoutube: await pdfDoc.embedPng(socialYoutubeBytes),
+    socialFacebook: await pdfDoc.embedPng(socialFacebookBytes),
   };
 
   const fonts: Fonts = {
@@ -1410,7 +1421,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     10,
     TOTAL_PAGES
   );
-  // 11. Why This Is Critical — now shows the actual matched HR/OA/NR rule
+  // 11. Why This Is Critical — shows the actual matched HR/OA/NR rule
   drawWhyCriticalPage(addPage(), fonts, assets, data, { ruleId: matchedRuleId, verdict, isFallback }, 11, TOTAL_PAGES);
   // 12. Pricing / upsell offers
   drawPricingPage(addPage(), fonts, assets, data, 12, TOTAL_PAGES);
