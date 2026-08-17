@@ -532,21 +532,34 @@ export default function NameCheckReports() {
     return `${firstName}_Name Check_M${mulank}B${bhagyank}.pdf`;
   }
 
-  const handleDownloadPdf = (report: NameCheckReportRow) => {
+  const handleDownloadPdf = async (report: NameCheckReportRow) => {
     if (!report.pdf_url) {
       toast({ title: "No PDF available", description: "Generate the PDF for this report first.", variant: "destructive" });
       return;
     }
-    const link = document.createElement("a");
-    link.href = report.pdf_url;
-    link.download = buildDownloadFilename(report);
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // Fetch the PDF bytes ourselves first — the download="filename" attribute
+      // is silently ignored by browsers for cross-origin links (our PDF lives on
+      // Supabase Storage, a different origin from this admin panel), so a direct
+      // <a href={report.pdf_url} download> just opens the file instead of naming it.
+      // Fetching it into a same-origin blob: URL makes the custom filename work.
+      const res = await fetch(report.pdf_url);
+      if (!res.ok) throw new Error(`Failed to fetch PDF (${res.status})`);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
 
-    logActivity(report.id, "download");
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = buildDownloadFilename(report);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+
+      logActivity(report.id, "download");
+    } catch (err) {
+      toast({ title: "Download failed", description: err instanceof Error ? err.message : "Could not download the PDF.", variant: "destructive" });
+    }
   };
 
   const handlePrint = (report: NameCheckReportRow) => {
