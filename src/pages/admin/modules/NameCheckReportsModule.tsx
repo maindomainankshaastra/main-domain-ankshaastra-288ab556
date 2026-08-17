@@ -150,6 +150,17 @@ function clearCreateDraft() {
   }
 }
 
+const CREATE_OPEN_KEY = "name-check-create-report-open";
+
+/** Whether the "Generate Report" dialog was left open last time — reopens it automatically on return. */
+function loadCreateOpenFlag(): boolean {
+  try {
+    return window.localStorage.getItem(CREATE_OPEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 const PAGE_SIZE = 10;
 const TABLE_NAME = "name_check_reports";
 const STORAGE_BUCKET = "name-check-reports";
@@ -200,10 +211,21 @@ export default function NameCheckReports() {
   const [viewTarget, setViewTarget] = useState<NameCheckReportRow | null>(null);
   const [editTarget, setEditTarget] = useState<NameCheckReportRow | null>(null);
   const [editForm, setEditForm] = useState<ReportFormValues>(EMPTY_FORM);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(() => loadCreateOpenFlag());
   const [createForm, setCreateForm] = useState<ReportFormValues>(() => loadCreateDraft());
   const [deleteTarget, setDeleteTarget] = useState<NameCheckReportRow | null>(null);
   const [regenerateTarget, setRegenerateTarget] = useState<NameCheckReportRow | null>(null);
+
+  // Persist whether the "Generate Report" dialog was left open, so navigating
+  // away and coming back re-opens it automatically instead of just keeping
+  // the form data in the background.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CREATE_OPEN_KEY, createOpen ? "1" : "0");
+    } catch {
+      // Ignore — worst case the dialog just doesn't auto-reopen.
+    }
+  }, [createOpen]);
 
   // Persist the "Generate Report" form as a draft so it survives navigating
   // away and coming back (e.g. checking a customer's details in another tab
