@@ -1,3 +1,5 @@
+
+
 // import { calculateGst, type GstBreakdown } from './gst.js';
 // import { amountInWordsInr } from './amount-in-words.js';
 // import { resolveSacCode, resolveDefaultGstRate } from './invoice-constants.js';
@@ -10,7 +12,7 @@
 // } from './indian-states.js';
 // import { resolveGstConfigBillingTexts, resolveGstConfigExtras } from './gst-config-fields.js';
 // import { getInvoiceLogoUrl } from './invoice-logo.js';
-// import { getOrderFormRows } from './order-form-details.js';
+// import { formatServiceDisplayName, getOrderFormRows } from './order-form-details.js';
 // import type { InvoiceTemplateData } from './templates/invoice-html.js';
 
 // type GstConfigRow = Record<string, unknown>;
@@ -182,7 +184,14 @@
 //     year: 'numeric',
 //   });
 
-//   const serviceTitle = String(order.service_title || 'Service');
+//   // FIX (per client report 2026-08-09): this used to be the raw
+//   // order.service_title, so whatever internal slug the source website
+//   // happened to save (e.g. Empower's "premium"/"single" package codes)
+//   // printed as-is in the "Item" column and the "Package" row — instead of
+//   // a name the customer would recognize. formatServiceDisplayName() already
+//   // existed for exactly this (it turns Empower's "namecheck-1" into "Name
+//   // Check - 1", etc.) but was never actually wired in here. Now it is.
+//   const serviceTitle = formatServiceDisplayName(order);
 //   const siteUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://ankshaastra.com').replace(/\/$/, '');
 //   const configExtras = resolveGstConfigExtras(gstConfig);
 //   const billingTexts = resolveGstConfigBillingTexts(gstConfig);
@@ -266,6 +275,8 @@
 // }
 
 
+
+
 import { calculateGst, type GstBreakdown } from './gst.js';
 import { amountInWordsInr } from './amount-in-words.js';
 import { resolveSacCode, resolveDefaultGstRate } from './invoice-constants.js';
@@ -280,10 +291,10 @@ import { resolveGstConfigBillingTexts, resolveGstConfigExtras } from './gst-conf
 import { getInvoiceLogoUrl } from './invoice-logo.js';
 import { formatServiceDisplayName, getOrderFormRows } from './order-form-details.js';
 import type { InvoiceTemplateData } from './templates/invoice-html.js';
-
+ 
 type GstConfigRow = Record<string, unknown>;
 type OrderRow = Record<string, unknown>;
-
+ 
 function pickString(source: Record<string, unknown>, keys: string[]): string | undefined {
   for (const key of keys) {
     const value = source[key];
@@ -293,7 +304,7 @@ function pickString(source: Record<string, unknown>, keys: string[]): string | u
   }
   return undefined;
 }
-
+ 
 function parseStateFromPob(pob?: string): string | undefined {
   if (!pob) return undefined;
   const parts = pob.split(',').map((part) => part.trim()).filter(Boolean);
@@ -302,7 +313,7 @@ function parseStateFromPob(pob?: string): string | undefined {
   if (!maybeState || maybeState.toLowerCase() === 'india') return undefined;
   return maybeState;
 }
-
+ 
 // FIX (per client request 2026-08-02): some booking forms (e.g. Ankshaastra's
 // own "Perfect Baby Name" / numerology forms) never collect a standalone
 // "city" field at all — only a combined "Place of Birth" string like
@@ -319,7 +330,7 @@ function parseCityFromPob(pob?: string): string | undefined {
   if (!candidate || candidate.toLowerCase() === 'india') return undefined;
   return candidate;
 }
-
+ 
 // FIX (website field): the "Website" line on the invoice/email previously
 // always came from a single, shared GST config value — the same for every
 // order regardless of which of the three sites (Ankshaastra, Miracle Baby,
@@ -335,7 +346,7 @@ function stripMarkdownLink(text?: string): string | undefined {
   const withoutMarkdown = text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
   return withoutMarkdown.replace(/^https?:\/\//, '').replace(/\/$/, '').trim() || undefined;
 }
-
+ 
 // FIX (per client request 2026-08-02): rather than maintaining an
 // ever-growing exact-name list for every field-naming convention each of
 // the three sites happens to use (city / currentCity / cityOfDelivery /
@@ -355,11 +366,11 @@ function findByKeyPattern(
   }
   return undefined;
 }
-
+ 
 export function resolveCustomerBilling(order: OrderRow) {
   const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
-
+ 
   const city =
     pickString(snapshot, ['currentCity', 'officeCity', 'city']) ||
     findByKeyPattern(snapshot, /city/i) ||
@@ -375,18 +386,18 @@ export function resolveCustomerBilling(order: OrderRow) {
     pickString(snapshot, ['customerStateCode', 'stateCode']) ||
     pickString(metadata, ['state_code']) ||
     stateCodeFromName(stateName);
-
+ 
   const customerGstin = pickString(snapshot, ['customerGstin', 'gstin', 'gstNumber']);
-
+ 
   const billingParts = [city, stateName, pincode ? `Pincode: ${pincode}` : undefined].filter(Boolean);
-
+ 
   const purchaserName =
     pickString(metadata, ['purchaserName']) ||
     pickString(snapshot, ['purchaserName', 'billingName', 'contactName']) ||
     (order.customer_name ? String(order.customer_name) : undefined) ||
     pickString(snapshot, ['fullName', 'firstName']) ||
     'Customer';
-
+ 
   return {
     name: purchaserName,
     email: String(order.customer_email || pickString(snapshot, ['email']) || ''),
@@ -400,19 +411,19 @@ export function resolveCustomerBilling(order: OrderRow) {
     customerGstin,
   };
 }
-
+ 
 export function resolveBusinessStateCode(gstConfig?: GstConfigRow | null): string {
   return (
     stateCodeFromGstin(String(gstConfig?.gstin || '')) ||
     String(gstConfig?.state_code || '09').padStart(2, '0').slice(-2)
   );
 }
-
+ 
 export function resolveCustomerStateCode(order: OrderRow): string | undefined {
   const billing = resolveCustomerBilling(order);
   return billing.stateCode;
 }
-
+ 
 export function buildInvoiceTemplateData(input: {
   order: OrderRow;
   gstConfig?: GstConfigRow | null;
@@ -435,7 +446,7 @@ export function buildInvoiceTemplateData(input: {
     billing.stateName ||
     (customerStateCode === UNKNOWN_STATE_CODE ? UNKNOWN_STATE_NAME : undefined);
   const gstRate = resolveDefaultGstRate(gstConfig);
-
+ 
   const gst = calculateGst({
     amount: Number(order.total_amount || order.amount || 0),
     gstRate,
@@ -443,13 +454,13 @@ export function buildInvoiceTemplateData(input: {
     businessStateCode,
     customerStateCode,
   });
-
+ 
   const invoiceDate = new Date().toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   });
-
+ 
   // FIX (per client report 2026-08-09): this used to be the raw
   // order.service_title, so whatever internal slug the source website
   // happened to save (e.g. Empower's "premium"/"single" package codes)
@@ -461,9 +472,9 @@ export function buildInvoiceTemplateData(input: {
   const siteUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://ankshaastra.com').replace(/\/$/, '');
   const configExtras = resolveGstConfigExtras(gstConfig);
   const billingTexts = resolveGstConfigBillingTexts(gstConfig);
-
+ 
   const sacCode = resolveSacCode(gstConfig);
-
+ 
   // FIX (website field): resolve the displayed website per-ORDER, not from a
   // single shared config value. Priority:
   //   1. order.source_website (e.g. "miraclebaby.ankshaastra.com",
@@ -479,9 +490,10 @@ export function buildInvoiceTemplateData(input: {
     stripMarkdownLink(order.source_website ? String(order.source_website) : undefined) ||
     stripMarkdownLink(configExtras.website_url) ||
     siteUrl.replace(/^https?:\/\//, '');
-
+ 
   const templateData: InvoiceTemplateData = {
     invoiceNumber,
+    orderId: order?.id ? String(order.id) : undefined,
     invoiceDate,
     dueDate: invoiceDate,
     businessName: String(gstConfig?.legal_name || gstConfig?.business_name || 'ANKSHAASTRA OCCULT EXPERTS LLP'),
@@ -536,6 +548,6 @@ export function buildInvoiceTemplateData(input: {
     invoiceFooter: billingTexts.invoice_footer || undefined,
     termsConditions: billingTexts.terms_conditions || undefined,
   };
-
+ 
   return { templateData, gst };
 }
