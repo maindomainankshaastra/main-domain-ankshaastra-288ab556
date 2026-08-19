@@ -2559,6 +2559,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
 import { Badge } from "@/components/ui/badge";
@@ -2739,7 +2740,13 @@ function formatDateTime(iso: string) {
 // page the same way Order deletes already do. Fire-and-forget: a logging
 // failure must never block or throw into the delete/restore action itself,
 // which has already succeeded by the time this runs.
-async function logAudit(actionType: "delete" | "restore", targetId: string, targetName: string) {
+async function logAudit(
+  actionType: "delete" | "restore",
+  targetId: string,
+  targetName: string,
+  actorRole?: string | null,
+  sourceWebsite?: string | null,
+) {
   try {
     const { data } = await supabase.auth.getUser();
     const actor = data.user;
@@ -2747,10 +2754,12 @@ async function logAudit(actionType: "delete" | "restore", targetId: string, targ
       user_id: actor?.id ?? null,
       user_name: actor?.user_metadata?.full_name || actor?.email || null,
       user_email: actor?.email ?? null,
+      user_role: actorRole ?? null,
       action_type: actionType,
       module: "invoices",
       record_id: targetId,
       record_name: targetName,
+      source_website: sourceWebsite ?? null,
     });
     if (error) {
       console.warn("[audit-log] failed to write invoices entry:", error.message);
@@ -2761,6 +2770,7 @@ async function logAudit(actionType: "delete" | "restore", targetId: string, targ
 }
 
 export default function InvoicesModule() {
+  const { role } = useAuth();
   const { rows, loading, reload } = useAdminTable<Invoice>("invoices", "invoice_date");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -2958,8 +2968,7 @@ export default function InvoicesModule() {
   // (server filters deleted_at IS NULL) but can be brought back via
   // restoreInvoice below. Email logs are left alone — they're history of
   // what was actually sent, independent of whether the invoice is later
-  // deleted. Also writes an audit_logs entry via logAudit() so who/when a
-  // delete happened is traceable in the Audit Logs page.
+  // deleted.
   const confirmDeleteInvoice = async () => {
     if (!deleteInvoiceId) return;
     setDeleting(true);
@@ -2976,7 +2985,13 @@ export default function InvoicesModule() {
         toast.error(error.message || "Failed to delete invoice");
       } else {
         const deletedInvoice = rows.find((i) => i.id === deleteInvoiceId);
-        void logAudit("delete", deleteInvoiceId, deletedInvoice?.invoice_number || deleteInvoiceId);
+        void logAudit(
+          "delete",
+          deleteInvoiceId,
+          deletedInvoice?.invoice_number || deleteInvoiceId,
+          role,
+          deletedInvoice?.source_website,
+        );
         toast.success("Invoice moved to Trash — you can restore it from there anytime");
         reload();
       }
@@ -2999,7 +3014,13 @@ export default function InvoicesModule() {
         toast.error(error.message || "Failed to restore invoice");
       } else {
         const restoredInvoice = rows.find((i) => i.id === invoiceId);
-        void logAudit("restore", invoiceId, restoredInvoice?.invoice_number || invoiceId);
+        void logAudit(
+          "restore",
+          invoiceId,
+          restoredInvoice?.invoice_number || invoiceId,
+          role,
+          restoredInvoice?.source_website,
+        );
         toast.success("Invoice restored");
         reload();
       }
