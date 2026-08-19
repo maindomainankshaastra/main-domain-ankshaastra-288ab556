@@ -681,15 +681,19 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
   const numSize = px(160);
   const bodySize = px(45);
 
-  let y = dividerY - 60;
+    let y = dividerY - 60;
   const tableX = 44;
   const tableWidth = PAGE_WIDTH - 88;
   const numColW = 84;
   const titleColW = 170;
 
+  const itemsTextX = tableX + numColW + titleColW + 10;
+  const itemsInnerWidth = tableX + tableWidth - 10 - itemsTextX;
+
   rows.forEach((row) => {
     const titleLineCount = row.title.split("\n").length;
-    const rowHeight = Math.max(numSize + 20, 26 + titleLineCount * (bodySize + 6) + row.items.length * (bodySize + 6) + 16);
+    const itemLineTotal = row.items.reduce((sum, item) => sum + wrapText(`• ${item}`, fonts.sans, bodySize, itemsInnerWidth).length, 0);
+    const rowHeight = Math.max(numSize + 20, 26 + titleLineCount * (bodySize + 6) + itemLineTotal * (bodySize + 6) + 16);
     page.drawRectangle({
       x: tableX,
       y: y - rowHeight,
@@ -714,10 +718,9 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
       page.drawText(line, { x: tableX + numColW + 10, y: titleY, size: bodySize, font: fonts.sans, color: COLOR.maroonDark });
       titleY -= bodySize + 6;
     });
-    let itemY = y - bodySize - 10;
+        let itemY = y - bodySize - 10;
     row.items.forEach((item) => {
-      page.drawText(`• ${item}`, { x: tableX + numColW + titleColW + 10, y: itemY, size: bodySize, font: fonts.sans, color: COLOR.ink });
-      itemY -= bodySize + 6;
+      itemY = drawWrappedText(page, `• ${item}`, { x: itemsTextX, y: itemY, font: fonts.sans, size: bodySize, maxWidth: itemsInnerWidth, lineHeight: bodySize + 6, color: COLOR.ink });
     });
     y -= rowHeight;
   });
@@ -893,19 +896,18 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
   const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
   const bodySize = px(45);
-  let boxTop = PAGE_HEIGHT - 210;
-  const boxHeight = 150;
+    let boxTop = PAGE_HEIGHT - 210;
+  const chaldeanBullets = [
+    "Ancient Babylonian system — considered the most accurate approach for name analysis.",
+    "Values run 1 to 8 (9 is considered sacred and is never assigned to a letter).",
+    "Focuses on the sound vibration and energy of each letter, rather than its position in the alphabet.",
+  ];
+  const chaldeanInnerWidth = boxWidth - 36;
+  const chaldeanBulletsHeight = measureBulletListHeight(chaldeanBullets, fonts.sans, bodySize, chaldeanInnerWidth, bodySize + 3, 8);
+  const boxHeight = 46 + chaldeanBulletsHeight + 18;
   drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
   drawMaroonBanner(page, fonts, "Chaldean Numerology", boxX, boxTop, boxWidth);
-  drawBulletList(
-    page,
-    [
-      "Ancient Babylonian system — considered the most accurate approach for name analysis.",
-      "Values run 1 to 8 (9 is considered sacred and is never assigned to a letter).",
-      "Focuses on the sound vibration and energy of each letter, rather than its position in the alphabet.",
-    ],
-    { x: 62, y: boxTop - 46, font: fonts.sans, size: bodySize, maxWidth: boxWidth - 36, lineHeight: bodySize + 3, gap: 8, color: COLOR.ink }
-  );
+  drawBulletList(page, chaldeanBullets, { x: 62, y: boxTop - 46, font: fonts.sans, size: bodySize, maxWidth: chaldeanInnerWidth, lineHeight: bodySize + 3, gap: 8, color: COLOR.ink });
 
   const chartTop = boxTop - boxHeight - 32;
   drawMaroonBanner(page, fonts, "The Chaldean Number Chart", boxX, chartTop, boxWidth);
