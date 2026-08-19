@@ -5,7 +5,7 @@
  * -----------------------------------------------------------------------
  */
 
-import { PDFDocument, PDFPage, PDFFont, PDFImage, StandardFonts, rgb, RGB } from "pdf-lib";
+import { PDFDocument, PDFPage, PDFFont, PDFImage, StandardFonts, rgb, RGB, PDFString, PDFName, PDFArray } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { runNameCheck } from "@/lib/name-check/rule-engine";
 import { chaldeanRawSum, getFullNameCompoundNumber } from "@/lib/name-check/numerology";
@@ -106,10 +106,6 @@ const ASSET_PATHS = {
   socialLinkedin: "/name-check-assets/social-linkedin.png",
   socialYoutube: "/name-check-assets/social-youtube.png",
   socialFacebook: "/name-check-assets/social-facebook.png",
-  // Real icons extracted straight from the client's reference PDF (pdfimages) —
-  // NOT drawn/approximated. offer-icon-pen = "edit/pencil on document" glyph used
-  // for the first bullet row of both pricing cards. offer-icon-digits = the
-  // pastel "0123 / 456 / 789" scatter badge used for the compound/number bullet row.
   offerIconPen: "/name-check-assets/offer-icon-pen.png",
   offerIconDigits: "/name-check-assets/offer-icon-digits.png",
   fonts: {
@@ -207,7 +203,6 @@ function drawRichWrappedTextCentered(
   tokens: { text: string; bold: boolean }[],
   opts: { centerX: number; y: number; font: PDFFont; boldFont: PDFFont; size: number; maxWidth: number; lineHeight: number; color: RGB }
 ): number {
-  // Break tokens into lines respecting maxWidth.
   const lines: { text: string; bold: boolean }[][] = [];
   let currentLine: { text: string; bold: boolean }[] = [];
   let currentWidth = 0;
@@ -391,6 +386,30 @@ function drawStarGlyph(page: PDFPage, cx: number, cy: number, r: number, color: 
   page.drawSvgPath(path, { x: cx - r, y: cy + r, color });
 }
 
+/** Adds an invisible clickable-URL region over a page area (used for the social icons on page 13). */
+function addLinkAnnotation(page: PDFPage, url: string, rect: { x: number; y: number; width: number; height: number }) {
+  const doc = page.doc;
+  const linkAnnotRef = doc.context.register(
+    doc.context.obj({
+      Type: "Annot",
+      Subtype: "Link",
+      Rect: [rect.x, rect.y, rect.x + rect.width, rect.y + rect.height],
+      Border: [0, 0, 0],
+      A: {
+        Type: "Action",
+        S: "URI",
+        URI: PDFString.of(url),
+      },
+    })
+  );
+  const existingAnnots = page.node.Annots();
+  if (existingAnnots) {
+    existingAnnots.push(linkAnnotRef);
+  } else {
+    page.node.set(PDFName.of("Annots"), doc.context.obj([linkAnnotRef]));
+  }
+}
+
 type OfferIconType = "pen" | "grid" | "digits" | "letter" | "document";
 
 /**
@@ -424,8 +443,6 @@ function drawOfferIcon(page: PDFPage, fonts: Fonts, assets: Assets, type: OfferI
       break;
     }
     case "grid": {
-      // 3x3 grid, white stroke, numbers only in top-left (1), top-right (8), and
-      // center (7) cells — matches the reference exactly (other 6 cells blank).
       const gridSize = maxBox;
       const cell = gridSize / 3;
       const originX = cx - gridSize / 2;
@@ -452,7 +469,6 @@ function drawOfferIcon(page: PDFPage, fonts: Fonts, assets: Assets, type: OfferI
       break;
     }
     case "document": {
-      // A small stack of 3 offset report pages with a few horizontal "text" lines.
       const w = maxBox * 0.62;
       const h = maxBox * 0.8;
       const offset = 2.6;
@@ -601,7 +617,6 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   const LOGO_TARGET_WIDTH = 210;
   const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
   const logoDims = assets.logo.scale(logoScale);
-  // Moved up from the previous 66pt top margin — was sitting too low on the page.
   let y = PAGE_HEIGHT - 40;
   page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: y - logoDims.height, width: logoDims.width, height: logoDims.height });
   y -= logoDims.height + 60;
@@ -612,7 +627,6 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   page.drawImage(assets.loshuGrid, { x: centerX - gridDims.width / 2, y: y - gridDims.height, width: gridDims.width, height: gridDims.height });
   y -= gridDims.height + 56;
 
-  // Client-confirmed from Canva: "NAME CHECK REPORT" = 124px, byline = 100px, pill = 45px.
   const titleSize = px(124);
   page.drawText("NAME CHECK", {
     x: centerX - fonts.heading.widthOfTextAtSize("NAME CHECK", titleSize) / 2,
@@ -711,8 +725,6 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
       font: fonts.sansBold,
       color: COLOR.maroon,
     });
-    // Row titles ("Personal Information & Introduction", etc.) are REGULAR weight,
-    // not bold — matches the reference exactly (only the 01/02/03 numerals are bold).
     let titleY = y - bodySize - 10;
     row.title.split("\n").forEach((line) => {
       page.drawText(line, { x: tableX + numColW + 10, y: titleY, size: bodySize, font: fonts.sans, color: COLOR.maroonDark });
@@ -730,7 +742,6 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
-  // Logo, top center (this page was missing it entirely before).
   const LOGO_TARGET_WIDTH = 150;
   const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
   const logoDims = assets.logo.scale(logoScale);
@@ -738,8 +749,6 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: y - logoDims.height, width: logoDims.width, height: logoDims.height });
   y -= logoDims.height + 34;
 
-  // Two-line heading — "Namaskar" / "Priyanka Ji" — BOTH at 80px Cinzel Decorative
-  // (previously this was jammed onto one auto-shrinking line).
   const titleSize = px(80);
   const nameStr = data.firstName || data.customerName;
   const line1 = `"Namaskar`;
@@ -767,7 +776,7 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     centerX,
     y: cy,
     font: fonts.quote,
-    boldFont: fonts.sansBold, // Cardo has no bold weight loaded — Quicksand Bold stands in for the emphasis
+    boldFont: fonts.sansBold,
     size: bodySize,
     maxWidth: PAGE_WIDTH - 140,
     lineHeight: bodySize + 8,
@@ -862,8 +871,6 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
     "Life challenges and lessons",
   ];
 
-  // Box 1 height is now MEASURED from the actual wrapped content instead of a fixed
-  // guess — this is what was letting the last bullet spill outside the box before.
   const introHeight = measureWrappedTextHeight(introText, fonts.sans, bodySize, innerWidth, bodySize + 4);
   const bulletsHeight = measureBulletListHeight(bulletItems, fonts.sans, bodySize, innerWidth, bodySize + 4, 4);
   const box1Height = 44 + introHeight + 8 + bulletsHeight + 22;
@@ -1086,8 +1093,6 @@ function drawWhyCriticalPage(
     "Name correction guidance could not be determined for this combination — please review this report manually before sending it to the customer.",
   ];
 
-  // Measured height — this box was the other one where the last bullet point
-  // was spilling past the card's bottom edge.
   const bulletsHeight = measureBulletListHeight(bullets, fonts.sans, bodySize, innerWidth, bodySize + 4.5, 14);
   const boxHeight = 46 + bulletsHeight + 22;
 
@@ -1176,7 +1181,6 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   const colWidth = (PAGE_WIDTH - 88 - colGap) / 2;
   const colTop = dividerY - 34;
 
-  // Client-confirmed: "₹2,987" / "₹3,437" price = 105px ≈34pt.
   const digitsSize = px(105);
   const rupeeSize = Math.round(digitsSize * 0.82 * 10) / 10;
 
@@ -1243,7 +1247,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   drawFooterPill(page, fonts, data.brand);
 }
 
-/** Page 13 — social follow icons. */
+/** Page 13 — social follow icons, each linking out to the real Ankshaastra profile. */
 function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
@@ -1261,18 +1265,23 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   const subtitle = "FOLLOW FOR DAILY WISDOM, TIPS, AND INSPIRATION";
   page.drawText(subtitle, { x: centerX - fonts.sansBold.widthOfTextAtSize(subtitle, subtitleSize) / 2, y: dividerY - subtitleSize - 20, size: subtitleSize, font: fonts.sansBold, color: COLOR.maroonDark });
 
-  const platforms: { image: PDFImage }[] = [
-    { image: assets.socialInstagram },
-    { image: assets.socialLinkedin },
-    { image: assets.socialYoutube },
-    { image: assets.socialFacebook },
+  const platforms: { image: PDFImage; url: string }[] = [
+    { image: assets.socialInstagram, url: "https://www.instagram.com/ankshaastra/" },
+    { image: assets.socialLinkedin, url: "https://www.linkedin.com/company/ankshaastra/?viewAsMember=true" },
+    { image: assets.socialYoutube, url: "https://www.youtube.com/@Ankshaastra" },
+    { image: assets.socialFacebook, url: "https://www.facebook.com/p/Ankshaastra-61561549995939/" },
   ];
   const colXs = [centerX - 155, centerX + 155];
   const rowYs = [dividerY - subtitleSize - 110, dividerY - subtitleSize - 240];
   let idx = 0;
   rowYs.forEach((ry) => {
     colXs.forEach((cx) => {
-      const { image } = platforms[idx++];
+      const { image, url } = platforms[idx++];
+
+      // Outer "halo" ring — thin maroon outline with a gap before the filled circle,
+      // matching the reference's double-ring look. Drawn UNFILLED so the page
+      // background shows through the gap.
+      page.drawCircle({ x: cx, y: ry, size: 40, borderColor: COLOR.maroon, borderWidth: 1.25 });
       page.drawCircle({ x: cx, y: ry, size: 34, color: COLOR.maroon });
       const iconW = 30;
       const iconH = (image.height / image.width) * iconW;
@@ -1282,7 +1291,16 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
       const btnH = 26;
       drawRoundedRect(page, { x: cx - btnW / 2, y: ry - 60, width: btnW, height: btnH, radius: btnH / 2, color: COLOR.maroon });
       const btnLabel = "CLICK ME";
-      page.drawText(btnLabel, { x: cx - fonts.sansBold.widthOfTextAtSize(btnLabel, 9.5) / 2, y: ry - 60 + btnH / 2 - 3.4, size: 9.5, font: fonts.sansBold, color: COLOR.white });
+      const btnLabelSize = 9.5;
+      const btnLabelWidth = fonts.sansBold.widthOfTextAtSize(btnLabel, btnLabelSize);
+      const btnLabelX = cx - btnLabelWidth / 2;
+      const btnLabelY = ry - 60 + btnH / 2 - 3.4;
+      page.drawText(btnLabel, { x: btnLabelX, y: btnLabelY, size: btnLabelSize, font: fonts.sansBold, color: COLOR.white });
+      // Underline beneath "CLICK ME" — matches the reference's underlined button label.
+      page.drawLine({ start: { x: btnLabelX, y: btnLabelY - 2 }, end: { x: btnLabelX + btnLabelWidth, y: btnLabelY - 2 }, thickness: 0.75, color: COLOR.white });
+
+      // Single clickable region spanning the icon circle + the button below it.
+      addLinkAnnotation(page, url, { x: cx - btnW / 2, y: ry - 60, width: btnW, height: ry + 40 - (ry - 60) });
     });
   });
 
