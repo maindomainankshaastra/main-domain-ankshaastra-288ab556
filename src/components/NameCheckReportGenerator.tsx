@@ -97,6 +97,7 @@ interface Fonts {
 
 const ASSET_PATHS = {
   background: "/name-check-assets/background-border.png",
+  backCoverBackground: "/name-check-assets/background-back-cover.png",
   logo: "/name-check-assets/logo-ankshaastra.png",
   loshuGrid: "/name-check-assets/loshu-turtle-grid.png",
   starIcon: "/name-check-assets/star-icon.png",
@@ -260,6 +261,7 @@ function buildBoldPhraseTokens(fullText: string, boldPhrase: string): { text: st
 
 interface Assets {
   background: PDFImage;
+  backCoverBackground: PDFImage;
   logo: PDFImage;
   loshuGrid: PDFImage;
   starIcon: PDFImage;
@@ -1291,11 +1293,14 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 
 /** Page 15 — minimal back cover: centered logo + website pill + report ID. */
 function drawBackCoverPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>) {
-  drawPageBackground(page, assets);
+  page.drawImage(assets.backCoverBackground, { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT });
   const centerX = PAGE_WIDTH / 2;
 
-  const logoDims = assets.logo.scale(0.5);
-  page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: PAGE_HEIGHT / 2 - logoDims.height / 2 + 30, width: logoDims.width, height: logoDims.height });
+  const LOGO_TARGET_WIDTH = px(1572.7);
+  const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
+  const logoDims = assets.logo.scale(logoScale);
+  const logoTopY = PAGE_HEIGHT - px(876.4);
+  page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: logoTopY - logoDims.height, width: logoDims.width, height: logoDims.height });
 
   drawFooterPill(page, fonts, data.brand);
   const reportIdText = `Report ID: ${data.reportId}`;
@@ -1348,6 +1353,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
 
   const [
     backgroundBytes,
+    backCoverBackgroundBytes,
     logoBytes,
     loshuGridBytes,
     starIconBytes,
@@ -1364,6 +1370,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     cardoRegularBytes,
   ] = await Promise.all([
     fetchAssetBytes(ASSET_PATHS.background),
+    fetchAssetBytes(ASSET_PATHS.backCoverBackground),
     fetchAssetBytes(ASSET_PATHS.logo),
     fetchAssetBytes(ASSET_PATHS.loshuGrid),
     fetchAssetBytes(ASSET_PATHS.starIcon),
@@ -1382,6 +1389,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
 
   const assets: Assets = {
     background: await pdfDoc.embedPng(backgroundBytes),
+    backCoverBackground: await pdfDoc.embedPng(backCoverBackgroundBytes),
     logo: await pdfDoc.embedPng(logoBytes),
     loshuGrid: await pdfDoc.embedPng(loshuGridBytes),
     starIcon: await pdfDoc.embedPng(starIconBytes),
