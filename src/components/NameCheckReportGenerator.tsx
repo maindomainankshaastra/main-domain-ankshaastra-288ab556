@@ -72,8 +72,8 @@ const PAGE_HEIGHT = 841.89;
  * 1860 x 2631 px Canva canvas — same aspect ratio as A4 — so any font size
  * read off Canva's toolbar converts straight to PDF points via this factor.
  */
-const CANVA_SCALE = PAGE_WIDTH / 1860; // ≈ 0.32005
-const px = (v: number) => Math.round(v * CANVA_SCALE * 10) / 10;
+const CANVA_SCALE = 1; // raw Canva numbers ARE the PDF point sizes now — no conversion.
+const px = (v: number) => v;
 
 const COLOR = {
   blush: rgb(0.988, 0.945, 0.925),
@@ -719,10 +719,10 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
     page.drawLine({ start: { x: tableX + numColW, y }, end: { x: tableX + numColW, y: y - rowHeight }, thickness: 0.5, color: COLOR.maroon });
     page.drawLine({ start: { x: tableX + numColW + titleColW, y }, end: { x: tableX + numColW + titleColW, y: y - rowHeight }, thickness: 0.5, color: COLOR.maroon });
     page.drawText(row.no, {
-      x: tableX + numColW / 2 - fonts.sansBold.widthOfTextAtSize(row.no, numSize) / 2,
+      x: tableX + numColW / 2 - fonts.heading.widthOfTextAtSize(row.no, numSize) / 2,
       y: y - rowHeight / 2 - numSize * 0.35,
       size: numSize,
-      font: fonts.sansBold,
+      font: fonts.heading,
       color: COLOR.maroon,
     });
     let titleY = y - bodySize - 10;
@@ -775,7 +775,7 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   cy = drawRichWrappedTextCentered(page, tokens, {
     centerX,
     y: cy,
-    font: fonts.quote,
+    font: fonts.sans,
     boldFont: fonts.sansBold,
     size: bodySize,
     maxWidth: PAGE_WIDTH - 140,
@@ -1089,9 +1089,13 @@ function drawWhyCriticalPage(
   const boxTop = PAGE_HEIGHT - 215;
   const innerWidth = boxWidth - 36;
 
-  const bullets = rule?.paragraphs ?? [
+  const allParagraphs = rule?.paragraphs ?? [
     "Name correction guidance could not be determined for this combination — please review this report manually before sending it to the customer.",
   ];
+  // The LAST paragraph is the actionable recommendation — it belongs inside the
+  // "Optional / Advisable" verdict box below, not as a third bullet in the main list.
+  const bullets = allParagraphs.length > 1 ? allParagraphs.slice(0, -1) : allParagraphs;
+  const recommendationText = allParagraphs.length > 1 ? allParagraphs[allParagraphs.length - 1] : null;
 
   const bulletsHeight = measureBulletListHeight(bullets, fonts.sans, bodySize, innerWidth, bodySize + 4.5, 14);
   const boxHeight = 46 + bulletsHeight + 22;
@@ -1102,9 +1106,16 @@ function drawWhyCriticalPage(
 
   const verdictLabel = `${VERDICT_LABEL[matched.verdict]}${matched.isFallback ? " (fallback — review recommended)" : ""}`;
   const verdictTop = boxTop - boxHeight - 46;
-  const verdictHeight = 78;
+  const verdictInnerWidth = boxWidth - 60;
+  const recLineHeight = 14;
+  const recHeight = recommendationText ? measureWrappedTextHeight(recommendationText, fonts.sans, 10.5, verdictInnerWidth, recLineHeight) : 0;
+  const verdictHeight = 78 + (recommendationText ? recHeight + 14 : 0);
   drawRoundedRect(page, { x: boxX, y: verdictTop - verdictHeight, width: boxWidth, height: verdictHeight, radius: 18, color: COLOR.maroon, borderColor: COLOR.maroon, borderWidth: 1 });
-  drawWrappedTextCentered(page, verdictLabel, { centerX: boxX + boxWidth / 2, y: verdictTop - verdictHeight / 2 + 6, font: fonts.sansBold, size: 13, maxWidth: boxWidth - 60, lineHeight: 17, color: COLOR.white });
+  let verdictCy = drawWrappedTextCentered(page, verdictLabel, { centerX: boxX + boxWidth / 2, y: verdictTop - verdictHeight / 2 + (recommendationText ? recHeight / 2 + 16 : 6), font: fonts.sansBold, size: 13, maxWidth: boxWidth - 60, lineHeight: 17, color: COLOR.white });
+  if (recommendationText) {
+    verdictCy -= 4;
+    drawWrappedTextCentered(page, recommendationText, { centerX: boxX + boxWidth / 2, y: verdictCy, font: fonts.sans, size: 10.5, maxWidth: verdictInnerWidth, lineHeight: recLineHeight, color: COLOR.white });
+  }
   const badgeR = 15;
   page.drawCircle({ x: boxX + boxWidth / 2, y: verdictTop, size: badgeR, color: COLOR.blush, borderColor: COLOR.maroon, borderWidth: 1.5 });
   drawStarGlyph(page, boxX + boxWidth / 2, verdictTop, 7, COLOR.maroon);
@@ -1497,5 +1508,3 @@ export const numerology = {
   splitName,
   NUMBER_KEYWORDS,
 };
-
-
