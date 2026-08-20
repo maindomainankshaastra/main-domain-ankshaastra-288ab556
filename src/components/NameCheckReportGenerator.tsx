@@ -1089,15 +1089,9 @@ function drawWhyCriticalPage(
   const boxTop = PAGE_HEIGHT - 215;
   const innerWidth = boxWidth - 36;
 
-    const rawBullets = rule?.paragraphs ?? [
+  const bullets = rule?.paragraphs ?? [
     "Name correction guidance could not be determined for this combination — please review this report manually before sending it to the customer.",
   ];
-  // The LAST paragraph is a recommendation/verdict statement ("Name correction
-  // is advisable for the full name...") rather than a supporting fact — it
-  // belongs inside the "Optional / Advisable" verdict box below, not as a
-  // bullet in the main "Why This Is Critical" box.
-  const bullets = rawBullets.length > 1 ? rawBullets.slice(0, -1) : rawBullets;
-  const verdictNote = rawBullets.length > 1 ? rawBullets[rawBullets.length - 1] : null;
 
   const bulletsHeight = measureBulletListHeight(bullets, fonts.sans, bodySize, innerWidth, bodySize + 4.5, 14);
   const boxHeight = 46 + bulletsHeight + 22;
@@ -1108,44 +1102,9 @@ function drawWhyCriticalPage(
 
   const verdictLabel = `${VERDICT_LABEL[matched.verdict]}${matched.isFallback ? " (fallback — review recommended)" : ""}`;
   const verdictTop = boxTop - boxHeight - 46;
-
-  const verdictLabelLineHeight = 17;
-  const verdictLabelLines = wrapText(verdictLabel, fonts.sansBold, 13, boxWidth - 60);
-  const verdictNoteSize = 10;
-  const verdictNoteLineHeight = verdictNoteSize + 4;
-  const verdictNoteInnerWidth = boxWidth - 60;
-  const verdictNoteLines = verdictNote ? wrapText(verdictNote, fonts.sans, verdictNoteSize, verdictNoteInnerWidth) : [];
-  const verdictTopPadding = 22;
-  const verdictBottomPadding = 18;
-  const verdictGap = 8;
-  const verdictContentHeight =
-    verdictLabelLines.length * verdictLabelLineHeight + (verdictNote ? verdictGap + verdictNoteLines.length * verdictNoteLineHeight : 0);
-  const verdictHeight = Math.max(78, verdictTopPadding + verdictContentHeight + verdictBottomPadding);
-
+  const verdictHeight = 78;
   drawRoundedRect(page, { x: boxX, y: verdictTop - verdictHeight, width: boxWidth, height: verdictHeight, radius: 18, color: COLOR.maroon, borderColor: COLOR.maroon, borderWidth: 1 });
-
-  let verdictCursorY = verdictTop - verdictTopPadding - (verdictLabelLineHeight - 6);
-  verdictCursorY = drawWrappedTextCentered(page, verdictLabel, {
-    centerX: boxX + boxWidth / 2,
-    y: verdictCursorY,
-    font: fonts.sansBold,
-    size: 13,
-    maxWidth: boxWidth - 60,
-    lineHeight: verdictLabelLineHeight,
-    color: COLOR.white,
-  });
-  if (verdictNote) {
-    verdictCursorY -= verdictGap - (verdictLabelLineHeight - verdictNoteLineHeight);
-    drawWrappedTextCentered(page, verdictNote, {
-      centerX: boxX + boxWidth / 2,
-      y: verdictCursorY,
-      font: fonts.sans,
-      size: verdictNoteSize,
-      maxWidth: verdictNoteInnerWidth,
-      lineHeight: verdictNoteLineHeight,
-      color: COLOR.white,
-    });
-  }
+  drawWrappedTextCentered(page, verdictLabel, { centerX: boxX + boxWidth / 2, y: verdictTop - verdictHeight / 2 + 6, font: fonts.sansBold, size: 13, maxWidth: boxWidth - 60, lineHeight: 17, color: COLOR.white });
   const badgeR = 15;
   page.drawCircle({ x: boxX + boxWidth / 2, y: verdictTop, size: badgeR, color: COLOR.blush, borderColor: COLOR.maroon, borderWidth: 1.5 });
   drawStarGlyph(page, boxX + boxWidth / 2, verdictTop, 7, COLOR.maroon);
@@ -1538,4 +1497,5 @@ export const numerology = {
   splitName,
   NUMBER_KEYWORDS,
 };
+
 
