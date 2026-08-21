@@ -23,6 +23,10 @@ export interface NameCheckReportInput {
   firstName?: string;
   middleName?: string;
   lastName?: string;
+  // yes = father's/husband's name, don't count middle name
+  // no = normal middle name, count it in numerology
+  middleNameType?: 'yes' | 'no';
+
   brand?: Partial<BrandConfig>;
 }
 
@@ -1384,7 +1388,18 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
   };
 
   const dobDate = new Date(data.dob);
-  const fullName = `${data.firstName} ${data.lastName}`.trim();
+
+  const middleNameForNumerology =
+  data.middleNameType === 'no' ? data.middleName : '';
+
+const fullName = [
+  data.firstName,
+  middleNameForNumerology,
+  data.lastName,
+]
+  .filter(Boolean)
+  .join(' ')
+  .trim();
 
   const { facts, verdict, matchedRuleId, isFallback } = runNameCheck({
     dob: { day: dobDate.getDate(), month: dobDate.getMonth() + 1, year: dobDate.getFullYear() },
