@@ -23,9 +23,11 @@ export interface NameCheckReportInput {
   firstName?: string;
   middleName?: string;
   lastName?: string;
-  // yes = father's/husband's name, don't count middle name
-  // no = normal middle name, count it in numerology
-  middleNameType?: 'yes' | 'no';
+  // Matches the exact field NameCheckReportsModule.tsx sends (mapped from the
+  // DB's `is_middle_name_father_husband` boolean column).
+  // true  = middle name is the father's/husband's name → exclude from numerology.
+  // false/unset = middle name is part of the person's own name → include it.
+ isMiddleNameFatherHusband?: boolean;
 
   brand?: Partial<BrandConfig>;
 }
@@ -1387,19 +1389,23 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     brand: { ...DEFAULT_BRAND, ...input.brand },
   };
 
-  const dobDate = new Date(data.dob);
+    const dobDate = new Date(data.dob);
 
-  const middleNameForNumerology =
-  data.middleNameType === 'no' ? data.middleName : '';
+  // Only exclude the middle name when the admin explicitly marked it as the
+  // father's/husband's name (true). Anything else — false, undefined, or an
+  // older report created before this field existed — safely defaults to
+  // including it, never silently drops real name data.
+  const excludeMiddleNameFromNumerology = data.isMiddleNameFatherHusband === true;
+  const middleNameForNumerology = excludeMiddleNameFromNumerology ? '' : data.middleName;
 
-const fullName = [
-  data.firstName,
-  middleNameForNumerology,
-  data.lastName,
-]
-  .filter(Boolean)
-  .join(' ')
-  .trim();
+  const fullName = [
+    data.firstName,
+    middleNameForNumerology,
+    data.lastName,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
 
   const { facts, verdict, matchedRuleId, isFallback } = runNameCheck({
     dob: { day: dobDate.getDate(), month: dobDate.getMonth() + 1, year: dobDate.getFullYear() },
