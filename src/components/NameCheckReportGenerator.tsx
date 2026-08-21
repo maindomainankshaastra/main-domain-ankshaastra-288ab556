@@ -1385,6 +1385,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     firstName: split.first,
     middleName: split.middle,
     lastName: split.last,
+    isMiddleNameFatherHusband: false,
     ...input,
     brand: { ...DEFAULT_BRAND, ...input.brand },
   };
