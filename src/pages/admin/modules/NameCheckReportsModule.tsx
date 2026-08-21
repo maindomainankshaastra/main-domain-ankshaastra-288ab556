@@ -490,6 +490,7 @@ export default function NameCheckReports() {
         firstName: report.first_name ?? undefined,
         middleName: report.middle_name ?? undefined,
         lastName: report.last_name ?? undefined,
+        isMiddleNameFatherHusband: report.is_middle_name_father_husband,
         email: report.email,
         phone: report.phone,
         dob: report.dob,
