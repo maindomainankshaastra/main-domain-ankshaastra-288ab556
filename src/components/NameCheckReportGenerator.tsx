@@ -1516,7 +1516,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     fonts,
     assets,
     data,
-    { heading: "Full Name Number", nameLabel: "First Name", nameValue: fullName, total: fullNameSum, reducedTo: fullNameNumber, bullets: FULL_NAME_BLOCKS[comboKey(facts.fullNameToMulank, facts.fullNameToBhagyank)] },
+    { heading: "Full Name Number", nameLabel: "Full Name", nameValue: fullName, total: fullNameSum, reducedTo: fullNameNumber, bullets: FULL_NAME_BLOCKS[comboKey(facts.fullNameToMulank, facts.fullNameToBhagyank)] },
     9,
     TOTAL_PAGES
   );
@@ -1525,7 +1525,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
     fonts,
     assets,
     data,
-    { heading: "Full Name Compound Number", nameLabel: "First Name", nameValue: fullName, total: fullNameCompound, bullets: COMPOUND_BLOCKS[compoundTier] },
+    { heading: "Full Name Compound Number", nameLabel: "Full Name", nameValue: fullName, total: fullNameCompound, bullets: COMPOUND_BLOCKS[compoundTier] },
     10,
     TOTAL_PAGES
   );
