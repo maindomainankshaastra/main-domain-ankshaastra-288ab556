@@ -2353,7 +2353,13 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
     // items column once transformed.
     const titleLines = wrapText(row.title.toUpperCase(), fonts.sansBold, bodySize, titleInnerWidth);
     const itemLineTotal = row.items.reduce((sum, item) => sum + wrapText(`• ${item}`, fonts.sans, bodySize, itemsInnerWidth).length, 0);
-    const rowHeight = Math.max(numSize + 20, 26 + titleLines.length * (bodySize + 6) + itemLineTotal * (bodySize + 6) + 16);
+    // Title and items sit in two SIDE-BY-SIDE columns, not stacked in one —
+    // the row only needs to be as tall as the taller of the two columns.
+    // (Previously this summed both line counts, which made the row far
+    // taller than its content, leaving the big centered "01"/"02"/"03"
+    // numeral visually sunk well below the top-anchored, much shorter title.)
+    const tallerLineCount = Math.max(titleLines.length, itemLineTotal);
+    const rowHeight = Math.max(numSize + 20, 26 + tallerLineCount * (bodySize + 6) + 16);
     page.drawRectangle({
       x: tableX,
       y: y - rowHeight,
