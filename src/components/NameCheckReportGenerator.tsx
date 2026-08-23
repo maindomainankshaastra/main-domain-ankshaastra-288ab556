@@ -986,8 +986,8 @@ function drawBlueprintPage(
   drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
   drawFooterPill(page, fonts, data.brand);
 
-  const boxX = 77;
-  const boxWidth = PAGE_WIDTH - 154;
+  const boxX = 44;
+  const boxWidth = PAGE_WIDTH - 88;
   const bannerSize = px(45);
   const bannerY = dividerY - 90;
   const bannerHeight = bannerSize + 26;
