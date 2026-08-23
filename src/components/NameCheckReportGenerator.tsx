@@ -1838,7 +1838,7 @@ const TYPE = {
   bodySize: px(45), // ~14.4pt — base paragraph / bullet text size
   lineGap: 5, // extra px added to font size for line-height inside a paragraph
   bulletGap: 14, // vertical gap BETWEEN bullet items (was inconsistently 4/8/12/16 per page)
-  bulletDotOffsetRatio: 0.32, // dot's y-offset below the text baseline, as a fraction of font size
+  bulletDotOffsetRatio: 0.38, // dot's y-offset below the text baseline, as a fraction of font size
   cardPadding: 46, // standard top padding inside a rounded content box, banner to first line of text
 };
 
@@ -2405,7 +2405,7 @@ function drawDataTable(
   opts: { x: number; y: number; width: number; rowHeight?: number }
 ): number {
   const size = px(45);
-  const rowHeight = opts.rowHeight ?? Math.max(32, size + 18);
+    const rowHeight = opts.rowHeight ?? Math.max(36, size + 26);
   const totalHeight = rowHeight * rows.length;
   const borderTint = rgb(0.82, 0.68, 0.66);
   const labelColCenter = opts.x + opts.width / 4;
@@ -2643,8 +2643,8 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 
   const titleSize = px(80);
   const nameStr = data.firstName || data.customerName;
-  const line1 = `"Namaskar`;
-  const line2 = `${nameStr} Ji"`;
+  const line1 = `\u201CNamaskar`;
+  const line2 = `${nameStr} Ji\u201D`;
   [line1, line2].forEach((line) => {
     let size = titleSize;
     while (fonts.heading.widthOfTextAtSize(line, size) > PAGE_WIDTH - 96 && size > 14) size -= 1;
@@ -2721,8 +2721,10 @@ function drawBlueprintPage(
   const bannerY = dividerY - 90;
   const bannerHeight = bannerSize + 26;
   drawRoundedRect(page, { x: boxX, y: bannerY - bannerHeight, width: boxWidth, height: bannerHeight, radius: bannerHeight / 2, color: COLOR.maroon });
-  page.drawText("PERSONAL INFORMATION", {
-    x: boxX + 24,
+    const piLabel = "PERSONAL INFORMATION";
+  const piWidth = fonts.sansBold.widthOfTextAtSize(piLabel, bannerSize);
+  page.drawText(piLabel, {
+    x: boxX + boxWidth / 2 - piWidth / 2,
     y: bannerY - bannerHeight / 2 - bannerSize * 0.35,
     size: bannerSize,
     font: fonts.sansBold,
@@ -2742,7 +2744,7 @@ function drawBlueprintPage(
     ["Full Name Compound Number", String(numbers.fullNameCompound)],
   ];
 
-  drawDataTable(page, fonts, rows, { x: boxX, y: bannerY - bannerHeight - 12, width: boxWidth });
+    drawDataTable(page, fonts, rows, { x: boxX, y: bannerY - bannerHeight - 12, width: boxWidth });
 }
 
 function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
@@ -2920,8 +2922,8 @@ function drawCurrentNameBreakdownPage(
   page.drawSvgPath(roundedTopRectSvgPath(boxWidth, nameRowH, 16), { x: boxX, y, color: COLOR.maroon });
   const nameLabelSize = 13;
   const nameValueSize = 14;
-  page.drawText(opts.nameLabel.toUpperCase(), {
-    x: boxX + boxWidth * 0.27 - fonts.sansBold.widthOfTextAtSize(opts.nameLabel.toUpperCase(), nameLabelSize) / 2,
+    page.drawText(opts.nameLabel, {
+    x: boxX + boxWidth * 0.27 - fonts.sansBold.widthOfTextAtSize(opts.nameLabel, nameLabelSize) / 2,
     y: y - nameRowH / 2 - nameLabelSize * 0.35,
     size: nameLabelSize,
     font: fonts.sansBold,
@@ -2938,9 +2940,9 @@ function drawCurrentNameBreakdownPage(
   const totalsY = y - nameRowH;
   page.drawLine({ start: { x: boxX, y: totalsY }, end: { x: boxX + boxWidth, y: totalsY }, thickness: 0.5, color: rgb(0.82, 0.68, 0.66) });
   if (opts.reducedTo !== undefined) {
-    const cols = [
-      { label: "TOTAL", value: String(opts.total) },
-      { label: "REDUCED TO", value: String(opts.reducedTo) },
+        const cols = [
+      { label: "Total", value: String(opts.total) },
+      { label: "Reduced To", value: String(opts.reducedTo) },
     ];
     const colW = boxWidth / 4;
     const labelSize = 12;
@@ -2961,7 +2963,7 @@ function drawCurrentNameBreakdownPage(
       }
     });
   } else {
-    const txt = `Total: ${opts.total}`;
+    const txt = `Total ${opts.total}`;
     const size = 16;
     page.drawText(txt, {
       x: boxX + boxWidth / 2 - fonts.sansBold.widthOfTextAtSize(txt, size) / 2,
@@ -3140,7 +3142,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     const priceWidth = rupeeWidth + digitsWidth + 56;
     const priceH = digitsSize + 24;
 
-    let iy = colTop - priceH - 30;
+    let iy = colTop - priceH - 16;
     const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, strikeSize);
     page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: strikeSize, font: fonts.sans, color: COLOR.muted });
     page.drawLine({ start: { x: cx + colWidth / 2 - strikeWidth / 2, y: iy + 4 }, end: { x: cx + colWidth / 2 + strikeWidth / 2, y: iy + 4 }, thickness: 0.9, color: COLOR.red });
@@ -3219,15 +3221,15 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     { image: assets.socialFacebook, url: "https://www.facebook.com/p/Ankshaastra-61561549995939/" },
   ];
   const colXs = [centerX - 155, centerX + 155];
-  const rowYs = [dividerY - subtitleSize - 110, dividerY - subtitleSize - 240];
+    const rowYs = [dividerY - subtitleSize - 100, dividerY - subtitleSize - 210];
   let idx = 0;
   rowYs.forEach((ry) => {
     colXs.forEach((cx) => {
       const { image, url } = platforms[idx++];
 
-      page.drawCircle({ x: cx, y: ry, size: 40, borderColor: COLOR.maroon, borderWidth: 1.25 });
-      page.drawCircle({ x: cx, y: ry, size: 34, color: COLOR.maroon });
-      const iconW = 30;
+            page.drawCircle({ x: cx, y: ry, size: 46, borderColor: COLOR.maroon, borderWidth: 1.25 });
+      page.drawCircle({ x: cx, y: ry, size: 40, color: COLOR.maroon });
+      const iconW = 36;
       const iconH = (image.height / image.width) * iconW;
       page.drawImage(image, { x: cx - iconW / 2, y: ry - iconH / 2, width: iconW, height: iconH });
 
