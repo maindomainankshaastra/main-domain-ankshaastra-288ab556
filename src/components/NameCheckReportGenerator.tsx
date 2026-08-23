@@ -2438,8 +2438,8 @@ function drawDataTable(
     const isPillRow = label === "Date of Birth" || label === "Gender";
     const rowCenterY = y - rowHeight / 2;
     if (isPillRow) {
-      const extraForArrow = label === "Gender" ? 22 : 0;
-      const pillW = fonts.sansBold.widthOfTextAtSize(displayText, size) + 26 + extraForArrow;
+      
+      const pillW = fonts.sansBold.widthOfTextAtSize(displayText, size) + 26;
       const pillH = size + 12;
       const pillX = valueColCenter - pillW / 2;
       drawRoundedRect(page, {
@@ -2450,19 +2450,7 @@ function drawDataTable(
         radius: pillH / 2,
         color: rgb(0.94, 0.87, 0.85),
       });
-      if (label === "Gender") {
-        // Small downward-pointing triangle, vector-drawn so it always renders
-        // regardless of font glyph coverage.
-        const triW = 8;
-        const triH = 5;
-        const triCx = pillX + pillW - 16;
-        const triTopY = rowCenterY + triH / 2;
-        page.drawSvgPath(`M 0 0 L ${triW} 0 L ${triW / 2} ${-triH} Z`, {
-          x: triCx - triW / 2,
-          y: triTopY,
-          color: COLOR.maroonDark,
-        });
-      }
+      
     }
 
     page.drawText(displayText, {
@@ -3259,7 +3247,7 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   });
 
   const closingSize = px(60);
-  const closingY = rowYs[1] - 90;
+  const closingY = rowYs[1] - 190;
   ["STAY CONNECTED FOR", "ONGOING GUIDANCE & SUPPORT"].forEach((line, i) => {
     page.drawText(line, { x: centerX - fonts.sansBold.widthOfTextAtSize(line, closingSize) / 2, y: closingY - i * (closingSize + 6), size: closingSize, font: fonts.sansBold, color: COLOR.maroonDark });
   });
