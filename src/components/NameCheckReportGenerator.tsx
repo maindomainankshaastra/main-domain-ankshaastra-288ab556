@@ -3,7 +3,7 @@
  * NameCheckReportGenerator.tsx
  * -----------------------------------------------------------------------
  * Ankshaastra-branded Name Check Report PDF generator.
- * -----------------------------------------------------------------------
+ * ------------------------------------page.drawText(row.no, {-----------------------------------
  */
 
 import { PDFDocument, PDFPage, PDFFont, PDFImage, StandardFonts, rgb, RGB, PDFString, PDFName, PDFArray } from "pdf-lib";
@@ -851,7 +851,7 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
     page.drawLine({ start: { x: tableX + numColW + titleColW, y }, end: { x: tableX + numColW + titleColW, y: y - rowHeight }, thickness: 0.5, color: COLOR.maroon });
     page.drawText(row.no, {
       x: tableX + numColW / 2 - fonts.heading.widthOfTextAtSize(row.no, numSize) / 2,
-      y: y - rowHeight / 2 - numSize * 0.35,
+      y: y - rowHeight / 2 - numSize * 0.78,
       size: numSize,
       font: fonts.heading,
       color: COLOR.maroon,
