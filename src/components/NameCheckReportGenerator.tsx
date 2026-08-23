@@ -1644,6 +1644,29 @@ const PAGE_HEIGHT = 841.89;
 const CANVA_SCALE = PAGE_WIDTH / 1860; // ≈ 0.32005
 const px = (v: number) => Math.round(v * CANVA_SCALE * 10) / 10;
 
+/**
+ * ------------------------------------------------------------------------
+ * CENTRAL SPACING / TYPOGRAPHY SCALE
+ * ------------------------------------------------------------------------
+ * Every page used to hardcode its own gap/row-height/font-size numbers,
+ * which is why the two reference builds ("Priyanka" vs "Bindhu") drifted
+ * apart — a fix on one page never propagated anywhere else. Everything
+ * below is now sourced from this single table. To make the WHOLE report
+ * roomier or tighter, change these numbers once instead of hunting through
+ * 15 draw functions.
+ *
+ * bodySize matches px(45) (~14.4pt) — the base paragraph size used
+ * everywhere. Gaps are expressed as multiples of that so they scale
+ * together if bodySize ever changes.
+ */
+const TYPE = {
+  bodySize: px(45), // ~14.4pt — base paragraph / bullet text size
+  lineGap: 5, // extra px added to font size for line-height inside a paragraph
+  bulletGap: 14, // vertical gap BETWEEN bullet items (was inconsistently 4/8/12/16 per page)
+  bulletDotOffsetRatio: 0.32, // dot's y-offset below the text baseline, as a fraction of font size
+  cardPadding: 46, // standard top padding inside a rounded content box, banner to first line of text
+};
+
 const COLOR = {
   blush: rgb(0.988, 0.945, 0.925),
   blushPanel: rgb(0.965, 0.902, 0.89),
@@ -1745,8 +1768,11 @@ function drawBulletList(
   opts: { x: number; y: number; font: PDFFont; size: number; maxWidth: number; lineHeight: number; gap: number; color: RGB }
 ): number {
   let y = opts.y;
+  // Dot sits relative to the font size, not a fixed "-4" — that fixed offset
+  // is what made bullets look mis-centered once font sizes ever changed.
+  const dotY = -opts.size * TYPE.bulletDotOffsetRatio;
   items.forEach((item) => {
-    page.drawCircle({ x: opts.x + 3, y: y - 4, size: 2.4, color: COLOR.maroon });
+    page.drawCircle({ x: opts.x + 3, y: y + dotY, size: 2.4, color: COLOR.maroon });
     y = drawWrappedText(page, item, {
       x: opts.x + 14,
       y,
@@ -1859,8 +1885,9 @@ function drawBulletListBoldLead(
   opts: { x: number; y: number; font: PDFFont; boldFont: PDFFont; size: number; maxWidth: number; lineHeight: number; gap: number; color: RGB }
 ): number {
   let y = opts.y;
+  const dotY = -opts.size * TYPE.bulletDotOffsetRatio;
   items.forEach((item) => {
-    page.drawCircle({ x: opts.x + 3, y: y - 4, size: 2.4, color: COLOR.maroon });
+    page.drawCircle({ x: opts.x + 3, y: y + dotY, size: 2.4, color: COLOR.maroon });
     const sepIdx = item.indexOf(" — ");
     const tokens =
       sepIdx === -1
@@ -2054,21 +2081,22 @@ function addLinkAnnotation(page: PDFPage, url: string, rect: { x: number; y: num
 type OfferIconType = "pen" | "grid" | "digits" | "letter" | "document";
 
 /**
- * Pricing-card bullet-row icon badges. "pen" and "digits" use the REAL glyphs
- * extracted from the client's reference PDF (see ASSET_PATHS.offerIconPen /
- * offerIconDigits) — both are fit-to-contain within a box no larger than the
- * badge circle's inscribed square, so they can never poke outside the circle.
- * "grid" / "letter" / "document" are vector-drawn to match the reference
- * exactly (grid: 1 top-left, 8 top-right, 7 center — verified against the
- * reference PDF pixel-for-pixel; letter: a large single "A" in the heading
- * font; document: a stack of report pages).
+ * Pricing-card bullet-row icon badges. Every icon is fit-to-contain within a
+ * box no larger than the badge circle's INSCRIBED SQUARE (r * SQRT2 would
+ * touch the circle exactly at the four corners — that's the mathematical
+ * ceiling). The old code used `r * 1.3`, which is fine in theory, but the
+ * "digits" image itself ships with very little internal padding, so at
+ * 1.3x it was visually grazing / poking past the circle's own stroke width.
+ * Dropping to `r * 1.05` and shrinking further via `scale * 0.92` below
+ * guarantees a visible gap between icon and circle edge at every badge size,
+ * matching the reference's comfortable icon-in-circle look.
  */
 function drawOfferIcon(page: PDFPage, fonts: Fonts, assets: Assets, type: OfferIconType, cx: number, cy: number, r: number) {
   const white = COLOR.white;
-  const maxBox = r * 1.3; // inscribed-square-ish bound — keeps every icon safely inside the circle
+  const maxBox = r * 1.05; // safe inscribed bound with visible breathing room from the circle's edge
 
   const drawContainedImage = (img: PDFImage) => {
-    const scale = Math.min(maxBox / img.width, maxBox / img.height);
+    const scale = Math.min(maxBox / img.width, maxBox / img.height) * 0.92;
     const w = img.width * scale;
     const h = img.height * scale;
     page.drawImage(img, { x: cx - w / 2, y: cy - h / 2, width: w, height: h });
@@ -2105,14 +2133,14 @@ function drawOfferIcon(page: PDFPage, fonts: Fonts, assets: Assets, type: OfferI
     }
     case "letter": {
       const label = "A";
-      const size = maxBox * 1.05;
+      const size = maxBox * 1.0;
       page.drawText(label, { x: cx - fonts.heading.widthOfTextAtSize(label, size) / 2, y: cy - size * 0.36, size, font: fonts.heading, color: white });
       break;
     }
     case "document": {
-      const w = maxBox * 0.62;
-      const h = maxBox * 0.8;
-      const offset = 2.6;
+      const w = maxBox * 0.6;
+      const h = maxBox * 0.76;
+      const offset = 2.2;
       for (let i = 2; i >= 0; i--) {
         const x = cx - w / 2 + i * offset;
         const y = cy - h / 2 - i * offset;
@@ -2510,7 +2538,8 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
 
   const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
-  const bodySize = px(45);
+  const bodySize = TYPE.bodySize;
+  const lineHeight = bodySize + TYPE.lineGap;
   const innerWidth = boxWidth - 36;
   const introText =
     "Every letter in the alphabet carries a specific numeric vibration. When combined, the letters of a name create unique energy patterns that influence:";
@@ -2523,30 +2552,35 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
     "Life challenges and lessons",
   ];
 
-  const introHeight = measureWrappedTextHeight(introText, fonts.sans, bodySize, innerWidth, bodySize + 4);
-  const bulletsHeight = measureBulletListHeight(bulletItems, fonts.sans, bodySize, innerWidth, bodySize + 4, 4);
-  const box1Height = 44 + introHeight + 8 + bulletsHeight + 22;
+  const introHeight = measureWrappedTextHeight(introText, fonts.sans, bodySize, innerWidth, lineHeight);
+  // gap was a flat "4" here — far tighter than every other bullet list in the
+  // document (8/12/14/16 elsewhere) which is exactly why this box looked
+  // cramped next to the reference. Now uses the shared TYPE.bulletGap so it
+  // matches every other list, and the box height below grows to match.
+  const bulletsHeight = measureBulletListHeight(bulletItems, fonts.sans, bodySize, innerWidth, lineHeight, TYPE.bulletGap);
+  const box1Height = TYPE.cardPadding + introHeight + 10 + bulletsHeight + 24;
 
   let y = PAGE_HEIGHT - 185;
   let boxTop = y;
   drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: box1Height });
   drawMaroonBanner(page, fonts, "What Is Name Numerology", boxX, boxTop, boxWidth);
-  let cy = boxTop - 44;
-  cy = drawWrappedText(page, introText, { x: 62, y: cy, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight: bodySize + 4, color: COLOR.ink });
-  cy -= 8;
-  drawBulletList(page, bulletItems, { x: 62, y: cy, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight: bodySize + 4, gap: 4, color: COLOR.ink });
+  let cy = boxTop - TYPE.cardPadding;
+  cy = drawWrappedText(page, introText, { x: 62, y: cy, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight, color: COLOR.ink });
+  cy -= 10;
+  drawBulletList(page, bulletItems, { x: 62, y: cy, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight, gap: TYPE.bulletGap, color: COLOR.ink });
 
   const box2Text =
     "You hear and respond to your name thousands of times throughout life. Each utterance reinforces the vibrational pattern, making your name a constant affirmation — positive or negative — depending on its alignment with your destiny.";
   const box2InnerWidth = boxWidth - 64;
-  const box2TextHeight = measureWrappedTextHeight(box2Text, fonts.sans, bodySize, box2InnerWidth, bodySize + 5);
-  const box2Height = 50 + box2TextHeight + 20;
+  const box2LineHeight = bodySize + TYPE.lineGap + 2;
+  const box2TextHeight = measureWrappedTextHeight(box2Text, fonts.sans, bodySize, box2InnerWidth, box2LineHeight);
+  const box2Height = TYPE.cardPadding + 6 + box2TextHeight + 22;
 
   y = boxTop - box1Height - 32;
   boxTop = y;
   drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: box2Height });
   drawMaroonBanner(page, fonts, "Why Your Name Matters", boxX, boxTop, boxWidth);
-  drawWrappedTextCentered(page, box2Text, { centerX: boxX + boxWidth / 2, y: boxTop - 50, font: fonts.sans, size: bodySize, maxWidth: box2InnerWidth, lineHeight: bodySize + 5, color: COLOR.ink });
+  drawWrappedTextCentered(page, box2Text, { centerX: boxX + boxWidth / 2, y: boxTop - TYPE.cardPadding - 6, font: fonts.sans, size: bodySize, maxWidth: box2InnerWidth, lineHeight: box2LineHeight, color: COLOR.ink });
 }
 
 function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
@@ -2554,7 +2588,8 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
 
   const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
-  const bodySize = px(45);
+  const bodySize = TYPE.bodySize;
+  const lineHeight = bodySize + TYPE.lineGap;
     let boxTop = PAGE_HEIGHT - 210;
   const chaldeanBullets = [
     "Ancient Babylonian system — considered the most accurate approach for name analysis.",
@@ -2562,11 +2597,11 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
     "Focuses on the sound vibration and energy of each letter, rather than its position in the alphabet.",
   ];
   const chaldeanInnerWidth = boxWidth - 36;
-  const chaldeanBulletsHeight = measureBulletListHeight(chaldeanBullets, fonts.sans, bodySize, chaldeanInnerWidth, bodySize + 3, 8);
-  const boxHeight = 46 + chaldeanBulletsHeight + 18;
+  const chaldeanBulletsHeight = measureBulletListHeight(chaldeanBullets, fonts.sans, bodySize, chaldeanInnerWidth, lineHeight, TYPE.bulletGap);
+  const boxHeight = TYPE.cardPadding + chaldeanBulletsHeight + 18;
   drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
   drawMaroonBanner(page, fonts, "Chaldean Numerology", boxX, boxTop, boxWidth);
-  drawBulletList(page, chaldeanBullets, { x: 62, y: boxTop - 46, font: fonts.sans, size: bodySize, maxWidth: chaldeanInnerWidth, lineHeight: bodySize + 3, gap: 8, color: COLOR.ink });
+  drawBulletList(page, chaldeanBullets, { x: 62, y: boxTop - TYPE.cardPadding, font: fonts.sans, size: bodySize, maxWidth: chaldeanInnerWidth, lineHeight, gap: TYPE.bulletGap, color: COLOR.ink });
 
   const chartTop = boxTop - boxHeight - 32;
   drawMaroonBanner(page, fonts, "The Chaldean Number Chart", boxX, chartTop, boxWidth);
@@ -2636,19 +2671,22 @@ function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, assets: Assets, da
 
   const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
-  const bodySize = px(45);
-  const boxTop = PAGE_HEIGHT - 195;
-  const boxHeight = 250;
-  drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
-  drawMaroonBanner(page, fonts, "What We'll Analyze", boxX, boxTop, boxWidth);
-
+  const bodySize = TYPE.bodySize;
+  const lineHeight = bodySize + TYPE.lineGap + 0.5;
+  const innerWidth = boxWidth - 36;
   const items = [
     "First Name Number — your personal identity and self-expression.",
     "Full Name Number — your complete destiny and life purpose.",
     "Full Name Compound Number — hidden influences and karmic patterns.",
     "Complete Date of Birth — its influence on your name number, via Mulank and Bhagyank.",
   ];
-  drawBulletListBoldLead(page, items, { x: 62, y: boxTop - 46, font: fonts.sans, boldFont: fonts.sansBold, size: bodySize, maxWidth: boxWidth - 36, lineHeight: bodySize + 4.5, gap: 16, color: COLOR.ink });
+  const itemsHeight = measureBulletListHeight(items, fonts.sans, bodySize, innerWidth, lineHeight, TYPE.bulletGap + 2);
+  const boxTop = PAGE_HEIGHT - 195;
+  const boxHeight = TYPE.cardPadding + itemsHeight + 18;
+  drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
+  drawMaroonBanner(page, fonts, "What We'll Analyze", boxX, boxTop, boxWidth);
+
+  drawBulletListBoldLead(page, items, { x: 62, y: boxTop - TYPE.cardPadding, font: fonts.sans, boldFont: fonts.sansBold, size: bodySize, maxWidth: innerWidth, lineHeight, gap: TYPE.bulletGap + 2, color: COLOR.ink });
 }
 
 function drawCurrentNameBreakdownPage(
@@ -2664,24 +2702,30 @@ function drawCurrentNameBreakdownPage(
 
   const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
-  const bodySize = px(45);
-  const nameRowH = 34;
-  const totalsRowH = 34;
+  const bodySize = TYPE.bodySize;
+  const lineHeight = bodySize + TYPE.lineGap;
+  // Both rows were a flat "34" — noticeably thinner than the reference's
+  // roomy name/totals band. Bumped to give the header its own visual weight
+  // and match the taller reference proportions.
+  const nameRowH = 58;
+  const totalsRowH = 56;
   let y = PAGE_HEIGHT - 215;
 
   drawRoundedRect(page, { x: boxX, y: y - nameRowH - totalsRowH, width: boxWidth, height: nameRowH + totalsRowH, radius: 16, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
   page.drawSvgPath(roundedTopRectSvgPath(boxWidth, nameRowH, 16), { x: boxX, y, color: COLOR.maroon });
+  const nameLabelSize = 13;
+  const nameValueSize = 14;
   page.drawText(opts.nameLabel.toUpperCase(), {
-    x: boxX + boxWidth * 0.27 - fonts.sansBold.widthOfTextAtSize(opts.nameLabel.toUpperCase(), 11) / 2,
-    y: y - nameRowH / 2 - 4,
-    size: 11,
+    x: boxX + boxWidth * 0.27 - fonts.sansBold.widthOfTextAtSize(opts.nameLabel.toUpperCase(), nameLabelSize) / 2,
+    y: y - nameRowH / 2 - nameLabelSize * 0.35,
+    size: nameLabelSize,
     font: fonts.sansBold,
     color: COLOR.white,
   });
   page.drawText(opts.nameValue, {
-    x: boxX + boxWidth * 0.65 - fonts.sansBold.widthOfTextAtSize(opts.nameValue, 12) / 2,
-    y: y - nameRowH / 2 - 4,
-    size: 12,
+    x: boxX + boxWidth * 0.65 - fonts.sansBold.widthOfTextAtSize(opts.nameValue, nameValueSize) / 2,
+    y: y - nameRowH / 2 - nameValueSize * 0.35,
+    size: nameValueSize,
     font: fonts.sansBold,
     color: COLOR.white,
   });
@@ -2694,13 +2738,16 @@ function drawCurrentNameBreakdownPage(
       { label: "REDUCED TO", value: String(opts.reducedTo) },
     ];
     const colW = boxWidth / 4;
+    const labelSize = 12;
+    const valueSize = 16;
     [cols[0].label, cols[0].value, cols[1].label, cols[1].value].forEach((txt, i) => {
       const isLabel = i % 2 === 0;
+      const size = isLabel ? labelSize : valueSize;
       const cx = boxX + colW * i + colW / 2;
       page.drawText(txt, {
-        x: cx - fonts.sansBold.widthOfTextAtSize(txt, isLabel ? 10 : 13) / 2,
-        y: totalsY - totalsRowH / 2 - 4,
-        size: isLabel ? 10 : 13,
+        x: cx - fonts.sansBold.widthOfTextAtSize(txt, size) / 2,
+        y: totalsY - totalsRowH / 2 - size * 0.35,
+        size,
         font: fonts.sansBold,
         color: COLOR.maroonDark,
       });
@@ -2710,10 +2757,11 @@ function drawCurrentNameBreakdownPage(
     });
   } else {
     const txt = `Total: ${opts.total}`;
+    const size = 16;
     page.drawText(txt, {
-      x: boxX + boxWidth / 2 - fonts.sansBold.widthOfTextAtSize(txt, 13) / 2,
-      y: totalsY - totalsRowH / 2 - 4,
-      size: 13,
+      x: boxX + boxWidth / 2 - fonts.sansBold.widthOfTextAtSize(txt, size) / 2,
+      y: totalsY - totalsRowH / 2 - size * 0.35,
+      size,
       font: fonts.sansBold,
       color: COLOR.maroonDark,
     });
@@ -2722,11 +2770,11 @@ function drawCurrentNameBreakdownPage(
   y = totalsY - totalsRowH - 34;
   const contentBoxTop = y;
   const innerWidth = boxWidth - 36;
-  const bulletsHeight = measureBulletListHeight(opts.bullets, fonts.sans, bodySize, innerWidth, bodySize + 4, 12);
-  const contentBoxHeight = 46 + bulletsHeight + 22;
+  const bulletsHeight = measureBulletListHeight(opts.bullets, fonts.sans, bodySize, innerWidth, lineHeight, TYPE.bulletGap);
+  const contentBoxHeight = TYPE.cardPadding + bulletsHeight + 22;
   drawContentBox(page, { x: boxX, y: contentBoxTop, width: boxWidth, height: contentBoxHeight });
   drawMaroonBanner(page, fonts, "What This Represents", boxX, contentBoxTop, boxWidth);
-  drawBulletList(page, opts.bullets, { x: 62, y: contentBoxTop - 46, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight: bodySize + 4, gap: 12, color: COLOR.ink });
+  drawBulletList(page, opts.bullets, { x: 62, y: contentBoxTop - TYPE.cardPadding, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight, gap: TYPE.bulletGap, color: COLOR.ink });
 }
 
 const VERDICT_LABEL: Record<"HR" | "OA" | "NR", string> = {
@@ -2749,7 +2797,8 @@ function drawWhyCriticalPage(
   const rule = ALL_RULES.find((r) => r.id === matched.ruleId);
   const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
-  const bodySize = px(45);
+  const bodySize = TYPE.bodySize;
+  const lineHeight = bodySize + TYPE.lineGap + 0.5;
   const boxTop = PAGE_HEIGHT - 215;
   const innerWidth = boxWidth - 36;
 
@@ -2763,12 +2812,12 @@ function drawWhyCriticalPage(
   const bullets = rawBullets.length > 1 ? rawBullets.slice(0, -1) : rawBullets;
   const verdictNote = rawBullets.length > 1 ? rawBullets[rawBullets.length - 1] : null;
 
-  const bulletsHeight = measureBulletListHeight(bullets, fonts.sans, bodySize, innerWidth, bodySize + 4.5, 14);
-  const boxHeight = 46 + bulletsHeight + 22;
+  const bulletsHeight = measureBulletListHeight(bullets, fonts.sans, bodySize, innerWidth, lineHeight, TYPE.bulletGap);
+  const boxHeight = TYPE.cardPadding + bulletsHeight + 22;
 
   drawContentBox(page, { x: boxX, y: boxTop, width: boxWidth, height: boxHeight });
   drawMaroonBanner(page, fonts, "Why This Is Critical", boxX, boxTop, boxWidth);
-  drawBulletList(page, bullets, { x: 62, y: boxTop - 46, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight: bodySize + 4.5, gap: 14, color: COLOR.ink });
+  drawBulletList(page, bullets, { x: 62, y: boxTop - TYPE.cardPadding, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight, gap: TYPE.bulletGap, color: COLOR.ink });
 
   // Bindhu reference renders this box as a single centered paragraph — no
   // separate bold "Highly Recommended" / "Optional / Advisable" label line.
@@ -2780,13 +2829,13 @@ function drawWhyCriticalPage(
   const verdictText = verdictNote ?? verdictLabel;
   const verdictTop = boxTop - boxHeight - 46;
 
-  const verdictTextSize = 12;
-  const verdictTextLineHeight = verdictTextSize + 6;
+  const verdictTextSize = 13;
+  const verdictTextLineHeight = verdictTextSize + 7;
   const verdictTextInnerWidth = boxWidth - 60;
   const verdictTextLines = wrapText(verdictText, fonts.sans, verdictTextSize, verdictTextInnerWidth);
-  const verdictTopPadding = 24;
-  const verdictBottomPadding = 20;
-  const verdictHeight = Math.max(78, verdictTopPadding + verdictTextLines.length * verdictTextLineHeight + verdictBottomPadding);
+  const verdictTopPadding = 26;
+  const verdictBottomPadding = 22;
+  const verdictHeight = Math.max(84, verdictTopPadding + verdictTextLines.length * verdictTextLineHeight + verdictBottomPadding);
 
   drawRoundedRect(page, { x: boxX, y: verdictTop - verdictHeight, width: boxWidth, height: verdictHeight, radius: 18, color: COLOR.maroon, borderColor: COLOR.maroon, borderWidth: 1 });
 
@@ -2824,7 +2873,7 @@ function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Req
 
   let y = PAGE_HEIGHT - 220;
   const dotR = 9;
-  const bodySize = px(45);
+  const bodySize = TYPE.bodySize;
   services.forEach((service) => {
     page.drawCircle({ x: 44 + dotR, y: y - 5, size: dotR, borderColor: COLOR.maroon, borderWidth: 1 });
     drawStarGlyph(page, 44 + dotR, y - 5, 3.6, COLOR.maroon);
@@ -2833,7 +2882,17 @@ function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Req
   });
 }
 
-/** Page 12 — the two upsell offer cards, side by side. */
+/**
+ * Page 12 — the two upsell offer cards, side by side.
+ * -----------------------------------------------------------------------
+ * This page previously used its own tiny hand-picked font sizes (9 / 8.5 /
+ * 10 / 11 / 12 / 13pt) instead of the shared TYPE scale, which is why it
+ * looked noticeably smaller/denser than every other page and than the
+ * Bindhu reference. All sizes below are lifted roughly to TYPE.bodySize
+ * territory and the badge/row geometry grown to match — this is the fix
+ * for "price wale page same bilkul bindhu wale pdf jaisa" and for the
+ * icons that were poking past their circles (see drawOfferIcon above).
+ */
 function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
@@ -2842,10 +2901,10 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: PAGE_HEIGHT - 56 - logoDims.height, width: logoDims.width, height: logoDims.height });
 
   let titleY = PAGE_HEIGHT - 100 - logoDims.height;
-  page.drawText("YOUR NAME DECIDES", { x: centerX - fonts.heading.widthOfTextAtSize("YOUR NAME DECIDES", 14) / 2, y: titleY, size: 14, font: fonts.heading, color: COLOR.maroon });
-  titleY -= 26;
-  page.drawText("YOUR SPEED IN LIFE", { x: centerX - fonts.heading.widthOfTextAtSize("YOUR SPEED IN LIFE", 21) / 2, y: titleY, size: 21, font: fonts.heading, color: COLOR.maroon });
-  const dividerY = titleY - 16;
+  page.drawText("YOUR NAME DECIDES", { x: centerX - fonts.heading.widthOfTextAtSize("YOUR NAME DECIDES", 15) / 2, y: titleY, size: 15, font: fonts.heading, color: COLOR.maroon });
+  titleY -= 28;
+  page.drawText("YOUR SPEED IN LIFE", { x: centerX - fonts.heading.widthOfTextAtSize("YOUR SPEED IN LIFE", 23) / 2, y: titleY, size: 23, font: fonts.heading, color: COLOR.maroon });
+  const dividerY = titleY - 18;
   page.drawLine({ start: { x: centerX - 150, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
   page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 150, y: dividerY }, thickness: 1, color: COLOR.maroon });
   drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
@@ -2872,12 +2931,22 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     },
   ];
 
-  const colGap = 16;
+  const colGap = 18;
   const colWidth = (PAGE_WIDTH - 88 - colGap) / 2;
-  const colTop = dividerY - 34;
+  const colTop = dividerY - 40;
 
-  const digitsSize = px(105);
+  const digitsSize = px(140); // was px(105) — the reference price badge text reads noticeably larger
   const rupeeSize = Math.round(digitsSize * 0.82 * 10) / 10;
+
+  // Row/font sizes below were 9 / 8.5 / 10 / 11 / 12 / 13pt in the old code —
+  // all bumped roughly 25-35% to match TYPE.bodySize-era proportions.
+  const strikeSize = 12;
+  const offSize = 15;
+  const cardTitleSize = 14;
+  const bulletTextSize = 11.5;
+  const noteSize = 10.5;
+  const btnLabelSize = 13;
+  const badgeR = 18; // was 13 — bigger badge so icons have real room to sit inside
 
   offers.forEach((offer, i) => {
     const cx = 44 + i * (colWidth + colGap);
@@ -2885,49 +2954,49 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     const priceDigits = offer.price.replace(/^\D*/, "");
     const rupeeWidth = fonts.sansBold.widthOfTextAtSize("₹", rupeeSize);
     const digitsWidth = fonts.heading.widthOfTextAtSize(priceDigits, digitsSize);
-    const priceWidth = rupeeWidth + digitsWidth + 50;
-    const priceH = digitsSize + 22;
+    const priceWidth = rupeeWidth + digitsWidth + 56;
+    const priceH = digitsSize + 24;
 
-    let iy = colTop - priceH - 26;
-    const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, 10);
-    page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: 10, font: fonts.sans, color: COLOR.muted });
-    page.drawLine({ start: { x: cx + colWidth / 2 - strikeWidth / 2, y: iy + 3.5 }, end: { x: cx + colWidth / 2 + strikeWidth / 2, y: iy + 3.5 }, thickness: 0.75, color: COLOR.red });
-    iy -= 22;
-    page.drawText(offer.off, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.off, 13) / 2, y: iy, size: 13, font: fonts.sansBold, color: COLOR.ink });
-    iy -= 24;
-    page.drawText(offer.title, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.title, 12) / 2, y: iy, size: 12, font: fonts.sansBold, color: COLOR.maroon });
-    iy -= 18;
-    page.drawLine({ start: { x: cx + colWidth / 2 - 46, y: iy }, end: { x: cx + colWidth / 2 + 46, y: iy }, thickness: 0.75, color: COLOR.maroon });
-    iy -= 22;
+    let iy = colTop - priceH - 30;
+    const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, strikeSize);
+    page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: strikeSize, font: fonts.sans, color: COLOR.muted });
+    page.drawLine({ start: { x: cx + colWidth / 2 - strikeWidth / 2, y: iy + 4 }, end: { x: cx + colWidth / 2 + strikeWidth / 2, y: iy + 4 }, thickness: 0.9, color: COLOR.red });
+    iy -= 26;
+    page.drawText(offer.off, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.off, offSize) / 2, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.ink });
+    iy -= 28;
+    page.drawText(offer.title, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.title, cardTitleSize) / 2, y: iy, size: cardTitleSize, font: fonts.sansBold, color: COLOR.maroon });
+    iy -= 20;
+    page.drawLine({ start: { x: cx + colWidth / 2 - 52, y: iy }, end: { x: cx + colWidth / 2 + 52, y: iy }, thickness: 0.75, color: COLOR.maroon });
+    iy -= 26;
 
-    const bulletTextX = 44;
+    const bulletTextX = 52; // was 44 — gives the bigger badge (radius 18 vs 13) room before the text starts
     offer.bullets.forEach((b, bi) => {
       const textWidth = colWidth - 28 - bulletTextX - 14;
-      const lines = wrapText(b, fonts.sans, 9, textWidth);
-      const rowH = 22 + Math.max(0, lines.length - 1) * 12;
-      drawRoundedRect(page, { x: cx + 14, y: iy - rowH, width: colWidth - 28, height: rowH, radius: 12, borderColor: COLOR.maroon, borderWidth: 0.75 });
-      const badgeCx = cx + 14 + 20;
+      const lines = wrapText(b, fonts.sans, bulletTextSize, textWidth);
+      const rowH = Math.max(badgeR * 2 + 10, 26 + Math.max(0, lines.length - 1) * 15);
+      drawRoundedRect(page, { x: cx + 14, y: iy - rowH, width: colWidth - 28, height: rowH, radius: 14, borderColor: COLOR.maroon, borderWidth: 0.75 });
+      const badgeCx = cx + 14 + badgeR + 6;
       const badgeCy = iy - rowH / 2;
-      page.drawCircle({ x: badgeCx, y: badgeCy, size: 13, color: COLOR.maroon });
-      drawOfferIcon(page, fonts, assets, offer.icons[bi] ?? "letter", badgeCx, badgeCy, 13);
-      let ty = iy - rowH / 2 + (lines.length - 1) * 6 + 3;
+      page.drawCircle({ x: badgeCx, y: badgeCy, size: badgeR, color: COLOR.maroon });
+      drawOfferIcon(page, fonts, assets, offer.icons[bi] ?? "letter", badgeCx, badgeCy, badgeR);
+      let ty = iy - rowH / 2 + (lines.length - 1) * 7.5 + 4;
       lines.forEach((line) => {
-        page.drawText(line, { x: cx + 14 + bulletTextX, y: ty, size: 9, font: fonts.sans, color: COLOR.maroonDark });
-        ty -= 12;
+        page.drawText(line, { x: cx + 14 + bulletTextX, y: ty, size: bulletTextSize, font: fonts.sans, color: COLOR.maroonDark });
+        ty -= 15;
       });
-      iy -= rowH + 8;
+      iy -= rowH + 10;
     });
 
-    iy -= 6;
-    wrapText(offer.note, fonts.sans, 8.5, colWidth - 40).forEach((line) => {
-      page.drawText(line, { x: cx + colWidth / 2 - fonts.sans.widthOfTextAtSize(line, 8.5) / 2, y: iy, size: 8.5, font: fonts.sans, color: COLOR.muted });
-      iy -= 12;
+    iy -= 8;
+    wrapText(offer.note, fonts.sans, noteSize, colWidth - 40).forEach((line) => {
+      page.drawText(line, { x: cx + colWidth / 2 - fonts.sans.widthOfTextAtSize(line, noteSize) / 2, y: iy, size: noteSize, font: fonts.sans, color: COLOR.muted });
+      iy -= 14;
     });
 
-    iy -= 6;
-    const btnH = 34;
-    const btnY = iy - 20;
-    const cardBottom = btnY - 14;
+    iy -= 8;
+    const btnH = 38;
+    const btnY = iy - 22;
+    const cardBottom = btnY - 16;
     drawRoundedRect(page, { x: cx, y: cardBottom, width: colWidth, height: colTop - cardBottom, radius: 18, borderColor: COLOR.maroon, borderWidth: 1 });
     drawRoundedRect(page, { x: cx + colWidth / 2 - priceWidth / 2, y: colTop - priceH / 2, width: priceWidth, height: priceH, radius: priceH / 2, color: COLOR.maroon });
     const priceStartX = cx + colWidth / 2 - (rupeeWidth + digitsWidth) / 2;
@@ -2936,7 +3005,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 
     drawRoundedRect(page, { x: cx + 12, y: btnY, width: colWidth - 24, height: btnH, radius: btnH / 2, color: COLOR.maroon });
     const btnLabel = "CLICK NOW";
-    page.drawText(btnLabel, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(btnLabel, 11) / 2, y: btnY + btnH / 2 - 4, size: 11, font: fonts.sansBold, color: COLOR.white });
+    page.drawText(btnLabel, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(btnLabel, btnLabelSize) / 2, y: btnY + btnH / 2 - btnLabelSize * 0.35, size: btnLabelSize, font: fonts.sansBold, color: COLOR.white });
   });
 
   drawFooterPill(page, fonts, data.brand);
