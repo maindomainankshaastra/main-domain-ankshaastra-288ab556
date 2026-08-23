@@ -2935,7 +2935,7 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   const colWidth = (PAGE_WIDTH - 88 - colGap) / 2;
   const colTop = dividerY - 40;
 
-  const digitsSize = px(140); // was px(105) — the reference price badge text reads noticeably larger
+  const digitsSize = px(105); // was px(105) — the reference price badge text reads noticeably larger
   const rupeeSize = Math.round(digitsSize * 0.82 * 10) / 10;
 
   // Row/font sizes below were 9 / 8.5 / 10 / 11 / 12 / 13pt in the old code —
