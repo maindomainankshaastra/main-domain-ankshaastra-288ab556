@@ -675,8 +675,15 @@ function drawDataTable(
   const labelColCenter = opts.x + opts.width / 4;
   const valueColCenter = opts.x + (opts.width * 3) / 4;
 
-  drawRoundedRect(page, { x: opts.x, y: opts.y - totalHeight, width: opts.width, height: totalHeight, radius: 16, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
-
+page.drawRectangle({
+  x: opts.x,
+  y: opts.y - totalHeight,
+  width: opts.width,
+  height: totalHeight,
+  color: COLOR.blushPanel,
+  borderColor: COLOR.maroon,
+  borderWidth: 1,
+});
   let y = opts.y;
   rows.forEach(([label, value], i) => {
     if (i > 0) {
@@ -979,8 +986,8 @@ function drawBlueprintPage(
   drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
   drawFooterPill(page, fonts, data.brand);
 
-  const boxX = 44;
-  const boxWidth = PAGE_WIDTH - 88;
+  const boxX = 77;
+  const boxWidth = PAGE_WIDTH - 154;
   const bannerSize = px(45);
   const bannerY = dividerY - 90;
   const bannerHeight = bannerSize + 26;
@@ -1008,7 +1015,12 @@ function drawBlueprintPage(
     ["Full Name Compound Number", String(numbers.fullNameCompound)],
   ];
 
-    drawDataTable(page, fonts, rows, { x: boxX, y: bannerY - bannerHeight - 12, width: boxWidth });
+    drawDataTable(page, fonts, rows, {
+  x: boxX,
+  y: bannerY - bannerHeight - 22,
+  width: boxWidth,
+  rowHeight: 63,
+});
 }
 
 function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
