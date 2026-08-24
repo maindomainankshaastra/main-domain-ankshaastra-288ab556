@@ -1211,6 +1211,7 @@ const lineHeight = bodySize + 6;
     font: fonts.sansBold,
     color: COLOR.white,
   });
+  page.drawLine({ start: { x: boxX + boxWidth * 0.46, y: y - 8 }, end: { x: boxX + boxWidth * 0.46, y: y - nameRowH + 8 }, thickness: 0.75, color: COLOR.white });
 
   const totalsY = y - nameRowH;
   page.drawLine({ start: { x: boxX, y: totalsY }, end: { x: boxX + boxWidth, y: totalsY }, thickness: 0.5, color: rgb(0.82, 0.68, 0.66) });
