@@ -1015,12 +1015,7 @@ function drawBlueprintPage(
     ["Full Name Compound Number", String(numbers.fullNameCompound)],
   ];
 
-    drawDataTable(page, fonts, rows, {
-  x: boxX,
-  y: bannerY - bannerHeight - 22,
-  width: boxWidth,
-  rowHeight: 63,
-});
+    drawDataTable(page, fonts, rows, { x: boxX, y: bannerY - bannerHeight - 12, width: boxWidth });
 }
 
 function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
