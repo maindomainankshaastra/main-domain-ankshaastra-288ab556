@@ -1812,7 +1812,7 @@ rowYs.forEach((ry) => {
     // Shadow behind button
     drawRoundedRect(page, {
       x: cx - btnW / 2 + 3,
-      y: ry - 63,
+      y: ry - 85,
       width: btnW,
       height: btnH,
       radius: btnH / 2,
@@ -1822,7 +1822,7 @@ rowYs.forEach((ry) => {
     // Main button — MAROON
     drawRoundedRect(page, {
       x: cx - btnW / 2,
-      y: ry - 60,
+      y: ry - 82,
       width: btnW,
       height: btnH,
       radius: btnH / 2,
@@ -1842,7 +1842,7 @@ rowYs.forEach((ry) => {
 
     const btnLabelX = cx - btnLabelWidth / 2;
     const btnLabelY =
-      ry - 60 + btnH / 2 - 3.4;
+      ry - 82 + btnH / 2 - 3.4;
 
     page.drawText(btnLabel, {
       x: btnLabelX,
