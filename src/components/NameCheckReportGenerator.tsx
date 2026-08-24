@@ -1755,11 +1755,11 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     { image: assets.socialYoutube, url: "https://www.youtube.com/@Ankshaastra" },
     { image: assets.socialFacebook, url: "https://www.facebook.com/p/Ankshaastra-61561549995939/" },
   ];
- const colXs = [centerX - 155, centerX + 155];
+ const colXs = [centerX - 135, centerX + 135];
 
 const rowYs = [
   dividerY - subtitleSize - 125,
-  dividerY - subtitleSize - 280,
+  dividerY - subtitleSize - 260,
 ];
 
 let idx = 0;
@@ -1878,7 +1878,7 @@ page.drawCircle({
 });
 
   const closingSize = px(60);
-  const closingY = rowYs[1] - 105;
+  const closingY = rowYs[1] - 125;
   ["STAY CONNECTED FOR", "ONGOING GUIDANCE & SUPPORT"].forEach((line, i) => {
     page.drawText(line, { x: centerX - fonts.sansBold.widthOfTextAtSize(line, closingSize) / 2, y: closingY - i * (closingSize + 6), size: closingSize, font: fonts.sansBold, color: COLOR.maroonDark });
   });
