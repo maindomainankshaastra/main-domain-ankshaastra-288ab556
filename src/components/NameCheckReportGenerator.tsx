@@ -1284,8 +1284,8 @@ page.drawLine({
 
  const totalsY = y - nameRowH - 12;
 const totalsHeight = totalsRowH - 5;
-const totalsWidth = boxWidth - innerGap * 2;
-const totalsHeight = totalsRowH - innerGap;
+// const totalsWidth = boxWidth - innerGap * 2;
+// const totalsHeight = totalsRowH - innerGap;
 
 if (opts.reducedTo !== undefined) {
   const cols = [
