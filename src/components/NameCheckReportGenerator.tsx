@@ -1190,28 +1190,97 @@ function drawCurrentNameBreakdownPage(
   const bodySize = 12.5;
 const lineHeight = bodySize + 6;
     const nameRowH = 58;
-  const totalsRowH = 56;
-  let y = PAGE_HEIGHT - 215;
+const totalsRowH = 56;
+let y = PAGE_HEIGHT - 215;
 
-  drawRoundedRect(page, { x: boxX, y: y - nameRowH - totalsRowH, width: boxWidth, height: nameRowH + totalsRowH, radius: 16, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
-  page.drawSvgPath(roundedTopRectSvgPath(boxWidth, nameRowH, 16), { x: boxX, y, color: COLOR.maroon });
-  const nameLabelSize = 13;
-  const nameValueSize = 14;
-  page.drawText(opts.nameLabel, {
-    x: boxX + boxWidth * 0.27 - fonts.sansBold.widthOfTextAtSize(opts.nameLabel, nameLabelSize) / 2,
-    y: y - nameRowH / 2 - nameLabelSize * 0.35,
-    size: nameLabelSize,
-    font: fonts.sansBold,
-    color: COLOR.white,
-  });
-  page.drawText(opts.nameValue, {
-    x: boxX + boxWidth * 0.65 - fonts.sansBold.widthOfTextAtSize(opts.nameValue, nameValueSize) / 2,
-    y: y - nameRowH / 2 - nameValueSize * 0.35,
-    size: nameValueSize,
-    font: fonts.sansBold,
-    color: COLOR.white,
-  });
-  page.drawLine({ start: { x: boxX + boxWidth * 0.46, y: y - 8 }, end: { x: boxX + boxWidth * 0.46, y: y - nameRowH + 8 }, thickness: 0.75, color: COLOR.white });
+const outerRadius = 16;
+const innerGap = 7;
+
+// OUTER CONTAINER
+drawRoundedRect(page, {
+  x: boxX,
+  y: y - nameRowH - totalsRowH,
+  width: boxWidth,
+  height: nameRowH + totalsRowH,
+  radius: outerRadius,
+  color: COLOR.blushPanel,
+  borderColor: COLOR.maroon,
+  borderWidth: 1,
+});
+
+// INNER MAROON HEADER
+const headerX = boxX + innerGap;
+const headerY = y - innerGap;
+const headerWidth = boxWidth - innerGap * 2;
+const headerHeight = nameRowH - innerGap;
+
+page.drawSvgPath(
+  roundedTopRectSvgPath(
+    headerWidth,
+    headerHeight,
+    outerRadius - 2
+  ),
+  {
+    x: headerX,
+    y: headerY,
+    color: COLOR.maroon,
+  }
+);
+ const nameLabelSize = 13;
+const nameValueSize = 14;
+
+const leftCenterX = headerX + headerWidth * 0.25;
+const rightCenterX = headerX + headerWidth * 0.75;
+
+// LEFT TEXT
+page.drawText(opts.nameLabel, {
+  x:
+    leftCenterX -
+    fonts.sansBold.widthOfTextAtSize(
+      opts.nameLabel,
+      nameLabelSize
+    ) / 2,
+  y:
+    headerY -
+    headerHeight / 2 -
+    nameLabelSize * 0.35,
+  size: nameLabelSize,
+  font: fonts.sansBold,
+  color: COLOR.white,
+});
+
+// RIGHT TEXT
+page.drawText(opts.nameValue, {
+  x:
+    rightCenterX -
+    fonts.sans.widthOfTextAtSize(
+      opts.nameValue,
+      nameValueSize
+    ) / 2,
+  y:
+    headerY -
+    headerHeight / 2 -
+    nameValueSize * 0.35,
+  size: nameValueSize,
+  font: fonts.sans,
+  color: COLOR.white,
+});
+
+// CENTER DIVIDER
+const dividerX = headerX + headerWidth / 2;
+
+page.drawLine({
+  start: {
+    x: dividerX,
+    y: headerY - 8,
+  },
+  end: {
+    x: dividerX,
+    y: headerY - headerHeight + 8,
+  },
+  thickness: 0.75,
+  color: COLOR.white,
+});
 
   const totalsY = y - nameRowH;
   page.drawLine({ start: { x: boxX, y: totalsY }, end: { x: boxX + boxWidth, y: totalsY }, thickness: 0.5, color: rgb(0.82, 0.68, 0.66) });
