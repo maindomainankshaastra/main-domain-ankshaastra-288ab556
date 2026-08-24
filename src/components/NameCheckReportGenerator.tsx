@@ -1283,9 +1283,10 @@ page.drawLine({
 });
 
  const totalsY = y - nameRowH - 12;
+
+const totalsX = boxX + innerGap;
+const totalsWidth = boxWidth - innerGap * 2;
 const totalsHeight = totalsRowH - 5;
-// const totalsWidth = boxWidth - innerGap * 2;
-// const totalsHeight = totalsRowH - innerGap;
 
 if (opts.reducedTo !== undefined) {
   const cols = [
@@ -1339,18 +1340,15 @@ if (opts.reducedTo !== undefined) {
       thickness: 0.5,
       color: COLOR.maroon,
     });
-  
-}
-  } else {
+  }
+
+} else {
   // ------------------------------------
   // TOTAL ONLY ROW
   // ------------------------------------
-  const totalsX = boxX + innerGap;
-  const totalsWidth = boxWidth - innerGap * 2;
-  const totalsHeight = totalsRowH - innerGap;
+
   const totalsBottom = totalsY - totalsHeight;
 
-  // Inset totals box
   drawRoundedRect(page, {
     x: totalsX,
     y: totalsBottom,
@@ -1365,7 +1363,6 @@ if (opts.reducedTo !== undefined) {
   // Two columns: Total | Value
   const colW = totalsWidth / 2;
 
-  // Total label
   const label = "Total";
   const labelSize = 16;
 
@@ -1373,7 +1370,10 @@ if (opts.reducedTo !== undefined) {
     x:
       totalsX +
       colW / 2 -
-      fonts.sansBold.widthOfTextAtSize(label, labelSize) / 2,
+      fonts.sansBold.widthOfTextAtSize(
+        label,
+        labelSize
+      ) / 2,
     y:
       totalsBottom +
       totalsHeight / 2 -
@@ -1383,7 +1383,6 @@ if (opts.reducedTo !== undefined) {
     color: COLOR.maroonDark,
   });
 
-  // Total value
   const value = String(opts.total);
   const valueSize = 16;
 
@@ -1392,7 +1391,10 @@ if (opts.reducedTo !== undefined) {
       totalsX +
       colW +
       colW / 2 -
-      fonts.sans.widthOfTextAtSize(value, valueSize) / 2,
+      fonts.sans.widthOfTextAtSize(
+        value,
+        valueSize
+      ) / 2,
     y:
       totalsBottom +
       totalsHeight / 2 -
@@ -1416,7 +1418,6 @@ if (opts.reducedTo !== undefined) {
     color: COLOR.maroon,
   });
 }
-
   y = totalsY - totalsRowH - 34;
   const contentBoxTop = y;
   const innerWidth = boxWidth - 36;
