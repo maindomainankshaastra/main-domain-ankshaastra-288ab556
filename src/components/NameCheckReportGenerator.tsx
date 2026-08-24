@@ -1877,7 +1877,7 @@ rowYs.forEach((ry) => {
 });
 
   const closingSize = px(60);
-  const closingY = rowYs[1] - 82;
+  const closingY = rowYs[1] - 105;
   ["STAY CONNECTED FOR", "ONGOING GUIDANCE & SUPPORT"].forEach((line, i) => {
     page.drawText(line, { x: centerX - fonts.sansBold.widthOfTextAtSize(line, closingSize) / 2, y: closingY - i * (closingSize + 6), size: closingSize, font: fonts.sansBold, color: COLOR.maroonDark });
   });
