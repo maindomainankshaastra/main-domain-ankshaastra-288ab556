@@ -1189,7 +1189,7 @@ function drawCurrentNameBreakdownPage(
   const boxWidth = PAGE_WIDTH - 88;
   const bodySize = 12.5;
 const lineHeight = bodySize + 6;
-    const nameRowH = 58;
+    const nameRowH = 56;
 const totalsRowH = 56;
 let y = PAGE_HEIGHT - 215;
 
@@ -1282,8 +1282,8 @@ page.drawLine({
   color: COLOR.white,
 });
 
-  const totalsY = y - nameRowH - innerGap;
-const totalsX = boxX + innerGap;
+ const totalsY = y - nameRowH - 12;
+const totalsHeight = totalsRowH - 5;
 const totalsWidth = boxWidth - innerGap * 2;
 const totalsHeight = totalsRowH - innerGap;
 
@@ -1342,16 +1342,80 @@ if (opts.reducedTo !== undefined) {
   
 }
   } else {
-    const txt = `Total ${opts.total}`;
-    const size = 16;
-    page.drawText(txt, {
-      x: boxX + boxWidth / 2 - fonts.sansBold.widthOfTextAtSize(txt, size) / 2,
-      y: totalsY - totalsRowH / 2 - size * 0.35,
-      size,
-      font: fonts.sansBold,
-      color: COLOR.maroonDark,
-    });
-  }
+  // ------------------------------------
+  // TOTAL ONLY ROW
+  // ------------------------------------
+  const totalsX = boxX + innerGap;
+  const totalsWidth = boxWidth - innerGap * 2;
+  const totalsHeight = totalsRowH - innerGap;
+  const totalsBottom = totalsY - totalsHeight;
+
+  // Inset totals box
+  drawRoundedRect(page, {
+    x: totalsX,
+    y: totalsBottom,
+    width: totalsWidth,
+    height: totalsHeight,
+    radius: outerRadius - 2,
+    color: COLOR.blushPanel,
+    borderColor: COLOR.maroon,
+    borderWidth: 1,
+  });
+
+  // Two columns: Total | Value
+  const colW = totalsWidth / 2;
+
+  // Total label
+  const label = "Total";
+  const labelSize = 16;
+
+  page.drawText(label, {
+    x:
+      totalsX +
+      colW / 2 -
+      fonts.sansBold.widthOfTextAtSize(label, labelSize) / 2,
+    y:
+      totalsBottom +
+      totalsHeight / 2 -
+      labelSize * 0.35,
+    size: labelSize,
+    font: fonts.sansBold,
+    color: COLOR.maroonDark,
+  });
+
+  // Total value
+  const value = String(opts.total);
+  const valueSize = 16;
+
+  page.drawText(value, {
+    x:
+      totalsX +
+      colW +
+      colW / 2 -
+      fonts.sans.widthOfTextAtSize(value, valueSize) / 2,
+    y:
+      totalsBottom +
+      totalsHeight / 2 -
+      valueSize * 0.35,
+    size: valueSize,
+    font: fonts.sans,
+    color: COLOR.maroonDark,
+  });
+
+  // Center divider
+  page.drawLine({
+    start: {
+      x: totalsX + colW,
+      y: totalsBottom + 2,
+    },
+    end: {
+      x: totalsX + colW,
+      y: totalsBottom + totalsHeight - 2,
+    },
+    thickness: 0.5,
+    color: COLOR.maroon,
+  });
+}
 
   y = totalsY - totalsRowH - 34;
   const contentBoxTop = y;
