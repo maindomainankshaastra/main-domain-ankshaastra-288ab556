@@ -1282,31 +1282,65 @@ page.drawLine({
   color: COLOR.white,
 });
 
-  const totalsY = y - nameRowH;
-  page.drawLine({ start: { x: boxX, y: totalsY }, end: { x: boxX + boxWidth, y: totalsY }, thickness: 0.5, color: rgb(0.82, 0.68, 0.66) });
-  if (opts.reducedTo !== undefined) {
-    const cols = [
-      { label: "Total", value: String(opts.total) },
-      { label: "Reduced To", value: String(opts.reducedTo) },
-    ];
-    const colW = boxWidth / 4;
-    const labelSize = 12;
-    const valueSize = 16;
-    [cols[0].label, cols[0].value, cols[1].label, cols[1].value].forEach((txt, i) => {
-      const isLabel = i % 2 === 0;
-      const size = isLabel ? labelSize : valueSize;
-      const cx = boxX + colW * i + colW / 2;
-      page.drawText(txt, {
-        x: cx - fonts.sansBold.widthOfTextAtSize(txt, size) / 2,
-        y: totalsY - totalsRowH / 2 - size * 0.35,
-        size,
-        font: fonts.sansBold,
-        color: COLOR.maroonDark,
-      });
-      if (i > 0) {
-        page.drawLine({ start: { x: boxX + colW * i, y: totalsY }, end: { x: boxX + colW * i, y: totalsY - totalsRowH }, thickness: 0.5, color: rgb(0.82, 0.68, 0.66) });
-      }
+  const totalsY = y - nameRowH - innerGap;
+const totalsX = boxX + innerGap;
+const totalsWidth = boxWidth - innerGap * 2;
+const totalsHeight = totalsRowH - innerGap;
+
+if (opts.reducedTo !== undefined) {
+  const cols = [
+    { label: "Total", value: String(opts.total) },
+    { label: "Reduced To", value: String(opts.reducedTo) },
+  ];
+
+  const colW = totalsWidth / 4;
+
+  const labelSize = 12;
+  const valueSize = 16;
+
+  const cells = [
+    { text: cols[0].label, size: labelSize },
+    { text: cols[0].value, size: valueSize },
+    { text: cols[1].label, size: labelSize },
+    { text: cols[1].value, size: valueSize },
+  ];
+
+  cells.forEach((cell, i) => {
+    const centerX = totalsX + colW * i + colW / 2;
+
+    page.drawText(cell.text, {
+      x:
+        centerX -
+        fonts.sansBold.widthOfTextAtSize(
+          cell.text,
+          cell.size
+        ) / 2,
+      y:
+        totalsY -
+        totalsHeight / 2 -
+        cell.size * 0.35,
+      size: cell.size,
+      font: fonts.sansBold,
+      color: COLOR.maroonDark,
     });
+  });
+
+  // Vertical separators
+  for (let i = 1; i < 4; i++) {
+    page.drawLine({
+      start: {
+        x: totalsX + colW * i,
+        y: totalsY - 2,
+      },
+      end: {
+        x: totalsX + colW * i,
+        y: totalsY - totalsHeight + 2,
+      },
+      thickness: 0.5,
+      color: COLOR.maroon,
+    });
+  }
+}
   } else {
     const txt = `Total ${opts.total}`;
     const size = 16;
