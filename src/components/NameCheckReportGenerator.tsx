@@ -1339,7 +1339,7 @@ if (opts.reducedTo !== undefined) {
       thickness: 0.5,
       color: COLOR.maroon,
     });
-  }
+  
 }
   } else {
     const txt = `Total ${opts.total}`;
