@@ -2440,10 +2440,20 @@ drawRoundedRect(page, {
     // font-glyph-coverage entirely.
     const displayText = value || "—";
     const isPillRow = label === "Date of Birth" || label === "Gender";
+    const isGenderRow = label === "Gender";
     const rowCenterY = y - rowHeight / 2;
+    // Gender's pill needs extra room on the right for the dropdown triangle —
+    // without this, the triangle has nowhere to sit but on top of the last
+    // letter of the value text (e.g. overlapping the "e" in "Female").
+    const arrowSpace = isGenderRow ? 22 : 0;
+    const textWidth = fonts.sansBold.widthOfTextAtSize(displayText, size);
+    // Text is centered in the pill as before, but for Gender the pill is wider
+    // than the text+padding alone, so re-center the text within just its own
+    // portion of the pill (shifted left by half the reserved arrow space).
+    const valueTextCenterX = valueColCenter - arrowSpace / 2;
+
     if (isPillRow) {
-      
-      const pillW = fonts.sansBold.widthOfTextAtSize(displayText, size) + 26;
+      const pillW = textWidth + 26 + arrowSpace;
       const pillH = size + 12;
       const pillX = valueColCenter - pillW / 2;
       drawRoundedRect(page, {
@@ -2455,10 +2465,10 @@ drawRoundedRect(page, {
         color: rgb(0.94, 0.87, 0.85),
       });
 
-      if (label === "Gender") {
+      if (isGenderRow) {
         const triW = 7;
         const triH = 4.5;
-        const triCx = pillX + pillW - 16;
+        const triCx = pillX + pillW - 15;
         const triTopY = rowCenterY + triH / 2;
         page.drawSvgPath(`M 0 0 L ${triW} 0 L ${triW / 2} ${-triH} Z`, {
           x: triCx - triW / 2,
@@ -2469,7 +2479,7 @@ drawRoundedRect(page, {
     }
 
     page.drawText(displayText, {
-      x: valueColCenter - fonts.sansBold.widthOfTextAtSize(displayText, size) / 2,
+      x: (isGenderRow ? valueTextCenterX : valueColCenter) - textWidth / 2,
       y: y - rowHeight / 2 - size * 0.35,
       size,
       font: fonts.sansBold,
