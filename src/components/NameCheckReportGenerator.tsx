@@ -1756,23 +1756,39 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     { image: assets.socialFacebook, url: "https://www.facebook.com/p/Ankshaastra-61561549995939/" },
   ];
   const colXs = [centerX - 155, centerX + 155];
-     const rowYs = [dividerY - subtitleSize - 110, dividerY - subtitleSize - 240];
+
+const rowYs = [
+  dividerY - subtitleSize - 125,
+  dividerY - subtitleSize - 280,
+];
   let idx = 0;
   rowYs.forEach((ry) => {
     colXs.forEach((cx) => {
       const { image, url } = platforms[idx++];
 
-      page.drawCircle({ x: cx, y: ry, size: 40, borderColor: COLOR.maroon, borderWidth: 1.25 });
-      page.drawCircle({ x: cx, y: ry, size: 34, color: COLOR.maroon });
+      page.drawCircle({
+  x: cx,
+  y: ry,
+  size: 43,
+  borderColor: COLOR.maroon,
+  borderWidth: 1.25
+});
+
+page.drawCircle({
+  x: cx,
+  y: ry,
+  size: 37,
+  color: COLOR.maroon
+});
       const iconW = 30;
       const iconH = (image.height / image.width) * iconW;
       page.drawImage(image, { x: cx - iconW / 2, y: ry - iconH / 2, width: iconW, height: iconH });
 
-      const btnW = 122;
-      const btnH = 27;
+      const btnW = 140;
+const btnH = 32;
       drawRoundedRect(page, { x: cx - btnW / 2, y: ry - 60, width: btnW, height: btnH, radius: btnH / 2, color: COLOR.maroon });
       const btnLabel = "CLICK ME";
-      const btnLabelSize = 9.5;
+      const btnLabelSize = 11;
       const btnLabelWidth = fonts.sansBold.widthOfTextAtSize(btnLabel, btnLabelSize);
       const btnLabelX = cx - btnLabelWidth / 2;
       const btnLabelY = ry - 60 + btnH / 2 - 3.4;
