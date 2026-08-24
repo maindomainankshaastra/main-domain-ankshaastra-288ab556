@@ -1176,256 +1176,347 @@ function drawCurrentNameBreakdownPage(
   fonts: Fonts,
   assets: Assets,
   data: Required<NameCheckReportInput>,
-  opts: { heading: string; nameLabel: string; nameValue: string; total: number; reducedTo?: number; bullets: string[] },
+  opts: {
+    heading: string;
+    nameLabel: string;
+    nameValue: string;
+    total: number;
+    reducedTo?: number;
+    bullets: string[];
+  },
   pageNumber: number,
   totalPages: number
 ) {
+  drawPageChrome(page, fonts, assets, {
+    title: "Current Name\nBreakdown",
+    subtitle: opts.heading,
+    pageNumber,
+    totalPages,
+    brand: data.brand,
+  });
 
-
-
-  drawPageChrome(page, fonts, assets, { title: "Current Name\nBreakdown", subtitle: opts.heading, pageNumber, totalPages, brand: data.brand });
-
-   const boxX = 44;
+  const boxX = 44;
   const boxWidth = PAGE_WIDTH - 88;
+
   const bodySize = 12.5;
-const lineHeight = bodySize + 6;
-    const nameRowH = 56;
-const totalsRowH = 56;
-let y = PAGE_HEIGHT - 215;
+  const lineHeight = bodySize + 6;
 
-const outerRadius = 16;
-const innerGap = 7;
+  // ---------------------------------------------------------
+  // TOP NAME + BOTTOM TOTALS CARD
+  // ---------------------------------------------------------
 
-// OUTER CONTAINER
-drawRoundedRect(page, {
-  x: boxX,
-  y: y - nameRowH - totalsRowH,
-  width: boxWidth,
-  height: nameRowH + totalsRowH,
-  radius: outerRadius,
-  color: COLOR.blushPanel,
-  borderColor: COLOR.maroon,
-  borderWidth: 1,
-});
+  const nameRowH = 56;
+  const totalsRowH = 56;
 
-// INNER MAROON HEADER
-const headerX = boxX + innerGap;
-const headerY = y - innerGap;
-const headerWidth = boxWidth - innerGap * 2;
-const headerHeight = nameRowH - innerGap;
+  const outerRadius = 16;
+  const innerGap = 7;
+  const rowGap = 12;
 
-page.drawSvgPath(
-  roundedTopRectSvgPath(
-    headerWidth,
-    headerHeight,
-    outerRadius - 2
-  ),
-  {
+  const headerHeight = nameRowH - innerGap;
+  const totalsHeight = totalsRowH - 5;
+
+  let y = PAGE_HEIGHT - 215;
+
+  const headerX = boxX + innerGap;
+  const headerY = y - innerGap;
+  const headerWidth = boxWidth - innerGap * 2;
+
+  const totalsX = boxX + innerGap;
+  const totalsY = y - nameRowH - rowGap;
+  const totalsWidth = boxWidth - innerGap * 2;
+
+  // Outer container:
+  // top padding + header + gap + totals + bottom padding
+  const outerHeight =
+    innerGap +
+    headerHeight +
+    rowGap +
+    totalsHeight +
+    innerGap;
+
+  const outerBottom = y - outerHeight;
+
+  drawRoundedRect(page, {
+    x: boxX,
+    y: outerBottom,
+    width: boxWidth,
+    height: outerHeight,
+    radius: outerRadius,
+    color: COLOR.blushPanel,
+    borderColor: COLOR.maroon,
+    borderWidth: 1,
+  });
+
+  // ---------------------------------------------------------
+  // MAROON NAME HEADER
+  // IMPORTANT: all 4 corners rounded
+  // ---------------------------------------------------------
+
+  drawRoundedRect(page, {
     x: headerX,
-    y: headerY,
+    y: headerY - headerHeight,
+    width: headerWidth,
+    height: headerHeight,
+    radius: outerRadius - 2,
     color: COLOR.maroon,
-  }
-);
- const nameLabelSize = 13;
-const nameValueSize = 14;
+  });
 
-const leftCenterX = headerX + headerWidth * 0.25;
-const rightCenterX = headerX + headerWidth * 0.75;
+  const nameLabelSize = 13;
+  const nameValueSize = 14;
 
-// LEFT TEXT
-page.drawText(opts.nameLabel, {
-  x:
-    leftCenterX -
-    fonts.sansBold.widthOfTextAtSize(
-      opts.nameLabel,
-      nameLabelSize
-    ) / 2,
-  y:
-    headerY -
-    headerHeight / 2 -
-    nameLabelSize * 0.35,
-  size: nameLabelSize,
-  font: fonts.sansBold,
-  color: COLOR.white,
-});
+  const leftCenterX = headerX + headerWidth * 0.25;
+  const rightCenterX = headerX + headerWidth * 0.75;
 
-// RIGHT TEXT
-page.drawText(opts.nameValue, {
-  x:
-    rightCenterX -
-    fonts.sans.widthOfTextAtSize(
-      opts.nameValue,
-      nameValueSize
-    ) / 2,
-  y:
-    headerY -
-    headerHeight / 2 -
-    nameValueSize * 0.35,
-  size: nameValueSize,
-  font: fonts.sans,
-  color: COLOR.white,
-});
+  // LEFT TEXT
+  page.drawText(opts.nameLabel, {
+    x:
+      leftCenterX -
+      fonts.sansBold.widthOfTextAtSize(
+        opts.nameLabel,
+        nameLabelSize
+      ) / 2,
+    y:
+      headerY -
+      headerHeight / 2 -
+      nameLabelSize * 0.35,
+    size: nameLabelSize,
+    font: fonts.sansBold,
+    color: COLOR.white,
+  });
 
-// CENTER DIVIDER
-const dividerX = headerX + headerWidth / 2;
+  // RIGHT TEXT
+  page.drawText(opts.nameValue, {
+    x:
+      rightCenterX -
+      fonts.sans.widthOfTextAtSize(
+        opts.nameValue,
+        nameValueSize
+      ) / 2,
+    y:
+      headerY -
+      headerHeight / 2 -
+      nameValueSize * 0.35,
+    size: nameValueSize,
+    font: fonts.sans,
+    color: COLOR.white,
+  });
 
-page.drawLine({
-  start: {
-    x: dividerX,
-    y: headerY - 8,
-  },
-  end: {
-    x: dividerX,
-    y: headerY - headerHeight + 8,
-  },
-  thickness: 0.75,
-  color: COLOR.white,
-});
+  // CENTER DIVIDER
+  const dividerX = headerX + headerWidth / 2;
 
- const totalsY = y - nameRowH - 12;
+  page.drawLine({
+    start: {
+      x: dividerX,
+      y: headerY - 8,
+    },
+    end: {
+      x: dividerX,
+      y: headerY - headerHeight + 8,
+    },
+    thickness: 0.75,
+    color: COLOR.white,
+  });
 
-const totalsX = boxX + innerGap;
-const totalsWidth = boxWidth - innerGap * 2;
-const totalsHeight = totalsRowH - 5;
+  // ---------------------------------------------------------
+  // TOTAL / REDUCED TO ROW
+  // IMPORTANT: this is now its own rounded bordered box
+  // ---------------------------------------------------------
 
-if (opts.reducedTo !== undefined) {
-  const cols = [
-    { label: "Total", value: String(opts.total) },
-    { label: "Reduced To", value: String(opts.reducedTo) },
-  ];
+  if (opts.reducedTo !== undefined) {
+    drawRoundedRect(page, {
+      x: totalsX,
+      y: totalsY - totalsHeight,
+      width: totalsWidth,
+      height: totalsHeight,
+      radius: outerRadius - 2,
+      color: COLOR.blushPanel,
+      borderColor: COLOR.maroon,
+      borderWidth: 1,
+    });
 
-  const colW = totalsWidth / 4;
+    const colW = totalsWidth / 4;
 
-  const labelSize = 12;
-  const valueSize = 16;
+    const cells = [
+      {
+        text: "Total",
+        size: 12,
+        bold: true,
+      },
+      {
+        text: String(opts.total),
+        size: 16,
+        bold: true,
+      },
+      {
+        text: "Reduced To",
+        size: 12,
+        bold: true,
+      },
+      {
+        text: String(opts.reducedTo),
+        size: 16,
+        bold: false,
+      },
+    ];
 
-  const cells = [
-    { text: cols[0].label, size: labelSize },
-    { text: cols[0].value, size: valueSize },
-    { text: cols[1].label, size: labelSize },
-    { text: cols[1].value, size: valueSize },
-  ];
+    cells.forEach((cell, i) => {
+      const centerX = totalsX + colW * i + colW / 2;
 
-  cells.forEach((cell, i) => {
-    const centerX = totalsX + colW * i + colW / 2;
+      const font = cell.bold
+        ? fonts.sansBold
+        : fonts.sans;
 
-    page.drawText(cell.text, {
+      page.drawText(cell.text, {
+        x:
+          centerX -
+          font.widthOfTextAtSize(cell.text, cell.size) / 2,
+        y:
+          totalsY -
+          totalsHeight / 2 -
+          cell.size * 0.35,
+        size: cell.size,
+        font,
+        color: COLOR.maroonDark,
+      });
+    });
+
+    // Vertical separators INSIDE the rounded row
+    for (let i = 1; i < 4; i++) {
+      page.drawLine({
+        start: {
+          x: totalsX + colW * i,
+          y: totalsY - 3,
+        },
+        end: {
+          x: totalsX + colW * i,
+          y: totalsY - totalsHeight + 3,
+        },
+        thickness: 0.5,
+        color: COLOR.maroon,
+      });
+    }
+  } else {
+    // -------------------------------------------------------
+    // TOTAL ONLY ROW
+    // -------------------------------------------------------
+
+    drawRoundedRect(page, {
+      x: totalsX,
+      y: totalsY - totalsHeight,
+      width: totalsWidth,
+      height: totalsHeight,
+      radius: outerRadius - 2,
+      color: COLOR.blushPanel,
+      borderColor: COLOR.maroon,
+      borderWidth: 1,
+    });
+
+    const colW = totalsWidth / 2;
+
+    const label = "Total";
+    const labelSize = 16;
+
+    page.drawText(label, {
       x:
-        centerX -
+        totalsX +
+        colW / 2 -
         fonts.sansBold.widthOfTextAtSize(
-          cell.text,
-          cell.size
+          label,
+          labelSize
         ) / 2,
       y:
         totalsY -
         totalsHeight / 2 -
-        cell.size * 0.35,
-      size: cell.size,
+        labelSize * 0.35,
+      size: labelSize,
       font: fonts.sansBold,
       color: COLOR.maroonDark,
     });
-  });
 
-  // Vertical separators
-  for (let i = 1; i < 4; i++) {
+    const value = String(opts.total);
+    const valueSize = 16;
+
+    page.drawText(value, {
+      x:
+        totalsX +
+        colW +
+        colW / 2 -
+        fonts.sans.widthOfTextAtSize(
+          value,
+          valueSize
+        ) / 2,
+      y:
+        totalsY -
+        totalsHeight / 2 -
+        valueSize * 0.35,
+      size: valueSize,
+      font: fonts.sans,
+      color: COLOR.maroonDark,
+    });
+
     page.drawLine({
       start: {
-        x: totalsX + colW * i,
-        y: totalsY - 2,
+        x: totalsX + colW,
+        y: totalsY - totalsHeight + 3,
       },
       end: {
-        x: totalsX + colW * i,
-        y: totalsY - totalsHeight + 2,
+        x: totalsX + colW,
+        y: totalsY - 3,
       },
       thickness: 0.5,
       color: COLOR.maroon,
     });
   }
 
-} else {
-  // ------------------------------------
-  // TOTAL ONLY ROW
-  // ------------------------------------
+  // ---------------------------------------------------------
+  // WHAT THIS REPRESENTS
+  // ---------------------------------------------------------
 
-  const totalsBottom = totalsY - totalsHeight;
+  y = outerBottom - 34;
 
-  drawRoundedRect(page, {
-    x: totalsX,
-    y: totalsBottom,
-    width: totalsWidth,
-    height: totalsHeight,
-    radius: outerRadius - 2,
-    color: COLOR.blushPanel,
-    borderColor: COLOR.maroon,
-    borderWidth: 1,
-  });
-
-  // Two columns: Total | Value
-  const colW = totalsWidth / 2;
-
-  const label = "Total";
-  const labelSize = 16;
-
-  page.drawText(label, {
-    x:
-      totalsX +
-      colW / 2 -
-      fonts.sansBold.widthOfTextAtSize(
-        label,
-        labelSize
-      ) / 2,
-    y:
-      totalsBottom +
-      totalsHeight / 2 -
-      labelSize * 0.35,
-    size: labelSize,
-    font: fonts.sansBold,
-    color: COLOR.maroonDark,
-  });
-
-  const value = String(opts.total);
-  const valueSize = 16;
-
-  page.drawText(value, {
-    x:
-      totalsX +
-      colW +
-      colW / 2 -
-      fonts.sans.widthOfTextAtSize(
-        value,
-        valueSize
-      ) / 2,
-    y:
-      totalsBottom +
-      totalsHeight / 2 -
-      valueSize * 0.35,
-    size: valueSize,
-    font: fonts.sans,
-    color: COLOR.maroonDark,
-  });
-
-  // Center divider
-  page.drawLine({
-    start: {
-      x: totalsX + colW,
-      y: totalsBottom + 2,
-    },
-    end: {
-      x: totalsX + colW,
-      y: totalsBottom + totalsHeight - 2,
-    },
-    thickness: 0.5,
-    color: COLOR.maroon,
-  });
-}
-  y = totalsY - totalsRowH - 34;
   const contentBoxTop = y;
   const innerWidth = boxWidth - 36;
-  const bulletsHeight = measureBulletListHeight(opts.bullets, fonts.sans, bodySize, innerWidth, lineHeight, TYPE.bulletGap);
-  const contentBoxHeight = TYPE.cardPadding + bulletsHeight + 22;
-  drawContentBox(page, { x: boxX, y: contentBoxTop, width: boxWidth, height: contentBoxHeight });
-  drawMaroonBanner(page, fonts, "What This Represents", boxX, contentBoxTop, boxWidth);
-  drawBulletList(page, opts.bullets, { x: 62, y: contentBoxTop - TYPE.cardPadding, font: fonts.sans, size: bodySize, maxWidth: innerWidth, lineHeight, gap: TYPE.bulletGap, color: COLOR.ink });
+
+  const bulletsHeight = measureBulletListHeight(
+    opts.bullets,
+    fonts.sans,
+    bodySize,
+    innerWidth,
+    lineHeight,
+    TYPE.bulletGap
+  );
+
+  const contentBoxHeight =
+    TYPE.cardPadding +
+    bulletsHeight +
+    22;
+
+  drawContentBox(page, {
+    x: boxX,
+    y: contentBoxTop,
+    width: boxWidth,
+    height: contentBoxHeight,
+  });
+
+  drawMaroonBanner(
+    page,
+    fonts,
+    "What This Represents",
+    boxX,
+    contentBoxTop,
+    boxWidth
+  );
+
+  drawBulletList(page, opts.bullets, {
+    x: 62,
+    y: contentBoxTop - TYPE.cardPadding,
+    font: fonts.sans,
+    size: bodySize,
+    maxWidth: innerWidth,
+    lineHeight,
+    gap: TYPE.bulletGap,
+    color: COLOR.ink,
+  });
 }
 
 const VERDICT_LABEL: Record<"HR" | "OA" | "NR", string> = {
