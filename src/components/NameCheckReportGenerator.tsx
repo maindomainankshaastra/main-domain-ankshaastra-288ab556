@@ -1755,11 +1755,11 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     { image: assets.socialYoutube, url: "https://www.youtube.com/@Ankshaastra" },
     { image: assets.socialFacebook, url: "https://www.facebook.com/p/Ankshaastra-61561549995939/" },
   ];
-  const colXs = [centerX - 155, centerX + 155];
+ const colXs = [centerX - 155, centerX + 155];
 
 const rowYs = [
   dividerY - subtitleSize - 125,
-  dividerY - subtitleSize - 280,
+  dividerY - subtitleSize - 280
 ];
   let idx = 0;
   rowYs.forEach((ry) => {
