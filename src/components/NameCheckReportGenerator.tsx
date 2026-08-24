@@ -1228,13 +1228,13 @@ const lineHeight = bodySize + 6;
       const cx = boxX + colW * i + colW / 2;
       page.drawText(txt, {
         x: cx - fonts.sansBold.widthOfTextAtSize(txt, size) / 2,
-        y: totalsTop - totalsRowH / 2 - size * 0.35,
+        y: totalsY - totalsRowH / 2 - size * 0.35,
         size,
         font: fonts.sansBold,
         color: COLOR.maroonDark,
       });
       if (i > 0) {
-        page.drawLine({ start: { x: boxX + colW * i, y: totalsTop }, end: { x: boxX + colW * i, y: totalsTop - totalsRowH }, thickness: 0.5, color: rgb(0.82, 0.68, 0.66) });
+        page.drawLine({ start: { x: boxX + colW * i, y: totalsY }, end: { x: boxX + colW * i, y: totalsY - totalsRowH }, thickness: 0.5, color: rgb(0.82, 0.68, 0.66) });
       }
     });
   } else {
@@ -1242,7 +1242,7 @@ const lineHeight = bodySize + 6;
     const size = 16;
     page.drawText(txt, {
       x: boxX + boxWidth / 2 - fonts.sansBold.widthOfTextAtSize(txt, size) / 2,
-      y: totalsTop - totalsRowH / 2 - size * 0.35,
+      y: totalsY - totalsRowH / 2 - size * 0.35,
       size,
       font: fonts.sansBold,
       color: COLOR.maroonDark,
