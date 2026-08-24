@@ -1653,20 +1653,20 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     },
   ];
 
-  const colGap = 18;
-  const colWidth = (PAGE_WIDTH - 88 - colGap) / 2;
-  const colTop = dividerY - 40;
+  const colGap = 14;
+const colWidth = (PAGE_WIDTH - 80 - colGap) / 2;
+const colTop = dividerY - 40;
 
-  const digitsSize = px(105);
-  const rupeeSize = Math.round(digitsSize * 0.82 * 10) / 10;
+const digitsSize = px(90);
+const rupeeSize = Math.round(digitsSize * 0.82 * 10) / 10;
 
-  const strikeSize = 12;
-  const offSize = 15;
-  const cardTitleSize = 14;
-  const bulletTextSize = 11.5;
-  const noteSize = 10.5;
-  const btnLabelSize = 13;
-  const badgeR = 18;
+const strikeSize = 12;
+const offSize = 17;
+const cardTitleSize = 17;
+const bulletTextSize = 13;
+const noteSize = 10.5;
+const btnLabelSize = 13;
+const badgeR = 22;
 
   offers.forEach((offer, i) => {
     const cx = 44 + i * (colWidth + colGap);
@@ -1693,18 +1693,21 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     offer.bullets.forEach((b, bi) => {
       const textWidth = colWidth - 28 - bulletTextX - 14;
       const lines = wrapText(b, fonts.sans, bulletTextSize, textWidth);
-      const rowH = Math.max(badgeR * 2 + 10, 26 + Math.max(0, lines.length - 1) * 15);
+      const rowH = Math.max(
+  badgeR * 2 + 18,
+  42 + Math.max(0, lines.length - 1) * 17
+);
       drawRoundedRect(page, { x: cx + 14, y: iy - rowH, width: colWidth - 28, height: rowH, radius: 14, borderColor: COLOR.maroon, borderWidth: 0.75 });
       const badgeCx = cx + 14 + badgeR + 6;
       const badgeCy = iy - rowH / 2;
       page.drawCircle({ x: badgeCx, y: badgeCy, size: badgeR, color: COLOR.maroon });
       drawOfferIcon(page, fonts, assets, offer.icons[bi] ?? "letter", badgeCx, badgeCy, badgeR);
-      let ty = iy - rowH / 2 + (lines.length - 1) * 7.5 + 4;
+      let ty = iy - rowH / 2 + (lines.length - 1) * 8.5 + 5;
       lines.forEach((line) => {
         page.drawText(line, { x: cx + 14 + bulletTextX, y: ty, size: bulletTextSize, font: fonts.sans, color: COLOR.maroonDark });
         ty -= 15;
       });
-      iy -= rowH + 10;
+      iy -= rowH + 12;
     });
 
     iy -= 8;
@@ -1725,6 +1728,12 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 
     drawRoundedRect(page, { x: cx + 12, y: btnY, width: colWidth - 24, height: btnH, radius: btnH / 2, color: COLOR.maroon });
     const btnLabel = "CLICK NOW";
+    addLinkAnnotation(page, "https://www.ankshaastra.com/services/name-correction", {
+  x: cx + 12,
+  y: btnY,
+  width: colWidth - 24,
+  height: btnH,
+});
     page.drawText(btnLabel, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(btnLabel, btnLabelSize) / 2, y: btnY + btnH / 2 - btnLabelSize * 0.35, size: btnLabelSize, font: fonts.sansBold, color: COLOR.white });
   });
 
