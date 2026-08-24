@@ -1759,67 +1759,125 @@ function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 
 const rowYs = [
   dividerY - subtitleSize - 125,
-  dividerY - subtitleSize - 280
+  dividerY - subtitleSize - 280,
 ];
-  let idx = 0;
-  rowYs.forEach((ry) => {
-    colXs.forEach((cx) => {
-      const { image, url } = platforms[idx++];
 
-     // OUTER CIRCLE — reference size
-page.drawCircle({
-  x: cx,
-  y: ry,
-  size: 43,
-  borderColor: COLOR.maroon,
-  borderWidth: 1.25,
-});
+let idx = 0;
 
-// INNER MAROON CIRCLE
-page.drawCircle({
-  x: cx,
-  y: ry,
-  size: 37,
-  color: COLOR.maroon,
-});
+rowYs.forEach((ry) => {
+  colXs.forEach((cx) => {
+    const { image, url } = platforms[idx++];
 
-// SOCIAL ICON — MAKE THE ACTUAL LOGO BIGGER
-const iconW = 48;
-const iconH = (image.height / image.width) * iconW;
+    // =========================
+    // SOCIAL ICON CIRCLE
+    // =========================
 
-page.drawImage(image, {
-  x: cx - iconW / 2,
-  y: ry - iconH / 2,
-  width: iconW,
-  height: iconH,
-});
+    // OUTER RING — MAROON
+    page.drawCircle({
+      x: cx,
+      y: ry,
+      size: 40,
+      borderColor: COLOR.maroon,
+      borderWidth: 1.5,
+    });
 
-      const btnW = 140;
-const btnH = 32;
-      drawRoundedRect(page, {
-  x: cx - btnW / 2,
-  y: ry - 60,
-  width: btnW,
-  height: btnH,
-  radius: btnH / 2,
-  color: COLOR.maroon,
-  borderColor: COLOR.white,
-  borderWidth: 1.5,
-});
-      const btnLabel = "CLICK ME";
-      const btnLabelSize = 11;
-      const btnLabelWidth = fonts.sansBold.widthOfTextAtSize(btnLabel, btnLabelSize);
-      const btnLabelX = cx - btnLabelWidth / 2;
-      const btnLabelY = ry - 60 + btnH / 2 - 3.4;
-      page.drawText(btnLabel, { x: btnLabelX, y: btnLabelY, size: btnLabelSize, font: fonts.sansBold, color: COLOR.white });
-      page.drawLine({ start: { x: btnLabelX, y: btnLabelY - 2 }, end: { x: btnLabelX + btnLabelWidth, y: btnLabelY - 2 }, thickness: 0.75, color: COLOR.white });
+    // INNER CIRCLE — MAROON + WHITE INNER RING
+    page.drawCircle({
+      x: cx,
+      y: ry,
+      size: 35,
+      color: COLOR.maroon,
+      borderColor: COLOR.white,
+      borderWidth: 1.5,
+    });
 
-      addLinkAnnotation(page, url, { x: cx - btnW / 2, y: ry - 60, width: btnW, height: ry + 40 - (ry - 60) });
+    // ACTUAL SOCIAL ICON
+    const iconW = 46;
+    const iconH = (image.height / image.width) * iconW;
+
+    page.drawImage(image, {
+      x: cx - iconW / 2,
+      y: ry - iconH / 2,
+      width: iconW,
+      height: iconH,
+    });
+
+    // =========================
+    // CLICK ME BUTTON
+    // =========================
+
+    const btnW = 140;
+    const btnH = 32;
+
+    // Shadow behind button
+    drawRoundedRect(page, {
+      x: cx - btnW / 2 + 3,
+      y: ry - 63,
+      width: btnW,
+      height: btnH,
+      radius: btnH / 2,
+      color: COLOR.maroonDark,
+    });
+
+    // Main button — MAROON
+    drawRoundedRect(page, {
+      x: cx - btnW / 2,
+      y: ry - 60,
+      width: btnW,
+      height: btnH,
+      radius: btnH / 2,
+      color: COLOR.maroon,
+      borderColor: COLOR.white,
+      borderWidth: 1.25,
+    });
+
+    const btnLabel = "CLICK ME";
+    const btnLabelSize = 11;
+
+    const btnLabelWidth =
+      fonts.sansBold.widthOfTextAtSize(
+        btnLabel,
+        btnLabelSize
+      );
+
+    const btnLabelX = cx - btnLabelWidth / 2;
+    const btnLabelY =
+      ry - 60 + btnH / 2 - 3.4;
+
+    page.drawText(btnLabel, {
+      x: btnLabelX,
+      y: btnLabelY,
+      size: btnLabelSize,
+      font: fonts.sansBold,
+      color: COLOR.white,
+    });
+
+    // Underline
+    page.drawLine({
+      start: {
+        x: btnLabelX,
+        y: btnLabelY - 2,
+      },
+      end: {
+        x: btnLabelX + btnLabelWidth,
+        y: btnLabelY - 2,
+      },
+      thickness: 0.75,
+      color: COLOR.white,
+    });
+
+    // Clickable area
+    addLinkAnnotation(page, url, {
+      x: cx - btnW / 2,
+      y: ry - 60,
+      width: btnW,
+      height: btnH,
     });
   });
+});
 
   const closingSize = px(60);
-  const closingY = rowYs[1] - 90;
+  const closingY = rowYs[1] - 82;
   ["STAY CONNECTED FOR", "ONGOING GUIDANCE & SUPPORT"].forEach((line, i) => {
     page.drawText(line, { x: centerX - fonts.sansBold.widthOfTextAtSize(line, closingSize) / 2, y: closingY - i * (closingSize + 6), size: closingSize, font: fonts.sansBold, color: COLOR.maroonDark });
   });
