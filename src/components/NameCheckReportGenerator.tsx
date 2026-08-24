@@ -1772,27 +1772,28 @@ rowYs.forEach((ry) => {
     // SOCIAL ICON CIRCLE
     // =========================
 
-    // OUTER RING — MAROON
-    page.drawCircle({
-      x: cx,
-      y: ry,
-      size: 40,
-      borderColor: COLOR.maroon,
-      borderWidth: 1.5,
-    });
+    // OUTER CIRCLE — MAROON
+page.drawCircle({
+  x: cx,
+  y: ry,
+  size: 40,
+  color: COLOR.maroon,
+  borderColor: COLOR.maroon,
+  borderWidth: 1.5,
+});
 
-    // INNER CIRCLE — MAROON + WHITE INNER RING
-    page.drawCircle({
-      x: cx,
-      y: ry,
-      size: 35,
-      color: COLOR.maroon,
-      borderColor: COLOR.white,
-      borderWidth: 1.5,
-    });
+// INNER CIRCLE — MAROON WITH WHITE RING
+page.drawCircle({
+  x: cx,
+  y: ry,
+  size: 35,
+  color: COLOR.maroon,
+  borderColor: COLOR.white,
+  borderWidth: 1.5,
+});
 
     // ACTUAL SOCIAL ICON
-    const iconW = 46;
+    const iconW = 58;
     const iconH = (image.height / image.width) * iconW;
 
     page.drawImage(image, {
