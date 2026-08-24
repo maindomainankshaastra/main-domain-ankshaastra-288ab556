@@ -1189,13 +1189,12 @@ function drawCurrentNameBreakdownPage(
   const boxWidth = PAGE_WIDTH - 88;
   const bodySize = 12.5;
 const lineHeight = bodySize + 6;
-  const nameRowH = 44;
-  const totalsRowH = 50;
-  const gapBetween = 10; // Bindhu reference mein dono boxes alag-alag hain, gap ke saath
+    const nameRowH = 58;
+  const totalsRowH = 56;
   let y = PAGE_HEIGHT - 215;
 
-  // Box 1 — standalone maroon pill: "First Name | Priyanka"
-  drawRoundedRect(page, { x: boxX, y: y - nameRowH, width: boxWidth, height: nameRowH, radius: nameRowH / 2, color: COLOR.maroon });
+  drawRoundedRect(page, { x: boxX, y: y - nameRowH - totalsRowH, width: boxWidth, height: nameRowH + totalsRowH, radius: 16, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
+  page.drawSvgPath(roundedTopRectSvgPath(boxWidth, nameRowH, 16), { x: boxX, y, color: COLOR.maroon });
   const nameLabelSize = 13;
   const nameValueSize = 14;
   page.drawText(opts.nameLabel, {
@@ -1213,9 +1212,8 @@ const lineHeight = bodySize + 6;
     color: COLOR.white,
   });
 
-  // Box 2 — standalone outlined box: "Total | Reduced To"
-  const totalsTop = y - nameRowH - gapBetween;
-  drawRoundedRect(page, { x: boxX, y: totalsTop - totalsRowH, width: boxWidth, height: totalsRowH, radius: 16, color: COLOR.blushPanel, borderColor: COLOR.maroon, borderWidth: 1 });
+  const totalsY = y - nameRowH;
+  page.drawLine({ start: { x: boxX, y: totalsY }, end: { x: boxX + boxWidth, y: totalsY }, thickness: 0.5, color: rgb(0.82, 0.68, 0.66) });
   if (opts.reducedTo !== undefined) {
     const cols = [
       { label: "Total", value: String(opts.total) },
@@ -1251,7 +1249,7 @@ const lineHeight = bodySize + 6;
     });
   }
 
-  y = totalsTop - totalsRowH - 34;
+  y = totalsY - totalsRowH - 34;
   const contentBoxTop = y;
   const innerWidth = boxWidth - 36;
   const bulletsHeight = measureBulletListHeight(opts.bullets, fonts.sans, bodySize, innerWidth, lineHeight, TYPE.bulletGap);
