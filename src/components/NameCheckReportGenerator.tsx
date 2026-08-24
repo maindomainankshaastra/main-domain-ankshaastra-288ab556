@@ -1766,27 +1766,46 @@ const rowYs = [
     colXs.forEach((cx) => {
       const { image, url } = platforms[idx++];
 
-      page.drawCircle({
+     // OUTER CIRCLE — reference size
+page.drawCircle({
   x: cx,
   y: ry,
   size: 43,
   borderColor: COLOR.maroon,
-  borderWidth: 1.25
+  borderWidth: 1.25,
 });
 
+// INNER MAROON CIRCLE
 page.drawCircle({
   x: cx,
   y: ry,
   size: 37,
-  color: COLOR.maroon
+  color: COLOR.maroon,
 });
-      const iconW = 30;
-      const iconH = (image.height / image.width) * iconW;
-      page.drawImage(image, { x: cx - iconW / 2, y: ry - iconH / 2, width: iconW, height: iconH });
+
+// SOCIAL ICON — MAKE THE ACTUAL LOGO BIGGER
+const iconW = 48;
+const iconH = (image.height / image.width) * iconW;
+
+page.drawImage(image, {
+  x: cx - iconW / 2,
+  y: ry - iconH / 2,
+  width: iconW,
+  height: iconH,
+});
 
       const btnW = 140;
 const btnH = 32;
-      drawRoundedRect(page, { x: cx - btnW / 2, y: ry - 60, width: btnW, height: btnH, radius: btnH / 2, color: COLOR.maroon });
+      drawRoundedRect(page, {
+  x: cx - btnW / 2,
+  y: ry - 60,
+  width: btnW,
+  height: btnH,
+  radius: btnH / 2,
+  color: COLOR.maroon,
+  borderColor: COLOR.white,
+  borderWidth: 1.5,
+});
       const btnLabel = "CLICK ME";
       const btnLabelSize = 11;
       const btnLabelWidth = fonts.sansBold.widthOfTextAtSize(btnLabel, btnLabelSize);
