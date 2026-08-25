@@ -1657,16 +1657,16 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 const colWidth = (PAGE_WIDTH - 80 - colGap) / 2;
 const colTop = dividerY - 40;
 
-const digitsSize = px(90);
+const digitsSize = px(75);
 const rupeeSize = Math.round(digitsSize * 0.82 * 10) / 10;
 
 const strikeSize = 12;
 const offSize = 17;
 const cardTitleSize = 17;
-const bulletTextSize = 13;
+const bulletTextSize = 12;
 const noteSize = 10.5;
 const btnLabelSize = 13;
-const badgeR = 22;
+const badgeR = 19;
 
   offers.forEach((offer, i) => {
     const cx = 44 + i * (colWidth + colGap);
@@ -1677,25 +1677,25 @@ const badgeR = 22;
     const priceWidth = rupeeWidth + digitsWidth + 56;
     const priceH = digitsSize + 24;
 
-    let iy = colTop - priceH - 16;
-    const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, strikeSize);
-    page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: strikeSize, font: fonts.sans, color: COLOR.muted });
-    page.drawLine({ start: { x: cx + colWidth / 2 - strikeWidth / 2, y: iy + 4 }, end: { x: cx + colWidth / 2 + strikeWidth / 2, y: iy + 4 }, thickness: 0.9, color: COLOR.red });
-    iy -= 26;
-    page.drawText(offer.off, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.off, offSize) / 2, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.ink });
-    iy -= 28;
-    page.drawText(offer.title, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.title, cardTitleSize) / 2, y: iy, size: cardTitleSize, font: fonts.sansBold, color: COLOR.maroon });
-    iy -= 20;
-    page.drawLine({ start: { x: cx + colWidth / 2 - 52, y: iy }, end: { x: cx + colWidth / 2 + 52, y: iy }, thickness: 0.75, color: COLOR.maroon });
-    iy -= 26;
+    let iy = colTop - priceH - 10;
+const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, strikeSize);
+page.drawText(offer.strike, { ... });
+page.drawLine({ ... });
+iy -= 20;
+page.drawText(offer.off, { ... });
+iy -= 22;
+page.drawText(offer.title, { ... });
+iy -= 16;
+page.drawLine({ start: { x: cx + colWidth / 2 - 52, y: iy }, end: { x: cx + colWidth / 2 + 52, y: iy }, thickness: 0.75, color: COLOR.maroon });
+iy -= 18;
 
     const bulletTextX = 52;
     offer.bullets.forEach((b, bi) => {
       const textWidth = colWidth - 28 - bulletTextX - 14;
       const lines = wrapText(b, fonts.sans, bulletTextSize, textWidth);
       const rowH = Math.max(
-  badgeR * 2 + 18,
-  42 + Math.max(0, lines.length - 1) * 17
+  badgeR * 2 + 14,
+  36 + Math.max(0, lines.length - 1) * 15
 );
       drawRoundedRect(page, { x: cx + 14, y: iy - rowH, width: colWidth - 28, height: rowH, radius: 14, borderColor: COLOR.maroon, borderWidth: 0.75 });
       const badgeCx = cx + 14 + badgeR + 6;
@@ -1707,7 +1707,7 @@ const badgeR = 22;
         page.drawText(line, { x: cx + 14 + bulletTextX, y: ty, size: bulletTextSize, font: fonts.sans, color: COLOR.maroonDark });
         ty -= 15;
       });
-      iy -= rowH + 12;
+      iy -= rowH + 8;
     });
 
     iy -= 8;
