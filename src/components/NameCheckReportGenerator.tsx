@@ -1776,7 +1776,7 @@ iy -= 22;
   const btnH = 38;
 
 // Same fixed bottom for both cards
-const cardBottom = 70;
+const cardBottom = 115;
 const cardHeight = colTop - cardBottom;
 
 const btnY = cardBottom + 18;
