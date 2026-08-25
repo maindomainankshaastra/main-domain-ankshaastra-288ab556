@@ -2024,7 +2024,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
 
   const assets: Assets = {
     background: await pdfDoc.embedPng(backgroundBytes),
-    backCoverBackground: await pdfDoc.embedPng(backCoverBackgroundBytes),
+    backCoverBackground: await pdfDoc.embedJpg(backCoverBackgroundBytes),
     logo: await pdfDoc.embedPng(logoBytes),
     loshuGrid: await pdfDoc.embedPng(loshuGridBytes),
     starIcon: await pdfDoc.embedPng(starIconBytes),
