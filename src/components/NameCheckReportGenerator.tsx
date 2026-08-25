@@ -117,6 +117,7 @@ const COLOR = {
   cream: rgb(0.99, 0.97, 0.95),
   green: rgb(0.15, 0.45, 0.2),
   red: rgb(0.6, 0.15, 0.15),
+  black: rgb(0.12, 0.12, 0.12),
 };
 
 interface Fonts {
@@ -1682,7 +1683,21 @@ const badgeR = 19;
     page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: strikeSize, font: fonts.sans, color: COLOR.muted });
     page.drawLine({ start: { x: cx + colWidth / 2 - strikeWidth / 2, y: iy + 4 }, end: { x: cx + colWidth / 2 + strikeWidth / 2, y: iy + 4 }, thickness: 0.9, color: COLOR.red });
     iy -= 20;
-    page.drawText(offer.off, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.off, offSize) / 2, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.ink });
+        const offMatch = offer.off.match(/^(GET )(\d+%)( OFF)$/);
+    if (offMatch) {
+      const [, offPrefix, offPercent, offSuffix] = offMatch;
+      const prefixWidth = fonts.sansBold.widthOfTextAtSize(offPrefix, offSize);
+      const percentWidth = fonts.sansBold.widthOfTextAtSize(offPercent, offSize);
+      const suffixWidth = fonts.sansBold.widthOfTextAtSize(offSuffix, offSize);
+      let offX = cx + colWidth / 2 - (prefixWidth + percentWidth + suffixWidth) / 2;
+      page.drawText(offPrefix, { x: offX, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.black });
+      offX += prefixWidth;
+      page.drawText(offPercent, { x: offX, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.maroon });
+      offX += percentWidth;
+      page.drawText(offSuffix, { x: offX, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.black });
+    } else {
+      page.drawText(offer.off, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.off, offSize) / 2, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.ink });
+    }
     iy -= 22;
     page.drawText(offer.title, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.title, cardTitleSize) / 2, y: iy, size: cardTitleSize, font: fonts.sansBold, color: COLOR.maroon });
     iy -= 16;
@@ -1722,7 +1737,7 @@ const badgeR = 19;
     drawRoundedRect(page, { x: cx + colWidth / 2 - priceWidth / 2, y: colTop - priceH / 2, width: priceWidth, height: priceH, radius: priceH / 2, color: COLOR.maroon });
     const priceStartX = cx + colWidth / 2 - (rupeeWidth + digitsWidth) / 2;
     page.drawText("₹", { x: priceStartX, y: colTop - priceH / 2 + priceH * 0.32, size: rupeeSize, font: fonts.sansBold, color: COLOR.white });
-    page.drawText(priceDigits, { x: priceStartX + rupeeWidth, y: colTop - priceH / 2 + priceH * 0.3, size: digitsSize, font: fonts.heading, color: COLOR.white });
+    page.drawText(priceDigits, { x: priceStartX + rupeeWidth, y: colTop - priceH / 2 + priceH * 0.3, size: digitsSize, font: fonts.sansBold, color: COLOR.white });
 
     drawRoundedRect(page, { x: cx + 12, y: btnY, width: colWidth - 24, height: btnH, radius: btnH / 2, color: COLOR.maroon });
     const btnLabel = "CLICK NOW";
