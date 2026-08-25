@@ -987,8 +987,8 @@ function drawBlueprintPage(
   drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
   drawFooterPill(page, fonts, data.brand);
 
-  const boxX = 44;
-  const boxWidth = PAGE_WIDTH - 88;
+  const boxX = 32;
+const boxWidth = PAGE_WIDTH - 64;
   const bannerSize = px(45);
   const bannerY = dividerY - 90;
   const bannerHeight = bannerSize + 26;
@@ -1022,8 +1022,8 @@ function drawBlueprintPage(
 function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageChrome(page, fonts, assets, { title: "The Science of\nName Numbers", pageNumber, totalPages, brand: data.brand });
 
-  const boxX = 44;
-  const boxWidth = PAGE_WIDTH - 88;
+  const boxX = 32;
+  const boxWidth = PAGE_WIDTH - 64;
   const bodySize = TYPE.bodySize;
   const lineHeight = bodySize + TYPE.lineGap;
   
@@ -1069,8 +1069,8 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
 function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageChrome(page, fonts, assets, { title: "Numerological\nSystems Used", subtitle: "This Report Analyzes Your Name Using", pageNumber, totalPages, brand: data.brand });
 
-  const boxX = 44;
-  const boxWidth = PAGE_WIDTH - 88;
+  const boxX = 32;
+  const boxWidth = PAGE_WIDTH - 64;
   const bodySize = TYPE.bodySize;
   const lineHeight = bodySize + TYPE.lineGap;
     let boxTop = PAGE_HEIGHT - 210;
@@ -1152,8 +1152,8 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
 function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
   drawPageChrome(page, fonts, assets, { title: "Numerological\nSystems Used", pageNumber, totalPages, brand: data.brand });
 
-  const boxX = 44;
-  const boxWidth = PAGE_WIDTH - 88;
+  const boxX = 32;
+  const boxWidth = PAGE_WIDTH - 64;
   const bodySize = TYPE.bodySize;
   const lineHeight = bodySize + TYPE.lineGap + 0.5;
   const innerWidth = boxWidth - 36;
@@ -1196,8 +1196,8 @@ function drawCurrentNameBreakdownPage(
     brand: data.brand,
   });
 
-  const boxX = 44;
-  const boxWidth = PAGE_WIDTH - 88;
+  const boxX = 32;
+  const boxWidth = PAGE_WIDTH - 64;
 
   const bodySize = 12.5;
   const lineHeight = bodySize + 6;
@@ -1538,8 +1538,8 @@ function drawWhyCriticalPage(
   drawPageChrome(page, fonts, assets, { title: "Current Name\nBreakdown", subtitle: "Why This Is Critical", pageNumber, totalPages, brand: data.brand });
 
   const rule = ALL_RULES.find((r) => r.id === matched.ruleId);
-  const boxX = 44;
-  const boxWidth = PAGE_WIDTH - 88;
+  const boxX = 32;
+  const boxWidth = PAGE_WIDTH - 64;
   const bodySize = TYPE.bodySize;
   const lineHeight = bodySize + TYPE.lineGap + 0.5;
   const boxTop = PAGE_HEIGHT - 215;
@@ -1608,9 +1608,9 @@ function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Req
   const dotR = 9;
   const bodySize = TYPE.bodySize;
   services.forEach((service) => {
-    page.drawCircle({ x: 44 + dotR, y: y - 5, size: dotR, borderColor: COLOR.maroon, borderWidth: 1 });
-    drawStarGlyph(page, 44 + dotR, y - 5, 3.6, COLOR.maroon);
-    page.drawText(service, { x: 44 + dotR * 2 + 14, y: y - bodySize * 0.35 - 5, size: bodySize, font: fonts.sans, color: COLOR.ink });
+        page.drawCircle({ x: 32 + dotR, y: y - 5, size: dotR, borderColor: COLOR.maroon, borderWidth: 1 });
+    drawStarGlyph(page, 32 + dotR, y - 5, 3.6, COLOR.maroon);
+    page.drawText(service, { x: 32 + dotR * 2 + 14, y: y - bodySize * 0.35 - 5, size: bodySize, font: fonts.sans, color: COLOR.ink });
     y -= bodySize + 20;
   });
 }
