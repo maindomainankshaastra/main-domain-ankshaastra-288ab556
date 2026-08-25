@@ -1677,17 +1677,15 @@ const badgeR = 19;
     const priceWidth = rupeeWidth + digitsWidth + 56;
     const priceH = digitsSize + 24;
 
-    let iy = colTop - priceH - 10;
-const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, strikeSize);
-page.drawText(offer.strike, { ... });
-page.drawLine({ ... });
-iy -= 20;
-page.drawText(offer.off, { ... });
-iy -= 22;
-page.drawText(offer.title, { ... });
-iy -= 16;
-page.drawLine({ start: { x: cx + colWidth / 2 - 52, y: iy }, end: { x: cx + colWidth / 2 + 52, y: iy }, thickness: 0.75, color: COLOR.maroon });
-iy -= 18;
+        let iy = colTop - priceH - 10;
+    const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, strikeSize);
+    page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: strikeSize, font: fonts.sans, color: COLOR.muted });
+    page.drawLine({ start: { x: cx + colWidth / 2 - strikeWidth / 2, y: iy + 4 }, end: { x: cx + colWidth / 2 + strikeWidth / 2, y: iy + 4 }, thickness: 0.9, color: COLOR.red });
+    iy -= 20;
+    page.drawText(offer.off, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.off, offSize) / 2, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.ink });
+    iy -= 22;
+    page.drawText(offer.title, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.title, cardTitleSize) / 2, y: iy, size: cardTitleSize, font: fonts.sansBold, color: COLOR.maroon });
+    iy -= 16;
 
     const bulletTextX = 52;
     offer.bullets.forEach((b, bi) => {
