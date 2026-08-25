@@ -1699,7 +1699,7 @@ page.drawLine({
   thickness: 1,
   color: COLOR.maroon,
 });
-    iy -= 20;
+    iy -= 26;
         const offMatch = offer.off.match(/^(GET )(\d+%)( OFF)$/);
     if (offMatch) {
       const [, offPrefix, offPercent, offSuffix] = offMatch;
@@ -1715,7 +1715,7 @@ page.drawLine({
     } else {
       page.drawText(offer.off, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.off, offSize) / 2, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.ink });
     }
-    iy -= 22;
+    iy -= 28;
 
 const titleWidth = fonts.sansBold.widthOfTextAtSize(offer.title, cardTitleSize);
 
