@@ -1680,8 +1680,8 @@ const badgeR = 19;
 
         let iy = colTop - priceH - 10;
     const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, strikeSize);
-    page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: strikeSize, font: fonts.sans, color: COLOR.muted });
-    page.drawLine({ start: { x: cx + colWidth / 2 - strikeWidth / 2, y: iy + 4 }, end: { x: cx + colWidth / 2 + strikeWidth / 2, y: iy + 4 }, thickness: 0.9, color: COLOR.red });
+        page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: strikeSize, font: fonts.sans, color: COLOR.black });
+        page.drawLine({ start: { x: cx + colWidth / 2 - 65, y: iy }, end: { x: cx + colWidth / 2 + 65, y: iy }, thickness: 1.2, color: COLOR.maroon });
     iy -= 20;
         const offMatch = offer.off.match(/^(GET )(\d+%)( OFF)$/);
     if (offMatch) {
@@ -1734,7 +1734,7 @@ const badgeR = 19;
     const btnY = iy - 22;
     const cardBottom = btnY - 16;
     drawRoundedRect(page, { x: cx, y: cardBottom, width: colWidth, height: colTop - cardBottom, radius: 18, borderColor: COLOR.maroon, borderWidth: 1 });
-    drawRoundedRect(page, { x: cx + colWidth / 2 - priceWidth / 2, y: colTop - priceH / 2, width: priceWidth, height: priceH, radius: priceH / 2, color: COLOR.maroon });
+        drawRoundedRect(page, { x: cx + colWidth / 2 - priceWidth / 2, y: colTop - priceH / 2, width: priceWidth, height: priceH, radius: priceH / 2, color: COLOR.maroon, borderColor: COLOR.white, borderWidth: 1.5 });
     const priceStartX = cx + colWidth / 2 - (rupeeWidth + digitsWidth) / 2;
     page.drawText("₹", { x: priceStartX, y: colTop - priceH / 2 + priceH * 0.32, size: rupeeSize, font: fonts.sansBold, color: COLOR.white });
     page.drawText(priceDigits, { x: priceStartX + rupeeWidth, y: colTop - priceH / 2 + priceH * 0.3, size: digitsSize, font: fonts.sansBold, color: COLOR.white });
