@@ -129,7 +129,7 @@ interface Fonts {
 
 const ASSET_PATHS = {
   background: "/name-check-assets/background-border.png",
-  backCoverBackground: "/name-check-assets/background-back-cover.png",
+  backCoverBackground: "/name-check-assets/background-back-cover.jpeg",
   logo: "/name-check-assets/logo-ankshaastra.png",
   loshuGrid: "/name-check-assets/loshu-turtle-grid.png",
   starIcon: "/name-check-assets/star-icon.png",
