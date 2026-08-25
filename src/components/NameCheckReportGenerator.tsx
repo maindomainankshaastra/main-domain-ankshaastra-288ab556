@@ -1773,18 +1773,22 @@ iy -= 22;
     });
 
     iy -= 8;
-   const btnH = 38;
-const btnY = iy - 22;
-const cardBottom = btnY - 16;
+  const btnH = 38;
+
+// Same fixed bottom for both cards
+const cardBottom = 70;
+const cardHeight = colTop - cardBottom;
+
+const btnY = cardBottom + 18;
 
 drawRoundedRect(page, {
   x: cx,
   y: cardBottom,
   width: colWidth,
-  height: colTop - cardBottom,
+  height: cardHeight,
   radius: 18,
   borderColor: COLOR.maroon,
-  borderWidth: 1
+  borderWidth: 1,
 });
         drawRoundedRect(page, {
   x: cx + colWidth / 2 - priceWidth / 2,
