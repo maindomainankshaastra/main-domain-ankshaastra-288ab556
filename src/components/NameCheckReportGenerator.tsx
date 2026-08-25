@@ -1816,13 +1816,13 @@ page.drawCircle({
     // CLICK ME BUTTON
     // =========================
 
-    const btnW = 140;
-    const btnH = 32;
+    const btnW = 160;
+    const btnH = 36;
 
     // Shadow behind button
     drawRoundedRect(page, {
       x: cx - btnW / 2 + 3,
-      y: ry - 85,
+      y: ry - 87,
       width: btnW,
       height: btnH,
       radius: btnH / 2,
@@ -1832,7 +1832,7 @@ page.drawCircle({
     // Main button — MAROON
     drawRoundedRect(page, {
       x: cx - btnW / 2,
-      y: ry - 82,
+      y: ry - 84,
       width: btnW,
       height: btnH,
       radius: btnH / 2,
@@ -1842,7 +1842,7 @@ page.drawCircle({
     });
 
     const btnLabel = "CLICK ME";
-    const btnLabelSize = 11;
+    const btnLabelSize = 13;
 
     const btnLabelWidth =
       fonts.sansBold.widthOfTextAtSize(
@@ -1879,7 +1879,7 @@ page.drawCircle({
     // Clickable area
     addLinkAnnotation(page, url, {
       x: cx - btnW / 2,
-      y: ry - 60,
+      y: ry - 84,
       width: btnW,
       height: btnH,
     });
