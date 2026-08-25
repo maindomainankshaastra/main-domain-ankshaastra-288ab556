@@ -1611,7 +1611,7 @@ function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Req
   drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
   drawFooterPill(page, fonts, data.brand);
 
-    const bannerY = dividerY - 40;
+        const bannerY = dividerY - 55;
   drawMaroonBanner(page, fonts, "Services Offered", 44, bannerY, PAGE_WIDTH - 88, 34);
 
   const services = [
