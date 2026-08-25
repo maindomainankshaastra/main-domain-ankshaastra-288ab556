@@ -1620,14 +1620,14 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
-  const logoDims = assets.logo.scale(0.16);
+  const logoDims = assets.logo.scale(0.22);
   page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: PAGE_HEIGHT - 56 - logoDims.height, width: logoDims.width, height: logoDims.height });
 
-  let titleY = PAGE_HEIGHT - 100 - logoDims.height;
+  let titleY = PAGE_HEIGHT - 92 - logoDims.height;
   page.drawText("YOUR NAME DECIDES", { x: centerX - fonts.heading.widthOfTextAtSize("YOUR NAME DECIDES", 15) / 2, y: titleY, size: 15, font: fonts.heading, color: COLOR.maroon });
-  titleY -= 28;
+  titleY -= 30;
   page.drawText("YOUR SPEED IN LIFE", { x: centerX - fonts.heading.widthOfTextAtSize("YOUR SPEED IN LIFE", 23) / 2, y: titleY, size: 23, font: fonts.heading, color: COLOR.maroon });
-  const dividerY = titleY - 18;
+  const dividerY = titleY - 20;
   page.drawLine({ start: { x: centerX - 150, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
   page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 150, y: dividerY }, thickness: 1, color: COLOR.maroon });
   drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
@@ -1654,33 +1654,51 @@ function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
     },
   ];
 
- const colGap = 14;
+ const colGap = 18;
 const colWidth = (PAGE_WIDTH - 80 - colGap) / 2;
-const colTop = dividerY - 40;
+const colTop = dividerY - 38;
 
-const digitsSize = px(75);
+const digitsSize = px(70);
 const rupeeSize = Math.round(digitsSize * 0.82 * 10) / 10;
 
-const strikeSize = 12;
-const offSize = 17;
-const cardTitleSize = 17;
-const bulletTextSize = 12;
-const noteSize = 10.5;
-const btnLabelSize = 13;
-const badgeR = 19;
+const strikeSize = 11;
+const offSize = 16;
+const cardTitleSize = 16;
+const bulletTextSize = 11.5;
+const noteSize = 9.5;
+const btnLabelSize = 12;
+const badgeR = 17;
   offers.forEach((offer, i) => {
     const cx = 44 + i * (colWidth + colGap);
 
     const priceDigits = offer.price.replace(/^\D*/, "");
     const rupeeWidth = fonts.sansBold.widthOfTextAtSize("₹", rupeeSize);
     const digitsWidth = fonts.heading.widthOfTextAtSize(priceDigits, digitsSize);
-    const priceWidth = rupeeWidth + digitsWidth + 56;
-const priceH = digitsSize + 24;
+    const priceWidth = rupeeWidth + digitsWidth + 48;
+const priceH = digitsSize + 20;
 
         let iy = colTop - priceH - 10;
     const strikeWidth = fonts.sans.widthOfTextAtSize(offer.strike, strikeSize);
-        page.drawText(offer.strike, { x: cx + colWidth / 2 - strikeWidth / 2, y: iy, size: strikeSize, font: fonts.sans, color: COLOR.black });
-        page.drawLine({ start: { x: cx + colWidth / 2 - 65, y: iy }, end: { x: cx + colWidth / 2 + 65, y: iy }, thickness: 1.2, color: COLOR.maroon });
+        page.drawText(offer.strike, {
+  x: cx + colWidth / 2 - strikeWidth / 2,
+  y: iy,
+  size: strikeSize,
+  font: fonts.sans,
+  color: COLOR.black,
+});
+
+page.drawLine({
+  start: {
+    x: cx + colWidth / 2 - strikeWidth / 2 - 4,
+    y: iy + strikeSize * 0.42,
+  },
+  end: {
+    x: cx + colWidth / 2 + strikeWidth / 2 + 4,
+    y: iy + strikeSize * 0.42,
+  },
+  thickness: 1,
+  color: COLOR.maroon,
+});
     iy -= 20;
         const offMatch = offer.off.match(/^(GET )(\d+%)( OFF)$/);
     if (offMatch) {
@@ -1698,16 +1716,42 @@ const priceH = digitsSize + 24;
       page.drawText(offer.off, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.off, offSize) / 2, y: iy, size: offSize, font: fonts.sansBold, color: COLOR.ink });
     }
     iy -= 22;
-    page.drawText(offer.title, { x: cx + colWidth / 2 - fonts.sansBold.widthOfTextAtSize(offer.title, cardTitleSize) / 2, y: iy, size: cardTitleSize, font: fonts.sansBold, color: COLOR.maroon });
-    iy -= 16;
+
+const titleWidth = fonts.sansBold.widthOfTextAtSize(offer.title, cardTitleSize);
+
+page.drawText(offer.title, {
+  x: cx + colWidth / 2 - titleWidth / 2,
+  y: iy,
+  size: cardTitleSize,
+  font: fonts.sansBold,
+  color: COLOR.maroon,
+});
+
+// line under title
+const titleLineY = iy - 7;
+
+page.drawLine({
+  start: {
+    x: cx + colWidth / 2 - titleWidth / 2,
+    y: titleLineY,
+  },
+  end: {
+    x: cx + colWidth / 2 + titleWidth / 2,
+    y: titleLineY,
+  },
+  thickness: 0.8,
+  color: COLOR.maroon,
+});
+
+iy -= 22;
 
     const bulletTextX = 52;
     offer.bullets.forEach((b, bi) => {
       const textWidth = colWidth - 28 - bulletTextX - 14;
       const lines = wrapText(b, fonts.sans, bulletTextSize, textWidth);
       const rowH = Math.max(
-  badgeR * 2 + 14,
-  36 + Math.max(0, lines.length - 1) * 15
+  48,
+  42 + Math.max(0, lines.length - 1) * 14
 );
       drawRoundedRect(page, { x: cx + 14, y: iy - rowH, width: colWidth - 28, height: rowH, radius: 14, borderColor: COLOR.maroon, borderWidth: 0.75 });
       const badgeCx = cx + 14 + badgeR + 6;
@@ -1719,7 +1763,7 @@ const priceH = digitsSize + 24;
         page.drawText(line, { x: cx + 14 + bulletTextX, y: ty, size: bulletTextSize, font: fonts.sans, color: COLOR.maroonDark });
         ty -= 15;
       });
-      iy -= rowH + 8;
+      iy -= rowH + 7;
     });
 
     iy -= 8;
@@ -1742,7 +1786,16 @@ drawRoundedRect(page, {
   borderColor: COLOR.maroon,
   borderWidth: 1
 });
-        drawRoundedRect(page, { x: cx + colWidth / 2 - priceWidth / 2, y: colTop - priceH / 2, width: priceWidth, height: priceH, radius: priceH / 2, color: COLOR.maroon, borderColor: COLOR.white, borderWidth: 1.5 });
+        drawRoundedRect(page, {
+  x: cx + colWidth / 2 - priceWidth / 2,
+  y: colTop - priceH / 2,
+  width: priceWidth,
+  height: priceH,
+  radius: priceH / 2,
+  color: COLOR.maroon,
+  borderColor: COLOR.white,
+  borderWidth: 2.5,
+});
     const priceStartX = cx + colWidth / 2 - (rupeeWidth + digitsWidth) / 2;
     page.drawText("₹", { x: priceStartX, y: colTop - priceH / 2 + priceH * 0.32, size: rupeeSize, font: fonts.sansBold, color: COLOR.white });
     page.drawText(priceDigits, { x: priceStartX + rupeeWidth, y: colTop - priceH / 2 + priceH * 0.3, size: digitsSize, font: fonts.sansBold, color: COLOR.white });
