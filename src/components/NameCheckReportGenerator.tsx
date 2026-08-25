@@ -1727,21 +1727,22 @@ page.drawText(offer.title, {
   color: COLOR.maroon,
 });
 
-// line under title
+// line under title, with a small star gap in the middle (matches other page dividers)
 const titleLineY = iy - 7;
-
+const lineHalfWidth = titleWidth / 2;
 page.drawLine({
-  start: {
-    x: cx + colWidth / 2 - titleWidth / 2,
-    y: titleLineY,
-  },
-  end: {
-    x: cx + colWidth / 2 + titleWidth / 2,
-    y: titleLineY,
-  },
+  start: { x: cx + colWidth / 2 - lineHalfWidth, y: titleLineY },
+  end: { x: cx + colWidth / 2 - 8, y: titleLineY },
   thickness: 0.8,
   color: COLOR.maroon,
 });
+page.drawLine({
+  start: { x: cx + colWidth / 2 + 8, y: titleLineY },
+  end: { x: cx + colWidth / 2 + lineHalfWidth, y: titleLineY },
+  thickness: 0.8,
+  color: COLOR.maroon,
+});
+drawStarGlyph(page, cx + colWidth / 2, titleLineY, 3.5, COLOR.maroon);
 
 iy -= 22;
 
@@ -1766,10 +1767,10 @@ iy -= 22;
       iy -= rowH + 7;
     });
 
-    iy -= 8;
+        iy -= 14;
     wrapText(offer.note, fonts.sans, noteSize, colWidth - 40).forEach((line) => {
-      page.drawText(line, { x: cx + colWidth / 2 - fonts.sans.widthOfTextAtSize(line, noteSize) / 2, y: iy, size: noteSize, font: fonts.sans, color: COLOR.muted });
-      iy -= 14;
+      page.drawText(line, { x: cx + colWidth / 2 - fonts.sans.widthOfTextAtSize(line, noteSize) / 2, y: iy, size: noteSize, font: fonts.sans, color: COLOR.maroonDark });
+      iy -= 13;
     });
 
     iy -= 8;
