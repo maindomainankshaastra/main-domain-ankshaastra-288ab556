@@ -1919,13 +1919,13 @@ function drawBackCoverPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Re
   page.drawImage(assets.backCoverBackground, { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT });
   const centerX = PAGE_WIDTH / 2;
 
-  const LOGO_TARGET_WIDTH = px(1572.7);
-  const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
-  const logoDims = assets.logo.scale(logoScale);
-  const logoTopY = PAGE_HEIGHT - px(876.4);
-  page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: logoTopY - logoDims.height, width: logoDims.width, height: logoDims.height });
+  // const LOGO_TARGET_WIDTH = px(1572.7);
+  // const logoScale = LOGO_TARGET_WIDTH / assets.logo.width;
+  // const logoDims = assets.logo.scale(logoScale);
+  // const logoTopY = PAGE_HEIGHT - px(876.4);
+  // page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: logoTopY - logoDims.height, width: logoDims.width, height: logoDims.height });
 
-  drawFooterPill(page, fonts, data.brand);
+  // drawFooterPill(page, fonts, data.brand);
   const reportIdText = `Report ID: ${data.reportId}`;
   page.drawText(reportIdText, { x: centerX - fonts.sans.widthOfTextAtSize(reportIdText, 8) / 2, y: 20, size: 8, font: fonts.sans, color: COLOR.muted });
 }
