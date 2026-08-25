@@ -1588,7 +1588,31 @@ function drawWhyCriticalPage(
 }
 
 function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
-  drawPageChrome(page, fonts, assets, { title: "Illuminating Lives\nThrough Ancient Wisdom", subtitle: "Services Offered", pageNumber, totalPages, brand: data.brand });
+  drawPageBackground(page, assets);
+  const centerX = PAGE_WIDTH / 2;
+
+  const logoDims = assets.logo.scale(0.22);
+  page.drawImage(assets.logo, { x: centerX - logoDims.width / 2, y: PAGE_HEIGHT - 56 - logoDims.height, width: logoDims.width, height: logoDims.height });
+
+  const titleSize = px(80);
+  const kickerSize = px(50);
+  let titleY = PAGE_HEIGHT - 92 - logoDims.height;
+  const line1 = "Illuminating Lives";
+  const line2 = "Through Ancient Wisdom";
+
+  page.drawText(line1, { x: centerX - fonts.heading.widthOfTextAtSize(line1, kickerSize) / 2, y: titleY, size: kickerSize, font: fonts.heading, color: COLOR.maroon });
+  titleY -= kickerSize + 10;
+  page.drawText(line2, { x: centerX - fonts.heading.widthOfTextAtSize(line2, titleSize) / 2, y: titleY, size: titleSize, font: fonts.heading, color: COLOR.maroon });
+  titleY -= titleSize + 10;
+
+  const dividerY = titleY + 12;
+  page.drawLine({ start: { x: centerX - 165, y: dividerY }, end: { x: centerX - 14, y: dividerY }, thickness: 1, color: COLOR.maroon });
+  page.drawLine({ start: { x: centerX + 14, y: dividerY }, end: { x: centerX + 165, y: dividerY }, thickness: 1, color: COLOR.maroon });
+  drawStarGlyph(page, centerX, dividerY, 6, COLOR.maroon);
+  drawFooterPill(page, fonts, data.brand);
+
+  const bannerY = dividerY - 20;
+  drawMaroonBanner(page, fonts, "Services Offered", 44, bannerY, PAGE_WIDTH - 88, 34);
 
   const services = [
     "Complete Numerology Analysis",
@@ -1604,13 +1628,13 @@ function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Req
     "Gemstone & Rudraksha Recommendations",
   ];
 
-  let y = PAGE_HEIGHT - 220;
+  let y = bannerY - 40;
   const dotR = 9;
   const bodySize = TYPE.bodySize;
   services.forEach((service) => {
-        page.drawCircle({ x: 32 + dotR, y: y - 5, size: dotR, borderColor: COLOR.maroon, borderWidth: 1 });
-    drawStarGlyph(page, 32 + dotR, y - 5, 3.6, COLOR.maroon);
-    page.drawText(service, { x: 32 + dotR * 2 + 14, y: y - bodySize * 0.35 - 5, size: bodySize, font: fonts.sans, color: COLOR.ink });
+    page.drawCircle({ x: 44 + dotR, y: y - 5, size: dotR, borderColor: COLOR.maroon, borderWidth: 1 });
+    drawStarGlyph(page, 44 + dotR, y - 5, 3.6, COLOR.maroon);
+    page.drawText(service, { x: 44 + dotR * 2 + 14, y: y - bodySize * 0.35 - 5, size: bodySize, font: fonts.sans, color: COLOR.ink });
     y -= bodySize + 20;
   });
 }
