@@ -102,7 +102,7 @@ const TYPE = {
   bodySize: px(45), // ~14.4pt — base paragraph / bullet text size
   lineGap: 5, // extra px added to font size for line-height inside a paragraph
   bulletGap: 14, // vertical gap BETWEEN bullet items (was inconsistently 4/8/12/16 per page)
-  bulletDotOffsetRatio: 0.38, // dot's y-offset below the text baseline, as a fraction of font size
+  bulletDotOffsetRatio: 0.32 // dot's y-offset below the text baseline, as a fraction of font size
   cardPadding: 46, // standard top padding inside a rounded content box, banner to first line of text
 };
 
@@ -210,7 +210,7 @@ function drawBulletList(
   let y = opts.y;
   // Dot sits relative to the font size, not a fixed "-4" — that fixed offset
   // is what made bullets look mis-centered once font sizes ever changed.
-  const dotY = -opts.size * TYPE.bulletDotOffsetRatio;
+  const dotY = opts.size * TYPE.bulletDotOffsetRatio;
   items.forEach((item) => {
     page.drawCircle({ x: opts.x + 3, y: y + dotY, size: 2.4, color: COLOR.maroon });
     y = drawWrappedText(page, item, {
@@ -325,7 +325,7 @@ function drawBulletListBoldLead(
   opts: { x: number; y: number; font: PDFFont; boldFont: PDFFont; size: number; maxWidth: number; lineHeight: number; gap: number; color: RGB }
 ): number {
   let y = opts.y;
-  const dotY = -opts.size * TYPE.bulletDotOffsetRatio;
+  const dotY = opts.size * TYPE.bulletDotOffsetRatio;
   items.forEach((item) => {
     page.drawCircle({ x: opts.x + 3, y: y + dotY, size: 2.4, color: COLOR.maroon });
     const sepIdx = item.indexOf(" — ");
