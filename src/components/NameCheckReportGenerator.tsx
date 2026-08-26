@@ -102,7 +102,7 @@ const TYPE = {
   bodySize: px(45), // ~14.4pt — base paragraph / bullet text size
   lineGap: 5, // extra px added to font size for line-height inside a paragraph
   bulletGap: 14, // vertical gap BETWEEN bullet items (was inconsistently 4/8/12/16 per page)
-  bulletDotOffsetRatio: 0.32 // dot's y-offset below the text baseline, as a fraction of font size
+  bulletDotOffsetRatio: 0.32, // dot's y-offset below the text baseline, as a fraction of font size
   cardPadding: 46, // standard top padding inside a rounded content box, banner to first line of text
 };
 
