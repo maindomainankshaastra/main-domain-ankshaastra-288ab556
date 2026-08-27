@@ -2238,7 +2238,7 @@ export interface NameCheckReportInput {
    * live rule-engine calculation for the corresponding piece of content.
    * Anything left undefined here still falls back to the live calculation,
    * so an admin can override just one paragraph without having to also
-   * override every number. See `report_content` column on
+   * override every number. See `content_overrides` column on
    * `name_check_reports` (added in the 20260827120000 migration) — that's
    * where this object is persisted between edits.
    */
@@ -2249,7 +2249,7 @@ export interface NameCheckReportInput {
  * Every computed number + analysis paragraph that appears in the report,
  * pulled out into one plain-JSON-serialisable object so it can be shown to
  * an admin as prefilled, editable fields; saved to
- * `name_check_reports.report_content` as their correction; and fed back
+ * `name_check_reports.content_overrides` as their correction; and fed back
  * into generateNameCheckReportPdf() as `contentOverride` so the next PDF
  * render uses the corrected values instead of recalculating.
  */
@@ -4490,4 +4490,3 @@ export const numerology = {
   splitName,
   NUMBER_KEYWORDS,
 };
-
