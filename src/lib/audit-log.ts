@@ -12,7 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
  * or fail the primary action (GST fix, team change, CRM delete, ...).
  */
 
-export type AuditModule = "gst-maintenance" | "team-management" | "crm";
+// export type AuditModule = "gst-maintenance" | "team-management" | "crm";
+
+export type AuditModule = "gst-maintenance" | "team-management" | "crm" | "name-check-reports";
 
 interface AuditLogInput {
   module: AuditModule;
