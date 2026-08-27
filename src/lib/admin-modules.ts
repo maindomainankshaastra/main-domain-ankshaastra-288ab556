@@ -6,6 +6,7 @@ export const ADMIN_MODULES = [
   { key: "workflows", label: "Workflows" },
   { key: "webhooks", label: "Webhook Logs" },
   { key: "ai-reports", label: "AI Reports" },
+  { key: "name-check-reports", label: "Name Check Reports" },
   { key: "services", label: "Services Management" },
   { key: "service-pages", label: "Pages & Packages" },
   // { key: "pricing", label: "Pricing Management" },
