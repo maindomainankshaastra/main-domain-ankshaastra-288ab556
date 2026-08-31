@@ -1701,7 +1701,6 @@
 //   );
 // }
 
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FileSearch,
@@ -1977,6 +1976,13 @@ export default function NameCheckReports() {
   const [loadingContentEdit, setLoadingContentEdit] = useState(false);
   const [savingContentEdit, setSavingContentEdit] = useState(false);
 
+  // Gates the save-effect below until the restore-effect has had its first
+  // chance to read localStorage — without this, the save-effect's own
+  // mount-time run (viewTarget still null) wipes the saved key a tick
+  // before the restore-effect gets to read it, so restoring silently never
+  // works.
+  const [hasHydratedViewDialog, setHasHydratedViewDialog] = useState(false);
+
   // Persist whether the "Generate Report" dialog was left open, so navigating
   // away and coming back re-opens it automatically instead of just keeping
   // the form data in the background.
@@ -2004,6 +2010,7 @@ export default function NameCheckReports() {
   // wipes its local state (viewTarget resets to null, closing the dialog
   // and losing any in-progress "Edit Report Content" text).
   useEffect(() => {
+    if (!hasHydratedViewDialog) return; // don't touch storage until restore has run
     try {
       if (viewTarget) {
         window.localStorage.setItem(
@@ -2016,14 +2023,17 @@ export default function NameCheckReports() {
     } catch {
       // Ignore — worst case the dialog just doesn't auto-restore.
     }
-  }, [viewTarget, viewMode, contentEditForm]);
+  }, [viewTarget, viewMode, contentEditForm, hasHydratedViewDialog]);
 
   // Restores the preview/edit dialog on mount, if one was left open before
   // navigating away. Fetches the row fresh (not from the paginated `reports`
   // list) since that list may not include this report on the current page.
   useEffect(() => {
     const saved = loadSavedViewDialogState();
-    if (!saved?.reportId) return;
+    if (!saved?.reportId) {
+      setHasHydratedViewDialog(true); // nothing to restore — unblock the save-effect
+      return;
+    }
 
     (async () => {
       const { data, error } = await supabase
@@ -2033,6 +2043,7 @@ export default function NameCheckReports() {
         .single();
       if (error || !data) {
         window.localStorage.removeItem(VIEW_DIALOG_KEY);
+        setHasHydratedViewDialog(true);
         return;
       }
       const row = data as NameCheckReportRow;
@@ -2053,6 +2064,7 @@ export default function NameCheckReports() {
             })
         );
       }
+      setHasHydratedViewDialog(true); // unblock the save-effect only after restore is fully applied
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
