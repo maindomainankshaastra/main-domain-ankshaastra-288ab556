@@ -1102,9 +1102,7 @@ export default function NameCheckReports() {
                   <Button variant="ghost" size="icon" title="Edit customer details" onClick={() => openEditDialog(report)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" title="Edit report content" onClick={() => enterContentEditMode(report)}>
-                    <FileEdit className="h-4 w-4" />
-                  </Button>
+                  
                   <Button
                     variant="ghost"
                     size="icon"
