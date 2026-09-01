@@ -645,6 +645,9 @@
 
 
 
+
+
+
 import { getSupabaseAdmin } from './supabase-admin.js';
 import { nextInvoiceNumber } from './gst.js';
 import { type InvoiceTemplateData } from './templates/invoice-html.js';
@@ -1059,9 +1062,13 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   };
 
   try {
+    const tPdf = Date.now();
     const { buffer, mimeType } = await generateInvoicePdf(finalTemplateData);
+    console.log(`[TIMING] generateInvoicePdf took ${Date.now() - tPdf}ms (invoice ${invoiceNumber})`);
     const storagePath = invoiceStoragePath(invoiceNumber);
+    const tUpload = Date.now();
     const pdfUrl = await uploadInvoicePdf(storagePath, buffer, mimeType);
+    console.log(`[TIMING] uploadInvoicePdf took ${Date.now() - tUpload}ms (invoice ${invoiceNumber})`);
 
     const { data: invoice, error: updateErr } = await supabase
       .from('invoices')
@@ -1171,7 +1178,9 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   const orderDetailsHtml = buildOrderDetailsHtml(order);
   const billing = resolveCustomerBilling(order);
   const serviceTitle = String(invoice.service_title || order.service_title || 'Service');
+  const tSheet = Date.now();
   await pushOrderToGoogleSheet(order, serviceTitle, Number(invoice.total_amount || order.total_amount || 0));
+  console.log(`[TIMING] pushOrderToGoogleSheet took ${Date.now() - tSheet}ms (invoice ${invoiceId})`);
   const emailSubject = buildInvoiceEmailSubject(serviceTitle, String(invoice.invoice_number));
   const gstRate = Number(invoice.cgst_rate || 0) + Number(invoice.sgst_rate || 0) + Number(invoice.igst_rate || 0) || 18;
   const gst = {
@@ -1224,6 +1233,7 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
       );
 
       try {
+        const tEmail = Date.now();
         await sendEmail({
           to: invoice.customer_email,
           subject: emailSubject,
@@ -1234,6 +1244,7 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
           orderId: invoice.order_id,
           invoiceId: invoice.id,
         });
+        console.log(`[TIMING] sendEmail (customer) took ${Date.now() - tEmail}ms (invoice ${invoiceId})`);
         if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
       } catch (emailErr) {
         console.error('[invoice] Customer email failed:', emailErr);
@@ -1308,10 +1319,12 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
 
 /** Single entry point: generate invoice once and send email once per order. */
 export async function processInvoiceJob(orderId: string, opts?: { paymentId?: string; forceDeliver?: boolean }) {
+  const t0 = Date.now();
   const result = await generateInvoiceForOrder({
     orderId,
     paymentId: opts?.paymentId,
   });
+  console.log(`[TIMING] generateInvoiceForOrder took ${Date.now() - t0}ms (order ${orderId})`);
 
   if (!result.invoiceId) return result;
 
@@ -1320,7 +1333,10 @@ export async function processInvoiceJob(orderId: string, opts?: { paymentId?: st
     return result;
   }
 
+  const t1 = Date.now();
   await deliverInvoice(result.invoiceId, { force: opts?.forceDeliver });
+  console.log(`[TIMING] deliverInvoice took ${Date.now() - t1}ms (invoice ${result.invoiceId})`);
+  console.log(`[TIMING] TOTAL processInvoiceJob took ${Date.now() - t0}ms (order ${orderId})`);
   return result;
 }
 
