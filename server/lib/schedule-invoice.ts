@@ -88,7 +88,6 @@
 
 
 
-
 import { enqueueJob } from "./workflow-engine.js";
 import { processInvoiceJob, orderHasDeliverableInvoice } from "./invoice-engine.js";
 import { invoiceJobKey } from "./payment-order-map.js";
@@ -170,60 +169,21 @@ export async function scheduleInvoiceGeneration(orderId: string, paymentId?: str
   }
 }
 
-/**
- * True fire-and-forget trigger for invoice generation — used by request
- * paths where the CALLER must respond immediately instead of waiting for
- * PDF render + email send to finish (e.g. the admin "Confirm & Create"
- * button in InvoicesModule.tsx, which used to block on the full
- * scheduleInvoiceGeneration() chain and felt very slow).
- *
- * Unlike scheduleInvoiceGeneration() (which awaits the whole pipeline
- * inline), this function only awaits the cheap part — enqueuing a durable
- * job row — then kicks off the async route WITHOUT awaiting it. The
- * enqueued job is the safety net: if the fire-and-forget call gets cut off
- * when the caller's response is sent, the daily
- * /api/operations/process-jobs cron (and manual retry via
- * operations-retry-job.ts) will still pick it up.
- */
-export async function triggerInvoiceGenerationInBackground(
-  orderId: string,
-  opts?: { paymentId?: string | null; forceDeliver?: boolean },
-): Promise<void> {
-  try {
-    await enqueueJob(
-      "generate_and_deliver_invoice",
-      { orderId, ...(opts?.paymentId ? { paymentId: opts.paymentId } : {}) },
-      { idempotencyKey: invoiceJobKey(orderId, opts?.paymentId), priority: 1 },
-    );
-  } catch (err) {
-    console.error("[schedule-invoice] Could not enqueue background invoice job:", err);
-  }
-
-  const secret = getInternalSecret();
-  const host = getPublicApiHost();
-  if (!host || !secret) {
-    console.warn("[schedule-invoice] Missing SITE_URL/VERCEL_URL or CRON_SECRET — relying on job queue only.");
-    return;
-  }
-
-  // Deliberately not awaited — this is what makes it non-blocking.
-  fetch(`${host}/api/invoices/generate-async`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      orderId,
-      paymentId: opts?.paymentId || undefined,
-      forceDeliver: opts?.forceDeliver ?? false,
-    }),
-  }).catch((err) => {
-    console.warn("[schedule-invoice] Fire-and-forget async route call failed (job queue will retry):", err);
-  });
-}
+// REMOVED (2026-08-31): triggerInvoiceGenerationInBackground() used to live
+// here — a fire-and-forget trigger meant to let the "Confirm & Create"
+// request return immediately. Removed because this hosting plan's daily-only
+// cron + lack of a waitUntil-style primitive means fire-and-forget work
+// reliably gets cut off before it completes, silently dropping invoice
+// generation and email delivery. Do not reintroduce this pattern without a
+// hosting change that actually supports background execution (e.g.
+// @vercel/functions waitUntil on a plan that supports it, or a real job
+// worker) — until then, invoice generation must stay inline/awaited, same as
+// scheduleInvoiceGeneration() above.
 
 export function buildInvoiceEmailSubject(serviceTitle: string, invoiceNumber: string): string {
   const service = serviceTitle.trim() || "Service";
   return `${service} ${invoiceNumber}`;
 }
+
+
+
