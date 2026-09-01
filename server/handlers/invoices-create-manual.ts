@@ -157,12 +157,11 @@
 
 
 
-
 // import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 import { normalizeSourceWebsite } from '../lib/connected-sites.js';
-import { triggerInvoiceGenerationInBackground } from '../lib/schedule-invoice.js';
+import { processInvoiceJob } from '../lib/invoice-engine.js';
 import { logAuditForUser } from '../lib/audit-log.js';
 
 type Req = {
@@ -283,27 +282,40 @@ export default async function handler(req: Req, res: Res) {
       return res.status(500).json({ error: orderErr?.message || 'Could not create order' });
     }
 
-    // Don't block this request on PDF render + email send (previously the
-    // "Confirm & Create" button waited on the full processInvoiceJob()
-    // pipeline — puppeteer/chromium launch + storage upload + email —
-    // which is what made invoice creation feel very slow). Fire it in the
-    // background and respond immediately; the invoice row will appear in
-    // the list once generation finishes (job queue + cron is the safety
-    // net if the fire-and-forget call itself gets interrupted).
-    await triggerInvoiceGenerationInBackground(order.id, { forceDeliver: paymentStatus === 'paid' });
+    // REVERTED (2026-08-31): a background/fire-and-forget version of this
+    // was tried here, but this project's hosting plan only runs the daily
+    // cron once a day and doesn't support true background execution after
+    // the response is sent (no waitUntil) — so the fire-and-forget call got
+    // cut off, and nothing was generated or emailed until the next day's
+    // cron. Reverted to the original synchronous, reliable behavior: this
+    // request waits for PDF generation + email to actually finish. This IS
+    // slower per-click than we'd like, but it's correct. If we want it
+    // faster, the fix has to be "make generateInvoiceForOrder/deliverInvoice
+    // themselves faster" (e.g. the Google Sheets push or email send inside
+    // deliverInvoice), not "move the work outside the request" on this plan.
+    const result = await processInvoiceJob(order.id, { forceDeliver: paymentStatus === 'paid' });
+
+    if (result.skipped || !result.invoiceId) {
+      return res.status(202).json({
+        ok: false,
+        order_id: order.id,
+        error: 'Invoice generation is still in progress. Please refresh in a few seconds.',
+      });
+    }
 
     await logAuditForUser(user, {
-      actionType: 'invoice_generation_queued',
+      actionType: 'invoice_generated',
       module: 'invoices',
-      recordId: order.id,
-      recordName: customerName,
+      recordId: result.invoiceId,
+      recordName: result.invoiceNumber,
     });
 
-    return res.status(202).json({
+    return res.status(201).json({
       ok: true,
       order_id: order.id,
-      status: 'generating',
-      message: 'Invoice is being generated and will appear in the list shortly.',
+      invoice_id: result.invoiceId,
+      invoice_number: result.invoiceNumber,
+      duplicate: result.duplicate ?? false,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Invoice creation failed';
