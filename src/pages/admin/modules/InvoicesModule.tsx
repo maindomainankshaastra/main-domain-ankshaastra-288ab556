@@ -3927,7 +3927,6 @@
 //   );
 // }
 
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -4066,6 +4065,23 @@ const CITY_STATE_ALIASES: Record<string, string> = {
   pondicherry: "Puducherry", puducherry: "Puducherry",
   jodhpur: "Rajasthan", jaipur: "Rajasthan", udaipur: "Rajasthan",
   bhubaneswar: "Odisha", panaji: "Goa", panjim: "Goa",
+};
+
+// India Post's search API only matches its own (often old/official) branch
+// spellings — e.g. no branch is literally named "Bengaluru", they're all
+// filed under "Bangalore...". CITY_STATE_ALIASES above fixes the State
+// field for these instantly without even calling the API, but Pincode still
+// needs a real API result — so for any city whose common name wouldn't
+// actually match anything in India Post's records, this swaps in the
+// spelling that will.
+const CITY_SEARCH_ALIASES: Record<string, string> = {
+  bengaluru: "Bangalore", mysuru: "Mysore",
+  mumbai: "Bombay", poona: "Pune",
+  vadodara: "Baroda",
+  thiruvananthapuram: "Trivandrum", kochi: "Cochin",
+  prayagraj: "Allahabad",
+  gurugram: "Gurgaon",
+  vishakhapatnam: "Visakhapatnam",
 };
 
 // Same fixed status → color mapping used on Orders & Bookings, so "paid"
@@ -4514,10 +4530,21 @@ export default function InvoicesModule() {
       let pincode: string | undefined;
 
       try {
-        const res = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(city)}`);
-        const data = await res.json();
-        const offices: Array<{ District?: string; State?: string; Pincode?: string; Block?: string }> =
-          data?.[0]?.PostOffice || [];
+        const searchTerm = CITY_SEARCH_ALIASES[cityLower] || city;
+        const fetchOffices = async (term: string) => {
+          const res = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(term)}`);
+          const data = await res.json();
+          return (data?.[0]?.PostOffice || []) as Array<{
+            District?: string; State?: string; Pincode?: string; Block?: string;
+          }>;
+        };
+
+        let offices = await fetchOffices(searchTerm);
+        // If the alias spelling didn't match anything either, fall back to
+        // whatever the admin actually typed as a last resort.
+        if (!offices.length && searchTerm !== city) {
+          offices = await fetchOffices(city);
+        }
 
         if (offices.length) {
           // Prefer a post office whose District (or, failing that, Block)
