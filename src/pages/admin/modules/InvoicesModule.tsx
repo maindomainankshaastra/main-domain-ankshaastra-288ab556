@@ -3928,7 +3928,6 @@
 // }
 
 
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -4042,6 +4041,32 @@ const INDIAN_STATES = [
 ];
 
 const PAGE_SIZE = 10;
+
+// India Post's public API only matches text against the post office's own
+// NAME, not the city/district — and its records still use old official
+// spellings for several renamed cities. So a search for "Bengaluru" often
+// returns zero results (every branch there is still filed under
+// "Bangalore..."), and the State field would stay blank even though this is
+// one of the most common cities admins will type. This small, hand-picked
+// map is checked first for well-known cities/aliases before ever calling
+// the API, so these always resolve correctly and instantly.
+const CITY_STATE_ALIASES: Record<string, string> = {
+  bengaluru: "Karnataka", bangalore: "Karnataka", mysuru: "Karnataka", mysore: "Karnataka",
+  mumbai: "Maharashtra", bombay: "Maharashtra", pune: "Maharashtra", poona: "Maharashtra", nagpur: "Maharashtra",
+  chennai: "Tamil Nadu", madras: "Tamil Nadu", coimbatore: "Tamil Nadu",
+  kolkata: "West Bengal", calcutta: "West Bengal",
+  hyderabad: "Telangana", secunderabad: "Telangana",
+  vishakhapatnam: "Andhra Pradesh", vizag: "Andhra Pradesh", visakhapatnam: "Andhra Pradesh",
+  ahmedabad: "Gujarat", vadodara: "Gujarat", baroda: "Gujarat", surat: "Gujarat",
+  gurugram: "Haryana", gurgaon: "Haryana", faridabad: "Haryana",
+  thiruvananthapuram: "Kerala", trivandrum: "Kerala", kochi: "Kerala", cochin: "Kerala",
+  varanasi: "Uttar Pradesh", banaras: "Uttar Pradesh", benares: "Uttar Pradesh",
+  prayagraj: "Uttar Pradesh", allahabad: "Uttar Pradesh", lucknow: "Uttar Pradesh", kanpur: "Uttar Pradesh",
+  delhi: "Delhi", "new delhi": "Delhi",
+  pondicherry: "Puducherry", puducherry: "Puducherry",
+  jodhpur: "Rajasthan", jaipur: "Rajasthan", udaipur: "Rajasthan",
+  bhubaneswar: "Odisha", panaji: "Goa", panjim: "Goa",
+};
 
 // Same fixed status → color mapping used on Orders & Bookings, so "paid"
 // looks the same shade of green everywhere instead of each screen inventing
@@ -4479,51 +4504,77 @@ export default function InvoicesModule() {
   useEffect(() => {
     const city = createForm.customerCity.trim();
     if (city.length < 3 || !createOpen) return;
+    const cityLower = city.toLowerCase();
 
     const timer = setTimeout(async () => {
+      // 1) Known city → always-correct state, no network round trip needed.
+      let state = CITY_STATE_ALIASES[cityLower]
+        ? normalizeToStateOption(CITY_STATE_ALIASES[cityLower])
+        : undefined;
+      let pincode: string | undefined;
+
       try {
         const res = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(city)}`);
         const data = await res.json();
         const offices: Array<{ District?: string; State?: string; Pincode?: string; Block?: string }> =
           data?.[0]?.PostOffice || [];
-        if (!offices.length) return;
 
-        // Prefer a post office whose District (or, failing that, Block)
-        // matches the typed city — that's what actually identifies which
-        // real-world place the admin meant, not just any office whose name
-        // happens to contain similar text.
-        const cityLower = city.toLowerCase();
-        const po =
-          offices.find((o) => (o.District || "").trim().toLowerCase() === cityLower) ||
-          offices.find((o) => (o.Block || "").trim().toLowerCase() === cityLower) ||
-          offices[0];
+        if (offices.length) {
+          // Prefer a post office whose District (or, failing that, Block)
+          // matches the typed city exactly.
+          let po =
+            offices.find((o) => (o.District || "").trim().toLowerCase() === cityLower) ||
+            offices.find((o) => (o.Block || "").trim().toLowerCase() === cityLower);
 
-        const state = normalizeToStateOption(String(po.State || ""));
-        const pincode = String(po.Pincode || "").trim();
-
-        setCreateForm((f) => {
-          // Re-check against the latest form state (not the stale closure)
-          // in case the admin kept typing or filled these in while the
-          // request was in flight.
-          if (f.customerCity.trim() !== city) return f;
-          const next = { ...f };
-          // Fill if the field is empty, OR still holds a value we
-          // auto-filled earlier (so a corrected city can replace a
-          // previous — possibly wrong — auto-filled guess). Never touch a
-          // value the admin entered/selected themselves.
-          if (state && (!f.customerState.trim() || autoFilledRef.current.state)) {
-            next.customerState = state;
-            autoFilledRef.current.state = true;
+          // No exact match (common for big metros, where the district is
+          // officially named e.g. "Bangalore Urban", not "Bangalore") — take
+          // whichever State most of the search results agree on, instead of
+          // blindly trusting whatever happens to be first. A single
+          // same-named place in another state (like the small Jodhpur that
+          // exists in Gujarat) then can't outvote the real match.
+          if (!po) {
+            const counts = new Map<string, number>();
+            for (const o of offices) {
+              const s = (o.State || "").trim();
+              if (s) counts.set(s, (counts.get(s) || 0) + 1);
+            }
+            let bestState: string | undefined;
+            let bestCount = 0;
+            for (const [s, count] of counts) {
+              if (count > bestCount) { bestState = s; bestCount = count; }
+            }
+            po = offices.find((o) => (o.State || "").trim() === bestState) || offices[0];
           }
-          if (pincode && (!f.customerPincode.trim() || autoFilledRef.current.pincode)) {
-            next.customerPincode = pincode;
-            autoFilledRef.current.pincode = true;
-          }
-          return next;
-        });
+
+          if (!state) state = normalizeToStateOption(String(po.State || ""));
+          pincode = String(po.Pincode || "").trim() || undefined;
+        }
       } catch {
         // Best-effort only — admin can always fill State/Pincode manually.
+        // A known-city alias match above still applies even if this fails.
       }
+
+      if (!state && !pincode) return;
+      setCreateForm((f) => {
+        // Re-check against the latest form state (not the stale closure)
+        // in case the admin kept typing or filled these in while the
+        // request was in flight.
+        if (f.customerCity.trim() !== city) return f;
+        const next = { ...f };
+        // Fill if the field is empty, OR still holds a value we
+        // auto-filled earlier (so a corrected city can replace a
+        // previous — possibly wrong — auto-filled guess). Never touch a
+        // value the admin entered/selected themselves.
+        if (state && (!f.customerState.trim() || autoFilledRef.current.state)) {
+          next.customerState = state;
+          autoFilledRef.current.state = true;
+        }
+        if (pincode && (!f.customerPincode.trim() || autoFilledRef.current.pincode)) {
+          next.customerPincode = pincode;
+          autoFilledRef.current.pincode = true;
+        }
+        return next;
+      });
     }, 600);
 
     return () => clearTimeout(timer);
