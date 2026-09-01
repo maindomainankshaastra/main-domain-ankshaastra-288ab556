@@ -1636,10 +1636,14 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
     return { invoiceId: afterLock.id, invoiceNumber: afterLock.invoice_number, duplicate: true };
   }
  
+  const tCustomer = Date.now();
   const customerId = await upsertCustomerFromOrder(order);
+  recordTiming('upsertCustomerFromOrder', Date.now() - tCustomer);
   const { data: gstConfig } = await supabase.from('gst_config').select('*').limit(1).single();
  
+  const tInvNum = Date.now();
    const invoiceNumber = await nextInvoiceNumber(supabase);
+  recordTiming('nextInvoiceNumber', Date.now() - tInvNum);
   const invoiceUserId = await resolveInvoiceUserId(order, customerId);
  
   if (invoiceUserId && !order.user_id) {
@@ -1648,12 +1652,16 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
  
   const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
+  const tSync = Date.now();
   try {
     await syncServicePersonsForOrder(String(order.id), snapshot);
   } catch (err) {
     console.warn('[invoice-engine] service persons sync skipped:', err);
   }
+  recordTiming('syncServicePersonsForOrder', Date.now() - tSync);
+  const tSubjects = Date.now();
   const serviceSubjects = await resolveOrderServiceSubjects(order);
+  recordTiming('resolveOrderServiceSubjects', Date.now() - tSubjects);
  
   const { templateData, gst } = buildInvoiceTemplateData({
     order,
@@ -1707,6 +1715,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   const invoiceDate = new Date().toISOString().slice(0, 10);
  
   // Reserve invoice row BEFORE PDF generation so concurrent requests hit unique constraint.
+  const tReserve = Date.now();
   const { data: reserved, error: reserveErr } = await supabase
     .from('invoices')
     .insert({
@@ -1745,6 +1754,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
     })
     .select('id')
     .single();
+  recordTiming('reserveInvoiceRow', Date.now() - tReserve);
  
   if (reserveErr) {
     if (reserveErr.code === '23505') {
@@ -1771,6 +1781,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   const qrPayload = `upi://pay?pa=${gstConfig?.upi_id || 'ankshaastra@upi'}&am=${gst.grandTotal}&tn=${invoiceNumber}`;
  
   let qrCodeDataUrl: string | undefined;
+  const tQr = Date.now();
   try {
     const QRCode = await import('qrcode');
     qrCodeDataUrl = await QRCode.toDataURL(qrPayload, {
@@ -1781,6 +1792,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   } catch {
     /* optional */
   }
+  recordTiming('qrCodeGeneration', Date.now() - tQr);
  
   const finalTemplateData: InvoiceTemplateData = {
     ...templateData,
@@ -1894,10 +1906,14 @@ async function pushOrderToGoogleSheet(
  
 export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean }) {
   const supabase = getSupabaseAdmin();
+  const tFetch = Date.now();
   const { data: invoice } = await supabase.from('invoices').select('*, orders(*)').eq('id', invoiceId).single();
   if (!invoice) throw new Error('Invoice not found');
+  recordTiming('deliverInvoice_fetchInvoice', Date.now() - tFetch);
  
+  const tAttach = Date.now();
   const attachments = await getInvoiceAttachment(invoice);
+  recordTiming('getInvoiceAttachment', Date.now() - tAttach);
   const force = opts?.force ?? false;
   const orderId = invoice.order_id as string | null;
   const order = (invoice.orders as Record<string, unknown> | null) || {};
@@ -1922,7 +1938,9 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     ? `<p style="margin-top:16px;">You can also <a href="${invoice.pdf_url}" style="color:#4b77be;font-weight:600;">download your invoice PDF</a>.</p>`
     : '';
  
+  const tGstConfig2 = Date.now();
   const { data: gstConfigRow } = await supabase.from('gst_config').select('*').limit(1).maybeSingle();
+  recordTiming('deliverInvoice_gstConfigFetch', Date.now() - tGstConfig2);
   const billingTexts = resolveGstConfigBillingTexts(gstConfigRow as Record<string, unknown> | null);
   const thankYouMessage = billingTexts.thank_you_message || undefined;
  
@@ -1936,8 +1954,10 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   );
  
   if (invoice.customer_email) {
+    const tDupCustomer = Date.now();
     const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
     const invoiceAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
+    recordTiming('duplicateCheck_customerEmail', Date.now() - tDupCustomer);
     if (!orderAlreadySent && !invoiceAlreadySent) {
       const customerHtml = wrapEmailLayout(
         buildInvoicePaymentEmailHtml({
@@ -1998,8 +2018,10 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   }
  
   if (adminEmail) {
+    const tDupAdmin = Date.now();
     const orderAdminSent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : false;
     const adminAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_admin'));
+    recordTiming('duplicateCheck_adminEmail', Date.now() - tDupAdmin);
     if (!orderAdminSent && !adminAlreadySent) {
       const adminHtml = wrapEmailLayout(
         `
@@ -2022,6 +2044,7 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
       );
  
       try {
+        const tAdminEmail = Date.now();
         await sendEmail({
           to: adminEmail,
           subject: emailSubject,
@@ -2031,15 +2054,18 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
           orderId: invoice.order_id,
           invoiceId: invoice.id,
         });
+        recordTiming('sendEmail_admin', Date.now() - tAdminEmail);
       } catch (emailErr) {
         console.error('[invoice] Admin email failed:', emailErr);
       }
     }
   }
  
+  const tWorkflow = Date.now();
   if (invoice.order_id) {
     await advanceWorkflow(invoice.order_id, 'completed', 'invoice.delivery_completed');
   }
+  recordTiming('advanceWorkflow_completed', Date.now() - tWorkflow);
  
   return { ok: true };
 }
@@ -2088,3 +2114,4 @@ export async function paymentInvoiceGenerationActive(paymentId: string): Promise
   const existing = await getExistingInvoiceByPaymentId(paymentId);
   return Boolean(existing?.id);
 }
+
