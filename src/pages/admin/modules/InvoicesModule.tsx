@@ -3929,7 +3929,7 @@
 
 
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -4413,6 +4413,7 @@ export default function InvoicesModule() {
     setCreateForm(emptyCreateForm());
     setCreateStep("form");
     setCreateFormTouched(false);
+    autoFilledRef.current = { state: false, pincode: false };
     setCreateOpen(true);
     // Fetch once per modal open — only needed to label the preview row,
     // so a failure here just falls back to the generic "GST" label.
@@ -4424,10 +4425,28 @@ export default function InvoicesModule() {
     setCreateStep("form");
     setCreateForm(emptyCreateForm());
     setCreateFormTouched(false);
+    autoFilledRef.current = { state: false, pincode: false };
   };
 
   const updateCreateForm = <K extends keyof CreateInvoiceForm>(key: K, value: CreateInvoiceForm[K]) => {
     setCreateForm((f) => ({ ...f, [key]: value }));
+  };
+
+  // Tracks which of State/Pincode currently hold a value the city-lookup
+  // effect auto-filled (safe to replace the next time the city changes) vs.
+  // a value the admin typed/selected themselves (must never be silently
+  // overwritten). Previously the auto-fill only ever wrote into an EMPTY
+  // field, which meant: type "Jodhpur", get a wrong auto-filled state,
+  // then correct the city to "Jaipur" — State was no longer empty, so it
+  // stayed stuck on the first (wrong) guess forever.
+  const autoFilledRef = useRef<{ state: boolean; pincode: boolean }>({ state: false, pincode: false });
+
+  const updateCreateFormManually = <K extends "customerState" | "customerPincode">(
+    key: K,
+    value: CreateInvoiceForm[K],
+  ) => {
+    autoFilledRef.current[key === "customerState" ? "state" : "pincode"] = false;
+    updateCreateForm(key, value);
   };
 
   // The State <Select> only recognizes the exact strings in INDIAN_STATES.
@@ -4449,10 +4468,14 @@ export default function InvoicesModule() {
   // Auto-fill State + Pincode from the typed City, using the same India
   // Post public API Payment.tsx already uses for the reverse direction
   // (pincode -> city/state). Looking a city UP by name is inherently
-  // ambiguous (many cities share pincodes across multiple post offices, and
-  // some names return no exact match) — this fills the best guess (first
-  // matching post office) only into fields the admin hasn't already typed
-  // into, and never overwrites something the admin entered manually.
+  // ambiguous — several places across India share the same name in
+  // different states (e.g. there's a small Jodhpur in Gujarat as well as
+  // the well-known Jodhpur in Rajasthan) — so this prefers whichever
+  // returned post office's District actually matches the typed city,
+  // instead of blindly trusting whatever the API lists first. It only
+  // ever fills fields the admin hasn't manually edited themselves (see
+  // autoFilledRef) — so correcting the city afterwards still updates
+  // State/Pincode, but never overwrites something the admin typed in.
   useEffect(() => {
     const city = createForm.customerCity.trim();
     if (city.length < 3 || !createOpen) return;
@@ -4461,8 +4484,19 @@ export default function InvoicesModule() {
       try {
         const res = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(city)}`);
         const data = await res.json();
-        const po = data?.[0]?.PostOffice?.[0];
-        if (!po) return;
+        const offices: Array<{ District?: string; State?: string; Pincode?: string; Block?: string }> =
+          data?.[0]?.PostOffice || [];
+        if (!offices.length) return;
+
+        // Prefer a post office whose District (or, failing that, Block)
+        // matches the typed city — that's what actually identifies which
+        // real-world place the admin meant, not just any office whose name
+        // happens to contain similar text.
+        const cityLower = city.toLowerCase();
+        const po =
+          offices.find((o) => (o.District || "").trim().toLowerCase() === cityLower) ||
+          offices.find((o) => (o.Block || "").trim().toLowerCase() === cityLower) ||
+          offices[0];
 
         const state = normalizeToStateOption(String(po.State || ""));
         const pincode = String(po.Pincode || "").trim();
@@ -4473,8 +4507,18 @@ export default function InvoicesModule() {
           // request was in flight.
           if (f.customerCity.trim() !== city) return f;
           const next = { ...f };
-          if (state && !f.customerState.trim()) next.customerState = state;
-          if (pincode && !f.customerPincode.trim()) next.customerPincode = pincode;
+          // Fill if the field is empty, OR still holds a value we
+          // auto-filled earlier (so a corrected city can replace a
+          // previous — possibly wrong — auto-filled guess). Never touch a
+          // value the admin entered/selected themselves.
+          if (state && (!f.customerState.trim() || autoFilledRef.current.state)) {
+            next.customerState = state;
+            autoFilledRef.current.state = true;
+          }
+          if (pincode && (!f.customerPincode.trim() || autoFilledRef.current.pincode)) {
+            next.customerPincode = pincode;
+            autoFilledRef.current.pincode = true;
+          }
           return next;
         });
       } catch {
@@ -4569,15 +4613,6 @@ export default function InvoicesModule() {
       toast.success(
         result.invoice_number ? `Invoice ${result.invoice_number} created successfully` : "Invoice created successfully",
       );
-      // TEMPORARY (2026-09-01): show the step timing breakdown right on
-      // screen so it's easy to see without digging through Vercel logs.
-      // Remove this block once the slow step is found and fixed.
-      if (result.timings) {
-        const lines = Object.entries(result.timings)
-          .map(([step, ms]) => `${step}: ${ms}ms`)
-          .join("\n");
-        alert(`Invoice creation timing breakdown:\n\n${lines}`);
-      }
       closeCreateModal();
       reload();
     } catch (e) {
@@ -5099,7 +5134,7 @@ export default function InvoicesModule() {
                   </Label>
                   <Select
                     value={createForm.customerState}
-                    onValueChange={(v) => updateCreateForm("customerState", v)}
+                    onValueChange={(v) => updateCreateFormManually("customerState", v)}
                   >
                     <SelectTrigger
                       aria-invalid={showStateError}
@@ -5128,7 +5163,7 @@ export default function InvoicesModule() {
                     id="inv-pincode"
                     value={createForm.customerPincode}
                     onChange={(e) =>
-                      updateCreateForm("customerPincode", e.target.value.replace(/\D/g, "").slice(0, 6))
+                      updateCreateFormManually("customerPincode", e.target.value.replace(/\D/g, "").slice(0, 6))
                     }
                     placeholder="e.g. 302001"
                     inputMode="numeric"
