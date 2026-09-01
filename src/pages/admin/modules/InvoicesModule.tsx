@@ -1373,7 +1373,6 @@
 // }
 
 
-
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -2008,19 +2007,14 @@ export default function InvoicesModule() {
         return;
       }
 
-      // Backend now responds immediately (202) once the order is created and
-      // hands PDF generation + email off to the background — it no longer
-      // waits for invoice_number. Let the admin know it's in progress, then
-      // refresh the list after a short delay so the new invoice row (once
-      // ready) shows up without a manual page reload.
+      // REVERTED (2026-08-31): backend generates the invoice synchronously
+      // again (see invoices-create-manual.ts), so invoice_number is always
+      // present here on success — no more "generating" placeholder state.
       toast.success(
-        result.invoice_number
-          ? `Invoice ${result.invoice_number} created successfully`
-          : "Invoice is being generated — it'll appear in the list shortly",
+        result.invoice_number ? `Invoice ${result.invoice_number} created successfully` : "Invoice created successfully",
       );
       closeCreateModal();
       reload();
-      setTimeout(reload, 6000);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create invoice");
     } finally {
@@ -2409,18 +2403,23 @@ export default function InvoicesModule() {
                 <span className="text-muted-foreground">Amount</span>
                 <span className="font-medium">₹{Number(viewInvoice.total_amount).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">
-                  {Number(viewInvoice.igst_amount || 0) > 0 ? "IGST Amount" : "CGST + SGST Amount"}
-                </span>
-                <span className="font-medium">
-                  ₹{(
-                    Number(viewInvoice.cgst_amount || 0) +
-                    Number(viewInvoice.sgst_amount || 0) +
-                    Number(viewInvoice.igst_amount || 0)
-                  ).toLocaleString()}
-                </span>
-              </div>
+              {Number(viewInvoice.igst_amount || 0) > 0 ? (
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">IGST Amount</span>
+                  <span className="font-medium">₹{Number(viewInvoice.igst_amount || 0).toLocaleString()}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted-foreground">CGST Amount</span>
+                    <span className="font-medium">₹{Number(viewInvoice.cgst_amount || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted-foreground">SGST Amount</span>
+                    <span className="font-medium">₹{Number(viewInvoice.sgst_amount || 0).toLocaleString()}</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between border-b border-border pb-2">
                 <span className="text-muted-foreground">Total</span>
                 <span className="font-medium">
