@@ -4186,7 +4186,7 @@ async function logAudit(
 
 export default function InvoicesModule() {
   const { role } = useAuth();
-  const { rows, loading, reload } = useAdminTable<Invoice>("invoices", "invoice_date");
+  const { rows, loading, reload } = useAdminTable<Invoice>("invoices", "created_at");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
