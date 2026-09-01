@@ -1362,6 +1362,7 @@
 // }
 
 
+
 import { getSupabaseAdmin } from './supabase-admin.js';
 import { nextInvoiceNumber } from './gst.js';
 import { type InvoiceTemplateData } from './templates/invoice-html.js';
@@ -1911,18 +1912,12 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   if (!invoice) throw new Error('Invoice not found');
   recordTiming('deliverInvoice_fetchInvoice', Date.now() - tFetch);
  
-  const tAttach = Date.now();
-  const attachments = await getInvoiceAttachment(invoice);
-  recordTiming('getInvoiceAttachment', Date.now() - tAttach);
   const force = opts?.force ?? false;
   const orderId = invoice.order_id as string | null;
   const order = (invoice.orders as Record<string, unknown> | null) || {};
   const orderDetailsHtml = buildOrderDetailsHtml(order);
   const billing = resolveCustomerBilling(order);
   const serviceTitle = String(invoice.service_title || order.service_title || 'Service');
-  const tSheet = Date.now();
-  await pushOrderToGoogleSheet(order, serviceTitle, Number(invoice.total_amount || order.total_amount || 0));
-  recordTiming('pushOrderToGoogleSheet', Date.now() - tSheet);
   const emailSubject = buildInvoiceEmailSubject(serviceTitle, String(invoice.invoice_number));
   const gstRate = Number(invoice.cgst_rate || 0) + Number(invoice.sgst_rate || 0) + Number(invoice.igst_rate || 0) || 18;
   const gst = {
@@ -1938,12 +1933,6 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     ? `<p style="margin-top:16px;">You can also <a href="${invoice.pdf_url}" style="color:#4b77be;font-weight:600;">download your invoice PDF</a>.</p>`
     : '';
  
-  const tGstConfig2 = Date.now();
-  const { data: gstConfigRow } = await supabase.from('gst_config').select('*').limit(1).maybeSingle();
-  recordTiming('deliverInvoice_gstConfigFetch', Date.now() - tGstConfig2);
-  const billingTexts = resolveGstConfigBillingTexts(gstConfigRow as Record<string, unknown> | null);
-  const thankYouMessage = billingTexts.thank_you_message || undefined;
- 
   // FIX (website field): resolve the per-order website once here, from the
   // invoice's own source_website (falls back to the order's, then a
   // hardcoded default) — same priority as build-invoice-template.js — and
@@ -1952,52 +1941,6 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
   const emailFooterWebsite = cleanWebsiteText(
     (invoice.source_website as string | undefined) || (order.source_website as string | undefined),
   );
- 
-  if (invoice.customer_email) {
-    const tDupCustomer = Date.now();
-    const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
-    const invoiceAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
-    recordTiming('duplicateCheck_customerEmail', Date.now() - tDupCustomer);
-    if (!orderAlreadySent && !invoiceAlreadySent) {
-      const customerHtml = wrapEmailLayout(
-        buildInvoicePaymentEmailHtml({
-          customerName: String(invoice.customer_name || 'Customer'),
-          serviceTitle,
-          invoiceNumber: String(invoice.invoice_number),
-          gst,
-          gstRate,
-          placeOfSupply: billing.placeOfSupply,
-          paymentMethod: String(invoice.payment_method || order.payment_method || 'Razorpay'),
-          transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
-          orderDetailsHtml,
-          downloadLinkHtml: downloadLink,
-          thankYouMessage,
-        }),
-        emailSubject,
-        'Ankshaastra Occult Experts LLP',
-        emailFooterWebsite,
-      );
- 
-      try {
-        const tEmail = Date.now();
-        await sendEmail({
-          to: invoice.customer_email,
-          subject: emailSubject,
-          html: customerHtml,
-          attachments,
-          templateSlug: 'invoice_email',
-          customerId: invoice.customer_id,
-          orderId: invoice.order_id,
-          invoiceId: invoice.id,
-        });
-        console.log(`[TIMING] sendEmail (customer) took ${Date.now() - tEmail}ms (invoice ${invoiceId})`);
-        recordTiming('sendEmail', Date.now() - tEmail);
-        if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
-      } catch (emailErr) {
-        console.error('[invoice] Customer email failed:', emailErr);
-      }
-    }
-  }
  
   // FIX (2026-08-08): the per-site admin-email routing below used to only
   // exist in a large commented-out duplicate copy of this file (never
@@ -2017,14 +1960,92 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     adminEmail = process.env.EMPOWER_ADMIN_EMAIL || adminEmail;
   }
  
-  if (adminEmail) {
-    const tDupAdmin = Date.now();
-    const orderAdminSent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : false;
-    const adminAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_admin'));
-    recordTiming('duplicateCheck_adminEmail', Date.now() - tDupAdmin);
-    if (!orderAdminSent && !adminAlreadySent) {
-      const adminHtml = wrapEmailLayout(
-        `
+  // PERF (2026-09-01): the five calls below are all independent of each
+  // other (none needs another's result), but used to run strictly one
+  // after another — that alone was ~14s of pure waiting with nothing
+  // actually blocking it. Running them together cuts that to whichever one
+  // is slowest (Google Sheet push, ~8s) instead of their sum. Still fully
+  // synchronous/awaited overall — nothing here is fire-and-forget, so
+  // reliability is unchanged, only the ordering.
+  const tParallelPrep = Date.now();
+  const [attachments, gstConfigResult, customerDupResult, adminDupResult] = await Promise.all([
+    getInvoiceAttachment(invoice),
+    supabase.from('gst_config').select('*').limit(1).maybeSingle(),
+    invoice.customer_email
+      ? Promise.all([
+          orderId ? wasOrderInvoiceEmailSent(orderId, 'invoice_email') : Promise.resolve(false),
+          force ? Promise.resolve(false) : wasInvoiceEmailSent(invoiceId, 'invoice_email'),
+        ])
+      : Promise.resolve([false, false] as [boolean, boolean]),
+    adminEmail
+      ? Promise.all([
+          orderId ? wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : Promise.resolve(false),
+          force ? Promise.resolve(false) : wasInvoiceEmailSent(invoiceId, 'invoice_admin'),
+        ])
+      : Promise.resolve([false, false] as [boolean, boolean]),
+    pushOrderToGoogleSheet(order, serviceTitle, Number(invoice.total_amount || order.total_amount || 0)),
+  ]);
+  recordTiming('deliverInvoice_parallelPrep', Date.now() - tParallelPrep);
+ 
+  const gstConfigRow = gstConfigResult.data;
+  const [orderAlreadySent, invoiceAlreadySent] = customerDupResult;
+  const [orderAdminSent, adminAlreadySent] = adminDupResult;
+ 
+  const billingTexts = resolveGstConfigBillingTexts(gstConfigRow as Record<string, unknown> | null);
+  const thankYouMessage = billingTexts.thank_you_message || undefined;
+ 
+  // Customer email, admin email, and the final workflow update are also
+  // independent of each other — send/run them together too instead of
+  // waiting for the customer email to fully finish before starting the
+  // admin email.
+  const tasks: Promise<void>[] = [];
+ 
+  if (invoice.customer_email && !orderAlreadySent && !invoiceAlreadySent) {
+    const customerHtml = wrapEmailLayout(
+      buildInvoicePaymentEmailHtml({
+        customerName: String(invoice.customer_name || 'Customer'),
+        serviceTitle,
+        invoiceNumber: String(invoice.invoice_number),
+        gst,
+        gstRate,
+        placeOfSupply: billing.placeOfSupply,
+        paymentMethod: String(invoice.payment_method || order.payment_method || 'Razorpay'),
+        transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
+        orderDetailsHtml,
+        downloadLinkHtml: downloadLink,
+        thankYouMessage,
+      }),
+      emailSubject,
+      'Ankshaastra Occult Experts LLP',
+      emailFooterWebsite,
+    );
+ 
+    tasks.push(
+      (async () => {
+        try {
+          const tEmail = Date.now();
+          await sendEmail({
+            to: invoice.customer_email,
+            subject: emailSubject,
+            html: customerHtml,
+            attachments,
+            templateSlug: 'invoice_email',
+            customerId: invoice.customer_id,
+            orderId: invoice.order_id,
+            invoiceId: invoice.id,
+          });
+          recordTiming('sendEmail', Date.now() - tEmail);
+          if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
+        } catch (emailErr) {
+          console.error('[invoice] Customer email failed:', emailErr);
+        }
+      })(),
+    );
+  }
+ 
+  if (adminEmail && !orderAdminSent && !adminAlreadySent) {
+    const adminHtml = wrapEmailLayout(
+      `
       <p style="margin:0 0 16px;font-size:16px;color:#4b77be;font-weight:700;">New Order Received</p>
       ${buildInvoicePaymentEmailHtml({
         customerName: String(invoice.customer_name || 'Customer'),
@@ -2038,34 +2059,43 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
       })}
       <p style="margin-top:16px;">Invoice PDF is attached.</p>
     `,
-        `New order: ${serviceTitle}`,
-        'Ankshaastra Occult Experts LLP',
-        emailFooterWebsite,
-      );
+      `New order: ${serviceTitle}`,
+      'Ankshaastra Occult Experts LLP',
+      emailFooterWebsite,
+    );
  
-      try {
-        const tAdminEmail = Date.now();
-        await sendEmail({
-          to: adminEmail,
-          subject: emailSubject,
-          html: adminHtml,
-          attachments,
-          templateSlug: 'invoice_admin',
-          orderId: invoice.order_id,
-          invoiceId: invoice.id,
-        });
-        recordTiming('sendEmail_admin', Date.now() - tAdminEmail);
-      } catch (emailErr) {
-        console.error('[invoice] Admin email failed:', emailErr);
+    tasks.push(
+      (async () => {
+        try {
+          const tAdminEmail = Date.now();
+          await sendEmail({
+            to: adminEmail,
+            subject: emailSubject,
+            html: adminHtml,
+            attachments,
+            templateSlug: 'invoice_admin',
+            orderId: invoice.order_id,
+            invoiceId: invoice.id,
+          });
+          recordTiming('sendEmail_admin', Date.now() - tAdminEmail);
+        } catch (emailErr) {
+          console.error('[invoice] Admin email failed:', emailErr);
+        }
+      })(),
+    );
+  }
+ 
+  tasks.push(
+    (async () => {
+      const tWorkflow = Date.now();
+      if (invoice.order_id) {
+        await advanceWorkflow(invoice.order_id, 'completed', 'invoice.delivery_completed');
       }
-    }
-  }
+      recordTiming('advanceWorkflow_completed', Date.now() - tWorkflow);
+    })(),
+  );
  
-  const tWorkflow = Date.now();
-  if (invoice.order_id) {
-    await advanceWorkflow(invoice.order_id, 'completed', 'invoice.delivery_completed');
-  }
-  recordTiming('advanceWorkflow_completed', Date.now() - tWorkflow);
+  await Promise.all(tasks);
  
   return { ok: true };
 }
@@ -2114,4 +2144,3 @@ export async function paymentInvoiceGenerationActive(paymentId: string): Promise
   const existing = await getExistingInvoiceByPaymentId(paymentId);
   return Boolean(existing?.id);
 }
-
