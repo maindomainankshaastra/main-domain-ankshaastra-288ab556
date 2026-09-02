@@ -1,3 +1,5 @@
+
+
 // import { useCallback, useEffect, useMemo, useState } from "react";
 // import {
 //   FileSearch,
@@ -171,6 +173,33 @@
 //   }
 // }
 
+// /* ------------------------------------------------------------------ */
+// /*  Preview/Edit dialog persistence                                    */
+// /* ------------------------------------------------------------------ */
+
+// // Without this, navigating to another admin screen and coming back
+// // unmounts this whole component — React wipes viewTarget/viewMode/
+// // contentEditForm back to their initial (closed) values, so the preview or
+// // in-progress "Edit Report Content" form the admin left open just
+// // disappears. Persisting the minimal state needed to reopen it here fixes
+// // that, mirroring the CREATE_OPEN_KEY/CREATE_DRAFT_KEY pattern above.
+// const VIEW_DIALOG_KEY = "name-check-view-dialog-state";
+
+// interface SavedViewDialogState {
+//   reportId: string;
+//   viewMode: "details" | "edit";
+//   contentEditForm: NameCheckReportContent | null;
+// }
+
+// function loadSavedViewDialogState(): SavedViewDialogState | null {
+//   try {
+//     const raw = window.localStorage.getItem(VIEW_DIALOG_KEY);
+//     return raw ? (JSON.parse(raw) as SavedViewDialogState) : null;
+//   } catch {
+//     return null;
+//   }
+// }
+
 // const PAGE_SIZE = 10;
 // const TABLE_NAME = "name_check_reports";
 // const STORAGE_BUCKET = "name-check-reports";
@@ -246,6 +275,13 @@
 //   const [loadingContentEdit, setLoadingContentEdit] = useState(false);
 //   const [savingContentEdit, setSavingContentEdit] = useState(false);
 
+//   // Gates the save-effect below until the restore-effect has had its first
+//   // chance to read localStorage — without this, the save-effect's own
+//   // mount-time run (viewTarget still null) wipes the saved key a tick
+//   // before the restore-effect gets to read it, so restoring silently never
+//   // works.
+//   const [hasHydratedViewDialog, setHasHydratedViewDialog] = useState(false);
+
 //   // Persist whether the "Generate Report" dialog was left open, so navigating
 //   // away and coming back re-opens it automatically instead of just keeping
 //   // the form data in the background.
@@ -267,6 +303,70 @@
 //       // Storage can fail (private browsing, quota) — losing the draft-save is fine, don't crash the form.
 //     }
 //   }, [createForm]);
+
+//   // Persists the preview/edit dialog across navigation — without this,
+//   // moving to another screen and coming back unmounts this component and
+//   // wipes its local state (viewTarget resets to null, closing the dialog
+//   // and losing any in-progress "Edit Report Content" text).
+//   useEffect(() => {
+//     if (!hasHydratedViewDialog) return; // don't touch storage until restore has run
+//     try {
+//       if (viewTarget) {
+//         window.localStorage.setItem(
+//           VIEW_DIALOG_KEY,
+//           JSON.stringify({ reportId: viewTarget.id, viewMode, contentEditForm })
+//         );
+//       } else {
+//         window.localStorage.removeItem(VIEW_DIALOG_KEY);
+//       }
+//     } catch {
+//       // Ignore — worst case the dialog just doesn't auto-restore.
+//     }
+//   }, [viewTarget, viewMode, contentEditForm, hasHydratedViewDialog]);
+
+//   // Restores the preview/edit dialog on mount, if one was left open before
+//   // navigating away. Fetches the row fresh (not from the paginated `reports`
+//   // list) since that list may not include this report on the current page.
+//   useEffect(() => {
+//     const saved = loadSavedViewDialogState();
+//     if (!saved?.reportId) {
+//       setHasHydratedViewDialog(true); // nothing to restore — unblock the save-effect
+//       return;
+//     }
+
+//     (async () => {
+//       const { data, error } = await supabase
+//         .from(TABLE_NAME)
+//         .select("*")
+//         .eq("id", saved.reportId)
+//         .single();
+//       if (error || !data) {
+//         window.localStorage.removeItem(VIEW_DIALOG_KEY);
+//         setHasHydratedViewDialog(true);
+//         return;
+//       }
+//       const row = data as NameCheckReportRow;
+//       setViewTarget(row);
+//       setViewMode(saved.viewMode);
+//       setPreviewUrl(withCacheBust(row.pdf_url));
+//       if (saved.viewMode === "edit") {
+//         setContentEditForm(
+//           saved.contentEditForm ??
+//             row.content_overrides ??
+//             computeNameCheckReportContent({
+//               customerName: row.customer_name,
+//               dob: row.dob,
+//               firstName: row.first_name ?? undefined,
+//               middleName: row.middle_name ?? undefined,
+//               lastName: row.last_name ?? undefined,
+//               isMiddleNameFatherHusband: row.is_middle_name_father_husband,
+//             })
+//         );
+//       }
+//       setHasHydratedViewDialog(true); // unblock the save-effect only after restore is fully applied
+//     })();
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, []);
 
 //   const [savingEdit, setSavingEdit] = useState(false);
 //   const [creating, setCreating] = useState(false);
@@ -1805,6 +1905,8 @@ interface NameCheckReportRow {
   pdf_url: string | null;
   /** Admin's saved correction of the computed report content, if any (see NameCheckReportGenerator.tsx). NULL = PDF uses the live rule-engine calculation. */
   content_overrides: NameCheckReportContent | null;
+  /** Who last generated/regenerated the PDF (admin email/name) — stamped directly on the row instead of going through Audit Logs, so it shows right on the card/preview. NULL = never generated, or generated before this field existed. */
+  generated_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -1933,6 +2035,22 @@ function formatDate(value: string | null | undefined) {
 function withCacheBust(url: string | null): string | null {
   if (!url) return null;
   return `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+}
+
+/**
+ * Resolves a human-readable identifier for "who did this" — used to stamp
+ * generated_by directly on the report row whenever a PDF is generated or
+ * regenerated (Generate/Regenerate and Edit Report Content -> Save both call
+ * this). Falls back to "Unknown" rather than throwing, since a missing name
+ * should never block the actual PDF generation from completing.
+ */
+async function getCurrentAdminIdentifier(): Promise<string> {
+  try {
+    const { data } = await supabase.auth.getUser();
+    return data.user?.email ?? "Unknown";
+  } catch {
+    return "Unknown";
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -2351,9 +2469,19 @@ export default function NameCheckReports() {
       const { data: publicUrlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
       const pdfUrl = publicUrlData?.publicUrl ?? null;
 
+      // "Generated by" stamp — who's currently signed in, resolved right
+      // before the DB write so it reflects whoever actually clicked
+      // Generate/Regenerate, not the person who first created the report.
+      const generatedByName = await getCurrentAdminIdentifier();
+
       const { error: updateError } = await supabase
         .from(TABLE_NAME)
-        .update({ pdf_url: pdfUrl, status: "completed", updated_at: new Date().toISOString() })
+        .update({
+          pdf_url: pdfUrl,
+          status: "completed",
+          generated_by: generatedByName,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", report.id);
       if (updateError) throw updateError;
 
@@ -2365,7 +2493,12 @@ export default function NameCheckReports() {
       // Report Content" reachable from inside it — this is the flow the
       // admin actually wants instead of just a toast + having to hunt for
       // the file afterwards.
-      const updatedRow: NameCheckReportRow = { ...report, pdf_url: pdfUrl, status: "completed" };
+      const updatedRow: NameCheckReportRow = {
+        ...report,
+        pdf_url: pdfUrl,
+        status: "completed",
+        generated_by: generatedByName,
+      };
       openPreview(updatedRow);
 
       fetchReports({ silent: true });
@@ -2465,12 +2598,18 @@ export default function NameCheckReports() {
       const { data: publicUrlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
       const pdfUrl = publicUrlData?.publicUrl ?? null;
 
+      // Same "generated by" stamp as a plain Generate/Regenerate — editing
+      // content and saving also produces a freshly-regenerated PDF, so it
+      // should be attributed the same way.
+      const generatedByName = await getCurrentAdminIdentifier();
+
       const { error: updateError } = await supabase
         .from(TABLE_NAME)
         .update({
           content_overrides: contentEditForm,
           pdf_url: pdfUrl,
           status: "completed",
+          generated_by: generatedByName,
           updated_at: new Date().toISOString(),
         })
         .eq("id", viewTarget.id);
@@ -2487,6 +2626,7 @@ export default function NameCheckReports() {
         pdf_url: pdfUrl,
         status: "completed",
         content_overrides: contentEditForm,
+        generated_by: generatedByName,
       };
       setViewTarget(updatedRow);
       setPreviewUrl(withCacheBust(pdfUrl));
@@ -2881,6 +3021,9 @@ export default function NameCheckReports() {
                     <div className="text-muted-foreground">{report.gender || "—"}</div>
                     <div className="text-muted-foreground">DOB: {formatDate(report.dob)}</div>
                     <div className="text-muted-foreground">Created: {formatDate(report.created_at)}</div>
+                    <div className="col-span-2 truncate text-muted-foreground">
+                      Generated by: {report.generated_by || "—"}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 text-xs">
@@ -3061,6 +3204,10 @@ export default function NameCheckReports() {
                 <div>
                   <p className="text-muted-foreground">Gender</p>
                   <p className="font-medium">{viewTarget.gender || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Generated By</p>
+                  <p className="font-medium">{viewTarget.generated_by || "—"}</p>
                 </div>
               </div>
 
