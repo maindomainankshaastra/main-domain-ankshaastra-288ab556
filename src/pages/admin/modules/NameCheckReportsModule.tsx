@@ -2038,18 +2038,19 @@ function withCacheBust(url: string | null): string | null {
 }
 
 /**
- * Resolves a human-readable identifier for "who did this" — used to stamp
- * generated_by directly on the report row whenever a PDF is generated or
- * regenerated (Generate/Regenerate and Edit Report Content -> Save both call
- * this). Falls back to "Unknown" rather than throwing, since a missing name
- * should never block the actual PDF generation from completing.
+ * Resolves the current admin's auth user id — this is what gets stamped
+ * into generated_by (a uuid column, matching profiles.user_id) whenever a
+ * PDF is generated or regenerated. Returns null rather than throwing if the
+ * session lookup fails, since a missing id should never block the actual
+ * PDF generation from completing — the report just shows "—" for Generated
+ * By in that rare case.
  */
-async function getCurrentAdminIdentifier(): Promise<string> {
+async function getCurrentAdminUserId(): Promise<string | null> {
   try {
     const { data } = await supabase.auth.getUser();
-    return data.user?.email ?? "Unknown";
+    return data.user?.id ?? null;
   } catch {
-    return "Unknown";
+    return null;
   }
 }
 
