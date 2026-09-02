@@ -2053,6 +2053,25 @@ async function getCurrentAdminIdentifier(): Promise<string> {
   }
 }
 
+/**
+ * Extracts a readable message from any thrown value. Supabase errors
+ * (PostgrestError / StorageError) are plain objects with a `message`
+ * property — they are NOT `instanceof Error` — so `err instanceof Error ?
+ * err.message : "Unexpected error"` (used throughout this file) was
+ * silently swallowing the real reason for any Supabase failure and always
+ * showing the generic fallback text instead. This checks for a `message`
+ * property on ANY object, not just real Error instances, so the actual
+ * database/storage error (e.g. a missing column, a type mismatch, an RLS
+ * rejection) shows up in the toast instead of being hidden.
+ */
+function getErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err && typeof (err as { message?: unknown }).message === "string") {
+    return (err as { message: string }).message;
+  }
+  return fallback;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -2503,9 +2522,10 @@ export default function NameCheckReports() {
 
       fetchReports({ silent: true });
     } catch (err) {
+      console.error("[NameCheckReports] PDF generation failed:", err);
       toast({
         title: "PDF generation failed",
-        description: err instanceof Error ? err.message : "Unexpected error while generating the PDF.",
+        description: getErrorMessage(err, "Unexpected error while generating the PDF."),
         variant: "destructive",
       });
     } finally {
@@ -2635,9 +2655,10 @@ export default function NameCheckReports() {
 
       fetchReports({ silent: true });
     } catch (err) {
+      console.error("[NameCheckReports] Save report content failed:", err);
       toast({
         title: "Could not save report content",
-        description: err instanceof Error ? err.message : "Unexpected error while regenerating the PDF.",
+        description: getErrorMessage(err, "Unexpected error while regenerating the PDF."),
         variant: "destructive",
       });
     } finally {
