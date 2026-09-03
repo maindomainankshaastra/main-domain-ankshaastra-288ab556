@@ -40,7 +40,7 @@ export const config = { api: { bodyParser: false } };
 export const maxDuration = 60;
  
 
-type ApiHandler = (req: unknown, res: unknown) => Promise<unknown> | unknown;
+type ApiHandler = (req: any, res: any) => any;
 
 type IncomingReq = {
   query?: Record<string, string | string[] | undefined>;
