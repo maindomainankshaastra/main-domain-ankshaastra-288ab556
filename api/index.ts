@@ -92,7 +92,7 @@ export default async function handler(req: Parameters<ApiHandler>[0], res: Param
   const routeKey = resolveRoute(req as IncomingReq);
 
   if (isPartnerPublicRoute(routeKey)) {
-    if (applyPartnerCors(req as IncomingReq, res as Parameters<typeof applyPartnerCors>[1])) {
+    if (applyPartnerCors(req as Parameters<typeof applyPartnerCors>[0], res as Parameters<typeof applyPartnerCors>[1])) {
       return;
     }
   }
