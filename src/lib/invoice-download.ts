@@ -125,8 +125,15 @@ export async function downloadMonthlyInvoiceZip(
     onProgress?.({ phase: "downloading", done: index + 1, total: invoices.length });
   });
 
+  // if (included === 0) {
+  //   throw new Error("Could not download any invoice PDFs for this month");
+  // }
+
+  // Isse REPLACE karo:
   if (included === 0) {
-    throw new Error("Could not download any invoice PDFs for this month");
+    throw new Error(
+      "All invoice PDFs for this month have been archived (older than 6 months) to save Supabase storage space. Invoice records themselves are still visible in the list above — only the PDF files were removed.",
+    );
   }
 
   if (skippedNumbers.length) {
