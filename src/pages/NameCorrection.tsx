@@ -15,12 +15,9 @@ import {
 } from "lucide-react";
 import { pricing, formatINR } from "@/config/pricing";
 import { nameCorrectionPackages } from "@/data/serviceCatalog";
-import bookMockup from "@/assets/name-blueprint-book.png";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
 import heroDesktop from "@/assets/name-correction-hero.webp";
 import heroMobile from "@/assets/name-correction-hero-mobile.webp";
-import blueprintDesktop from "@/assets/name-alignment-blueprint-desktop.webp";
-import blueprintMobile from "@/assets/name-alignment-blueprint-mobile.webp";
 import geetaImg from "@/assets/celebrities/geeta-tyagi.png";
 import darshanImg from "@/assets/celebrities/darshan-patil.jpg";
 
@@ -158,25 +155,6 @@ const NameCorrection = () => {
         </button>
       </section>
 
-      {/* SECTION 1.5 — Name Alignment Blueprint banner */}
-      <section className="relative overflow-hidden isolate" style={body}>
-        <button
-          type="button"
-          onClick={() => scrollToPackage("package-name-correction")}
-          aria-label="Order Now — scroll to package selection"
-          className="block w-full cursor-pointer border-0 p-0 bg-transparent"
-        >
-          <picture>
-            <source media="(min-width: 768px)" srcSet={blueprintDesktop} />
-            <img
-              src={blueprintMobile}
-              alt="What is a Name Alignment Blueprint? Personally crafted by Himansshu Agarwal Ji."
-              className="w-full h-auto block"
-              loading="lazy"
-            />
-          </picture>
-        </button>
-      </section>
 
       {/* SECTION 3 — Why Trust */}
       <section style={{ background: COLORS.amber, ...body }} className="py-20 lg:py-24">
