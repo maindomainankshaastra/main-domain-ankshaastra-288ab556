@@ -3978,7 +3978,8 @@ import {
   ArrowLeft,
   RotateCcw,
 } from "lucide-react";
-import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
+// import { downloadMonthlyInvoiceZip, fetchInvoiceDownloadUrl } from "@/lib/invoice-download";
+import { downloadMonthlyInvoiceZip } from "@/lib/invoice-download";
 import { createManualInvoice, sendInvoiceEmail, getBusinessGstStateCode } from "@/lib/invoice-actions";
 import { stateCodeFromName } from "@/lib/indian-states";
 import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
@@ -4340,15 +4341,56 @@ export default function InvoicesModule() {
   const goToPreviousPage = () => setPage((p) => Math.max(1, p - 1));
   const goToNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
+  // const downloadInvoice = async (inv: Invoice) => {
+  //   setDownloadingId(inv.id);
+  //   try {
+  //     const url = (await fetchInvoiceDownloadUrl(inv.id)) || inv.pdf_url;
+  //     if (!url) {
+  //       toast.error("Invoice PDF is not available yet.");
+  //       return;
+  //     }
+  //     window.open(url, "_blank", "noopener,noreferrer");
+  //   } catch {
+  //     toast.error("Could not download invoice");
+  //   } finally {
+  //     setDownloadingId(null);
+  //   }
+  // };
+
+  // Isse REPLACE karo:
   const downloadInvoice = async (inv: Invoice) => {
     setDownloadingId(inv.id);
     try {
-      const url = (await fetchInvoiceDownloadUrl(inv.id)) || inv.pdf_url;
-      if (!url) {
-        toast.error("Invoice PDF is not available yet.");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        toast.error("Please sign in again");
         return;
       }
+
+      // Always goes through /api/invoices/file — it serves the stored PDF
+      // when one exists, and transparently regenerates one on the fly from
+      // the permanent invoice/order records when the file was purged by the
+      // 6-month Storage retention job. Either way the invoice is always
+      // downloadable, however old.
+      const res = await fetch(`/api/invoices/file?invoiceId=${encodeURIComponent(inv.id)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.error || "Could not download invoice");
+        return;
+      }
+
+      if (res.headers.get("X-Invoice-Regenerated") === "true") {
+        toast.info("This invoice's PDF was archived to save storage — a fresh copy was just regenerated.");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch {
       toast.error("Could not download invoice");
     } finally {
@@ -4960,22 +5002,22 @@ export default function InvoicesModule() {
                 </Button>
               ) : (
                 <>
-                  {(i.pdf_storage_path || i.pdf_url) && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
-                      disabled={downloadingId === i.id}
-                      onClick={() => downloadInvoice(i)}
-                      aria-label="Download invoice PDF"
-                    >
-                      {downloadingId === i.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Download className="w-4 h-4" />
-                      )}
-                    </Button>
-                  )}
+                
+
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    disabled={downloadingId === i.id}
+                    onClick={() => downloadInvoice(i)}
+                    aria-label="Download invoice PDF"
+                  >
+                    {downloadingId === i.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                  </Button>
 
                   <Button
                     size="icon"
