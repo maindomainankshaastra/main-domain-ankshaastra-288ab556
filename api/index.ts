@@ -40,7 +40,7 @@ export const config = { api: { bodyParser: false } };
 export const maxDuration = 60;
  
 
-type ApiHandler = (req: unknown, res: unknown) => Promise<unknown> | unknown;
+type ApiHandler = (req: any, res: any) => any;
 
 type IncomingReq = {
   query?: Record<string, string | string[] | undefined>;
@@ -92,7 +92,7 @@ export default async function handler(req: Parameters<ApiHandler>[0], res: Param
   const routeKey = resolveRoute(req as IncomingReq);
 
   if (isPartnerPublicRoute(routeKey)) {
-    if (applyPartnerCors(req as IncomingReq, res as Parameters<typeof applyPartnerCors>[1])) {
+    if (applyPartnerCors(req as Parameters<typeof applyPartnerCors>[0], res as Parameters<typeof applyPartnerCors>[1])) {
       return;
     }
   }
