@@ -4209,6 +4209,60 @@ export default function InvoicesModule() {
 
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
 
+  // "Created by" for the invoice detail dialog. The invoices table itself
+  // doesn't record who made it — that lives on the linked ORDER instead
+  // (payment_method + metadata.createdByAdmin, written by
+  // invoices-create-manual.ts). So this is resolved lazily, on demand,
+  // rather than joined into every row of the main list. `undefined` =
+  // "not loaded yet" (shows a small loading state), `null` = "looked it up,
+  // nothing to show" (e.g. deleted order).
+  const [createdByInfo, setCreatedByInfo] = useState<
+    { kind: "manual"; adminName: string } | { kind: "automatic" } | null | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (!viewInvoice) {
+      setCreatedByInfo(undefined);
+      return;
+    }
+    if (!viewInvoice.order_id) {
+      setCreatedByInfo(null);
+      return;
+    }
+    let cancelled = false;
+    setCreatedByInfo(undefined);
+    (async () => {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("payment_method, metadata")
+        .eq("id", viewInvoice.order_id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!order) {
+        setCreatedByInfo(null);
+        return;
+      }
+      const adminId = (order.metadata as Record<string, unknown> | null)?.createdByAdmin as
+        | string
+        | undefined;
+      if (order.payment_method !== "manual" || !adminId) {
+        setCreatedByInfo({ kind: "automatic" });
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("user_id", adminId)
+        .maybeSingle();
+      if (cancelled) return;
+      const adminName = profile?.full_name || profile?.email || adminId;
+      setCreatedByInfo({ kind: "manual", adminName });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [viewInvoice]);
+
   // Deep-link support: Global Search sends ?open=<invoice id>. Instead of
   // auto-opening a read-only dialog, scroll to and briefly highlight that
   // exact row in the list, so the admin can use any action on it (View,
@@ -5151,6 +5205,18 @@ export default function InvoicesModule() {
                 <Badge className={cn("capitalize border-0", STATUS_STYLES[viewInvoice.status] || STATUS_STYLES.cancelled)}>
                   {viewInvoice.status}
                 </Badge>
+              </div>
+                            <div className="flex justify-between border-b border-border pb-2">
+                <span className="text-muted-foreground">Created By</span>
+                <span className="font-medium">
+                  {createdByInfo === undefined
+                    ? "Loading…"
+                    : createdByInfo === null
+                    ? "—"
+                    : createdByInfo.kind === "manual"
+                    ? `${createdByInfo.adminName} (manual)`
+                    : "Customer payment (automatic)"}
+                </span>
               </div>
               <div className="flex justify-between border-b border-border pb-2">
                 <span className="text-muted-foreground">Website</span>
