@@ -2788,8 +2788,8 @@ export default function NameCheckReports() {
     setEmailTarget(report);
     setEmailTo(report.email || "");
     setEmailSubject(`Your Name Check Report — ${report.report_id}`);
-    setEmailMessage(
-      `Dear ${report.customer_name || "Customer"},\n\nPlease find your Name Check Report attached.\n\nThank you for choosing us.`,
+        setEmailMessage(
+      `Namaste, 🙏\n\nPlease find attached Name Check Report prepared based on your Date of Birth and name analysis.\n\nIt highlights the key observations regarding your name vibration and clearly states whether name correction is required or not.\n\nKindly review it at your convenience.\n\nIf you would like the report to be explained over a phone call, you may request the same.\n\nWarm Regards,\nAnkshaastra – Empower Your Name`,
     );
   };
 
