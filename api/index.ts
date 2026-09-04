@@ -23,6 +23,7 @@ import adminGstrReports from "../server/handlers/admin-gstr-reports.js";
 import adminGstMaintenance from "../server/handlers/admin-gst-maintenance.js";
 import operationsSiteManifest from "../server/handlers/operations-site-manifest.js";
 import invoicesSendEmail from "../server/handlers/invoices-send-email.js";
+import nameCheckReportsSendEmail from "../server/handlers/name-check-reports-send-email.js";
 import invoicesCreateManual from "../server/handlers/invoices-create-manual.js";
 import adminAuditLogs from "../server/handlers/admin-audit-logs.js";
 import operationsTriggerInvoice from "../server/handlers/operations-trigger-invoice.js";
@@ -60,6 +61,7 @@ const routes: Record<string, ApiHandler> = {
   "invoices/bulk-manifest": invoicesBulkManifest,
   "invoices/file": invoicesFile,
   "invoices/send-email": invoicesSendEmail, 
+   "name-check-reports/send-email": nameCheckReportsSendEmail,
   "webhooks/razorpay": webhooksRazorpay,
   "operations/process-jobs": operationsProcessJobs,
   "operations/retry-job": operationsRetryJob,
