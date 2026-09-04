@@ -4801,8 +4801,8 @@ export default function InvoicesModule() {
     setEmailTo(inv.customer_email || "");
     setEmailSubject(`Invoice ${inv.invoice_number} — ${inv.service_title}`);
         setEmailMessage(
-      `Namaste, 🙏\n\nPlease find attached Name Check Report prepared based on your Date of Birth and name analysis.\n\nIt highlights the key observations regarding your name vibration and clearly states whether name correction is required or not.\n\nKindly review it at your convenience.\n\nIf you would like the report to be explained over a phone call, you may request the same.\n\nWarm Regards,\nAnkshaastra – Empower Your Name`,
-    );
+      `Dear ${inv.customer_name || "Customer"},\n\nPlease find your invoice ${inv.invoice_number} attached.\n\nThank you for choosing us.`,
+     );
     setEmailAttachPdf(true);
   };
 
