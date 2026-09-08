@@ -27,6 +27,7 @@ import nameCheckReportsSendEmail from "../server/handlers/name-check-reports-sen
 import invoicesCreateManual from "../server/handlers/invoices-create-manual.js";
 import adminAuditLogs from "../server/handlers/admin-audit-logs.js";
 import operationsTriggerInvoice from "../server/handlers/operations-trigger-invoice.js";
+import abandonedCarts from "../server/handlers/abandoned-carts.js";
 
 /** Single serverless function for all /api/* routes (Vercel Hobby: max 12 functions). */
 export const config = { api: { bodyParser: false } };
@@ -76,6 +77,7 @@ const routes: Record<string, ApiHandler> = {
   "admin/gst-maintenance": adminGstMaintenance,
   "invoices/create-manual": invoicesCreateManual,
 "admin/audit-logs": adminAuditLogs,
+ "admin/abandoned-carts": abandonedCarts,
 };
 
 function resolveRoute(req: IncomingReq): string {
