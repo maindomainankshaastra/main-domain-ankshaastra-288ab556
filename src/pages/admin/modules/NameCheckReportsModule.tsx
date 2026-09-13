@@ -1802,6 +1802,7 @@
 // }
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   FileSearch,
   RefreshCw,
@@ -2966,9 +2967,15 @@ export default function NameCheckReports() {
     <AdminPage>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Name Check Reports</h1>
+            <Link
+              to="/admin/reports"
+              className="mb-1 inline-block text-sm text-muted-foreground hover:text-foreground"
+            >
+              ← Back to Reports
+            </Link>
+            <h1 className="text-2xl font-semibold tracking-tight">Name Check</h1>
             <p className="text-sm text-muted-foreground">Manage all Name Check Report submissions.</p>
           </div>
           <div className="flex items-center gap-2">
