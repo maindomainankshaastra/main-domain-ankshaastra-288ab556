@@ -5537,8 +5537,8 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requ
 
   const titleSize = px(80);
   const nameStr = data.firstName || data.customerName;
-  const line1 = `\u201CNamaskar`;
-  const line2 = `${nameStr} Ji\u201D`;
+  const line1 = `\u201CNAMASKAR`;
+  const line2 = `${nameStr.toUpperCase()} JI\u201D`;
   [line1, line2].forEach((line) => {
     let size = titleSize;
     while (fonts.heading.widthOfTextAtSize(line, size) > PAGE_WIDTH - 96 && size > 14) size -= 1;
