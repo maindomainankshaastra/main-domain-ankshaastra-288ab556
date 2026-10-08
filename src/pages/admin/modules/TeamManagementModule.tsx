@@ -798,7 +798,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1013,7 +1013,7 @@ const TeamManagementModule = () => {
       return;
     }
 
-    const userIds = staffRoles.map((r) => r.user_id);
+    const userIds = staffRoles.flatMap((r) => typeof r.user_id === "string" ? [r.user_id] : []);
 
     const { data: profiles } = await supabase
       .from("profiles")
@@ -1028,11 +1028,11 @@ const TeamManagementModule = () => {
 
     const list: StaffMember[] = userIds.map((id) => {
       const profile = profiles?.find((p) => p.user_id === id);
-      const modules = perms?.filter((p) => p.user_id === id).map((p) => p.module) || [];
+      const modules = perms?.filter((p) => p.user_id === id).flatMap((p) => typeof p.module === "string" ? [p.module] : []) || [];
       return {
         user_id: id,
-        full_name: profile?.full_name || null,
-        email: profile?.email || null,
+        full_name: typeof profile?.full_name === "string" ? profile.full_name : null,
+        email: typeof profile?.email === "string" ? profile.email : null,
         modules,
       };
     });
@@ -1066,17 +1066,18 @@ const TeamManagementModule = () => {
       ? await supabase.from("profiles").select("user_id, full_name, email").in("user_id", removerIds)
       : { data: [] as { user_id: string; full_name: string | null; email: string | null }[] };
 
-    const list: RemovedStaffMember[] = removals.map((r) => {
+    const list: RemovedStaffMember[] = removals.flatMap((r) => {
+      if (typeof r.user_id !== "string" || typeof r.removed_at !== "string") return [];
       const remover = removerProfiles?.find((p) => p.user_id === r.removed_by);
-      return {
+      return [{
         user_id: r.user_id,
-        full_name: r.full_name,
-        email: r.email,
-        modules_snapshot: r.modules_snapshot || [],
+        full_name: typeof r.full_name === "string" ? r.full_name : null,
+        email: typeof r.email === "string" ? r.email : null,
+        modules_snapshot: Array.isArray(r.modules_snapshot) ? r.modules_snapshot.filter((value): value is string => typeof value === "string") : [],
         removed_at: r.removed_at,
-        removed_by: r.removed_by,
-        removed_by_name: remover?.full_name || remover?.email || null,
-      };
+        removed_by: typeof r.removed_by === "string" ? r.removed_by : null,
+        removed_by_name: typeof remover?.full_name === "string" ? remover.full_name : typeof remover?.email === "string" ? remover.email : null,
+      }];
     });
 
     setRemovedStaffList(list);
