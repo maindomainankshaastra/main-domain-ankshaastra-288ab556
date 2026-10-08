@@ -1831,7 +1831,7 @@ import { getMulank, getBhagyank } from "@/lib/name-check/lo-shu";
 import type { DateRange } from "react-day-picker";
 
 import { AdminPage } from "@/components/admin/AdminPage";
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
@@ -2190,7 +2190,7 @@ export default function NameCheckReports() {
         setHasHydratedViewDialog(true);
         return;
       }
-      const row = data as NameCheckReportRow;
+      const row = data as unknown as NameCheckReportRow;
       setViewTarget(row);
       setViewMode(saved.viewMode);
       setPreviewUrl(withCacheBust(row.pdf_url));
@@ -2317,8 +2317,8 @@ export default function NameCheckReports() {
         const { data, error, count } = await query;
         if (error) throw error;
 
-        setReports((data as NameCheckReportRow[]) ?? []);
-        resolveGeneratedByNames(((data as NameCheckReportRow[]) ?? []).map((r) => r.generated_by));
+        setReports((data as unknown as NameCheckReportRow[]) ?? []);
+        resolveGeneratedByNames(((data as unknown as NameCheckReportRow[]) ?? []).map((r) => r.generated_by));
         setTotalCount(count ?? 0);
       } catch (err) {
         console.error(err);

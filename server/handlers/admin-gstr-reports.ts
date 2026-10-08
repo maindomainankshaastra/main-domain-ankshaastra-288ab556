@@ -272,7 +272,7 @@
 import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 import { normalizeInvoiceForGstr } from '../lib/gst-auto-fix.js';
-import { filterInvoicesByPeriod } from '../lib/gstr-aggregate.js';
+import { filterInvoicesByPeriod, type GstrInvoiceRecord } from '../lib/gstr-aggregate.js';
 import {
   buildGstr1Workbook,
   buildGstSummaryWorkbook,
@@ -334,7 +334,7 @@ async function loadPeriodInvoices(year: number, month: number) {
 function prepareInvoices(
   raw: Record<string, unknown>[],
   gstConfig: Record<string, unknown> | null,
-): { invoices: InvoiceGstRow[]; info: GstValidationIssue[] } {
+): { invoices: GstrInvoiceRecord[]; info: GstValidationIssue[] } {
   const info: GstValidationIssue[] = [];
   const invoices = raw.map((row) => {
     const order = (row.orders as Record<string, unknown> | null) || null;
@@ -342,9 +342,13 @@ function prepareInvoices(
     info.push(...rowInfo);
     return {
       ...invoice,
+      id: String(invoice.id || ''),
+      invoice_number: String(invoice.invoice_number || ''),
+      customer_name: String(invoice.customer_name || ''),
+      service_title: String(invoice.service_title || ''),
       invoice_date: String(invoice.invoice_date || '').slice(0, 10),
       total_amount: Number(invoice.total_amount || 0),
-    } as InvoiceGstRow;
+    } as GstrInvoiceRecord;
   });
   return { invoices, info };
 }
@@ -431,9 +435,9 @@ export default async function handler(req: Req, res: Res) {
     const { report, dashboard, filingStatus } = await runValidation(period.year, period.month);
     return res.status(200).json({
       period: period.label,
-      filingStatus,
       dashboard,
       ...report,
+      filingStatus,
     });
   }
 
