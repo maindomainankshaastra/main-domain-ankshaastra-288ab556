@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase } from "@/lib/legacy-database-client";
 
 export type ApprovalActionType = "insert" | "update" | "delete";
 
@@ -29,7 +29,7 @@ export async function submitForApproval(params: {
   payload?: Record<string, unknown> | null;
   summary: string; // human-readable, e.g. `Update service "Kundali"`
 }): Promise<{ error: string | null }> {
-  const { error } = await supabase.from("approval_requests").insert({
+  const { error } = await legacyDatabase.from("approval_requests").insert({
     requested_by: params.userId,
     module: params.module,
     action_type: params.actionType,
@@ -47,12 +47,12 @@ export async function submitForApproval(params: {
 // This is what the Admin Approvals page calls on "Approve".
 export async function applyApprovalRequest(req: ApprovalRequest): Promise<{ error: string | null }> {
   if (req.action_type === "insert") {
-    const { error } = await supabase.from(req.target_table).insert(req.payload ?? {});
+    const { error } = await legacyDatabase.from(req.target_table).insert(req.payload ?? {});
     return { error: error?.message ?? null };
   }
   if (req.action_type === "update") {
     if (!req.target_id) return { error: "Missing target_id for update request" };
-    const { error } = await supabase
+    const { error } = await legacyDatabase
       .from(req.target_table)
       .update(req.payload ?? {})
       .eq("id", req.target_id);
@@ -60,7 +60,7 @@ export async function applyApprovalRequest(req: ApprovalRequest): Promise<{ erro
   }
   if (req.action_type === "delete") {
     if (!req.target_id) return { error: "Missing target_id for delete request" };
-    const { error } = await supabase.from(req.target_table).delete().eq("id", req.target_id);
+    const { error } = await legacyDatabase.from(req.target_table).delete().eq("id", req.target_id);
     return { error: error?.message ?? null };
   }
   return { error: `Unknown action_type: ${req.action_type}` };
