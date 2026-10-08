@@ -2372,7 +2372,7 @@ export default function NameCheckReports() {
         .single();
       if (error) throw error;
 
-      if (data?.id) {
+      if (typeof data?.id === "string") {
         logActivity(data.id, "create", { report_id: newReportId });
       }
 
@@ -2964,7 +2964,7 @@ export default function NameCheckReports() {
   /* ------------------------------ UI -------------------------------- */
 
   return (
-    <AdminPage>
+    <AdminPage title="Name Check">
       <div className="space-y-6">
         {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
