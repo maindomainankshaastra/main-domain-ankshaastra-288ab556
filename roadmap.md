@@ -1,6 +1,7 @@
 # Project Roadmap
 
 ## In Progress
+- Restore the Name Check banner and match the second section to the supplied celebrity/reviews reference.
 - Fix all TypeScript typecheck build errors in `/tmp/observability/build-errors.log` (including pre-existing ones).
 
 ## Completed
