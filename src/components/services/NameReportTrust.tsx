@@ -1,12 +1,12 @@
 import { Film, Star, Tv } from "lucide-react";
 import geita from "@/assets/celebrities/geeta-tyagi.png";
 import darshan from "@/assets/celebrities/darshan-patil.jpg";
-import prashantt from "@/assets/prashantt-client.webp.asset.json";
+import prashantt from "@/assets/prashantt-sambargi.webp.asset.json";
 
 const clients = [
   { name: "Geita Tyagi", role: "TV & Film Actress", work: "Jagaddhatri · Doli Armaano Ki", image: geita, icon: Tv },
   { name: "Prashantt Sambargi", role: "South Actor & Entrepreneur", work: "Bigg Boss Kannada", image: prashantt.url, icon: Tv },
-  { name: "Darshan Patil", role: "Film Actor", work: "Dhurandhar · Thumbs Up", image: darshan, icon: Film },
+  { name: "Darsshan Patil", role: "Film Actor", work: "Dhurandhar · Thumbs Up", image: darshan, icon: Film },
 ];
 
 export default function NameReportTrust() {

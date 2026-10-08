@@ -4,3 +4,5 @@
 - Name Correction's celebrity-and-reviews section is a dedicated presentation component directly below its banner, keeping trust content separate from checkout offers.
 - Legacy dynamic admin queries reuse the managed client through an isolated compatibility adapter; generated schema files and database access policies remain untouched.
 - PDF drawing helpers accept fully resolved report inputs with complete branding; partial branding remains supported only at the generation entry point.
+- Name Correction's press and philosophy content lives in a dedicated presentation component after the celebrity section, keeping reference-driven content independent of checkout pricing.
+- Vite proxies the Lovable asset endpoint to the hosted preview for local image parity; production keeps same-origin asset pointers so no binary duplicates or browser-only request overrides are needed.
