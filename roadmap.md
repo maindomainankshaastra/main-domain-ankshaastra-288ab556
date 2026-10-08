@@ -1,6 +1,7 @@
 # Project Roadmap
 
 ## In Progress
+- Replace Name Check banners, set single-name price to ₹373, remove multi-name offers, and restyle report package cards.
 - Fix all TypeScript typecheck build errors in `/tmp/observability/build-errors.log` (including pre-existing ones).
 
 ## Completed
