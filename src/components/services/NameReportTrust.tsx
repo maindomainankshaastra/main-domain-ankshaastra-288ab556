@@ -5,7 +5,7 @@ import prashantt from "@/assets/prashantt-sambargi.webp";
 
 const clients = [
   { name: "Geita Tyagi", role: "TV & Film Actress", work: "Jagaddhatri · Doli Armaano Ki", image: geita, icon: Tv },
-  { name: "Prashantt Sambargi", role: "South Actor & Entrepreneur", work: "Bigg Boss Kannada", image: prashantt.url, icon: Tv },
+  { name: "Prashantt Sambargi", role: "South Actor & Entrepreneur", work: "Bigg Boss Kannada", image: prashantt, icon: Tv },
   { name: "Darsshan Patil", role: "Film Actor", work: "Dhurandhar · Thumbs Up", image: darshan, icon: Film },
 ];
 
