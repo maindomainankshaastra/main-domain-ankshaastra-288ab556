@@ -439,8 +439,7 @@
 //   const [searchParams] = useSearchParams();
 //   const navigate = useNavigate();
 
-//   const requestedService = searchParams.get("service");
-  const serviceName = requestedService && /^name check(?:\s+[23])?$/i.test(requestedService.trim()) ? "Name Check" : requestedService;
+//   const serviceName = searchParams.get("service");
 //   const serviceAmount = searchParams.get("amount");
 //   const consultationType = searchParams.get("type") as keyof typeof consultationPackages;
 //   const formTypeParam = searchParams.get("formType") as FormType | null;
@@ -452,7 +451,7 @@
 //   const isServiceMode = !!serviceName;
 //   const catalogDisplay = useMemo(() => resolveServiceDisplay(serviceName), [serviceName]);
 //   const urlPrice = serviceAmount ? parseInt(serviceAmount, 10) : 0;
-//   const servicePrice = serviceName === "Name Check" ? pricing.nameCorrection.nameCheck : (urlPrice > 0 ? urlPrice : (serviceInfo?.price ?? catalogDisplay?.price ?? 0));
+//   const servicePrice = urlPrice > 0 ? urlPrice : (serviceInfo?.price ?? catalogDisplay?.price ?? 0);
 //   const canSubmitService = isServiceMode && servicePrice > 0 && !serviceLoading;
 
 //   const formType: FormType = useMemo(() => {
@@ -2245,7 +2244,8 @@ const PaymentPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const serviceName = searchParams.get("service");
+  const requestedService = searchParams.get("service");
+  const serviceName = requestedService && /^name check(?:\s+[23])?$/i.test(requestedService.trim()) ? "Name Check" : requestedService;
   const serviceAmount = searchParams.get("amount");
   const consultationType = searchParams.get("type") as keyof typeof consultationPackages;
   const formTypeParam = searchParams.get("formType") as FormType | null;
@@ -2257,7 +2257,7 @@ const PaymentPage = () => {
   const isServiceMode = !!serviceName;
   const catalogDisplay = useMemo(() => resolveServiceDisplay(serviceName), [serviceName]);
   const urlPrice = serviceAmount ? parseInt(serviceAmount, 10) : 0;
-  const servicePrice = urlPrice > 0 ? urlPrice : (serviceInfo?.price ?? catalogDisplay?.price ?? 0);
+  const servicePrice = serviceName === "Name Check" ? pricing.nameCorrection.nameCheck : (urlPrice > 0 ? urlPrice : (serviceInfo?.price ?? catalogDisplay?.price ?? 0));
   const canSubmitService = isServiceMode && servicePrice > 0 && !serviceLoading;
 
   const formType: FormType = useMemo(() => {
