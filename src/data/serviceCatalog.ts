@@ -116,9 +116,7 @@ export const kundli20Packages: CatalogPackage[] = [
 export const nameCorrectionPackages: CatalogPackage[] = [
   { name: "Name Correction", serviceTitle: "Name Correction", price: pricing.nameCorrection.standard, originalPrice: pricing.nameCorrection.standardOriginal, formType: "name-correction", popular: true },
   { name: "Name Correction + Complete Blueprint", serviceTitle: "Name Correction + Complete Blueprint", price: pricing.nameCorrection.withBlueprint, originalPrice: pricing.nameCorrection.withBlueprintOriginal, formType: "name-correction-couple" },
-  { name: "Name Check", serviceTitle: "Name Check", price: pricing.nameCorrection.nameCheck, formType: "name-check" },
-  { name: "Name Check 2", serviceTitle: "Name Check 2", price: pricing.nameCorrection.nameCheck2, originalPrice: pricing.nameCorrection.nameCheck2Original, formType: "name-check" },
-  { name: "Name Check 3", serviceTitle: "Name Check 3", price: pricing.nameCorrection.nameCheck3, originalPrice: pricing.nameCorrection.nameCheck3Original, formType: "name-check" },
+  { name: "Name Check", serviceTitle: "Name Check", price: pricing.nameCorrection.nameCheck, originalPrice: pricing.nameCorrection.nameCheckOriginal, formType: "name-check" },
 ];
 
 export const nameCorrectionHubAddons = [

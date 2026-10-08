@@ -22,11 +22,8 @@ export const pricing = {
     standardOriginal: 7500,
     withBlueprint: 7397,
     withBlueprintOriginal: 10076,
-    nameCheck: 827,
-    nameCheck2: 1527,
-    nameCheck2Original: 1797,
-    nameCheck3: 2227,
-    nameCheck3Original: 2597,
+    nameCheck: 373,
+    nameCheckOriginal: 1100,
   },
   luckyNumber: {
     vehicle: 1097,
