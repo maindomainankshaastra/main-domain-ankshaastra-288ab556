@@ -5,4 +5,4 @@
 - Legacy dynamic admin queries reuse the managed client through an isolated compatibility adapter; generated schema files and database access policies remain untouched.
 - PDF drawing helpers accept fully resolved report inputs with complete branding; partial branding remains supported only at the generation entry point.
 - Name Correction's press and philosophy content lives in a dedicated presentation component after the celebrity section, keeping reference-driven content independent of checkout pricing.
-- Vite proxies the Lovable asset endpoint to the hosted preview for local image parity; production keeps same-origin asset pointers so no binary duplicates or browser-only request overrides are needed.
+- Site images are bundled as regular Vite imports from src/assets, not Lovable Assets pointers, because the production domain is hosted on Vercel where the Lovable asset endpoint does not exist.

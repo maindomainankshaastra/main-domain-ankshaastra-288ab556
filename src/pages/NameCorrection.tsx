@@ -19,8 +19,8 @@ import NameReportTrust from "@/components/services/NameReportTrust";
 import NameReportPhilosophy from "@/components/services/NameReportPhilosophy";
 import { Button } from "@/components/ui/button";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
-import heroDesktop from "@/assets/name-check-desktop-restored.webp.asset.json";
-import heroMobile from "@/assets/name-check-mobile-restored.webp.asset.json";
+import heroDesktop from "@/assets/name-check-desktop-restored.webp";
+import heroMobile from "@/assets/name-check-mobile-restored.webp";
 import geetaImg from "@/assets/celebrities/geeta-tyagi.png";
 import darshanImg from "@/assets/celebrities/darshan-patil.jpg";
 
@@ -143,9 +143,9 @@ const NameCorrection = () => {
           className="block h-auto w-full cursor-pointer border-0 rounded-none p-0 bg-transparent hover:bg-transparent"
         >
           <picture className="block w-full">
-            <source media="(min-width: 768px)" srcSet={heroDesktop.url} />
+            <source media="(min-width: 768px)" srcSet={heroDesktop} />
             <img
-              src={heroMobile.url}
+              src={heroMobile}
               alt="A Small Tweak In Your Name Can Change Your Life — Expert-Led Name Correction Report"
               className="w-full h-auto block"
               width={768}
