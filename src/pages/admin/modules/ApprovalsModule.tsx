@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase } from "@/lib/legacy-database-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +38,7 @@ export default function ApprovalsModule() {
 
   const loadPending = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await legacyDatabase
       .from("approval_requests")
       .select("*")
       .eq("status", "pending")
@@ -47,7 +47,7 @@ export default function ApprovalsModule() {
       toast.error(error.message);
       setRequests([]);
     } else {
-      setRequests((data as ApprovalRequest[]) || []);
+      setRequests((data as unknown as ApprovalRequest[]) || []);
     }
     setLoading(false);
   };
@@ -64,7 +64,7 @@ export default function ApprovalsModule() {
       toast.error(`Couldn't apply change: ${applyError}`);
       return;
     }
-    const { error } = await supabase
+    const { error } = await legacyDatabase
       .from("approval_requests")
       .update({ status: "approved", reviewed_by: userId, reviewed_at: new Date().toISOString() })
       .eq("id", req.id);
@@ -79,7 +79,7 @@ export default function ApprovalsModule() {
 
   const handleReject = async (req: ApprovalRequest) => {
     setProcessingId(req.id);
-    const { error } = await supabase
+    const { error } = await legacyDatabase
       .from("approval_requests")
       .update({ status: "rejected", reviewed_by: userId, reviewed_at: new Date().toISOString() })
       .eq("id", req.id);

@@ -13,17 +13,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { reportsNavItems } from "@/data/navMenu";
+import { reportsNavItems, type NavItem } from "@/data/navMenu";
 
 type DropdownMenuConfig = {
   name: string;
   pathPrefix: string;
-  items: typeof servicesNavItems;
+  items: NavItem[];
 };
 
 const navLinks: Array<
-  | { name: string; path: string; external?: boolean }
-  | { name: string; path: string; hasDropdown: true; dropdown: DropdownMenuConfig }
+  | { name: string; path: string; external?: boolean; hasDropdown?: false }
+  | { name: string; path: string; external?: false; hasDropdown: true; dropdown: DropdownMenuConfig }
 > = [
   { name: "Home", path: "/" },
   { name: "Services", path: "/services" },

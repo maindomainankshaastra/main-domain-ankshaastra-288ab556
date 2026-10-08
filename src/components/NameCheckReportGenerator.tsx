@@ -4627,6 +4627,8 @@ export function computeNameCheckReportContent(
   };
 }
 
+type ResolvedNameCheckReportInput = Omit<Required<NameCheckReportInput>, "brand"> & { brand: BrandConfig };
+
 interface BrandConfig {
   companyName: string;
   tagline: string;
@@ -5369,7 +5371,7 @@ function drawCoverFooterPill(page: PDFPage, fonts: Fonts, brand: BrandConfig) {
   }
 }
 
-function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckReportInput>, assets: Assets) {
+function drawCoverPage(page: PDFPage, fonts: Fonts, data: ResolvedNameCheckReportInput, assets: Assets) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
@@ -5425,7 +5427,7 @@ function drawCoverPage(page: PDFPage, fonts: Fonts, data: Required<NameCheckRepo
   drawCoverFooterPill(page, fonts, data.brand);
 }
 
-function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
@@ -5524,7 +5526,7 @@ function drawIndexPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Requir
   });
 }
 
-function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
@@ -5586,7 +5588,7 @@ function drawBlueprintPage(
   page: PDFPage,
   fonts: Fonts,
   assets: Assets,
-  data: Required<NameCheckReportInput>,
+  data: ResolvedNameCheckReportInput,
   numbers: { mulank: number; bhagyank: number; firstNameNumber: number; fullNameNumber: number; fullNameCompound: number },
   pageNumber: number,
   totalPages: number
@@ -5641,7 +5643,7 @@ function drawBlueprintPage(
     drawDataTable(page, fonts, rows, { x: boxX, y: bannerY - bannerHeight - 12, width: boxWidth });
 }
 
-function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput, pageNumber: number, totalPages: number) {
   drawPageChrome(page, fonts, assets, { title: "The Science of\nName Numbers", pageNumber, totalPages, brand: data.brand });
 
   const boxX = 32;
@@ -5688,7 +5690,7 @@ function drawScienceOfNamesPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
   drawWrappedTextCentered(page, box2Text, { centerX: boxX + boxWidth / 2, y: boxTop - TYPE.cardPadding - 6, font: fonts.sans, size: bodySize, maxWidth: box2InnerWidth, lineHeight: box2LineHeight, color: COLOR.ink });
 }
 
-function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput, pageNumber: number, totalPages: number) {
   drawPageChrome(page, fonts, assets, { title: "Numerological\nSystems Used", subtitle: "This Report Analyzes Your Name Using", pageNumber, totalPages, brand: data.brand });
 
   const boxX = 32;
@@ -5771,7 +5773,7 @@ function drawChaldeanSystemPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
   }
 }
 
-function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+function drawWhatWellAnalyzePage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput, pageNumber: number, totalPages: number) {
   drawPageChrome(page, fonts, assets, { title: "Numerological\nSystems Used", pageNumber, totalPages, brand: data.brand });
 
   const boxX = 32;
@@ -5798,7 +5800,7 @@ function drawCurrentNameBreakdownPage(
   page: PDFPage,
   fonts: Fonts,
   assets: Assets,
-  data: Required<NameCheckReportInput>,
+  data: ResolvedNameCheckReportInput,
   opts: {
     heading: string;
     nameLabel: string;
@@ -6152,7 +6154,7 @@ function drawWhyCriticalPage(
   page: PDFPage,
   fonts: Fonts,
   assets: Assets,
-  data: Required<NameCheckReportInput>,
+  data: ResolvedNameCheckReportInput,
   matched: { verdict: "HR" | "OA" | "NR"; isFallback: boolean; bullets: string[]; verdictNote: string },
   pageNumber: number,
   totalPages: number
@@ -6205,7 +6207,7 @@ function drawWhyCriticalPage(
   drawStarGlyph(page, boxX + boxWidth / 2, verdictTop, 7, COLOR.maroon);
 }
 
-function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
@@ -6258,7 +6260,7 @@ function drawServicesPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Req
 }
 
 /** Page 12 — the two upsell offer cards, side by side. */
-function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+function drawPricingPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
@@ -6462,7 +6464,7 @@ drawRoundedRect(page, {
 }
 
 /** Page 13 — social follow icons, each linking out to the real Ankshaastra profile. */
-function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>, pageNumber: number, totalPages: number) {
+function drawConnectPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput, pageNumber: number, totalPages: number) {
   drawPageBackground(page, assets);
   const centerX = PAGE_WIDTH / 2;
 
@@ -6615,7 +6617,7 @@ page.drawCircle({
 }
 
 /** Page 15 — minimal back cover: centered logo + website pill + report ID. */
-function drawBackCoverPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Required<NameCheckReportInput>) {
+function drawBackCoverPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedNameCheckReportInput) {
   page.drawImage(assets.backCoverBackground, { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT });
   const centerX = PAGE_WIDTH / 2;
 
@@ -6636,7 +6638,7 @@ function drawBackCoverPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Re
 
 export async function generateNameCheckReportPdf(input: NameCheckReportInput): Promise<Uint8Array> {
   const split = splitName(input.customerName);
-  const data: Required<NameCheckReportInput> = {
+  const data: ResolvedNameCheckReportInput = {
     generatedDate: new Date().toISOString(),
     firstName: split.first,
     middleName: split.middle,
@@ -6794,7 +6796,7 @@ export async function generateNameCheckReportPdf(input: NameCheckReportInput): P
 }
 
 export function downloadNameCheckReportPdf(bytes: Uint8Array, filename: string) {
-  const blob = new Blob([bytes], { type: "application/pdf" });
+  const blob = new Blob([new Uint8Array(bytes).buffer], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -6806,7 +6808,7 @@ export function downloadNameCheckReportPdf(bytes: Uint8Array, filename: string) 
 }
 
 export function nameCheckReportPdfToBlob(bytes: Uint8Array): Blob {
-  return new Blob([bytes], { type: "application/pdf" });
+  return new Blob([new Uint8Array(bytes).buffer], { type: "application/pdf" });
 
 }
 

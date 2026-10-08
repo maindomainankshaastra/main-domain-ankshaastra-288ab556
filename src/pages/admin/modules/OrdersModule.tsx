@@ -526,7 +526,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";

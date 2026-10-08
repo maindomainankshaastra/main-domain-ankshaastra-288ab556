@@ -680,7 +680,7 @@ interface Invoice {
   total_amount: number;
   invoice_date: string;
   pdf_url: string | null;
-  pdf_storage_path: string | null;
+  pdf_storage_path?: string | null;
   status: string;
 }
 
@@ -706,7 +706,7 @@ const Dashboard = () => {
         supabase.from("orders").select("id, service_title, total_amount, status, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase
           .from("invoices")
-          .select("id, invoice_number, service_title, total_amount, invoice_date, pdf_url, pdf_storage_path, status")
+          .select("id, invoice_number, service_title, total_amount, invoice_date, pdf_url, status")
           .or(invoiceFilter)
           .order("invoice_date", { ascending: false }),
       ]);

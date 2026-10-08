@@ -23,7 +23,7 @@
 
 
 import { useState, type FormEvent } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
 import { Badge } from "@/components/ui/badge";

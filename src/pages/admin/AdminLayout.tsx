@@ -6,6 +6,7 @@ import SEOHead from "@/components/SEOHead";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase } from "@/lib/legacy-database-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -210,7 +211,7 @@ async function resolveTable(sourceKey: string, candidates: string[]): Promise<st
   if (sourceKey in resolvedTableCache) return resolvedTableCache[sourceKey];
   for (const table of candidates) {
     try {
-      const { error } = await supabase.from(table).select("*").limit(1);
+      const { error } = await legacyDatabase.from(table).select("*").limit(1);
       if (!error) {
         resolvedTableCache[sourceKey] = table;
         return table;
@@ -242,7 +243,7 @@ function makeSource(config: {
 
         // No known column names to filter on server-side, so fetch a
         // reasonably large recent batch and filter client-side instead.
-        const { data, error } = await supabase.from(table).select("*").limit(200);
+        const { data, error } = await legacyDatabase.from(table).select("*").limit(200);
         if (error) {
           console.warn(`[GlobalSearch] "${config.module}" query on "${table}" failed:`, error.message);
           return [];
@@ -279,7 +280,7 @@ function makeSource(config: {
 // instead of the generic makeSource().
 async function fetchTeamMembers(query: string): Promise<SearchResult[]> {
   try {
-    const { data: staffRoles, error: rolesError } = await supabase
+    const { data: staffRoles, error: rolesError } = await legacyDatabase
       .from("user_roles")
       .select("user_id")
       .eq("role", "staff");
@@ -287,7 +288,7 @@ async function fetchTeamMembers(query: string): Promise<SearchResult[]> {
       console.warn(`[GlobalSearch] "Team Members" — user_roles query failed:`, rolesError.message);
       return [];
     }
-    const ids = (staffRoles || []).map((r) => r.user_id);
+    const ids = (staffRoles || []).flatMap((r) => typeof r.user_id === "string" ? [r.user_id] : []);
     if (ids.length === 0) return [];
 
     const { data, error } = await supabase

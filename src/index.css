@@ -12,6 +12,9 @@
     --report-ink-foreground: 0 0% 100%;
     --report-saving: 143 55% 38%;
     --review-brand: 217 89% 61%;
+    --report-surface: 0 0% 100%;
+    --report-detail-surface: 30 25% 98%;
+    --report-muted: 0 0% 43%;
     /* Core - warm cream backgrounds, dark brown text */
     --background: 33 60% 96%;          /* #FDF5EC cream */
     --foreground: 24 60% 14%;          /* #3B1F0E dark brown */
@@ -121,6 +124,10 @@
 }
 
 @layer components {
+  .name-package-card { background: hsl(var(--report-surface)); color: hsl(var(--report-ink)); }
+  .name-package-card h3, .name-package-card h4 { letter-spacing: 0; }
+  .name-package-muted { color: hsl(var(--report-muted)); }
+  .name-package-details { background: hsl(var(--report-detail-surface)); }
   .name-report-trust h2, .name-report-trust h3 { letter-spacing: 0; }
   .name-report-google { color: hsl(var(--review-brand)); }
   .gradient-primary {

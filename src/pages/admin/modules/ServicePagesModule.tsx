@@ -2851,7 +2851,7 @@
 // }
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
 import { Button } from "@/components/ui/button";
@@ -3011,7 +3011,7 @@ export default function ServicePagesModule() {
 
   const [editingPage, setEditingPage] = useState<ServicePage | null>(null);
   const [editingPkg, setEditingPkg] = useState<ServicePackage | null>(null);
-  const [pageForm, setPageForm] = useState(blankPage);
+  const [pageForm, setPageForm] = useState<Omit<typeof blankPage, "status" | "content"> & { status: ServicePage["status"]; content: Record<string, unknown> }>(blankPage);
   const [pkgForm, setPkgForm] = useState(blankPackage);
   const [featuresText, setFeaturesText] = useState("");
   const [faqsText, setFaqsText] = useState("");
@@ -3077,7 +3077,7 @@ export default function ServicePagesModule() {
         .ilike("title", title)
         .maybeSingle();
 
-      if (existing?.id) {
+      if (typeof existing?.id === "string") {
         await supabase
           .from("services")
           .update({

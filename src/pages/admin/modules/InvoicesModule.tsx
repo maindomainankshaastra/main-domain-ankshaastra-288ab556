@@ -3929,7 +3929,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { useAdminTable } from "@/hooks/useAdminData";
@@ -4229,13 +4229,14 @@ export default function InvoicesModule() {
       setCreatedByInfo(null);
       return;
     }
+    const orderId = viewInvoice.order_id;
     let cancelled = false;
     setCreatedByInfo(undefined);
     (async () => {
       const { data: order } = await supabase
         .from("orders")
         .select("payment_method, metadata")
-        .eq("id", viewInvoice.order_id)
+        .eq("id", orderId)
         .maybeSingle();
       if (cancelled) return;
       if (!order) {
@@ -4255,7 +4256,7 @@ export default function InvoicesModule() {
         .eq("user_id", adminId)
         .maybeSingle();
       if (cancelled) return;
-      const adminName = profile?.full_name || profile?.email || adminId;
+      const adminName = typeof profile?.full_name === "string" ? profile.full_name : typeof profile?.email === "string" ? profile.email : adminId;
       setCreatedByInfo({ kind: "manual", adminName });
     })();
     return () => {

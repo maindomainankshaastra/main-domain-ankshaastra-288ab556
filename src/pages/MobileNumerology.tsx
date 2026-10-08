@@ -281,16 +281,14 @@ Email: ${formData.email}`;
             {[
               {
                 name: "Basic Analysis",
-                price: formatINR(pricing.mobile.audit),
-                originalPrice: formatINR(pricing.mobile.auditOriginal),
+                price: formatINR(pricing.luckyNumber.mobile),
                 features: ["Total Number Vibration Analysis", "Mulank & Bhagyank Compatibility", "Career & Relationship Impact", "Verbal Recommendations"],
                 excluded: ["No PDF Report"],
                 highlighted: false,
               },
               {
                 name: "Detailed Report",
-                price: formatINR(pricing.mobile.premium),
-                originalPrice: formatINR(pricing.mobile.premiumOriginal),
+                price: formatINR(pricing.luckyNumber.mobile),
                 badge: "BEST VALUE",
                 features: ["Total Number Vibration Analysis", "Mulank & Bhagyank Compatibility", "Career & Relationship Impact", "Detailed PDF Report (20+ Pages)", "Lucky Number Suggestions", "Personalised Loshu Grid Analysis", "1 Follow-up Consultation"],
                 excluded: [],
@@ -307,7 +305,6 @@ Email: ${formData.email}`;
                 <h3 className="font-display text-xl font-bold text-foreground mb-2">{plan.name}</h3>
                 <div className="flex items-baseline gap-3 mb-6">
                   <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-lg text-muted-foreground line-through">{plan.originalPrice}</span>
                 </div>
                 <div className="space-y-3 mb-8 flex-grow">
                   {plan.features.map((f) => (

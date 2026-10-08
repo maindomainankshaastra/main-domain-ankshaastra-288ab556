@@ -244,6 +244,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase } from "@/lib/legacy-database-client";
 
 type Role = "admin" | "staff" | "moderator" | "user";
 
@@ -302,13 +303,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchPermissions = async (userId: string) => {
-    const { data } = await supabase
+    const { data } = await legacyDatabase
       .from("admin_module_permissions")
       .select("module")
       .eq("user_id", userId)
       .eq("can_view", true);
 
-    setPermissions(data?.map((p) => p.module) || []);
+    setPermissions(data?.flatMap((p) => typeof p.module === "string" ? [p.module] : []) || []);
   };
 
   // Role + permissions fetch combined so we can `await` "do we fully know
