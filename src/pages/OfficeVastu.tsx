@@ -73,6 +73,8 @@ const OfficeVastu = () => {
     layoutAvailable: "",
     businessIndustry: "",
     companyLegalName: "",
+    officeAddress: "",
+    concerns: "",
     whatsapp: "",
     email: "",
   });
@@ -92,6 +94,8 @@ Office State: ${formData.officeState}
 Office Layout Available: ${formData.layoutAvailable}
 Business Industry: ${formData.businessIndustry}
 Company Legal Name: ${formData.companyLegalName}
+Office Address: ${formData.officeAddress}
+Specific Concerns: ${formData.concerns}
 WhatsApp: ${formData.whatsapp}
 Email: ${formData.email}`;
     window.open(`https://wa.me/919667305557?text=${encodeURIComponent(message)}`, "_blank");
@@ -330,13 +334,13 @@ Email: ${formData.email}`;
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">Business Name *</label>
-                  <Input required value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} placeholder="Company/Business name" />
+                  <Input required value={formData.companyLegalName} onChange={e => setFormData({...formData, companyLegalName: e.target.value})} placeholder="Company/Business name" />
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">Mobile Number *</label>
-                  <Input required value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} placeholder="Your mobile number" />
+                  <Input required value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} placeholder="Your mobile number" />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">Email *</label>
@@ -346,7 +350,7 @@ Email: ${formData.email}`;
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">City *</label>
-                  <Input required value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} placeholder="Your city" />
+                  <Input required value={formData.officeCity} onChange={e => setFormData({...formData, officeCity: e.target.value})} placeholder="Your city" />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">Office Address</label>

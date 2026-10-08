@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase } from "@/lib/legacy-database-client";
 
 /**
  * Basic audit logging.
@@ -40,7 +41,7 @@ export function logAuditEvent({ module, action, targetId }: AuditLogInput): void
         user.email ||
         user.id;
 
-      const { error } = await supabase.from("audit_logs").insert({
+      const { error } = await legacyDatabase.from("audit_logs").insert({
         actor_id: user.id,
         actor_name: actorName,
         module,
