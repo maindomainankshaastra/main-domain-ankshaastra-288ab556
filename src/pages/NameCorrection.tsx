@@ -16,6 +16,7 @@ import {
 import { pricing, formatINR } from "@/config/pricing";
 import NameReportPackages from "@/components/services/NameReportPackages";
 import NameReportTrust from "@/components/services/NameReportTrust";
+import NameReportPhilosophy from "@/components/services/NameReportPhilosophy";
 import { Button } from "@/components/ui/button";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
 import heroDesktop from "@/assets/name-check-desktop-restored.webp.asset.json";
@@ -158,27 +159,7 @@ const NameCorrection = () => {
 
       <NameReportTrust />
 
-      {/* SECTION 3 — Why Trust */}
-      <section style={{ background: COLORS.amber, ...body }} className="py-20 lg:py-24">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <h2 style={{ ...heading, color: COLORS.white }} className="text-center text-3xl md:text-[42px] font-semibold mb-12">
-            Why Trust This Report?
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {trustCards.map((c, i) => (
-              <div key={i} style={{ background: COLORS.cream, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }} className="p-8">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-5" style={{ background: COLORS.amber }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12,2 15,9 22,9.5 17,14.5 18.5,22 12,18 5.5,22 7,14.5 2,9.5 9,9" />
-                  </svg>
-                </div>
-                <h3 style={{ ...heading, color: COLORS.brown }} className="text-[22px] font-semibold mb-2">{c.title}</h3>
-                <p style={{ color: COLORS.brown }} className="text-[15px] leading-relaxed">{c.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <NameReportPhilosophy />
 
       {/* SECTION 4 — Comparison Table */}
       <section style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24">
