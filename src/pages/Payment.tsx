@@ -2306,7 +2306,7 @@ const PaymentPage = () => {
     if (formType === "kundali" || formType === "kundali-multi") return [];
     if (formType === "office-vastu") return [];
     if (formType === "consultation") return [KUNDLI_20_ADDON];
-    if (formType === "name-check") return [];
+    if (formType === "name-check" || formType === "name-correction" || formType === "name-correction-couple") return [];
     if (formType === "name-correction") {
       return [KUNDLI_20_ADDON, LUCKY_COLOR_ADDON, MISSING_NUMBER_ADDON];
     }
@@ -2975,8 +2975,8 @@ const PaymentPage = () => {
     formType === "business-property";
   const deliveryNote = formType === "consultation"
     ? "Call Consultation with Himansshu Ji will be scheduled within 48-72 hours."
-    : isNameCheckPackage
-      ? "Delivered within 12-24 Hrs."
+    : isNameCheckPackage || isNameCorrectionReport
+      ? "Delivered via Email within 3 Hours."
       : isNameCorrectionReport || isExtendedReport
         ? "Delivered within 24-48 Hrs."
         : "Delivered within 12-24 Hrs.";
@@ -3560,7 +3560,7 @@ const PaymentPage = () => {
   };
 
   return (
-    <Layout hideWhatsApp={formType === "kundali"}>
+    <Layout minimal={isNameCheckPackage || isNameCorrectionReport} hideWhatsApp={formType === "kundali"}>
       {/* Hero Section */}
       <section className="pt-12 pb-8 bg-gradient-to-br from-brown-dark via-brown to-brown-dark relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">

@@ -24,6 +24,7 @@ const ThankYou = () => {
   const [confirming, setConfirming] = useState(() => Boolean(pendingVerification));
 
   const isKundli = /kundli|kundali/i.test(service);
+  const isNameReport = /name check|name correction|complete.*blueprint/i.test(service);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -93,7 +94,7 @@ const ThankYou = () => {
                 Thank you{name ? `, ${name.split(" ")[0]}` : ""}!
               </h1>
               <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-                We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{service}</span>. Our team will connect with you shortly to begin your consultation.
+                We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{service}</span>. {isNameReport ? "Your report will be mailed to you within 3 hours." : "Our team will connect with you shortly to begin your consultation."}
               </p>
 
               {confirming && (
@@ -136,8 +137,8 @@ const ThankYou = () => {
                 </h2>
                 <ul className="space-y-3 text-white/80 text-sm">
                   <li className="flex gap-3"><span className="text-amber-200 font-bold">1.</span> You&apos;ll receive an invoice and confirmation on your email{email ? ` (${email})` : ""}.</li>
-                  <li className="flex gap-3"><span className="text-amber-200 font-bold">2.</span> Our team will reach out to schedule or deliver your service.</li>
-                  <li className="flex gap-3"><span className="text-amber-200 font-bold">3.</span> For premium reports, expect delivery within 3–7 working days.</li>
+                  <li className="flex gap-3"><span className="text-amber-200 font-bold">2.</span> {isNameReport ? "Your report will be mailed to you within 3 hours." : "Our team will reach out to schedule or deliver your service."}</li>
+                  <li className="flex gap-3"><span className="text-amber-200 font-bold">3.</span> {isNameReport ? "Please check your Spam / Junk folder after 1 hour." : "For premium reports, expect delivery within 3–7 working days."}</li>
                 </ul>
               </div>
 
@@ -149,14 +150,14 @@ const ThankYou = () => {
                 </div>
               )}
 
-              <div className="flex justify-center">
+              {!isNameReport && <div className="flex justify-center">
                 <Link
                   to="/"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-white/20 text-white hover:bg-white/10 transition-all font-semibold"
                 >
                   Back to Home <ArrowRight className="w-4 h-4" />
                 </Link>
-              </div>
+              </div>}
 
               <p className="mt-8 text-white/50 text-xs flex items-center justify-center gap-2">
                 <Mail className="w-3.5 h-3.5" />

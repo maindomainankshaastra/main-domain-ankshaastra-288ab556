@@ -8,9 +8,9 @@ import correctionCover from "@/assets/name-correction-package.webp";
 import blueprintCover from "@/assets/complete-name-package.webp";
 
 const reports = [
-  { title: "Name Check", badge: "Quick Check", description: "Check whether one chosen name aligns with the person's birth date and numerological profile.", cover: nameCheckCover, delivery: "12 Hours" },
-  { title: "Name Correction", badge: "Best Value", description: "A personalised name analysis with corrected name options and clear numerological guidance.", cover: correctionCover, delivery: "Delivered within 24–48 Hrs." },
-  { title: "Name Correction + Complete Blueprint", badge: "Full Blueprint", description: "Name correction and complete numerology guidance for two people, including numbers, colours and remedies.", cover: blueprintCover, delivery: "Delivered within 24–48 Hrs." },
+  { title: "Name Check", badge: "Quick Check", description: "Check whether one chosen name aligns with the person's birth date and numerological profile.", cover: nameCheckCover, delivery: "Email within 3 Hours" },
+  { title: "Name Correction", badge: "Best Value", description: "A personalised name analysis with corrected name options and clear numerological guidance.", cover: correctionCover, delivery: "Email within 3 Hours" },
+  { title: "Name Correction + Complete Blueprint", badge: "Full Blueprint", description: "Name correction and complete numerology guidance for two people, including numbers, colours and remedies.", cover: blueprintCover, delivery: "Email within 3 Hours" },
 ];
 
 const nameCheckInclusions = [
@@ -25,7 +25,7 @@ export default function NameReportPackages() {
     <section id="name-correction-packages" className="bg-background py-16 lg:py-20 scroll-mt-24 font-body">
       <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
         <h2 className="text-center text-3xl md:text-4xl font-semibold mb-10 text-foreground">Select Your Name Report</h2>
-        <div className="grid lg:grid-cols-3 gap-6 items-stretch">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5 items-stretch">
           {reports.map((report, index) => {
             const pkg = nameCorrectionPackages.find((item) => item.serviceTitle === report.title);
             if (!pkg) return null;
