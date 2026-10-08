@@ -19,6 +19,15 @@ export default {
         body: ['"DM Sans"', '"Nunito"', 'sans-serif'],
       },
       colors: {
+        "report-gold": {
+          DEFAULT: "hsl(var(--report-gold))",
+          foreground: "hsl(var(--report-gold-foreground))",
+        },
+        "report-ink": {
+          DEFAULT: "hsl(var(--report-ink))",
+          foreground: "hsl(var(--report-ink-foreground))",
+        },
+        "report-saving": "hsl(var(--report-saving))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
