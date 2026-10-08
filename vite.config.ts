@@ -59,6 +59,12 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
+      // Hosted previews serve CDN pointers before Vite; local previews need the same image endpoint.
+      "/__l5e/assets-v1": {
+        target: "https://id-preview--cd45ad11-7c36-477d-a497-c78207f3eb0f.lovable.app",
+        changeOrigin: true,
+        secure: true,
+      },
       "/api": {
         target: "http://localhost:8081",
         changeOrigin: true,
