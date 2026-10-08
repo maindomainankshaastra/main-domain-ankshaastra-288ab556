@@ -14,10 +14,11 @@ import {
   Clock
 } from "lucide-react";
 import { pricing, formatINR } from "@/config/pricing";
-import { nameCorrectionPackages } from "@/data/serviceCatalog";
+import NameReportPackages from "@/components/services/NameReportPackages";
+import { Button } from "@/components/ui/button";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
-import heroDesktop from "@/assets/name-correction-hero.webp";
-import heroMobile from "@/assets/name-correction-hero-mobile.webp";
+import heroDesktop from "@/assets/name_check_373_desktop.webp.asset.json";
+import heroMobile from "@/assets/name_check_373_mobile.webp.asset.json";
 import geetaImg from "@/assets/celebrities/geeta-tyagi.png";
 import darshanImg from "@/assets/celebrities/darshan-patil.jpg";
 
@@ -104,10 +105,6 @@ const scrollToPackage = (targetId: string) => {
 const NameCorrection = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeT, setActiveT] = useState(0);
-  const [nameQty, setNameQty] = useState<1 | 2 | 3>(1);
-
-  const nameCheckPackages = nameCorrectionPackages.filter((p) => p.formType === "name-check");
-  const activeNameCheck = nameCheckPackages[nameQty - 1] ?? nameCheckPackages[0];
 
   return (
     <Layout>
@@ -136,23 +133,24 @@ const NameCorrection = () => {
 
       {/* SECTION 1 — HERO (minimal) */}
       <section className="relative overflow-hidden isolate" style={body}>
-        <button
+        <Button
+          variant="ghost"
           type="button"
           onClick={() => scrollToPackage("package-name-check")}
           aria-label="Get Name Check — scroll to package selection"
-          className="block w-full cursor-pointer border-0 p-0 bg-transparent"
+          className="block h-auto w-full cursor-pointer border-0 rounded-none p-0 bg-transparent hover:bg-transparent"
         >
           <picture>
-            <source media="(min-width: 768px)" srcSet={heroDesktop} />
+            <source media="(min-width: 768px)" srcSet={heroDesktop.url} />
             <img
-              src={heroMobile}
+              src={heroMobile.url}
               alt="A Small Tweak In Your Name Can Change Your Life — Expert-Led Name Correction Report"
               className="w-full h-auto block"
               loading="eager"
               fetchPriority="high"
             />
           </picture>
-        </button>
+        </Button>
       </section>
 
 
@@ -211,127 +209,7 @@ const NameCorrection = () => {
         </div>
       </section>
 
-      {/* SECTION 5 — Pricing */}
-      <section id="name-correction-packages" style={{ background: COLORS.cream, ...body }} className="py-20 lg:py-24 scroll-mt-24">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <h2 style={{ ...heading, color: COLORS.brown }} className="text-center text-3xl md:text-[44px] font-semibold mb-12 leading-tight">
-            Select the <span style={{ color: COLORS.gold }}>Name Correction Report Package</span>
-          </h2>
-
-          <div className="grid lg:grid-cols-3 gap-6 lg:gap-5 items-stretch">
-            {/* Card 1 — Name Check */}
-            <div id="package-name-check" className="relative rounded-xl p-7 flex flex-col scroll-mt-28"
-              style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider"
-                style={{ background: COLORS.brown, color: COLORS.white }}>NOT SURE?</div>
-              <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-4">Name Check</h3>
-              <div className="flex gap-2 mb-5">
-                {[1, 2, 3].map((q) => (
-                  <button key={q} onClick={() => setNameQty(q as 1 | 2 | 3)}
-                    className="flex-1 py-2 rounded-md text-xs font-medium transition"
-                    style={{
-                      background: nameQty === q ? COLORS.amber : COLORS.cream,
-                      color: nameQty === q ? COLORS.white : COLORS.brown,
-                      border: `1px solid ${nameQty === q ? COLORS.amber : COLORS.cardBorder}`,
-                    }}>
-                    {nameCheckPackages[q - 1]?.name ?? `${q} Name${q > 1 ? "s" : ""}`}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-baseline gap-2 mb-5">
-                {activeNameCheck.originalPrice && (
-                  <span className="line-through text-lg" style={{ color: "#987" }}>{formatINR(activeNameCheck.originalPrice)}</span>
-                )}
-                <span style={{ ...heading, color: COLORS.brown }} className="text-5xl font-bold">{formatINR(activeNameCheck.price)}</span>
-              </div>
-              <ul className="space-y-3 mb-6 flex-1">
-                {["Quick Name Compatibility Check", "Mulank & Bhagyank Overview", "Clear Yes/No Recommendation", "Expert Analysis Summary"].map((f, i) => (
-                  <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
-                ))}
-              </ul>
-              <Link to={payLink(activeNameCheck.serviceTitle, activeNameCheck.price, activeNameCheck.formType)}
-                className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
-                style={{ background: COLORS.brown, color: COLORS.white }}>
-                Get {activeNameCheck.name}
-              </Link>
-              <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
-                <span className="font-semibold"><Clock className="inline w-3 h-3 mr-1" />Delivered within 12-24 Hrs.</span>
-                <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
-              </div>
-            </div>
-
-            {/* Card 2 — Name Correction (Most Popular) */}
-            <div id="package-name-correction" className="relative rounded-xl p-7 flex flex-col lg:scale-[1.02] scroll-mt-28"
-              style={{ background: COLORS.white, border: `2px solid ${COLORS.amber}`, borderRadius: 12, boxShadow: "0 8px 28px rgba(193,122,26,0.18)" }}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[11px] font-semibold tracking-wider"
-                style={{ background: COLORS.amber, color: COLORS.white }}>★ MOST POPULAR</div>
-              <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction</h3>
-              <div className="flex items-baseline gap-3 mb-1">
-                <span className="line-through text-base" style={{ color: "#987" }}>{formatINR(pricing.nameCorrection.standardOriginal)}</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>60% OFF</span>
-              </div>
-              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(pricing.nameCorrection.standard)}</div>
-              <ul className="space-y-3 mb-6 flex-1">
-                {["Mulank & Bhagyank Analysis", "First Name & Full Name Analysis", "Compound Number Analysis", "Personal Lo Shu Grid", "First Alphabet Analysis", "2 Corrected Name Options", "PDF Report (50+ Pages)", "Call Consultation Included"].map((f, i) => (
-                  <li key={i} className="flex items-start text-[15px]" style={{ color: COLORS.brown }}><Diamond />{f}</li>
-                ))}
-              </ul>
-              <Link to={payLink("Name Correction", pricing.nameCorrection.standard, "name-correction")}
-                className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90"
-                style={{ background: COLORS.gold, color: COLORS.white }}>
-                Get Name Correction Report
-              </Link>
-              <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
-                <span className="font-semibold"><Clock className="inline w-3 h-3 mr-1" />Delivered within 24-48 Hrs.</span>
-                <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
-              </div>
-            </div>
-
-            {/* Card 3 — Premium */}
-            <div id="package-complete-blueprint" className="relative rounded-xl p-7 flex flex-col scroll-mt-28"
-              style={{ background: COLORS.white, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, boxShadow: "0 2px 16px rgba(193,122,26,0.10)" }}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider"
-                style={{ background: COLORS.brown, color: COLORS.gold }}>✦ PREMIUM</div>
-              <h3 style={{ ...heading, color: COLORS.brown }} className="text-2xl font-semibold mt-2 mb-3">Name Correction + Complete Numerology Blueprint</h3>
-              <div className="flex items-baseline gap-3 mb-1">
-                <span className="line-through text-base" style={{ color: "#987" }}>{formatINR(10076)}</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: COLORS.gold, color: COLORS.white }}>27% OFF</span>
-              </div>
-              <div style={{ ...heading, color: COLORS.brown }} className="text-[56px] font-bold leading-tight mb-5">{formatINR(7397)}</div>
-              <div className="rounded-lg px-4 py-3 mb-5" style={{ background: "#FFF3DC", border: `1px solid ${COLORS.gold}` }}>
-                <div className="text-[14px] font-semibold leading-snug" style={{ color: COLORS.brown }}>
-                  ✦ Everything Included — Covers 2 People
-                </div>
-                <div className="text-[12px] mt-1" style={{ color: COLORS.brown, opacity: 0.8 }}>
-                  Full Name Correction + complete numerology blueprint for both individuals.
-                </div>
-              </div>
-              <ul className="space-y-2.5 mb-5">
-                {[
-                  "Everything in Name Correction Report",
-                  "Lucky Color Analysis",
-                  "Lucky Number Analysis",
-                  "Lucky Mobile Number",
-                  "Missing Number Remedy",
-                  "Repeating Number Remedy",
-                  "Covers 2 People",
-                ].map((f, i) => (
-                  <li key={i} className="flex items-start text-[14px]" style={{ color: COLORS.brown }}><Diamond color={COLORS.amber} />{f}</li>
-                ))}
-              </ul>
-              <Link to={payLink("Name Correction + Complete Blueprint", pricing.nameCorrection.withBlueprint, "name-correction-couple")}
-                className="block w-full text-center py-3.5 rounded-md font-medium transition hover:opacity-90 mt-auto"
-                style={{ background: COLORS.brown, color: COLORS.white }}>
-                Get Complete Blueprint
-              </Link>
-              <div className="flex items-center justify-center gap-4 mt-3 text-xs" style={{ color: COLORS.brown }}>
-                <span className="font-semibold"><Clock className="inline w-3 h-3 mr-1" />Delivered within 24-48 Hrs.</span>
-                <span><Lock className="inline w-3 h-3 mr-1" />Secure</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <NameReportPackages />
 
       {/* SECTION 6 — About */}
       <section style={{ background: COLORS.amber, ...body }} className="py-20 lg:py-24">
