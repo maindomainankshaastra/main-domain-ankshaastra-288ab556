@@ -1905,7 +1905,7 @@ const consultationPackages = {
 type BaseFormType = "kundali" | "kundali-multi" | "consultation" | "name-correction" | "name-correction-couple" | "name-check" | "couple" | "pyaar-shastra" | "default";
 type FormType = BaseFormType | ExtendedFormType;
 
-const inferFormType = (service: string | null, hasConsultationType: boolean): BaseFormType => {
+const inferFormType = (service: string | null, hasConsultationType: boolean): FormType => {
   if (hasConsultationType) return "consultation";
   if (!service) return "default";
   const s = service.toLowerCase();

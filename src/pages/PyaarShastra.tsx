@@ -256,7 +256,7 @@ const PyaarShastra = () => {
             <p className="text-lg text-muted-foreground mb-8">
               Pyaar Shaastra Report — kyunki ek achhi zindagi sirf feeling se nahi, samajh se bhi banti hai.
             </p>
-            <Link to={payLink} className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
+            <Link to={payLink(pyaarShastraPackages[0].serviceTitle, pyaarShastraPackages[0].price, pyaarShastraPackages[0].formType)} className="inline-flex items-center gap-3 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-xl hover:opacity-90 transition-opacity text-lg">
               Apna Report Book Karo — {formatINR(pricing.pyaarShastra.price)} <Heart className="w-5 h-5 fill-current" />
             </Link>
             <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-8 text-sm text-muted-foreground">
