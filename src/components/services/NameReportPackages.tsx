@@ -3,9 +3,9 @@ import { ArrowRight, Check, Clock, Lock, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { nameCorrectionPackages } from "@/data/serviceCatalog";
 import { formatINR, payLink } from "@/config/pricing";
-import nameCheckCover from "@/assets/name-check-package.webp.asset.json";
-import correctionCover from "@/assets/name-correction-package.webp.asset.json";
-import blueprintCover from "@/assets/complete-name-package.webp.asset.json";
+import nameCheckCover from "@/assets/name-check-package.webp";
+import correctionCover from "@/assets/name-correction-package.webp";
+import blueprintCover from "@/assets/complete-name-package.webp";
 
 const reports = [
   { title: "Name Check", badge: "Quick Check", description: "Check whether one chosen name aligns with the person's birth date and numerological profile.", cover: nameCheckCover.url, delivery: "12 Hours" },

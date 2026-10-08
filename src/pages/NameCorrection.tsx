@@ -19,8 +19,8 @@ import NameReportTrust from "@/components/services/NameReportTrust";
 import NameReportPhilosophy from "@/components/services/NameReportPhilosophy";
 import { Button } from "@/components/ui/button";
 import expertPhoto from "@/assets/expert-himansshu.jpg";
-import heroDesktop from "@/assets/name-check-desktop-restored.webp.asset.json";
-import heroMobile from "@/assets/name-check-mobile-restored.webp.asset.json";
+import heroDesktop from "@/assets/name-check-desktop-restored.webp";
+import heroMobile from "@/assets/name-check-mobile-restored.webp";
 import geetaImg from "@/assets/celebrities/geeta-tyagi.png";
 import darshanImg from "@/assets/celebrities/darshan-patil.jpg";
 

@@ -1,7 +1,7 @@
 import { Film, Star, Tv } from "lucide-react";
 import geita from "@/assets/celebrities/geeta-tyagi.png";
 import darshan from "@/assets/celebrities/darshan-patil.jpg";
-import prashantt from "@/assets/prashantt-sambargi.webp.asset.json";
+import prashantt from "@/assets/prashantt-sambargi.webp";
 
 const clients = [
   { name: "Geita Tyagi", role: "TV & Film Actress", work: "Jagaddhatri · Doli Armaano Ki", image: geita, icon: Tv },
