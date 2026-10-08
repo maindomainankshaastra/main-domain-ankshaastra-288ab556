@@ -1,5 +1,10 @@
 # Project Roadmap
 
+## Current
+- Remove Name Report comparison and isolate page/checkout from other services and WhatsApp.
+- Match expert and podcast reference sections directly after reviews; clean up mobile boxed content.
+- Update Name Report confirmation to 3-hour email delivery and spam check after 1 hour; verify page and checkout.
+
 ## Completed
 - Fixed local preview image routing and verified hero/package images without browser overrides; updated Prashantt's supplied portrait, Darsshan's spelling, and the third section with reader-focused copy. Desktop/mobile checks and catalog tests passed.
 - Cleared all automatic build/typecheck errors; four catalog/PDF regression tests passed; verified Name Check images and ₹373 checkout with no browser runtime errors.
