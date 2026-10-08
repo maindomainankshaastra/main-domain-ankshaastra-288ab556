@@ -1102,7 +1102,7 @@ const TeamManagementModule = () => {
       .ilike("email", searchEmail.trim())
       .maybeSingle();
 
-    if (error || !data) {
+    if (error || !data || typeof data.user_id !== "string") {
       setSearching(false);
       toast.error("No user found with this email. They must sign up first at /auth.");
       return;
@@ -1124,7 +1124,7 @@ const TeamManagementModule = () => {
       return;
     }
 
-    setFoundUser(data);
+    setFoundUser({ user_id: data.user_id, full_name: typeof data.full_name === "string" ? data.full_name : null, email: typeof data.email === "string" ? data.email : null });
     setSelectedModules([]);
     setPresetKey(null);
   };
