@@ -450,7 +450,7 @@ export function buildInvoiceTemplateData(input: {
   const gst = calculateGst({
     amount: Number(order.total_amount || order.amount || 0),
     gstRate,
-    isGstInclusive: gstConfig?.is_gst_inclusive_default ?? true,
+    isGstInclusive: typeof gstConfig?.is_gst_inclusive_default === 'boolean' ? gstConfig.is_gst_inclusive_default : true,
     businessStateCode,
     customerStateCode,
   });

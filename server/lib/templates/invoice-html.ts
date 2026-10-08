@@ -350,7 +350,7 @@ export function renderInvoiceHtml(data: InvoiceTemplateData): string {
     data.customerState,
     data.customerPincode ? `Pincode: ${data.customerPincode}` : '',
   ]
-    .filter(Boolean)
+    .filter((line): line is string => typeof line === 'string' && line.length > 0)
     .map((line) => `<div>${escape(line)}</div>`)
     .join('');
  
