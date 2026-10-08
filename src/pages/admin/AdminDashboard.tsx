@@ -2313,7 +2313,7 @@ type RecentInvoice = {
   status: string;
   invoice_date: string;
   pdf_url: string | null;
-  pdf_storage_path: string | null;
+  pdf_storage_path?: string | null;
 };
 
 const COLORS = ["#60A5FA", "#34D399", "#FBBF24", "#FB923C", "#A78BFA", "#F87171"];
@@ -2620,12 +2620,12 @@ const AdminDashboard = () => {
       // Financial Year filter updates this list too.
       const { data: periodInvoiceRows } = await supabase
         .from("invoices")
-        .select("id, invoice_number, customer_name, service_title, total_amount, status, invoice_date, pdf_url, pdf_storage_path")
+        .select("id, invoice_number, customer_name, service_title, total_amount, status, invoice_date, pdf_url")
         .gte("invoice_date", startISO)
         .lt("invoice_date", endISO)
         .order("invoice_date", { ascending: false })
         .limit(5);
-      setRecentInvoices((periodInvoiceRows as RecentInvoice[]) || []);
+      setRecentInvoices(periodInvoiceRows || []);
     })();
   }, [viewType, selectedMonth, selectedDate, selectedWeek]);
 
