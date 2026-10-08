@@ -2307,9 +2307,6 @@ const PaymentPage = () => {
     if (formType === "office-vastu") return [];
     if (formType === "consultation") return [KUNDLI_20_ADDON];
     if (formType === "name-check" || formType === "name-correction" || formType === "name-correction-couple") return [];
-    if (formType === "name-correction") {
-      return [KUNDLI_20_ADDON, LUCKY_COLOR_ADDON, MISSING_NUMBER_ADDON];
-    }
     if (formType === "lucky-vehicle") {
       return [LUCKY_VEHICLE_COLOR_ADDON, SHUBH_MUHURAT_ADDON];
     }
