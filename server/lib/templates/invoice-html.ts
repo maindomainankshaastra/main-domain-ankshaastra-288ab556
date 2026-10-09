@@ -326,6 +326,8 @@ export type InvoiceTemplateData = {
   thankYouMessage?: string;
   invoiceFooter?: string;
   termsConditions?: string;
+   /** Goods (Shopify store) invoice details. When present the goods PDF layout is used. */
+  goods?: import('../goods-invoice.js').GoodsInvoiceData;
 };
  
 // Case/whitespace-insensitive name comparison — used to detect a
