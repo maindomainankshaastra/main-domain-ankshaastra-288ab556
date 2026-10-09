@@ -189,6 +189,8 @@ export type GstrInvoiceRecord = {
   service_title: string;
   sac_code?: string | null;
   hsn_sac_code?: string | null;
+  item_quantity?: number | null;
+  hsn_summary?: Array<{ hsn: string; rate: number; taxable: number; cgst: number; sgst: number; igst: number }> | null;
   subtotal?: number | null;
   base_amount?: number | null;
   cgst_amount?: number | null;
@@ -218,6 +220,7 @@ export type B2csAggregateRow = {
 
 export type SacSummaryRow = {
   sacCode: string;
+  uqc: string;
   gstRate: number;
   invoiceCount: number;
   quantity: number;
