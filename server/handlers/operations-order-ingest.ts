@@ -5,6 +5,7 @@ import { scheduleInvoiceGeneration } from '../lib/schedule-invoice.js';
 import { normalizeSourceWebsite } from '../lib/connected-sites.js';
 import { resolveBusinessStateCode } from '../lib/build-invoice-template.js';
 import { stateCodeFromName } from '../lib/indian-states.js';
+import { handleLineItemOrder } from '../lib/shop-line-items.js';
 
 function pickString(source: Record<string, unknown>, keys: string[]): string | undefined {
   for (const key of keys) {
@@ -126,6 +127,11 @@ export default async function handler(req: any, res: any) {
 
   const body = req.body || {};
   const sourceWebsite = normalizeSourceWebsite(body.sourceWebsite);
+  
+  // Product-wise HSN/GST (Shopify store): split by rate/HSN, then re-enter this handler per group.
+  if (Array.isArray(body.lineItems) && body.lineItems.length > 0) {
+    return handleLineItemOrder(req, res, body, sourceWebsite, handler);
+  }
   const serviceTitle = String(body.serviceTitle || 'Service');
   const amount = Number(body.totalAmount || body.amount);
   const customer = body.customer || {};
@@ -158,7 +164,11 @@ export default async function handler(req: any, res: any) {
   const { data: gstConfig } = await supabase.from('gst_config').select('*').limit(1).single();
   const businessState = resolveBusinessStateCode(gstConfig as Record<string, unknown>);
   const customerStateCode = customerStateCodeFromMetadata(metadata) || businessState;
-  const gstRate = Number(gstConfig?.default_gst_rate ?? 18);
+    const metaRate = metadata.gstRate;
+  const gstRate =
+    metaRate !== undefined && metaRate !== null && metaRate !== '' && Number.isFinite(Number(metaRate))
+      ? Number(metaRate)
+      : Number(gstConfig?.default_gst_rate ?? 18);
 
   const gst = calculateGst({
     amount,
