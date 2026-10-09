@@ -23,7 +23,7 @@ const faqs = [
   { q: "How is this different from a software-generated report?", a: "Every report is personally analyzed by Himansshu Agarwal Ji using Chaldean and Vedic numerology — not auto-generated PDFs." },
   { q: "How long does delivery take?", a: "Name Check: 12–24 hours. Check your email / spam box after 6 hours. Name Correction: 24–48 hours. Complete Name Blueprint: 24–28 hours. Name Correction and Complete Blueprint reports are delivered on WhatsApp." },
   { q: "What information do I need to provide?", a: "Your full name, date of birth, time and place of birth (if available)." },
-  { q: "Is a live session included in all packages?", a: "Live video sessions with Himansshu Ji are included only in the Premium 'Name Correction + Live Session' package." },
+  { q: "Is a call consultation included?", a: "A call consultation is included in Name Correction and Complete Name Blueprint. It is not included in Name Check." },
 ];
 
 const scrollToPackages = () => {
@@ -74,7 +74,7 @@ export default function NameCorrection() {
         </section>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-report-gold/30 bg-background/95 p-3 backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-xs text-report-ink">{nameReportOffers[selected]?.title}</p><p className="font-display text-xl font-bold text-report-gold">{selectedPackage ? formatINR(selectedPackage.price) : ""}</p></div><Button onClick={() => bookReport(selected)} className="h-12 shrink-0 bg-report-gold text-report-gold-foreground hover:bg-report-gold/90">Get Report <ArrowRight /></Button></div>
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-xs text-report-ink">{nameReportOffers[selected]?.title}</p><p className="font-display text-xl font-bold text-report-gold">{selectedPackage ? formatINR(selectedPackage.price) : ""}</p></div><div className="flex shrink-0 gap-2"><Button variant="outline" onClick={scrollToPackages} className="h-12 px-2 text-xs text-report-ink">View Packages</Button><Button onClick={() => bookReport(selected)} className="h-12 px-3 bg-report-gold text-report-gold-foreground hover:bg-report-gold/90">Buy Now <ArrowRight /></Button></div></div>
       </div>
     </Layout>
   );

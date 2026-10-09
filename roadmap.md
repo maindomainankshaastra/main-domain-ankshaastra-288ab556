@@ -1,12 +1,11 @@
 # Project Roadmap
 
 ## Current
-- Add moving credibility strip and original Google/media logos; change trust heading to global.
-- Reorder report page; compact selectable packages with updated descriptions, inclusions, ratings and timelines.
-- Inline contact-first booking and review/payment; conditional middle-name question; eliminate duplicate PIN field.
-- Update report-specific confirmation; verify desktop/mobile and checkout review.
+- None.
 
 ## Completed
+- Added moving black credibility strip, original media/Google logos, global trust heading and requested section order; updated report descriptions, inclusions, ratings and delivery labels with compact selectable mobile packages.
+- Added inline contact-first details/review/payment using the existing payment flow, conditional middle-name question and one contact PIN; verified Name Check entry, review and edit without navigation or payment. Verified mobile cards, all report confirmation wording and six regression tests. Actual payment and automated report delivery were not exercised.
 - Removed comparison and other-service/WhatsApp distractions; added expert and podcasts after reviews with boxed mobile content. Verified ₹373 checkout, mobile images, podcast playback, and 3-hour email/1-hour spam confirmation (without making a payment).
 - Fixed local preview image routing and verified hero/package images without browser overrides; updated Prashantt's supplied portrait, Darsshan's spelling, and the third section with reader-focused copy. Desktop/mobile checks and catalog tests passed.
 - Cleared all automatic build/typecheck errors; four catalog/PDF regression tests passed; verified Name Check images and ₹373 checkout with no browser runtime errors.
