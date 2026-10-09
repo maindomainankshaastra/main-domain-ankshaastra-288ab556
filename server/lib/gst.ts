@@ -61,8 +61,18 @@ export function formatInvoiceNumber(rawPrefix: string, sequence: number): string
 }
 
 export async function nextInvoiceNumber(
-  supabase: ReturnType<typeof import("./supabase-admin").getSupabaseAdmin>
+  supabase: ReturnType<typeof import("./supabase-admin").getSupabaseAdmin>,
+   sourceWebsite?: string | null
 ): Promise<string> {
+    // Sites with their own series (e.g. shop.ankshaastra.com => S26-27/0001)
+  // use it; everyone else keeps the existing global series untouched.
+  if (sourceWebsite) {
+    const { data: siteNumber, error: siteErr } = await supabase.rpc("next_invoice_number_for_site", {
+      p_site: String(sourceWebsite),
+    });
+    if (!siteErr && siteNumber) return String(siteNumber);
+  }
+  
   const { data, error } = await supabase.rpc("next_invoice_number");
   if (!error && data) return String(data);
 
