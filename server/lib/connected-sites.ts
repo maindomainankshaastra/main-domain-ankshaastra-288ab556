@@ -97,6 +97,7 @@ export const CONNECTED_SITES = {
   MAIN: 'ankshaastra.com',
   EMPOWER: 'empower.ankshaastra.com',
   MIRACLEBABY: 'miraclebaby.ankshaastra.com',
+    SHOP: 'shop.ankshaastra.com',
 } as const;
 
 export type ConnectedSiteDomain = (typeof CONNECTED_SITES)[keyof typeof CONNECTED_SITES];
@@ -130,6 +131,7 @@ export function partnerOrigins(): string[] {
     'https://empower.ankshaastra.com',
     'https://www.empower.ankshaastra.com',
     'https://miraclebaby.ankshaastra.com',
+        'https://shop.ankshaastra.com',
     'http://localhost:5173',
     'http://localhost:3000',
     'http://127.0.0.1:5173',
