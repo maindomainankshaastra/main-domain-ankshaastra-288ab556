@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Make Complete Blueprint a single-person Name Correction form, remove two-person package references, restore contrasting sections around the hero-orange base, and replace Challenge text; verify checkout and mobile layout.
 
 ## Completed
 - Added contact-first mobile stepped booking sheets preserving existing report fields, validation and review; unified the Name Report hero-orange theme and updated Blueprint to ₹5,957 / ₹15,051 with 5 stars (8k sold). Five catalog tests passed; verified mobile entry, review and retained edits without making a payment.
