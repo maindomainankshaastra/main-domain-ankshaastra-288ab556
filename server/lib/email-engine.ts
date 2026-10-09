@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { assertSmtpConfigured, formatSmtpError } from './smtp-config.js';
+import { assertSmtpConfiguredForSite, formatSmtpError } from './smtp-config.js';
 import { getSupabaseAdmin } from './supabase-admin.js';
 
 export type SendEmailInput = {
@@ -15,6 +15,8 @@ export type SendEmailInput = {
   customerId?: string;
   orderId?: string;
   invoiceId?: string;
+    /** Order/invoice source site; picks the sender profile (e.g. shop.ankshaastra.com). */
+  sourceWebsite?: string | null;
 };
 
 async function logEmailAttempt(
@@ -47,7 +49,7 @@ async function logEmailAttempt(
 }
 
 export async function sendEmail(input: SendEmailInput) {
-  const smtp = assertSmtpConfigured();
+   const smtp = assertSmtpConfiguredForSite(input.sourceWebsite);
 
   const transporter = nodemailer.createTransport({
     host: smtp.host,
