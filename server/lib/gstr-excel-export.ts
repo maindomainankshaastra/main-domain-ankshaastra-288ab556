@@ -477,12 +477,13 @@ export async function buildGstr1Workbook(
   }
 
   const sacSheet = wb.addWorksheet('SAC Summary');
-  await writeMetaRows(sacSheet, meta, 'SAC / HSN Summary');
-  sacSheet.addRow(['SAC', 'GST %', 'Invoices', 'Qty', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total GST', 'Gross']);
+    await writeMetaRows(sacSheet, meta, 'HSN / SAC Summary');
+    sacSheet.addRow(['HSN/SAC', 'UQC', 'GST %', 'Invoices', 'Qty', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total GST', 'Gross']);
   sacSheet.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
   for (const row of sac) {
     sacSheet.addRow([
       row.sacCode,
+            row.uqc,
       row.gstRate,
       row.invoiceCount,
       row.quantity,
@@ -578,12 +579,13 @@ export async function buildSacSummaryWorkbook(
   const wb = new ExcelJS.Workbook();
   const sheet = wb.addWorksheet('SAC Summary');
   const rows = aggregateSacSummary(invoices);
-  await writeMetaRows(sheet, meta, 'SAC Summary Report');
-  sheet.addRow(['SAC', 'GST %', 'Invoices', 'Qty', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total GST', 'Gross']);
+   await writeMetaRows(sheet, meta, 'HSN / SAC Summary Report');
+    sheet.addRow(['HSN/SAC', 'UQC', 'GST %', 'Invoices', 'Qty', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total GST', 'Gross']);
   sheet.getRow(7).eachCell((c) => Object.assign(c, headerStyle()));
   for (const row of rows) {
     sheet.addRow([
       row.sacCode,
+            row.uqc,
       row.gstRate,
       row.invoiceCount,
       row.quantity,
