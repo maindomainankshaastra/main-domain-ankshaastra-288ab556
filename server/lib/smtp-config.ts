@@ -58,6 +58,54 @@ export function resolveSmtpConfig(): SmtpConfig {
 
   return { host, port, secure, user, pass, from };
 }
+/**
+ * Per-site sender. The Shopify store (shop.ankshaastra.com) sends from
+ * no-reply@ankshaastra.in by default. Everything else keeps the global SMTP_* / EMAIL_FROM.
+ *
+ * Optional overrides (Vercel env), all fall back to the global SMTP_* values:
+ *   SHOP_EMAIL_FROM, SHOP_SMTP_HOST, SHOP_SMTP_PORT, SHOP_SMTP_SECURE,
+ *   SHOP_SMTP_USER, SHOP_SMTP_PASSWORD
+ */
+export const SHOP_DEFAULT_FROM = 'Ankshaastra <no-reply@ankshaastra.in>';
+export const SHOP_DEFAULT_ADMIN_EMAIL = 'orders@ankshaastra.in';
+
+export function isShopSite(site?: string | null): boolean {
+  return String(site || '').trim().toLowerCase().startsWith('shop.');
+}
+
+export function resolveSmtpConfigForSite(site?: string | null): SmtpConfig {
+  const base = resolveSmtpConfig();
+  if (!isShopSite(site)) return base;
+
+  const port = trim(process.env.SHOP_SMTP_PORT);
+  const secure = trim(process.env.SHOP_SMTP_SECURE);
+  return {
+    host: trim(process.env.SHOP_SMTP_HOST) || base.host,
+    port: port ? Number(port) : base.port,
+    secure: secure ? secure === 'true' : base.secure,
+    user: trim(process.env.SHOP_SMTP_USER) || base.user,
+    pass: trim(process.env.SHOP_SMTP_PASSWORD) || base.pass,
+    from: trim(process.env.SHOP_EMAIL_FROM) || SHOP_DEFAULT_FROM,
+  };
+}
+
+export function assertSmtpConfiguredForSite(site?: string | null): SmtpConfig {
+  if (!isShopSite(site)) return assertSmtpConfigured();
+  // Validate with the same rules, but against the shop profile.
+  const cfg = resolveSmtpConfigForSite(site);
+  if (!cfg.host || !cfg.user || !cfg.pass || !cfg.from) {
+    throw new Error(
+      'SMTP is not fully configured for the shop. Set SMTP_HOST/SMTP_USER/SMTP_PASSWORD (or the SHOP_SMTP_* overrides) on the server.',
+    );
+  }
+  if (looksLikeEmailAddress(cfg.host)) {
+    throw new Error(`SMTP host must be a mail server hostname, not "${cfg.host}".`);
+  }
+  if (!Number.isFinite(cfg.port) || cfg.port <= 0) {
+    throw new Error('SHOP_SMTP_PORT / SMTP_PORT must be a valid port number.');
+  }
+  return cfg;
+}
 
 export function getSmtpConfigStatus(): SmtpConfigStatus {
   const cfg = resolveSmtpConfig();
