@@ -149,7 +149,7 @@
   .name-ad-page .name-report-philosophy article { background: hsl(var(--card)); }
   .name-ad-page .report-credibility-marquee { color: hsl(var(--amber-light)); }
   .report-mobile-sheet {
-    top: auto !important; bottom: 0; left: 0; transform: none !important; max-width: none;
+    top: auto !important; bottom: 0; left: 0 !important; transform: none !important; max-width: none;
     animation: none !important;
     display: flex; flex-direction: column; gap: 0; height: 94dvh; max-height: 94dvh;
     padding: 14px 20px max(20px, env(safe-area-inset-bottom));
