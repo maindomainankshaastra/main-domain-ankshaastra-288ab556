@@ -1,5 +1,6 @@
 import { renderInvoiceHtml, type InvoiceTemplateData } from './templates/invoice-html.js';
 import { generateInvoicePdfWithPdfLib } from './pdf-lib-invoice.js';
+import { generateGoodsInvoicePdf } from './goods-invoice.js';
 
 function isPdfBuffer(buffer: Buffer): boolean {
   return buffer.length >= 4 && buffer.subarray(0, 4).toString() === '%PDF';
@@ -56,6 +57,14 @@ export async function generateInvoicePdf(
   html: string;
   mimeType: string;
 }> {
+    // Goods invoices (Shopify store) have their own layout.
+  if (data.goods) {
+    const goodsBuffer = await generateGoodsInvoicePdf(data);
+    if (!isPdfBuffer(goodsBuffer)) throw new Error('Goods invoice renderer did not return a valid PDF buffer');
+    console.log(`[pdf-engine] Generated goods invoice ${data.invoiceNumber} (${goodsBuffer.length} bytes)`);
+    return { buffer: goodsBuffer, html: '', mimeType: 'application/pdf' };
+  }
+  
   const html = renderInvoiceHtml(data);
 
   let buffer: Buffer | null = null;
