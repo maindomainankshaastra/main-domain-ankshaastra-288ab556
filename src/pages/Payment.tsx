@@ -1495,7 +1495,8 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
       );
       return (
         <>
-          {ContactRow}
+          {(step === undefined || step === 0) && ContactRow}
+          {(step === undefined || step === 1) && <>
           {NameTriplet}
           <FormField control={c} name="lastNameChangeOk" render={({ field }) => (
             <FormItem>
@@ -1509,9 +1510,9 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
               <FormMessage />
             </FormItem>
           )} />
-          {BirthRow}
-          {POBPincode}
-          <GenderRadio control={c} />
+          <GenderRadio control={c} /></>}
+          {(step === undefined || step === 2) && <>{BirthRow}{POBPincode}</>}
+          {(step === undefined || step === 3) && <>
           <div>
             <h3 className="font-semibold text-foreground mb-3">Relationship Quality</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1540,20 +1541,17 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
               <FormMessage />
             </FormItem>
           )} />
+          </>}
         </>
       );
     }
 
     if (formType === "name-check") {
-      return (
-        <>
-          {ContactRow}
-          {NameTriplet}
-          <DOBPicker control={c} />
-          {POBPincode}
-          <GenderRadio control={c} />
-        </>
-      );
+      return <>
+        {(step === undefined || step === 0) && ContactRow}
+        {(step === undefined || step === 1) && <>{NameTriplet}<GenderRadio control={c} /></>}
+        {(step === undefined || step === 2) && <><DOBPicker control={c} />{POBPincode}</>}
+      </>;
     }
 
     if (formType === "name-correction-couple") {
@@ -1659,18 +1657,18 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
       );
       return (
         <>
-          {ContactRow}
+          {(step === undefined || step === 0) && ContactRow}
           <div className="rounded-lg bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-foreground">
             This package covers <strong>2 people</strong>. Please provide complete name correction details for both.
           </div>
-          <PersonNameCorrBlock name="person1" title="Person 1 — Full Details" accent="bg-primary" />
-          <PersonNameCorrBlock name="person2" title="Person 2 — Full Details" accent="bg-amber-500" />
-          <FormField control={c} name="reason" render={({ field }) => (
+          {(step === undefined || step === 1) && <PersonNameCorrBlock name="person1" title="Person 1 — Full Details" accent="bg-primary" />}
+          {(step === undefined || step === 2) && <PersonNameCorrBlock name="person2" title="Person 2 — Full Details" accent="bg-primary" />}
+          {(step === undefined || step === 3) && <FormField control={c} name="reason" render={({ field }) => (
             <FormItem><FormLabel>Reason for Name Correction *</FormLabel>
               <FormControl><Textarea placeholder="Share your goals, struggles, and what you'd like to improve for both people." className="min-h-[140px] resize-none" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
-          )} />
+          )} />}
         </>
       );
     }
