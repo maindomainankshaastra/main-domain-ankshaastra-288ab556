@@ -5,7 +5,7 @@ export const DEFAULT_SAC_CODE = GST_COMPANY_DEFAULTS.defaultSacCode;
 
 export function resolveSacCode(gstConfig?: { default_sac_code?: string | null } | null): string {
   const fromConfig = String(gstConfig?.default_sac_code || '').trim();
-  if (/^\d{6}$/.test(fromConfig)) return fromConfig;
+    if (/^(\d{4}|\d{6}|\d{8})$/.test(fromConfig)) return fromConfig;
   return DEFAULT_SAC_CODE;
 }
 
