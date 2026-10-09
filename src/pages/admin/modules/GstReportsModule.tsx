@@ -69,7 +69,12 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-export default function GstReportsModule() {
+/**
+ * GST & GSTR-1 Reports. Pass `site` for a single-site view (e.g. the Shop module):
+ * validation and exports cover only that site's invoices. Filing status is NOT
+ * tracked in this view — one GSTIN files one combined GSTR-1 (main GSTR Reports page).
+ */
+export default function GstReportsModule({ site, title }: { site?: string; title?: string } = {}) {
   const now = new Date();
   const [year, setYear] = useState(String(now.getFullYear()));
   const [month, setMonth] = useState(String(now.getMonth() + 1));
@@ -92,7 +97,7 @@ export default function GstReportsModule() {
       if (!token) throw new Error("Not signed in");
 
       const res = await fetch(
-        `/api/admin/gstr-reports?year=${year}&month=${month}`,
+                `/api/admin/gstr-reports?year=${year}&month=${month}${site ? `&site=${encodeURIComponent(site)}` : ""}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const withPeriod = (await res.json()) as ValidationReport & { error?: string };
@@ -122,7 +127,7 @@ export default function GstReportsModule() {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ action, year: Number(year), month: Number(month), ...extra }),
+            body: JSON.stringify({ action, year: Number(year), month: Number(month), ...(site ? { site } : {}), ...extra }),
     });
     const data = (await res.json()) as ValidationReport & { error?: string; filename?: string; data?: string };
     if (!res.ok) {
@@ -176,7 +181,7 @@ export default function GstReportsModule() {
 
   return (
     <AdminPage
-      title="GST & GSTR-1 Reports"
+           title={title || "GST & GSTR-1 Reports"}
     //   description="ANKSHAASTRA OCCULT EXPERTS LLP — SAC 999799, UP (09), monthly GSTR-1. Only errors block filing."
     >
       <div className="space-y-6 max-w-5xl">
@@ -209,8 +214,8 @@ export default function GstReportsModule() {
           </Button>
           {canExport && (
             <>
-              <Button variant="secondary" onClick={markReady}>Mark Ready To File</Button>
-              <Button variant="outline" onClick={markFiled}>Mark Filed</Button>
+                            {!site && <Button variant="secondary" onClick={markReady}>Mark Ready To File</Button>}
+              {!site && <Button variant="outline" onClick={markFiled}>Mark Filed</Button>}
             </>
           )}
         </div>
@@ -266,7 +271,7 @@ export default function GstReportsModule() {
             { type: "gstr1", label: "GSTR-1 Excel" },
             { type: "summary", label: "GST Summary Excel" },
             { type: "sales", label: "Monthly Sales Register" },
-            { type: "sac", label: "SAC Summary Report" },
+                        { type: "sac", label: "HSN/SAC Summary Report" },
           ].map(({ type, label }) => (
             <Button
               key={type}
@@ -286,7 +291,18 @@ export default function GstReportsModule() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          GSTIN 09AAFFE7583B1ZD · SAC 999799 · UP (09). B2CS rows are aggregated by state and rate.
+                    {site ? (
+            <>
+              GSTIN 09AAFFE7583B1ZD · UP (09). Showing <strong>{site}</strong> invoices only, for review and reconciliation.
+              The monthly GSTR-1 is filed once for all sites from the main <strong>GSTR Reports</strong> page, which already
+              includes these invoices — mark Ready/Filed there.{" "}
+            </>
+          ) : (
+            <>
+              GSTIN 09AAFFE7583B1ZD · UP (09). Includes invoices from all connected sites (main, Empower, Miracle Baby, Shop).{" "}
+            </>
+          )}
+          HSN/SAC summary is grouped by code and rate. B2CS rows are aggregated by state and rate.
           Warnings (missing state, address) do not block export or filing.
         </p>
       </div>
