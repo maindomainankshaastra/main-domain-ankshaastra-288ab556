@@ -4119,13 +4119,13 @@ type CreateInvoiceForm = {
   customerGstin: string;
 };
 
-function emptyCreateForm(): CreateInvoiceForm {
+function emptyCreateForm(site?: string): CreateInvoiceForm {
   const today = new Date().toISOString().slice(0, 10);
   return {
     customerName: "",
     customerEmail: "",
     customerPhone: "",
-    sourceWebsite: CONNECTED_SITE_OPTIONS[0]?.value || "ankshaastra.com",
+       sourceWebsite: site || CONNECTED_SITE_OPTIONS[0]?.value || "ankshaastra.com",
     serviceTitle: "",
     price: "",
     paymentStatus: "paid",
@@ -4185,7 +4185,11 @@ async function logAudit(
   }
 }
 
-export default function InvoicesModule() {
+/**
+ * Invoice Manager. Pass `lockedSite` to get a single-site view (e.g. the Shop
+ * module): the list, monthly ZIP and "Create Invoice" are all pinned to that site.
+ */
+export default function InvoicesModule({ lockedSite, title }: { lockedSite?: string; title?: string } = {}) {
   const { role } = useAuth();
   const { rows, loading, reload } = useAdminTable<Invoice>("invoices", "created_at");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -4196,8 +4200,7 @@ export default function InvoicesModule() {
   const now = new Date();
   const [bulkYear, setBulkYear] = useState(String(now.getFullYear()));
   const [bulkMonth, setBulkMonth] = useState(String(now.getMonth() + 1));
-  const [siteFilter, setSiteFilter] = useState("all");
-
+  const [siteFilter, setSiteFilter] = useState(lockedSite || "all");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("all");
@@ -4301,7 +4304,7 @@ export default function InvoicesModule() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createStep, setCreateStep] = useState<"form" | "preview">("form");
-  const [createForm, setCreateForm] = useState<CreateInvoiceForm>(emptyCreateForm());
+    const [createForm, setCreateForm] = useState<CreateInvoiceForm>(emptyCreateForm(lockedSite));
   const [creating, setCreating] = useState(false);
   const [createFormTouched, setCreateFormTouched] = useState(false);
   // Business's home GST state code, fetched once when the create-invoice
@@ -4465,7 +4468,7 @@ export default function InvoicesModule() {
         } else {
           setBulkProgress("Creating ZIP file…");
         }
-      });
+            }, lockedSite);
       const monthLabel = MONTHS[Number(bulkMonth) - 1];
       toast.success(
         `Downloaded ${result.included} invoice${result.included === 1 ? "" : "s"} for ${monthLabel} ${bulkYear}` +
@@ -4548,7 +4551,7 @@ export default function InvoicesModule() {
   };
 
   const openCreateModal = () => {
-    setCreateForm(emptyCreateForm());
+        setCreateForm(emptyCreateForm(lockedSite));
     setCreateStep("form");
     setCreateFormTouched(false);
     autoFilledRef.current = { state: false, pincode: false };
@@ -4561,7 +4564,7 @@ export default function InvoicesModule() {
   const closeCreateModal = () => {
     setCreateOpen(false);
     setCreateStep("form");
-    setCreateForm(emptyCreateForm());
+        setCreateForm(emptyCreateForm(lockedSite));
     setCreateFormTouched(false);
     autoFilledRef.current = { state: false, pincode: false };
   };
@@ -4887,8 +4890,12 @@ export default function InvoicesModule() {
 
   return (
     <AdminPage
-      title="Invoice Manager"
-      description="GST invoices stored in Supabase — download PDFs individually or as a monthly ZIP bundle."
+           title={title || "Invoice Manager"}
+      description={
+        lockedSite
+          ? `Invoices for ${lockedSite} only — download PDFs individually or as a monthly ZIP bundle.`
+          : "GST invoices stored in Supabase — download PDFs individually or as a monthly ZIP bundle."
+      }
       loading={loading}
       empty={!filteredRows.length}
       emptyMessage="No invoices yet. You can still download a monthly ZIP if PDFs exist for that period."
@@ -4902,14 +4909,18 @@ export default function InvoicesModule() {
           className="w-full max-w-md"
         />
 
-        <Select value={siteFilter} onValueChange={setSiteFilter}>
-          <SelectTrigger className="w-[200px]"><SelectValue placeholder="All sites" /></SelectTrigger>
-          <SelectContent>
-            {CONNECTED_SITE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+               {lockedSite ? (
+          <Badge variant="outline" className="h-9 px-3">{lockedSite}</Badge>
+        ) : (
+          <Select value={siteFilter} onValueChange={setSiteFilter}>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="All sites" /></SelectTrigger>
+            <SelectContent>
+              {CONNECTED_SITE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Button
           size="sm"
@@ -5287,6 +5298,7 @@ export default function InvoicesModule() {
                   <Select
                     value={createForm.sourceWebsite}
                     onValueChange={(v) => updateCreateForm("sourceWebsite", v)}
+                                        disabled={Boolean(lockedSite)}
                   >
                     <SelectTrigger><SelectValue placeholder="Select site" /></SelectTrigger>
                     <SelectContent>
