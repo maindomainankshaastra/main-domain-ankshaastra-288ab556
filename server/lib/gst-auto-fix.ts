@@ -34,7 +34,7 @@ export function buildGstFixPatch(
   const defaultSac = resolveSacCode(gstConfig as { default_sac_code?: string | null });
   const defaultRate = Number(gstConfig?.default_gst_rate ?? GST_COMPANY_DEFAULTS.defaultGstRate);
 
-  if (!/^\d{6}$/.test(sacOf(invoice))) {
+    if (!/^(\d{4}|\d{6}|\d{8})$/.test(sacOf(invoice))) {
     patch.sac_code = defaultSac;
     patch.hsn_sac_code = defaultSac;
     info.push({
@@ -63,7 +63,11 @@ export function buildGstFixPatch(
 
   const mergedForRate = { ...invoice, ...patch };
   const rate = gstRateOf(mergedForRate);
-  if (!Number.isFinite(rate) || rate <= 0) {
+    // A 0% rate is legitimate (e.g. Rudraksha, HSN 1404): only treat it as
+  // "missing" when tax was actually charged but no rate was recorded.
+  const taxCharged =
+    Number(mergedForRate.cgst_amount || 0) + Number(mergedForRate.sgst_amount || 0) + Number(mergedForRate.igst_amount || 0);
+  if (!Number.isFinite(rate) || rate < 0 || (rate === 0 && taxCharged > 0)) {
     const effectiveState = String(mergedForRate.customer_state_code || UNKNOWN_STATE_CODE).padStart(2, '0');
     const isIntra = effectiveState === GST_COMPANY_DEFAULTS.stateCode;
     patch.cgst_rate = isIntra ? defaultRate / 2 : 0;
