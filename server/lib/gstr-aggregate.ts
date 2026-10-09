@@ -294,6 +294,7 @@ export function aggregateSacSummary(invoices: GstrInvoiceRecord[]): SacSummaryRo
 
     const row = map.get(key) || {
       sacCode,
+            uqc: sacCode.startsWith('99') ? 'NA' : 'NOS',
       gstRate,
       invoiceCount: 0,
       quantity: 0,
@@ -306,7 +307,7 @@ export function aggregateSacSummary(invoices: GstrInvoiceRecord[]): SacSummaryRo
     };
 
     row.invoiceCount += 1;
-    row.quantity += 1;
+        row.quantity += sacCode.startsWith('99') ? 1 : Math.max(1, Number(inv.item_quantity) || 1);
     row.taxableValue += taxableOf(inv);
     row.cgst += Number(inv.cgst_amount || 0);
     row.sgst += Number(inv.sgst_amount || 0);
