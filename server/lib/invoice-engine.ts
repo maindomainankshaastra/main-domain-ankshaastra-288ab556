@@ -1365,6 +1365,7 @@
 
 import { getSupabaseAdmin } from './supabase-admin.js';
 import { nextInvoiceNumber } from './gst.js';
+import { SHOP_DEFAULT_ADMIN_EMAIL } from './smtp-config.js';
 import { type InvoiceTemplateData } from './templates/invoice-html.js';
 import { buildInvoiceTemplateData, resolveCustomerBilling } from './build-invoice-template.js';
 import { classifyGstrInvoice } from './gstr-classification.js';
@@ -1643,7 +1644,7 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   const { data: gstConfig } = await supabase.from('gst_config').select('*').limit(1).single();
  
   const tInvNum = Date.now();
-   const invoiceNumber = await nextInvoiceNumber(supabase);
+     const invoiceNumber = await nextInvoiceNumber(supabase, order.source_website as string | undefined);
   recordTiming('nextInvoiceNumber', Date.now() - tInvNum);
   const invoiceUserId = await resolveInvoiceUserId(order, customerId);
  
@@ -1699,13 +1700,13 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
     customerStateCode,
     supplierStateCode: supplierState,
   });
-  const sacCode = resolveSacCode(gstConfig);
+   const sacCode = templateData.sacCode || resolveSacCode(gstConfig);
  
   if (!invoiceNumber?.trim()) {
     throw new Error('Invoice number is required');
   }
-  if (!/^\d{6}$/.test(sacCode)) {
-    throw new Error('Valid SAC code is required');
+    if (!/^(\d{4}|\d{6}|\d{8})$/.test(sacCode)) {
+    throw new Error('Valid HSN/SAC code is required');
   }
   if (!Number.isFinite(gst.subtotal) || gst.subtotal <= 0) {
     throw new Error('Taxable value is required');
@@ -1958,6 +1959,8 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
     adminEmail = process.env.MIRACLE_ADMIN_EMAIL || adminEmail;
   } else if (website.includes('empower')) {
     adminEmail = process.env.EMPOWER_ADMIN_EMAIL || adminEmail;
+     } else if (website.startsWith('shop.')) {
+    adminEmail = process.env.SHOP_ADMIN_EMAIL || SHOP_DEFAULT_ADMIN_EMAIL;
   }
  
   // PERF (2026-09-01): the five calls below are all independent of each
@@ -2030,6 +2033,7 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
             html: customerHtml,
             attachments,
             templateSlug: 'invoice_email',
+                       sourceWebsite: website,
             customerId: invoice.customer_id,
             orderId: invoice.order_id,
             invoiceId: invoice.id,
@@ -2074,6 +2078,7 @@ export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean
             html: adminHtml,
             attachments,
             templateSlug: 'invoice_admin',
+                       sourceWebsite: website,
             orderId: invoice.order_id,
             invoiceId: invoice.id,
           });
