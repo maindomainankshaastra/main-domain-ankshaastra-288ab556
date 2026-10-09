@@ -2,6 +2,7 @@ import { Film, Star, Tv } from "lucide-react";
 import geita from "@/assets/celebrities/geeta-tyagi.png";
 import darshan from "@/assets/celebrities/darshan-patil.jpg";
 import prashantt from "@/assets/prashantt-sambargi.webp";
+import googleIcon from "@/assets/google-original.png";
 
 const clients = [
   { name: "Geita Tyagi", role: "TV & Film Actress", work: "Jagaddhatri · Doli Armaano Ki", image: geita, icon: Tv },
@@ -13,13 +14,13 @@ export default function NameReportTrust() {
   return (
     <section aria-labelledby="name-report-trust-heading" className="name-report-trust border-y border-report-gold/30 bg-background py-14 lg:py-20 font-body">
       <div className="mx-auto max-w-[1560px] px-6 lg:px-10">
-        <p className="mb-3 text-center text-sm font-semibold uppercase text-report-gold">Trusted Across India</p>
+        <p className="mb-3 text-center text-sm font-semibold uppercase text-report-gold">Trusted Across Globe</p>
         <h2 id="name-report-trust-heading" className="mb-10 text-center font-display text-3xl font-bold leading-tight text-report-ink md:text-4xl lg:text-5xl">
           Celebrities, Press & <span className="text-report-gold">48k Global Consultations</span>
         </h2>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <article className="flex min-h-[180px] flex-col items-center justify-center rounded-lg border border-border/50 bg-card px-5 py-6 shadow-sm">
-            <div className="mb-2 flex items-center gap-3 text-lg font-semibold text-report-ink"><span className="name-report-google font-body text-3xl font-bold" aria-hidden="true">G</span>Google Reviews</div>
+            <div className="mb-2 flex items-center gap-3 text-lg font-semibold text-report-ink"><img src={googleIcon} alt="Google" className="h-7 w-7" />Google Reviews</div>
             <div className="flex gap-1 text-report-gold" aria-label="5 stars">{[0, 1, 2, 3, 4].map((star) => <Star key={star} className="h-5 w-5 fill-current" />)}</div>
             <div className="mt-2 flex items-center gap-1 font-display text-4xl font-bold text-report-gold">4.9<Star className="h-8 w-8 fill-current" /></div>
             <p className="text-sm text-muted-foreground">48k Global Consultations</p>

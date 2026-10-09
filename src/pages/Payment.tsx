@@ -1806,6 +1806,9 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
+import NameReportReview from "@/components/payment/NameReportReview";
+import { nameReportOffers } from "@/data/nameReportOffers";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Shield, Check, MessageSquare, Phone, Video, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -2013,7 +2016,7 @@ const nameCorrectionSchema = z.object({
   dob: dobField,
   tob: tobField,
   pob: z.string().trim().min(2, "Place of birth required").max(120),
-  pincode: pincodeField,
+  pincode: z.string().optional(),
   gender: genderField,
   relationFather: relationField,
   relationMother: relationField,
@@ -2034,7 +2037,7 @@ const nameCheckSchema = z.object({
   middleIsFatherName: z.enum(["yes", "no"], { required_error: "Please select" }),
   whatsapp: phoneField,
   email: emailField,
-  pincode: pincodeField,
+  pincode: z.string().optional(),
   dob: dobField,
   pob: z.string().trim().min(2, "Place of birth required").max(120),
   gender: genderField,
@@ -2072,7 +2075,7 @@ const personNameCorrSchema = z.object({
   lastNameChangeOk: z.enum(["yes", "no"], { required_error: "Please select" }),
   dob: dobField,
   tob: tobField,
-  pincode: pincodeField,
+  pincode: z.string().optional(),
   pob: z.string().trim().min(2, "Place of birth required").max(120),
   gender: genderField,
   relationFather: relationField,
@@ -2084,6 +2087,7 @@ const personNameCorrSchema = z.object({
   profession: z.string().trim().min(2, "Profession required").max(120),
 });
 const nameCorrectionCoupleSchema = z.object({
+  purchaserName: z.string().trim().min(2, "Purchaser name required"),
   person1: personNameCorrSchema,
   person2: personNameCorrSchema,
   email: emailField,
@@ -2238,17 +2242,19 @@ const GenderRadio = ({ control, name = "gender" }: { control: any; name?: string
   />
 );
 
-const PaymentPage = () => {
+const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; reportService?: { serviceTitle: string; price: number; formType: string } }) => {
+  const [reviewData, setReviewData] = useState<Record<string, unknown> | null>(null);
+  const [middleNameTouched, setMiddleNameTouched] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const requestedService = searchParams.get("service");
+  const requestedService = reportService?.serviceTitle || searchParams.get("service");
   const serviceName = requestedService && /^name check(?:\s+[23])?$/i.test(requestedService.trim()) ? "Name Check" : requestedService;
-  const serviceAmount = searchParams.get("amount");
+  const serviceAmount = reportService ? String(reportService.price) : searchParams.get("amount");
   const consultationType = searchParams.get("type") as keyof typeof consultationPackages;
-  const formTypeParam = searchParams.get("formType") as FormType | null;
+  const formTypeParam = (reportService?.formType || searchParams.get("formType")) as FormType | null;
 
   const [serviceInfo, setServiceInfo] = useState<{ id: string; title: string; price: number; gst_rate: number } | null>(null);
   const [serviceLoading, setServiceLoading] = useState(false);
@@ -2465,7 +2471,16 @@ const PaymentPage = () => {
   }, [formType, kundaliCount]);
 
   const form = useForm<any>({
-    resolver: zodResolver(schema as any),
+    resolver: zodResolver(z.preprocess((input) => {
+      if (!["name-check", "name-correction", "name-correction-couple"].includes(formType) || !input || typeof input !== "object") return input;
+      const data = structuredClone(input) as Record<string, any>;
+      const subjects = formType === "name-correction-couple" ? [data.person1, data.person2] : [data];
+      subjects.forEach(subject => {
+        if (!subject) return;
+        if (!String(subject.middleName || "").trim()) subject.middleIsFatherName = "no";
+      });
+      return data;
+    }, schema as any)) as any,
     defaultValues: defaults,
   });
 
@@ -2932,6 +2947,11 @@ const PaymentPage = () => {
       return;
     }
 
+    if (["name-check", "name-correction", "name-correction-couple"].includes(formType) && !reviewData) {
+      setReviewData(data);
+      document.getElementById("name-report-booking")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      return;
+    }
     setIsProcessing(true);
     try {
       const baseAmount = isServiceMode ? servicePrice : (selectedOption?.price || 500);
@@ -2972,9 +2992,11 @@ const PaymentPage = () => {
     formType === "business-property";
   const deliveryNote = formType === "consultation"
     ? "Call Consultation with Himansshu Ji will be scheduled within 48-72 hours."
-    : isNameCheckPackage || isNameCorrectionReport
-      ? "Delivered via Email within 3 Hours."
-      : isNameCorrectionReport || isExtendedReport
+    : isNameCheckPackage
+      ? "Delivered via Email within 12–24 Hours."
+      : isNameCorrectionReport
+        ? (serviceLower.includes("blueprint") ? "Delivered on WhatsApp within 24–28 Hours." : "Delivered on WhatsApp within 24–48 Hours.")
+      : isExtendedReport
         ? "Delivered within 24-48 Hrs."
         : "Delivered within 12-24 Hrs.";
   const renderOrderSummary = (sticky: boolean) => (
@@ -3049,15 +3071,15 @@ const PaymentPage = () => {
             <FormItem><FormLabel>First Name *</FormLabel><FormControl><Input placeholder="First name" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={c} name="middleName" render={({ field }) => (
-            <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle name" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle name" {...field} onFocus={() => setMiddleNameTouched(previous => ({ ...previous, [field.name]: true }))} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={c} name="lastName" render={({ field }) => (
             <FormItem><FormLabel>Last Name *</FormLabel><FormControl><Input placeholder="Last name" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
-        <FormField control={c} name="middleIsFatherName" render={({ field }) => (
+        {(!isNameCheckPackage && !isNameCorrectionReport || middleNameTouched.middleName || String(form.watch("middleName") || "").trim()) && <FormField control={c} name="middleIsFatherName" render={({ field }) => (
           <FormItem>
-            <FormLabel>Is the middle name your father's name? *</FormLabel>
+            <FormLabel>Is the middle name your father's/husband's name? *</FormLabel>
             <FormControl>
               <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
                 <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="mfn-yes" /><Label htmlFor="mfn-yes">Yes</Label></div>
@@ -3066,7 +3088,7 @@ const PaymentPage = () => {
             </FormControl>
             <FormMessage />
           </FormItem>
-        )} />
+        )} />}
       </>
     );
 
@@ -3121,11 +3143,11 @@ const PaymentPage = () => {
 
     const POBPincode = (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField control={c} name="pincode" render={({ field }) => (
+        {!isNameCheckPackage && !isNameCorrectionReport && <FormField control={c} name="pincode" render={({ field }) => (
           <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} inputMode="numeric" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
+        )} />}
         <FormField control={c} name="pob" render={({ field }) => (
-          <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="Auto-filled from PIN — edit if needed" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder={isNameCheckPackage || isNameCorrectionReport ? "Birth city, state, country" : "Auto-filled from PIN — edit if needed"} {...field} /></FormControl><FormMessage /></FormItem>
         )} />
       </div>
     );
@@ -3267,6 +3289,7 @@ const PaymentPage = () => {
       );
       return (
         <>
+          {ContactRow}
           {NameTriplet}
           <FormField control={c} name="lastNameChangeOk" render={({ field }) => (
             <FormItem>
@@ -3280,7 +3303,6 @@ const PaymentPage = () => {
               <FormMessage />
             </FormItem>
           )} />
-          {ContactRow}
           {BirthRow}
           {POBPincode}
           <GenderRadio control={c} />
@@ -3319,11 +3341,11 @@ const PaymentPage = () => {
     if (formType === "name-check") {
       return (
         <>
+          {ContactRow}
           {NameTriplet}
           <DOBPicker control={c} />
           {POBPincode}
           <GenderRadio control={c} />
-          {ContactRow}
         </>
       );
     }
@@ -3339,15 +3361,15 @@ const PaymentPage = () => {
               <FormItem><FormLabel>First Name *</FormLabel><FormControl><Input placeholder="First name" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={c} name={`${name}.middleName`} render={({ field }) => (
-              <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle name" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>Middle Name</FormLabel><FormControl><Input placeholder="Middle name" {...field} onFocus={() => setMiddleNameTouched(previous => ({ ...previous, [field.name]: true }))} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={c} name={`${name}.lastName`} render={({ field }) => (
               <FormItem><FormLabel>Last Name *</FormLabel><FormControl><Input placeholder="Last name" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
           </div>
-          <FormField control={c} name={`${name}.middleIsFatherName`} render={({ field }) => (
+          {(middleNameTouched[`${name}.middleName`] || String(form.watch(`${name}.middleName`) || "").trim()) && <FormField control={c} name={`${name}.middleIsFatherName`} render={({ field }) => (
             <FormItem>
-              <FormLabel>Is your middle name your father&apos;s name? *</FormLabel>
+              <FormLabel>Is the middle name your father&apos;s/husband&apos;s name? *</FormLabel>
               <FormControl>
                 <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
                   <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id={`${name}-mfn-yes`} /><Label htmlFor={`${name}-mfn-yes`}>Yes</Label></div>
@@ -3356,7 +3378,7 @@ const PaymentPage = () => {
               </FormControl>
               <FormMessage />
             </FormItem>
-          )} />
+          )} />}
           <FormField control={c} name={`${name}.lastNameChangeOk`} render={({ field }) => (
             <FormItem>
               <FormLabel>Are you comfortable making a change in your last name (if required)? *</FormLabel>
@@ -3374,11 +3396,8 @@ const PaymentPage = () => {
             <TOBPicker control={c} name={`${name}.tob`} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={c} name={`${name}.pincode`} render={({ field }) => (
-              <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit pincode" maxLength={6} {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
             <FormField control={c} name={`${name}.pob`} render={({ field }) => (
-              <FormItem><FormLabel>Place of Birth (Auto-Fetched) *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="City, State, Country" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
           </div>
           <FormField control={c} name={`${name}.gender`} render={({ field }) => (
@@ -3434,13 +3453,12 @@ const PaymentPage = () => {
       );
       return (
         <>
+          {ContactRow}
           <div className="rounded-lg bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-foreground">
             This package covers <strong>2 people</strong>. Please provide complete name correction details for both.
           </div>
           <PersonNameCorrBlock name="person1" title="Person 1 — Full Details" accent="bg-primary" />
           <PersonNameCorrBlock name="person2" title="Person 2 — Full Details" accent="bg-amber-500" />
-          <h3 className="font-semibold text-foreground pt-2">Contact Details</h3>
-          {ContactRow}
           <FormField control={c} name="reason" render={({ field }) => (
             <FormItem><FormLabel>Reason for Name Correction *</FormLabel>
               <FormControl><Textarea placeholder="Share your goals, struggles, and what you'd like to improve for both people." className="min-h-[140px] resize-none" {...field} /></FormControl>
@@ -3555,6 +3573,17 @@ const PaymentPage = () => {
       </>
     );
   };
+
+  if (isNameCheckPackage || isNameCorrectionReport) {
+    const content = <section id="name-report-booking" aria-labelledby="report-booking-heading" className="scroll-mt-20 bg-background px-4 py-12 lg:py-16">
+      <div className="mx-auto max-w-6xl">
+        <h2 id="report-booking-heading" className="text-center font-display text-3xl font-bold text-report-ink md:text-4xl">{reviewData ? "Review & Pay" : "Your Details · Review & Pay"}</h2>
+        <div className="mx-auto my-7 flex max-w-2xl items-center justify-between border-b border-report-gold pb-4 text-sm"><span className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-report-gold text-report-gold-foreground">{reviewData ? <Check className="h-4 w-4" /> : "1"}</span>Details</span><span className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full border border-report-gold">2</span>Review & Pay</span></div>
+        {reviewData ? <NameReportReview data={reviewData} service={serviceName || "Name Check"} amount={displayPrice} processing={isProcessing || isAwaitingPayment} onEdit={() => setReviewData(null)} onPay={() => void onSubmit(reviewData)} /> : <Form {...form}><form onSubmit={form.handleSubmit(onSubmit)} className="grid items-start gap-6 lg:grid-cols-[1.65fr_1fr]"><div className="name-package-card space-y-5 rounded-lg border border-border p-5 md:p-7"><h3 className="font-display text-2xl font-bold">Your Details</h3>{renderFields()}<Button type="submit" disabled={isProcessing || !canSubmitService} className="h-12 w-full bg-report-gold text-report-gold-foreground hover:bg-report-gold/90">Review & Pay</Button>{serviceError && <p className="text-sm text-destructive">{serviceError}</p>}</div><aside className="lg:sticky lg:top-20">{renderOrderSummary(false)}<ul className="mt-4 space-y-2 text-sm name-package-muted">{nameReportOffers.find(item => item.serviceTitle === serviceName)?.inclusions.map(item => <li key={item} className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-report-saving" />{item}</li>)}</ul></aside></form></Form>}
+      </div>
+    </section>;
+    return inline ? content : <Layout minimal>{content}</Layout>;
+  }
 
   return (
     <Layout minimal={isNameCheckPackage || isNameCorrectionReport} hideWhatsApp={formType === "kundali"}>

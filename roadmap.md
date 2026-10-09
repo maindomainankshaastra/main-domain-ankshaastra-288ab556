@@ -1,7 +1,10 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Add moving credibility strip and original Google/media logos; change trust heading to global.
+- Reorder report page; compact selectable packages with updated descriptions, inclusions, ratings and timelines.
+- Inline contact-first booking and review/payment; conditional middle-name question; eliminate duplicate PIN field.
+- Update report-specific confirmation; verify desktop/mobile and checkout review.
 
 ## Completed
 - Removed comparison and other-service/WhatsApp distractions; added expert and podcasts after reviews with boxed mobile content. Verified ₹373 checkout, mobile images, podcast playback, and 3-hour email/1-hour spam confirmation (without making a payment).

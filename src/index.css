@@ -20,6 +20,8 @@
     --philosophy-muted: 45 8% 70%;
     --podcast-play: 0 78% 49%;
     --podcast-play-foreground: 0 0% 100%;
+    --credibility-surface: 0 0% 0%;
+    --media-surface: 0 0% 100%;
     /* Core - warm cream backgrounds, dark brown text */
     --background: 33 60% 96%;          /* #FDF5EC cream */
     --foreground: 24 60% 14%;          /* #3B1F0E dark brown */
@@ -140,6 +142,17 @@
   .name-report-philosophy p { color: hsl(var(--philosophy-muted)); }
   .name-podcast-play { background: hsl(var(--podcast-play)); color: hsl(var(--podcast-play-foreground)); }
   .name-ad-page h1, .name-ad-page h2, .name-ad-page h3 { letter-spacing: 0; }
+  .report-credibility-marquee { background: hsl(var(--credibility-surface)); color: hsl(var(--report-gold)); }
+  .report-media-marquee { background: hsl(var(--media-surface)); }
+  .report-marquee-track { animation: report-marquee 36s linear infinite; }
+  .report-media-marquee .report-marquee-track { animation-duration: 22s; }
+  .report-credibility-marquee:hover .report-marquee-track, .report-media-marquee:hover .report-marquee-track,
+  .report-credibility-marquee:focus .report-marquee-track, .report-media-marquee:focus .report-marquee-track { animation-play-state: paused; }
+  @keyframes report-marquee { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .report-marquee-track { animation: none; }
+    .report-credibility-marquee, .report-media-marquee { overflow-x: auto; }
+  }
   .gradient-primary {
     background: linear-gradient(135deg, hsl(var(--orange)) 0%, hsl(var(--amber)) 100%);
   }
