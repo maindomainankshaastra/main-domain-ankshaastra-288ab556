@@ -131,6 +131,40 @@
 }
 
 @layer components {
+  .name-ad-page, .report-mobile-sheet {
+    --background: 26 85% 91%;
+    --card: 30 100% 97%;
+    --report-surface: 30 100% 97%;
+    --report-detail-surface: 27 90% 94%;
+    --report-gold: 22 75% 38%;
+    --report-gold-foreground: 0 0% 100%;
+    --report-ink: 24 60% 14%;
+    --report-muted: 24 25% 35%;
+    --philosophy-surface: 25 79% 86%;
+    --philosophy-foreground: 24 60% 14%;
+    --philosophy-muted: 24 25% 35%;
+    --border: 26 50% 74%;
+    --media-surface: 30 100% 97%;
+  }
+  .name-ad-page .name-report-philosophy article { background: hsl(var(--card)); }
+  .name-ad-page .report-credibility-marquee { color: hsl(var(--amber-light)); }
+  .report-mobile-sheet {
+    top: auto !important; bottom: 0; left: 0 !important; transform: none !important; max-width: none;
+    animation: none !important;
+    display: flex; flex-direction: column; gap: 0; height: 94dvh; max-height: 94dvh;
+    padding: 14px 20px max(20px, env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0; background: hsl(var(--card));
+  }
+  .report-mobile-sheet > button { top: 32px; right: 20px; }
+  .report-sheet-scroll input, .report-sheet-scroll button[role="combobox"], .report-sheet-scroll textarea {
+    min-height: 52px; border-radius: 8px; background: hsl(var(--card)); font-size: 16px;
+  }
+  .report-sheet-scroll [role="radiogroup"] { flex-wrap: wrap; gap: 12px; }
+  .report-sheet-scroll [role="radiogroup"] > div {
+    flex: 1 1 auto; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 14px;
+  }
+  .report-sheet-scroll [role="radiogroup"] > div:has([data-state="checked"]) { background: hsl(var(--primary) / .12); border-color: hsl(var(--primary)); }
+  @media (prefers-reduced-motion: reduce) { .report-mobile-sheet { animation: none; } }
   .name-package-card { background: hsl(var(--report-surface)); color: hsl(var(--report-ink)); }
   .name-package-card h3, .name-package-card h4 { letter-spacing: 0; }
   .name-package-muted { color: hsl(var(--report-muted)); }
