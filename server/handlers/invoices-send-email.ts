@@ -73,6 +73,7 @@ export default async function handler(req: Req, res: Res) {
       html,
       attachments,
       templateSlug: 'manual_invoice_email',
+            sourceWebsite: invoice.source_website as string | undefined,
       customerId: invoice.customer_id,
       orderId: invoice.order_id,
       invoiceId: invoice.id,
