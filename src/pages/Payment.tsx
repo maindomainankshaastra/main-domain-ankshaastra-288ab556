@@ -111,7 +111,8 @@ const inferFormType = (service: string | null, hasConsultationType: boolean): Fo
   if (s.includes("call consultation") || s.includes("1:1 call")) return "consultation";
   if (s.includes("pyaar shastra") || s.includes("pyaar shaastra")) return "pyaar-shastra";
   if (s.includes("name check")) return "name-check";
-  if (s.includes("complete blueprint") || s.includes("for 2 people")) return "name-correction-couple";
+  if (s.includes("complete blueprint") || s.includes("complete name blueprint")) return "name-correction";
+  if (s.includes("for 2 people")) return "name-correction-couple";
   if (s.includes("name correction")) return "name-correction";
   if ((s.includes("kundali") || s.includes("kundli")) && (s.includes("triple") || s.includes("family") || s.includes("for 3") || s.includes("double") || s.includes("for 2") || s.includes("2 kundli") || s.includes("3 kundli"))) return "kundali-multi";
   if (s.includes("kundali") || s.includes("kundli") || s.includes("varshphal")) return "kundali";
@@ -473,6 +474,8 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
   const canSubmitService = isServiceMode && servicePrice > 0 && !serviceLoading;
 
   const formType: FormType = useMemo(() => {
+    // Retired Blueprint links may still carry the old two-person form parameter.
+    if (/complete (?:name )?blueprint/i.test(serviceName || "")) return "name-correction";
     if (formTypeParam && EXTENDED_FORM_TYPES.includes(formTypeParam as ExtendedFormType)) {
       return formTypeParam as ExtendedFormType;
     }

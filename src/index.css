@@ -133,20 +133,23 @@
 @layer components {
   .name-ad-page, .report-mobile-sheet {
     --background: 26 85% 91%;
-    --card: 30 100% 97%;
-    --report-surface: 30 100% 97%;
-    --report-detail-surface: 27 90% 94%;
+    --card: 0 0% 100%;
+    --report-surface: 0 0% 100%;
+    --report-detail-surface: 30 25% 98%;
     --report-gold: 22 75% 38%;
     --report-gold-foreground: 0 0% 100%;
     --report-ink: 24 60% 14%;
     --report-muted: 24 25% 35%;
-    --philosophy-surface: 25 79% 86%;
-    --philosophy-foreground: 24 60% 14%;
-    --philosophy-muted: 24 25% 35%;
+    --philosophy-surface: 0 0% 9%;
+    --philosophy-foreground: 45 20% 93%;
+    --philosophy-muted: 45 8% 70%;
     --border: 26 50% 74%;
-    --media-surface: 30 100% 97%;
+    --media-surface: 0 0% 100%;
   }
-  .name-ad-page .name-report-philosophy article { background: hsl(var(--card)); }
+  .name-ad-page .name-report-philosophy {
+    --report-gold: 44 54% 62%;
+    --report-ink: 0 0% 14%;
+  }
   .name-ad-page .report-credibility-marquee { color: hsl(var(--amber-light)); }
   .report-mobile-sheet {
     top: auto !important; bottom: 0; left: 0 !important; transform: none !important; max-width: none;

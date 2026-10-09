@@ -94,7 +94,8 @@ export function inferPersonCountFromServiceTitle(serviceTitle: string | null | u
   const s = (serviceTitle || '').toLowerCase();
   if (s.includes('name check 3')) return { min: 3, max: 3 };
   if (s.includes('name check 2')) return { min: 2, max: 2 };
-  if (s.includes('complete blueprint') || s.includes('for 2 people')) return { min: 2, max: 2 };
+  if (/complete (?:name )?blueprint/.test(s)) return { min: 1, max: 1 };
+  if (s.includes('for 2 people')) return { min: 2, max: 2 };
   if (s.includes('triple') || s.includes('family') || s.includes('for 3') || s.includes('3 kundli')) {
     return { min: 3, max: 3 };
   }

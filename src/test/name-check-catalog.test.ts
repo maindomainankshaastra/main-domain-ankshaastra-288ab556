@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { nameCorrectionPackages } from "@/data/serviceCatalog";
 import { resolveServiceDisplay } from "@/lib/service-display";
 import { nameReportOffers, nameReportConfirmation } from "@/data/nameReportOffers";
+import { inferPersonCountFromServiceTitle } from "@/lib/service-persons";
+import { inferPersonCountFromServiceTitle as serverPersonCount } from "../../server/lib/service-persons";
 
 describe("single Name Check offer", () => {
   it("offers exactly one Name Check at the approved price", () => {
@@ -27,7 +29,13 @@ describe("single Name Check offer", () => {
     expect(nameReportConfirmation("Name Correction + Complete Blueprint")).toContain("WhatsApp within 24–28 hours");
   });
   it("aligns the Blueprint price and rating", () => {
-    expect(nameCorrectionPackages.find(pkg => pkg.serviceTitle === "Name Correction + Complete Blueprint")).toMatchObject({ price: 5957, originalPrice: 15051 });
-    expect(nameReportOffers[2]).toMatchObject({ rating: "5.0", sold: "8k sold" });
+    expect(nameCorrectionPackages.find(pkg => pkg.serviceTitle === "Name Correction + Complete Blueprint")).toMatchObject({ name: "Complete Blueprint", formType: "name-correction", price: 5957, originalPrice: 15051 });
+    expect(nameReportOffers[2]).toMatchObject({ title: "Complete Blueprint", rating: "5.0", sold: "8k sold" });
+  });
+  it("treats all Blueprint title variants as a single-person report", () => {
+    for (const title of ["Complete Blueprint", "Complete Name Blueprint", "Name Correction + Complete Blueprint"]) {
+      expect(inferPersonCountFromServiceTitle(title)).toEqual({ min: 1, max: 1 });
+      expect(serverPersonCount(title)).toEqual({ min: 1, max: 1 });
+    }
   });
 });
