@@ -26,4 +26,8 @@ describe("single Name Check offer", () => {
     expect(nameReportConfirmation("Name Correction")).toContain("WhatsApp within 24–28 hours");
     expect(nameReportConfirmation("Name Correction + Complete Blueprint")).toContain("WhatsApp within 24–28 hours");
   });
+  it("aligns the Blueprint price and rating", () => {
+    expect(nameCorrectionPackages.find(pkg => pkg.serviceTitle === "Name Correction + Complete Blueprint")).toMatchObject({ price: 5957, originalPrice: 15051 });
+    expect(nameReportOffers[2]).toMatchObject({ rating: "5.0", sold: "8k sold" });
+  });
 });
