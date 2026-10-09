@@ -703,7 +703,8 @@ function inferAnkshaastraFormType(serviceTitle: string, hasConsultationType: boo
     return 'consultation';
   if (s.includes('pyaar shastra') || s.includes('pyaar shaastra')) return 'pyaar-shastra';
   if (s.includes('name check')) return 'name-check';
-  if (s.includes('complete blueprint') || s.includes('for 2 people')) return 'name-correction-couple';
+  if (/complete (?:name )?blueprint/.test(s)) return 'name-correction';
+  if (s.includes('for 2 people')) return 'name-correction-couple';
   if (s.includes('name correction')) return 'name-correction';
   if (
     (s.includes('kundali') || s.includes('kundli')) &&

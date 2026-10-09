@@ -21,9 +21,9 @@ import heroMobile from "@/assets/name-check-mobile-restored.webp";
 const faqs = [
   { q: "Will this change my name in official documents?", a: "No. The corrected name can be used in your signature, social media, business cards, and daily life. Legal documentation change is optional and entirely up to you." },
   { q: "How is this different from a software-generated report?", a: "Every report is personally analyzed by Himansshu Agarwal Ji using Chaldean and Vedic numerology — not auto-generated PDFs." },
-  { q: "How long does delivery take?", a: "Name Check: 12–24 hours. Check your email / spam box after 6 hours. Name Correction: 24–48 hours. Complete Name Blueprint: 24–28 hours. Name Correction and Complete Blueprint reports are delivered on WhatsApp." },
+  { q: "How long does delivery take?", a: "Name Check: 12–24 hours. Check your email / spam box after 6 hours. Name Correction: 24–48 hours. Complete Blueprint: 24–28 hours. Name Correction and Complete Blueprint reports are delivered on WhatsApp." },
   { q: "What information do I need to provide?", a: "Your full name, date of birth, time and place of birth (if available)." },
-  { q: "Is a call consultation included?", a: "A call consultation is included in Name Correction and Complete Name Blueprint. It is not included in Name Check." },
+  { q: "Is a call consultation included?", a: "A call consultation is included in Name Correction and Complete Blueprint. It is not included in Name Check." },
 ];
 
 const scrollToPackages = () => {

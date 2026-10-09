@@ -5,7 +5,7 @@ import SEOHead from "@/components/SEOHead";
 import { CheckCircle2, Mail, ArrowRight, Sparkles, FileText, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
 import { formatINR } from "@/config/pricing";
-import { nameReportConfirmation } from "@/data/nameReportOffers";
+import { nameReportConfirmation, nameReportOffers } from "@/data/nameReportOffers";
 import {
   consumePendingPaymentVerification,
   verifyPaymentAndInvoice,
@@ -14,6 +14,7 @@ import {
 const ThankYou = () => {
   const [params] = useSearchParams();
   const service = params.get("service") || "Your Order";
+  const serviceLabel = nameReportOffers.find(offer => offer.serviceTitle === service)?.title || service;
   const amount = Number(params.get("amount") || 0);
   const paymentId = params.get("payment_id") || "";
   const invoiceFromUrl = params.get("invoice") || "";
@@ -95,7 +96,7 @@ const ThankYou = () => {
                 Thank you{name ? `, ${name.split(" ")[0]}` : ""}!
               </h1>
               <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-                We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{service}</span>. {isNameReport ? nameReportConfirmation(service) : "Our team will connect with you shortly to begin your consultation."}
+                We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{serviceLabel}</span>. {isNameReport ? nameReportConfirmation(service) : "Our team will connect with you shortly to begin your consultation."}
               </p>
 
               {confirming && (

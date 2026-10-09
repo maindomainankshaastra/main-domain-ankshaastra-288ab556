@@ -119,7 +119,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="orders" element={<OrdersModule />} />
-              <Route path="invoices" element={<InvoicesModule />} 
+              <Route path="invoices" element={<InvoicesModule />} />
                               <Route path="shop-invoices" element={<ShopInvoicesModule />} />
               <Route path="email" element={<EmailModule />} />
               <Route path="crm" element={<CrmModule />} />
