@@ -1,11 +1,12 @@
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 // import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
+import { isAllowedSourceWebsite } from '../lib/connected-sites.js';
 
 type Req = {
   method?: string;
   headers?: { authorization?: string; Authorization?: string };
-  query?: { year?: string; month?: string };
+     query?: { year?: string; month?: string; site?: string };
 };
 
 type Res = {
@@ -39,6 +40,10 @@ export default async function handler(req: Req, res: Res) {
 
   const { start, end } = monthRange(year, month);
   const label = `${year}-${String(month).padStart(2, '0')}`;
+    const site = String(req.query?.site || '').trim().toLowerCase() || undefined;
+  if (site && !isAllowedSourceWebsite(site)) {
+    return res.status(400).json({ error: `Unknown site "${site}"` });
+  }
 
   try {
     const supabase = getSupabaseAdmin();
@@ -48,6 +53,7 @@ export default async function handler(req: Req, res: Res) {
       .gte('invoice_date', start)
       .lt('invoice_date', end)
       .not('pdf_storage_path', 'is', null)
+            .match(site ? { source_website: site } : {})
       .order('invoice_date', { ascending: true });
 
     if (error) throw error;
