@@ -49,6 +49,8 @@ const ServicesModule = lazy(() => import("./pages/admin/modules/ServicesModule")
 const TemplatesModule = lazy(() => import("./pages/admin/modules/TemplatesModule"));
 const SettingsModule = lazy(() => import("./pages/admin/modules/SettingsModule"));
 const GstReportsModule = lazy(() => import("./pages/admin/modules/GstReportsModule"));
+const ShopInvoicesModule = lazy(() => import("./pages/admin/modules/ShopInvoicesModule"));
+const ShopGstReportsModule = lazy(() => import("./pages/admin/modules/ShopGstReportsModule"));
 const GstMaintenanceModule = lazy(() => import("./pages/admin/modules/GstMaintenanceModule"));
 // const PricingModule = lazy(() => import("./pages/admin/modules/PricingModule"));
 const ServicePagesModule = lazy(() => import("./pages/admin/modules/ServicePagesModule"));
@@ -117,7 +119,8 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="orders" element={<OrdersModule />} />
-              <Route path="invoices" element={<InvoicesModule />} />
+              <Route path="invoices" element={<InvoicesModule />} 
+                              <Route path="shop-invoices" element={<ShopInvoicesModule />} />
               <Route path="email" element={<EmailModule />} />
               <Route path="crm" element={<CrmModule />} />
               <Route path="workflows" element={<WorkflowsModule />} />
@@ -129,6 +132,7 @@ const App = () => (
               <Route path="templates" element={<TemplatesModule />} />
               <Route path="settings" element={<SettingsModule />} />
               <Route path="gst-reports" element={<GstReportsModule />} />
+                            <Route path="shop-gst-reports" element={<ShopGstReportsModule />} />
               <Route path="gst-maintenance" element={<GstMaintenanceModule />} />
               <Route path="team" element={<TeamManagementModule />} />
               
