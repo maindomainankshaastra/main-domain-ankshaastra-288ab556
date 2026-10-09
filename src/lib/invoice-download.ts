@@ -62,13 +62,14 @@ export async function downloadMonthlyInvoiceZip(
   year: number,
   month: number,
   onProgress?: (progress: BulkDownloadProgress) => void,
+    site?: string,
 ): Promise<{ included: number; skipped: number; skippedNumbers: string[] }> {
   const token = await getAuthToken();
 
   onProgress?.({ phase: "listing", done: 0, total: 0 });
 
   const manifestRes = await fetch(
-    `/api/invoices/bulk-manifest?year=${year}&month=${month}`,
+        `/api/invoices/bulk-manifest?year=${year}&month=${month}${site ? `&site=${encodeURIComponent(site)}` : ""}`,
     { headers: { Authorization: `Bearer ${token}` } },
   );
 
