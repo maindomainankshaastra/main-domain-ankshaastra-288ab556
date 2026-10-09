@@ -6,9 +6,11 @@ import { round2 } from './gst.js';
  *
  * Shopify Flow sends `lineItems` (name/sku/quantity/amount). Each line is matched
  * against `product_catalog` (title or sku) to get its HSN and GST rate. Lines that
- * share the same HSN+rate are grouped, and ONE order (=> one invoice) is created per
- * group by re-using the normal order-ingest logic. A cart with only one rate/HSN
- * (the common case) therefore produces exactly one invoice.
+ * share the same GST RATE are grouped (each line keeps its own HSN), and ONE order
+ * (=> one invoice) is created per rate group by re-using the normal order-ingest logic.
+ * A cart where every item has the same rate (the common case) therefore produces exactly
+ * one invoice, with an HSN-wise summary when HSNs differ. Shipping and COD charges are
+ * separate lines on each invoice, taxed at that invoice's rate.
  *
  * Nothing is guessed: if any line cannot be matched, the order is saved but NO
  * invoice is generated, and the unmatched names are returned so the catalog can be
@@ -23,6 +25,10 @@ export type ShopLineItem = {
   quantity?: number;
   /** Line total AFTER discounts, GST-inclusive, in INR. */
   amount?: number;
+  /** Line total BEFORE discounts, GST-inclusive, in INR (optional; enables the Discount column). */
+  listAmount?: number;
+  /** Unit of measure: NOS (default), PCS, GMS ... */
+  uom?: string;
 };
 
 type CatalogRow = { sku: string | null; title: string; gst_rate: number | string; hsn_sac_code: string | null };
@@ -37,10 +43,10 @@ export function normalizeProductKey(input: string): string {
     .trim();
 }
 
+type GroupLine = { name: string; quantity: number; amount: number; listAmount?: number; hsn: string; uom: string };
 type Group = {
-  hsn: string;
   rate: number;
-  lines: Array<{ name: string; quantity: number; amount: number }>;
+  lines: GroupLine[];
   amount: number;
 };
 
@@ -112,19 +118,28 @@ export async function handleLineItemOrder(
     }
 
     const rate = Number(row.gst_rate);
-    const key = `${hsn}|${rate}`;
-    const g = groups.get(key) || { hsn, rate, lines: [], amount: 0 };
+    const key = String(rate);
+    const g = groups.get(key) || { rate, lines: [], amount: 0 };
     const amount = round2(Number(line.amount));
-    g.lines.push({ name: displayName, quantity: Math.max(1, Number(line.quantity) || 1), amount });
+    const listAmount = Number(line.listAmount) > amount ? round2(Number(line.listAmount)) : undefined;
+    g.lines.push({
+      name: displayName,
+      quantity: Math.max(1, Number(line.quantity) || 1),
+      amount,
+      listAmount,
+      hsn,
+      uom: String(line.uom || 'NOS').trim().toUpperCase() || 'NOS',
+    });
     g.amount = round2(g.amount + amount);
     groups.set(key, g);
   }
 
-  // Shipping is spread across groups in proportion to their value, so the invoices
-  // add up to what the customer actually paid (same GST rate as the goods).
+  // Shipping and COD charges are spread across the rate groups in proportion to their value,
+  // so the invoices add up to what the customer actually paid (same GST rate as the goods).
   const goodsTotal = round2([...groups.values()].reduce((s, g) => s + g.amount, 0) + 0);
   const shipping = Math.max(0, Number(body.shippingAmount) || 0);
-  const grandTotal = round2(lineItems.reduce((s, l) => s + Number(l.amount), 0) + shipping);
+  const codCharge = Math.max(0, Number(body.codAmount) || 0);
+  const grandTotal = round2(lineItems.reduce((s, l) => s + Number(l.amount), 0) + shipping + codCharge);
   const declaredTotal = Number(body.totalAmount || body.amount);
   const totalMismatch = Number.isFinite(declaredTotal) && Math.abs(declaredTotal - grandTotal) > 1;
 
@@ -144,6 +159,7 @@ export async function handleLineItemOrder(
         ...body,
         lineItems: undefined,
         shippingAmount: undefined,
+        codAmount: undefined,
         serviceTitle: fallback.map((f) => f.name).join(', ').slice(0, 250) || 'Shop order',
         totalAmount: grandTotal,
         autoInvoice: false,
@@ -157,16 +173,25 @@ export async function handleLineItemOrder(
 
   const results: unknown[] = [];
   const list = [...groups.values()];
-  let allocated = 0;
+  let shipAllocated = 0;
+  let codAllocated = 0;
   for (let i = 0; i < list.length; i++) {
     const g = list[i];
-    const shipShare =
-      i === list.length - 1 ? round2(shipping - allocated) : round2(goodsTotal > 0 ? (shipping * g.amount) / goodsTotal : 0);
-    allocated = round2(allocated + shipShare);
-    const total = round2(g.amount + shipShare);
+    const last = i === list.length - 1;
+    const share = (pool: number) => (goodsTotal > 0 ? round2((pool * g.amount) / goodsTotal) : 0);
+    const shipShare = last ? round2(shipping - shipAllocated) : share(shipping);
+    const codShare = last ? round2(codCharge - codAllocated) : share(codCharge);
+    shipAllocated = round2(shipAllocated + shipShare);
+    codAllocated = round2(codAllocated + codShare);
+    const total = round2(g.amount + shipShare + codShare);
+
+    // Principal HSN (largest value) is stored on the invoice row; every line keeps its own HSN.
+    const byHsn = new Map<string, number>();
+    for (const l of g.lines) byHsn.set(l.hsn, round2((byHsn.get(l.hsn) || 0) + l.amount));
+    const principalHsn = [...byHsn.entries()].sort((a, b) => b[1] - a[1])[0][0];
 
     const basePayment = body.paymentId ? String(body.paymentId) : null;
-    const paymentId = basePayment ? (list.length === 1 ? basePayment : `${basePayment}:${g.hsn}-${g.rate}`) : null;
+    const paymentId = basePayment ? (list.length === 1 ? basePayment : `${basePayment}:${g.rate}`) : null;
     const serviceTitle =
       g.lines.map((l) => (l.quantity > 1 ? `${l.name} x${l.quantity}` : l.name)).join(', ').slice(0, 250) || 'Shop order';
 
@@ -176,6 +201,7 @@ export async function handleLineItemOrder(
         ...body,
         lineItems: undefined,
         shippingAmount: undefined,
+        codAmount: undefined,
         serviceTitle,
         totalAmount: total,
         gstInclusive: true,
@@ -184,15 +210,16 @@ export async function handleLineItemOrder(
         metadata: {
           ...(body.metadata || {}),
           gstRate: g.rate,
-          hsnCode: g.hsn,
+          hsnCode: principalHsn,
           lineItems: g.lines,
           shippingShare: shipShare,
+          codShare,
           ...(totalMismatch ? { taxReview: { required: true, reason: holdReason } } : {}),
         },
       } },
       cap.res,
     );
-    results.push({ hsn: g.hsn, gstRate: g.rate, total, ...(cap.result() as object) });
+    results.push({ gstRate: g.rate, hsn: principalHsn, total, ...(cap.result() as object) });
   }
 
   return res.status(201).json({ success: true, invoiceHeld: holdInvoice, reason: holdReason, groups: results });
