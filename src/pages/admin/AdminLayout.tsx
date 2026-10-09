@@ -83,6 +83,7 @@ const navSections: NavSection[] = [
     items: [
       { to: "/admin/orders", label: "Orders & Bookings", icon: Package, module: "orders" },
       { to: "/admin/invoices", label: "Invoice Manager", icon: FileText, module: "invoices" },
+            { to: "/admin/shop-invoices", label: "Shop Invoices", icon: FileText, module: "invoices" },
       { to: "/admin/crm", label: "CRM", icon: Users, module: "crm" },
     ],
   },
@@ -108,6 +109,7 @@ const navSections: NavSection[] = [
     items: [
       { to: "/admin/settings", label: "GST Configuration", icon: Settings, module: "settings" },
       { to: "/admin/gst-reports", label: "GSTR Reports", icon: FileSpreadsheet, module: "gst-reports" },
+            { to: "/admin/shop-gst-reports", label: "Shop GSTR Reports", icon: FileSpreadsheet, module: "gst-reports" },
       { to: "/admin/gst-maintenance", label: "GST Maintenance", icon: Wrench, module: "gst-maintenance" },
     ],
   },
