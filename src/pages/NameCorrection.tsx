@@ -36,7 +36,10 @@ export default function NameCorrection() {
   const selectedPackage = nameCorrectionPackages.find(item => item.serviceTitle === nameReportOffers[selected]?.serviceTitle);
   const bookReport = (index: number) => {
     setSelected(index);
-    requestAnimationFrame(() => document.getElementById("name-report-booking")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
+    requestAnimationFrame(() => {
+      if (window.matchMedia("(max-width: 1023px)").matches) window.dispatchEvent(new Event("open-name-report-booking"));
+      else document.getElementById("name-report-booking")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+    });
   };
   return (
     <Layout minimal>

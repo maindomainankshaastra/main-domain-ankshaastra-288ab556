@@ -1165,7 +1165,7 @@
 //     ) : null;
 
 //   // ───── per-type field renderer ─────
-//   const renderFields = () => {
+//   const renderFields = (step?: number) => {
 //     const c = form.control;
 
 //     const FullName = (
@@ -1449,18 +1449,14 @@
 //     }
 
 //     if (formType === "name-check") {
-//       return (
-//         <>
-//           {NameTriplet}
-//           <DOBPicker control={c} />
-//           {POBPincode}
-//           <GenderRadio control={c} />
-//           {ContactRow}
-//         </>
-//       );
-//     }
+      return <>
+        {(step === undefined || step === 0) && ContactRow}
+        {(step === undefined || step === 1) && <>{NameTriplet}<GenderRadio control={c} /></>}
+        {(step === undefined || step === 2) && <><DOBPicker control={c} />{POBPincode}</>}
+      </>;
+    }
 
-//     if (formType === "name-correction-couple") {
+    if (formType === "name-correction-couple") {
 //       const PersonNameCorrBlock = ({ name, title, accent }: { name: "person1" | "person2"; title: string; accent: string }) => (
 //         <div className="rounded-xl border border-border p-5 bg-background/40 space-y-4">
 //           <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -1569,11 +1565,11 @@
 //           <div className="rounded-lg bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-foreground">
 //             This package covers <strong>2 people</strong>. Please provide complete name correction details for both.
 //           </div>
-//           <PersonNameCorrBlock name="person1" title="Person 1 — Full Details" accent="bg-primary" />
-//           <PersonNameCorrBlock name="person2" title="Person 2 — Full Details" accent="bg-amber-500" />
+//           {(step === undefined || step === 1) && <PersonNameCorrBlock name="person1" title="Person 1 — Full Details" accent="bg-primary" />}
+//           {(step === undefined || step === 2) && <PersonNameCorrBlock name="person2" title="Person 2 — Full Details" accent="bg-primary" />}
 //           <h3 className="font-semibold text-foreground pt-2">Contact Details</h3>
-//           {ContactRow}
-//           <FormField control={c} name="reason" render={({ field }) => (
+//           {(step === undefined || step === 0) && ContactRow}
+//           {(step === undefined || step === 3) && <FormField control={c} name="reason" render={({ field }) => (
 //             <FormItem><FormLabel>Reason for Name Correction *</FormLabel>
 //               <FormControl><Textarea placeholder="Share your goals, struggles, and what you'd like to improve for both people." className="min-h-[140px] resize-none" {...field} /></FormControl>
 //               <FormMessage />
@@ -1808,6 +1804,7 @@ import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import NameReportReview from "@/components/payment/NameReportReview";
+import MobileReportSheet from "@/components/payment/MobileReportSheet";
 import { nameReportOffers } from "@/data/nameReportOffers";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Shield, Check, MessageSquare, Phone, Video, Sparkles } from "lucide-react";
@@ -2244,6 +2241,16 @@ const GenderRadio = ({ control, name = "gender" }: { control: any; name?: string
 
 const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; reportService?: { serviceTitle: string; price: number; formType: string } }) => {
   const [reviewData, setReviewData] = useState<Record<string, unknown> | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [compactBooking, setCompactBooking] = useState(() => window.matchMedia("(max-width: 1023px)").matches);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1023px)");
+    const resize = () => setCompactBooking(media.matches);
+    const open = () => setSheetOpen(true);
+    media.addEventListener("change", resize);
+    window.addEventListener("open-name-report-booking", open);
+    return () => { media.removeEventListener("change", resize); window.removeEventListener("open-name-report-booking", open); };
+  }, []);
   const [middleNameTouched, setMiddleNameTouched] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const { user } = useAuth();
@@ -3055,7 +3062,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
     ) : null;
 
   // ───── per-type field renderer ─────
-  const renderFields = () => {
+  const renderFields = (step?: number) => {
     const c = form.control;
 
     const FullName = (
@@ -3575,6 +3582,13 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
   };
 
   if (isNameCheckPackage || isNameCorrectionReport) {
+    const stepTitles = formType === "name-check" ? ["Where should we send it?", "Who is this report for?", "Your birth details"] : formType === "name-correction-couple" ? ["Where should we send it?", "Person 1 — Your details", "Person 2 — Your details", "Your goals"] : ["Where should we send it?", "Who is this report for?", "Your birth details", "Family & personal details"];
+    const stepFields = formType === "name-correction-couple" ? [["purchaserName", "email", "whatsapp", "currentPincode", "currentCity", "currentState"], ["person1"], ["person2"], ["reason"]] : [["email", "whatsapp", "currentPincode", "currentCity", "currentState"], ["firstName", "middleName", "lastName", "middleIsFatherName", "gender", ...(formType === "name-correction" ? ["lastNameChangeOk"] : [])], ["dob", "pob", ...(formType === "name-correction" ? ["tob"] : [])], ["relationFather", "relationMother", "relationSpouse", "fatherName", "motherName", "spouseName", "profession", "reason"]];
+    const review = reviewData ? <NameReportReview data={reviewData} service={serviceName || "Name Check"} amount={displayPrice} processing={isProcessing || isAwaitingPayment} onEdit={() => setReviewData(null)} onPay={() => void onSubmit(reviewData)} /> : null;
+    if (compactBooking) {
+      const mobile = <section id="name-report-booking" className="name-ad-page bg-background px-5 py-10"><div className="mx-auto max-w-lg"><h2 className="mb-5 text-center font-display text-3xl">Your Details · Review & Pay</h2>{renderOrderSummary(false)}<Button className="mt-5 h-14 w-full rounded-full text-base" onClick={() => setSheetOpen(true)}>Continue with {nameReportOffers.find(item => item.serviceTitle === serviceName)?.title || serviceName}</Button></div><Form {...form}><MobileReportSheet open={sheetOpen} onOpenChange={setSheetOpen} service={nameReportOffers.find(item => item.serviceTitle === serviceName)?.title || serviceName || "Name Check"} steps={stepTitles.map((title, index) => ({ title, fields: renderFields(index) }))} onContinue={async step => form.trigger(stepFields[step], { shouldFocus: true })} onReview={() => void form.handleSubmit(onSubmit)()} review={review} /></Form></section>;
+      return inline ? mobile : <Layout minimal>{mobile}</Layout>;
+    }
     const content = <section id="name-report-booking" aria-labelledby="report-booking-heading" className="scroll-mt-20 bg-background px-4 py-12 lg:py-16">
       <div className="mx-auto max-w-6xl">
         <h2 id="report-booking-heading" className="text-center font-display text-3xl font-bold text-report-ink md:text-4xl">{reviewData ? "Review & Pay" : "Your Details · Review & Pay"}</h2>
