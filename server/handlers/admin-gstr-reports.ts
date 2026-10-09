@@ -1,8 +1,11 @@
+
+
+
 // // import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 // import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 // import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 // import { normalizeInvoiceForGstr } from '../lib/gst-auto-fix.js';
-// import { filterInvoicesByPeriod } from '../lib/gstr-aggregate.js';
+// import { filterInvoicesByPeriod, type GstrInvoiceRecord } from '../lib/gstr-aggregate.js';
 // import {
 //   buildGstr1Workbook,
 //   buildGstSummaryWorkbook,
@@ -51,6 +54,10 @@
 //     .gte('invoice_date', start)
 //     .lt('invoice_date', end)
 //     .in('status', ['paid', 'generating'])
+//     // Soft-deleted invoices (Invoice Manager > Delete) must never count
+//     // toward filing totals — they're excluded here the same way they're
+//     // excluded from the default Invoice Manager list.
+//     .is('deleted_at', null)
 //     .order('invoice_date', { ascending: true });
 
 //   if (error) throw error;
@@ -60,7 +67,7 @@
 // function prepareInvoices(
 //   raw: Record<string, unknown>[],
 //   gstConfig: Record<string, unknown> | null,
-// ): { invoices: InvoiceGstRow[]; info: GstValidationIssue[] } {
+// ): { invoices: GstrInvoiceRecord[]; info: GstValidationIssue[] } {
 //   const info: GstValidationIssue[] = [];
 //   const invoices = raw.map((row) => {
 //     const order = (row.orders as Record<string, unknown> | null) || null;
@@ -68,9 +75,13 @@
 //     info.push(...rowInfo);
 //     return {
 //       ...invoice,
+//       id: String(invoice.id || ''),
+//       invoice_number: String(invoice.invoice_number || ''),
+//       customer_name: String(invoice.customer_name || ''),
+//       service_title: String(invoice.service_title || ''),
 //       invoice_date: String(invoice.invoice_date || '').slice(0, 10),
 //       total_amount: Number(invoice.total_amount || 0),
-//     } as InvoiceGstRow;
+//     } as GstrInvoiceRecord;
 //   });
 //   return { invoices, info };
 // }
@@ -157,9 +168,9 @@
 //     const { report, dashboard, filingStatus } = await runValidation(period.year, period.month);
 //     return res.status(200).json({
 //       period: period.label,
-//       filingStatus,
 //       dashboard,
 //       ...report,
+//       filingStatus,
 //     });
 //   }
 
@@ -267,10 +278,10 @@
 //   return res.status(405).end();
 // }
 
-
-// import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
+import { isAllowedSourceWebsite } from '../lib/connected-sites.js';
+import { buildGoodsInvoiceData, isGoodsSite } from '../lib/goods-invoice.js';
 import { normalizeInvoiceForGstr } from '../lib/gst-auto-fix.js';
 import { filterInvoicesByPeriod, type GstrInvoiceRecord } from '../lib/gstr-aggregate.js';
 import {
@@ -308,7 +319,7 @@ function parsePeriod(year: number, month: number) {
   return { year: y, month: m, label: `${y}-${String(m).padStart(2, '0')}` };
 }
 
-async function loadPeriodInvoices(year: number, month: number) {
+async function loadPeriodInvoices(year: number, month: number, site?: string) {
   const supabase = getSupabaseAdmin();
   const start = `${year}-${String(month).padStart(2, '0')}-01`;
   const endMonth = month === 12 ? 1 : month + 1;
@@ -325,6 +336,8 @@ async function loadPeriodInvoices(year: number, month: number) {
     // toward filing totals — they're excluded here the same way they're
     // excluded from the default Invoice Manager list.
     .is('deleted_at', null)
+    // Optional per-site view (e.g. Shop). No site => all connected sites (combined GSTR-1).
+    .match(site ? { source_website: site } : {})
     .order('invoice_date', { ascending: true });
 
   if (error) throw error;
@@ -340,6 +353,46 @@ function prepareInvoices(
     const order = (row.orders as Record<string, unknown> | null) || null;
     const { invoice, info: rowInfo } = normalizeInvoiceForGstr(row, order, gstConfig);
     info.push(...rowInfo);
+
+    const orderMeta = (order?.metadata as Record<string, unknown> | undefined) || {};
+    const lines = Array.isArray(orderMeta.lineItems) ? (orderMeta.lineItems as Array<{ quantity?: number }>) : [];
+    const itemQuantity = lines.reduce((s, l) => s + (Number(l?.quantity) || 1), 0);
+
+    // Goods invoices can carry several HSN codes at one GST rate: split the HSN summary per line.
+    let hsnSummary: GstrInvoiceRecord['hsn_summary'] = null;
+    if (isGoodsSite(invoice.source_website) && lines.length > 0) {
+      const inv = invoice as Record<string, unknown>;
+      const cgst = Number(inv.cgst_amount || 0);
+      const sgst = Number(inv.sgst_amount || 0);
+      const igst = Number(inv.igst_amount || 0);
+      const rate = Number(inv.igst_rate || 0) > 0 ? Number(inv.igst_rate) : Number(inv.cgst_rate || 0) * 2;
+      const goods = buildGoodsInvoiceData({
+        order: { metadata: orderMeta },
+        gst: {
+          subtotal: Number(inv.subtotal || 0),
+          gstTotal: cgst + sgst + igst,
+          cgst,
+          sgst,
+          igst,
+          grandTotal: Number(inv.total_amount || 0),
+          isIntraState: igst === 0,
+        },
+        gstRate: rate,
+        fallbackHsn: String(inv.sac_code || ''),
+        fallbackDescription: '',
+        customerName: '',
+        businessStateCode: '09',
+      });
+      hsnSummary = goods.hsnSummary.map((r) => ({
+        hsn: r.hsn,
+        rate: r.rate,
+        taxable: r.taxable,
+        cgst: r.cgst,
+        sgst: r.sgst,
+        igst: r.igst,
+      }));
+    }
+
     return {
       ...invoice,
       id: String(invoice.id || ''),
@@ -348,7 +401,9 @@ function prepareInvoices(
       service_title: String(invoice.service_title || ''),
       invoice_date: String(invoice.invoice_date || '').slice(0, 10),
       total_amount: Number(invoice.total_amount || 0),
-    } as GstrInvoiceRecord;
+      item_quantity: itemQuantity > 0 ? itemQuantity : 1,
+      hsn_summary: hsnSummary,
+    } as unknown as GstrInvoiceRecord;
   });
   return { invoices, info };
 }
@@ -369,11 +424,11 @@ async function getFilingStatus(periodLabel: string): Promise<'draft' | 'ready_to
   return 'draft';
 }
 
-async function runValidation(year: number, month: number) {
+async function runValidation(year: number, month: number, site?: string) {
   const supabase = getSupabaseAdmin();
   const { data: config } = await supabase.from('gst_config').select('*').limit(1).single();
   const configIssues = validateGstConfig((config || {}) as Record<string, unknown>);
-  const raw = await loadPeriodInvoices(year, month);
+  const raw = await loadPeriodInvoices(year, month, site);
   const filtered = filterInvoicesByPeriod(
     raw.map((r) => ({
       ...r,
@@ -389,7 +444,8 @@ async function runValidation(year: number, month: number) {
   const invoiceIssues = validateInvoicesForGstr(invoices);
   const report = buildValidationReport(configIssues, invoiceIssues, info);
   const dashboard = buildGstrDashboard(invoices, invoiceIssues);
-  const storedStatus = await getFilingStatus(`${year}-${String(month).padStart(2, '0')}`);
+  const periodLabel = `${year}-${String(month).padStart(2, '0')}`;
+  const storedStatus = await getFilingStatus(site ? `${periodLabel}|${site}` : periodLabel);
   const filingStatus = report.errors.length > 0 ? 'draft' : storedStatus === 'filed' ? 'filed' : report.filingStatus;
 
   return { invoices, report, dashboard, filingStatus };
@@ -423,6 +479,10 @@ export default async function handler(req: Req, res: Res) {
   const year = Number(body.year ?? query.year);
   const month = Number(body.month ?? query.month);
   const action = String(body.action ?? query.action ?? 'validate');
+  const site = String(body.site ?? query.site ?? '').trim().toLowerCase() || undefined;
+  if (site && !isAllowedSourceWebsite(site)) {
+    return res.status(400).json({ error: `Unknown site "${site}"` });
+  }
 
   let period: ReturnType<typeof parsePeriod>;
   try {
@@ -430,9 +490,13 @@ export default async function handler(req: Req, res: Res) {
   } catch (e: unknown) {
     return res.status(400).json({ error: e instanceof Error ? e.message : 'Invalid period' });
   }
+  // Same GSTIN => one GSTR-1 for all sites. A site-scoped view is for review/export only,
+  // so its filings are logged under a separate key and never mark the combined period.
+  const filingKey = site ? `${period.label}|${site}` : period.label;
+  const fileTag = site ? `${site.split('.')[0]}-${period.label}` : period.label;
 
   if (req.method === 'GET' || action === 'validate') {
-    const { report, dashboard, filingStatus } = await runValidation(period.year, period.month);
+    const { report, dashboard, filingStatus } = await runValidation(period.year, period.month, site);
     return res.status(200).json({
       period: period.label,
       dashboard,
@@ -441,8 +505,14 @@ export default async function handler(req: Req, res: Res) {
     });
   }
 
+  if (req.method === 'POST' && (action === 'mark-ready' || action === 'mark-filed') && site) {
+    return res.status(400).json({
+      error: 'Filing status is tracked on the combined GSTR Reports page (one GSTIN files one GSTR-1 for all sites).',
+    });
+  }
+
   if (req.method === 'POST' && action === 'mark-ready') {
-    const { report } = await runValidation(period.year, period.month);
+    const { report } = await runValidation(period.year, period.month, site);
     if (!report.readyToFile) {
       return res.status(400).json({
         error: 'Cannot mark ready — fix errors first',
@@ -477,7 +547,7 @@ export default async function handler(req: Req, res: Res) {
   }
 
   if (req.method === 'POST') {
-    const { invoices, report } = await runValidation(period.year, period.month);
+    const { invoices, report } = await runValidation(period.year, period.month, site);
     if (!report.readyToFile) {
       return res.status(400).json({
         error: 'Validation failed — fix errors before export',
@@ -491,7 +561,7 @@ export default async function handler(req: Req, res: Res) {
 
     const meta = exportMeta(
       (config || {}) as Record<string, unknown>,
-      period.label,
+      site ? `${period.label} (${site} only)` : period.label,
       user.email || user.id,
     );
 
@@ -502,26 +572,26 @@ export default async function handler(req: Req, res: Res) {
     switch (exportType) {
       case 'summary':
         buffer = await buildGstSummaryWorkbook(invoices, meta);
-        filename = `GST-Summary-${period.label}.xlsx`;
+        filename = `GST-Summary-${fileTag}.xlsx`;
         break;
       case 'sales':
         buffer = await buildSalesRegisterWorkbook(invoices, meta);
-        filename = `Sales-Register-${period.label}.xlsx`;
+        filename = `Sales-Register-${fileTag}.xlsx`;
         break;
       case 'sac':
         buffer = await buildSacSummaryWorkbook(invoices, meta);
-        filename = `SAC-Summary-${period.label}.xlsx`;
+        filename = `HSN-SAC-Summary-${fileTag}.xlsx`;
         break;
       case 'gstr1':
       default:
         buffer = await buildGstr1Workbook(invoices, meta);
-        filename = `GSTR1-${period.label}.xlsx`;
+        filename = `GSTR1-${fileTag}.xlsx`;
         break;
     }
 
     try {
       await supabase.from('gstr_export_runs').insert({
-        filing_period: period.label,
+        filing_period: filingKey,
         export_type: exportType,
         status: 'exported',
         validation_errors: report.errors,
