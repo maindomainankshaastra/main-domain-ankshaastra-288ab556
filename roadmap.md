@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Match mobile Name Report booking to a stepped sheet while preserving all fields; unify hero-orange theme and update Blueprint to ₹5,957 / ₹15,051 with 5 stars (8k sold).
 
 ## Completed
 - Added moving black credibility strip, original media/Google logos, global trust heading and requested section order; updated report descriptions, inclusions, ratings and delivery labels with compact selectable mobile packages.
