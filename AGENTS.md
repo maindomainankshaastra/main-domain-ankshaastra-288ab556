@@ -7,4 +7,5 @@
 - Name Correction uses dedicated expert and podcast components immediately after trust content, followed by press/philosophy and catalog-backed packages, keeping ad-page presentation independent of checkout pricing.
 - Name report checkout uses the minimal layout and omits cross-service add-ons; report confirmation is scoped by service identity so other checkout flows stay unchanged.
 - Name report offers share presentation metadata across selector, review and confirmation, and the existing payment flow supports inline booking with a pre-payment review stage so ad visitors stay on the report page.
+- Mobile Name Report booking reuses existing form controls and validation in a service-scoped stepped dialog; desktop retains inline checkout so field and payment behavior remain consistent.
 - Site images are bundled as regular Vite imports from src/assets, not Lovable Assets pointers, because the production domain is hosted on Vercel where the Lovable asset endpoint does not exist.
