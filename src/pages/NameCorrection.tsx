@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Plus, Minus, ArrowRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
@@ -11,7 +11,7 @@ import NameReportPhilosophy from "@/components/services/NameReportPhilosophy";
 import NameReportMarquee from "@/components/services/NameReportMarquee";
 import NameReportTestimonials from "@/components/services/NameReportTestimonials";
 import NameReportChallenge from "@/components/services/NameReportChallenge";
-import PaymentPage from "@/pages/Payment";
+const PaymentPage = lazy(() => import("@/pages/Payment"));
 import { nameCorrectionPackages } from "@/data/serviceCatalog";
 import { nameReportOffers } from "@/data/nameReportOffers";
 import { formatINR } from "@/config/pricing";
