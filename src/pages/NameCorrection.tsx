@@ -59,7 +59,11 @@ export default function NameCorrection() {
         <NameReportPackages selected={selected} onSelect={setSelected} onBook={bookReport} />
         <NameReportTestimonials />
         <NameReportPodcasts />
-        {selectedPackage && <PaymentPage key={selectedPackage.serviceTitle} inline reportService={selectedPackage} />}
+        {selectedPackage && (
+          <Suspense fallback={<div className="mx-auto h-40 max-w-3xl animate-pulse rounded-2xl bg-muted/40" />}>
+            <PaymentPage key={selectedPackage.serviceTitle} inline reportService={selectedPackage} />
+          </Suspense>
+        )}
         <NameReportChallenge />
         <NameReportExpert />
         <section className="bg-background py-12 lg:py-16" aria-labelledby="name-faq-heading">
