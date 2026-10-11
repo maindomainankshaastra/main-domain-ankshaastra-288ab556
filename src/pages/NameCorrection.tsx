@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { Plus, Minus, ArrowRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
@@ -11,7 +11,7 @@ import NameReportPhilosophy from "@/components/services/NameReportPhilosophy";
 import NameReportMarquee from "@/components/services/NameReportMarquee";
 import NameReportTestimonials from "@/components/services/NameReportTestimonials";
 import NameReportChallenge from "@/components/services/NameReportChallenge";
-import PaymentPage from "@/pages/Payment";
+const PaymentPage = lazy(() => import("@/pages/Payment"));
 import { nameCorrectionPackages } from "@/data/serviceCatalog";
 import { nameReportOffers } from "@/data/nameReportOffers";
 import { formatINR } from "@/config/pricing";
@@ -59,7 +59,11 @@ export default function NameCorrection() {
         <NameReportPackages selected={selected} onSelect={setSelected} onBook={bookReport} />
         <NameReportTestimonials />
         <NameReportPodcasts />
-        {selectedPackage && <PaymentPage key={selectedPackage.serviceTitle} inline reportService={selectedPackage} />}
+        {selectedPackage && (
+          <Suspense fallback={<div className="mx-auto h-40 max-w-3xl animate-pulse rounded-2xl bg-muted/40" />}>
+            <PaymentPage key={selectedPackage.serviceTitle} inline reportService={selectedPackage} />
+          </Suspense>
+        )}
         <NameReportChallenge />
         <NameReportExpert />
         <section className="bg-background py-12 lg:py-16" aria-labelledby="name-faq-heading">
