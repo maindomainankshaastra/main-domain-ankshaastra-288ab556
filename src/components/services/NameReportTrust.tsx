@@ -1,6 +1,6 @@
 import { Film, Star, Tv } from "lucide-react";
-import geita from "@/assets/celebrities/geeta-tyagi.png";
-import darshan from "@/assets/celebrities/darshan-patil.jpg";
+import geita from "@/assets/celebrities/geeta-tyagi.webp";
+import darshan from "@/assets/celebrities/darshan-patil.webp";
 import prashantt from "@/assets/prashantt-sambargi.webp";
 import googleIcon from "@/assets/google-original.png";
 
