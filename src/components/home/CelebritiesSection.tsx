@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Star, Sparkles } from "lucide-react";
-import geetaImg from "@/assets/celebrities/geeta-tyagi.png";
-import darshanImg from "@/assets/celebrities/darshan-patil.jpg";
+import geetaImg from "@/assets/celebrities/geeta-tyagi.webp";
+import darshanImg from "@/assets/celebrities/darshan-patil.webp";
 
 const celebrities = [
   {
