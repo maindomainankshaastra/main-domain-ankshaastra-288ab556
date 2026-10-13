@@ -1,10 +1,10 @@
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import VarshphalSections from "@/components/services/VarshphalSections";
 import { varshphalInclusions } from "@/data/varshphalReport";
-import { ArrowRight, Check, LockKeyhole, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, LockKeyhole, FileText } from "lucide-react";
 import { formatINR } from "@/config/pricing";
 import { varshphalPackages } from "@/data/serviceCatalog";
 import hero from "@/assets/varshphal-2027-hero.webp";
@@ -32,9 +32,21 @@ const PaymentPage = lazy(() => import("@/pages/Payment"));
 
 export default function VarshphalReport() {
   const report = varshphalPackages[0];
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingVisited, setBookingVisited] = useState(false);
+  const openBooking = () => {
+    setBookingVisited(true);
+    setBookingOpen(true);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+  const closeBooking = () => {
+    setBookingOpen(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
   return <Layout minimal>
     <SEOHead title="Varshphal Report 2027 — Yearly Predictions" description="Plan your 2027 month by month with a personalised Varshphal astrology report by Himansshu Agarwal Ji. Annual chart, Muntha, guidance and monthly remedies in a detailed 30+ page PDF." canonical="/reports/varshphal-report" />
     <div className="varshphal-page">
+      <div hidden={bookingOpen} className="varshphal-content">
       <section className="varshphal-hero relative overflow-hidden">
         <img src={hero} alt="Ankshaastra Varshphal Report 2027 with golden planetary artwork" width={1536} height={1024} fetchPriority="high" className="varshphal-hero-art absolute inset-0 h-full w-full object-cover" />
         <div className="section-container relative z-10">
@@ -43,7 +55,7 @@ export default function VarshphalReport() {
             <h1 className="mt-8 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.08]">Varshphal Report —<br />Yearly Predictions</h1>
             <p className="varshphal-hero-subtitle mt-7 font-display text-2xl sm:text-3xl leading-snug">2027 Predictions Are Here,<br className="hidden sm:block" /> More Personalised Than Ever!</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="varshphal-hero-primary h-auto min-h-12 rounded-full px-6 py-3"><a href="#varshphal-report">Get Varshphal Report <ArrowRight /></a></Button>
+              <Button onClick={openBooking} size="lg" className="varshphal-hero-primary h-auto min-h-12 rounded-full px-6 py-3">Unlock My Varshphal <ArrowRight /></Button>
               <Button asChild variant="outline" size="lg" className="varshphal-hero-secondary h-auto min-h-12 rounded-full px-6 py-3"><a href="#varshphal-discover">See What You’ll Discover</a></Button>
             </div>
             <div className="varshphal-author mt-6 flex items-center gap-3 text-sm"><img src={expert} alt="Himansshu Agarwal Ji" width={40} height={40} className="h-10 w-10 rounded-full object-cover object-top" /><span>By <strong>Himansshu Agarwal Ji</strong></span></div>
@@ -88,14 +100,22 @@ export default function VarshphalReport() {
               <p className="varshphal-body mt-4 text-lg leading-relaxed">Your birth details, your next 12 months, your remedies. In one detailed PDF.</p>
               <ul className="my-7 space-y-4">{varshphalInclusions.map(item => <li key={item} className="flex items-start gap-3 text-sm"><Check className="varshphal-check mt-0.5 h-4 w-4 shrink-0" />{item}</li>)}</ul>
               <label className="varshphal-selected flex cursor-pointer items-start gap-3 rounded-lg border p-4"><input type="radio" name="varshphal-plan" defaultChecked aria-label="Varshphal Report PDF" className="mt-1 h-4 w-4 accent-primary" /><span className="flex-1"><strong className="block">Varshphal Report</strong><span className="varshphal-body mt-1 block text-sm">Your full report as a PDF via email</span></span><strong className="text-2xl">{formatINR(report.price)}</strong></label>
-              <Button asChild size="lg" className="varshphal-order mt-5 h-12 w-full"><a href="#varshphal-booking">Get My Varshphal Report <ArrowRight /></a></Button>
+              <Button onClick={openBooking} size="lg" className="varshphal-order mt-5 h-12 w-full">Unlock My Varshphal <ArrowRight /></Button>
               <div className="varshphal-body mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs"><span className="flex items-center gap-1.5"><LockKeyhole className="h-3.5 w-3.5" />100% Confidential</span><span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Personalised PDF</span></div>
             </div>
           </article>
         </div>
       </section>
-      <VarshphalSections />
-      <Suspense fallback={<section id="varshphal-booking" className="section-padding text-center">Loading your booking form…</section>}><PaymentPage inline reportService={report} /></Suspense>
+      <VarshphalSections onBook={openBooking} />
+      <div className="varshphal-mobile-cta fixed inset-x-0 bottom-0 z-40 px-4 pt-3 md:hidden">
+        <Button onClick={openBooking} size="lg" className="varshphal-unlock h-14 w-full rounded-full text-base">Unlock Varshphal · {formatINR(report.price)} <ArrowRight className="ml-2 h-5 w-5" /></Button>
+        <p className="varshphal-body mt-2 text-center text-[11px]">Secure checkout · 100% Confidential</p>
+      </div>
+      </div>
+      {bookingVisited && <div hidden={!bookingOpen}>
+        <div className="section-container pt-5"><Button variant="ghost" onClick={closeBooking} className="gap-2"><ArrowLeft className="h-4 w-4" />Back to report</Button></div>
+        <Suspense fallback={<section className="section-padding text-center" role="status">Loading your booking form…</section>}><PaymentPage inline reportService={report} /></Suspense>
+      </div>}
     </div>
   </Layout>;
 }

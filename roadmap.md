@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Refine Varshphal mobile spacing and sticky CTA; open form-only booking on demand and verify it.
 
 ## Completed
 - Updated Varshphal inclusions to monthly guidance/remedies, Muntha and a 30+ page PDF; added reference-style consultation feedback, expert note, closing CTA and supplied FAQs. Reused inline/standalone checkout with exact birth time required for both people, one additional report at 20% off (₹559.20), ₹1,258.20 total and brand terms link; no coupons or unrelated upsells. Ten tests passed; desktop/mobile and filled two-person submission verified against an intercepted order endpoint, with no real order or payment. Fixed narrow birth-field columns and duplicate gender-label IDs found during verification; build OK.
