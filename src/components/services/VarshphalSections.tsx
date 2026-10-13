@@ -10,7 +10,7 @@ const reviews = [
   { name: "Vikram Singh", text: "Best numerologist I've consulted. The call revealed things about my life nobody else knew." },
 ];
 
-export default function VarshphalSections() {
+export default function VarshphalSections({ onBook }: { onBook: () => void }) {
   return <>
     <section className="varshphal-feedback section-padding" aria-labelledby="varshphal-reviews-heading">
       <div className="section-container">
@@ -30,7 +30,7 @@ export default function VarshphalSections() {
       </div>
     </section>
     <section className="varshphal-closing section-padding text-center">
-      <div className="section-container"><Flower2 className="mx-auto h-12 w-12" strokeWidth={1} /><h2 className="mt-6 font-display text-4xl leading-tight">Your year has a story.<br />It's time you read it.</h2><p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed">Created from your exact birth date, time and place, your Varshphal Report helps you understand your annual theme, month-by-month outlook and the key periods shaping 2027. A clearer view of the year ahead, in a detailed PDF to keep forever.</p><Button asChild size="lg" className="varshphal-closing-button mt-7 h-auto min-h-12 rounded-full px-7 py-3"><a href="#varshphal-booking">Unlock My Varshphal Report <ArrowRight /></a></Button><p className="mt-4 text-xs">Exact birth time required · Personalised PDF via email</p></div>
+      <div className="section-container"><Flower2 className="mx-auto h-12 w-12" strokeWidth={1} /><h2 className="mt-6 font-display text-4xl leading-tight">Your year has a story.<br />It's time you read it.</h2><p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed">Created from your exact birth date, time and place, your Varshphal Report helps you understand your annual theme, month-by-month outlook and the key periods shaping 2027. A clearer view of the year ahead, in a detailed PDF to keep forever.</p><Button onClick={onBook} size="lg" className="varshphal-closing-button mt-7 h-auto min-h-12 rounded-full px-7 py-3">Unlock My Varshphal Report <ArrowRight /></Button><p className="mt-4 text-xs">Exact birth time required · Personalised PDF via email</p></div>
     </section>
     <section className="section-padding" aria-labelledby="varshphal-faq-heading"><div className="section-container max-w-4xl"><h2 id="varshphal-faq-heading" className="varshphal-section-title text-center text-3xl sm:text-4xl">Frequently Asked Questions</h2><Accordion type="single" collapsible className="mt-8">{varshphalFaqs.map((faq, index) => <AccordionItem key={faq.question} value={`faq-${index}`}><AccordionTrigger className="gap-4 text-left text-base">{faq.question}</AccordionTrigger><AccordionContent className="varshphal-body text-base leading-relaxed">{faq.answer}</AccordionContent></AccordionItem>)}</Accordion></div></section>
   </>;
