@@ -75,7 +75,7 @@ const reportListings: CatalogListingItem[] = [
   {
     id: "varshphal",
     title: "Varshphal Report",
-    description: "Complete year-ahead numerology forecast for 2026.",
+    description: "Complete year-ahead numerology forecast for 2027.",
     category: "Reports",
     price: pricing.reports.varshphal,
     route: "/reports/varshphal-report",
