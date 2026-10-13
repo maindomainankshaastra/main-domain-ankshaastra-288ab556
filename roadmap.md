@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Update Varshphal report inclusions, reference sections and FAQs; add exact-birth-time checkout with one additional report at 20% off and no coupons; verify single/two-person flow.
 
 ## Completed
 - Matched Varshphal references with Ankshaastra 2027 report artwork, planning questions, four illustrated benefits and a catalog-backed ₹699 offer. Verified desktop/mobile images, no horizontal overflow, and 2027 checkout total; seven regression tests passed and build OK. No payment made.
