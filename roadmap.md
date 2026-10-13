@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Match Varshphal references with a branded 2027 hero, planning questions, four benefit cards and report offer; retain ₹699 and verify booking.
 
 ## Completed
 - Renamed the visible package to Complete Blueprint and reused the single-person Name Correction form, including legacy URL protection and matching subject-count/invoice helpers. Restored dark charcoal/gold sections and white cards against the hero-orange base; replaced Challenge copy verbatim. Six tests passed and desktop details-to-review plus mobile sheet bounds were verified without payment; preview build OK.
