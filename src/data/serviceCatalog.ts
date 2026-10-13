@@ -42,7 +42,7 @@ export const callConsultationHub: ServiceHub = {
 };
 
 export const varshphalPackages: CatalogPackage[] = [
-  { name: "Varshphal Report", serviceTitle: "Varshphal Report 2026", price: pricing.reports.varshphal, formType: "kundali", popular: true },
+  { name: "Varshphal Report 2027", serviceTitle: "Varshphal Report 2027", price: pricing.reports.varshphal, formType: "kundali", popular: true },
 ];
 
 export const pyaarShastraPackages: CatalogPackage[] = [

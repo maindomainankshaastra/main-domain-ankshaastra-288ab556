@@ -12,7 +12,7 @@ const columns = [
     links: [
       { name: "Name Correction", to: "/services/name-correction" },
       { name: "Personalized Kundali", to: "/reports/personalized-kundali" },
-      { name: "Varshphal 2026", to: "/reports/varshphal-report" },
+      { name: "Varshphal 2027", to: "/reports/varshphal-report" },
       { name: "Pyaar Shaastra", to: "/reports/pyaar-shastra" },
       { name: "Baby Name", to: "https://empower.ankshaastra.com", external: true },
     ],

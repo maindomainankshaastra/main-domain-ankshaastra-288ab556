@@ -131,6 +131,68 @@
 }
 
 @layer components {
+  .varshphal-page {
+    --background: 0 0% 100%;
+    --foreground: 24 35% 17%;
+    --card: 0 0% 100%;
+    --border: 280 24% 88%;
+    --primary: 27 52% 41%;
+    --primary-foreground: 0 0% 100%;
+    --varshphal-hero: 23 60% 12%;
+    --varshphal-title: 353 48% 76%;
+    --varshphal-light: 34 60% 96%;
+    --varshphal-heading: 280 38% 19%;
+    --varshphal-muted: 24 15% 39%;
+    --varshphal-lavender: 264 45% 97%;
+    --varshphal-coral: 9 62% 52%;
+    --varshphal-rose: 8 70% 97%;
+    --varshphal-green: 154 38% 32%;
+    --varshphal-green-light: 150 42% 95%;
+    --varshphal-gold: 41 48% 52%;
+    --varshphal-gold-light: 46 80% 94%;
+    --varshphal-violet: 265 42% 48%;
+    --varshphal-promise: linear-gradient(100deg, hsl(var(--varshphal-rose)), hsl(var(--varshphal-gold-light)));
+    background: hsl(var(--background)); color: hsl(var(--foreground));
+  }
+  .varshphal-page h1, .varshphal-page h2, .varshphal-page h3, .varshphal-page h4 { letter-spacing: 0; }
+  .varshphal-hero { background: hsl(var(--varshphal-hero)); }
+  .varshphal-hero-art { object-position: right center; object-fit: contain !important; }
+  .varshphal-hero-copy { width: 54%; padding: 70px 0 76px; }
+  .varshphal-hero h1 { color: hsl(var(--varshphal-title)); }
+  .varshphal-hero-subtitle, .varshphal-author { color: hsl(var(--varshphal-light)); }
+  .varshphal-edition { background: hsl(var(--varshphal-light)); color: hsl(var(--varshphal-heading)); }
+  .varshphal-status { background: hsl(var(--varshphal-green)); }
+  .varshphal-page .varshphal-hero-primary { background: hsl(var(--background)); color: hsl(var(--varshphal-heading)); }
+  .varshphal-page .varshphal-hero-primary:hover { background: hsl(var(--varshphal-light)); }
+  .varshphal-page .varshphal-hero-secondary { background: hsl(var(--varshphal-light) / .08); color: hsl(var(--varshphal-light)); border-color: hsl(var(--varshphal-light) / .4); }
+  .varshphal-page .varshphal-hero-secondary:hover { background: hsl(var(--varshphal-light) / .17); }
+  .varshphal-section-title { color: hsl(var(--varshphal-heading)); }
+  .varshphal-section-title:not(h3) { font-family: 'DM Sans', sans-serif; font-weight: 600; }
+  .varshphal-question { background: hsl(var(--varshphal-lavender)); border-color: hsl(var(--varshphal-gold)); }
+  .varshphal-decision { background: hsl(var(--varshphal-rose)); color: hsl(var(--varshphal-coral)); }
+  .varshphal-benefits { background: hsl(var(--varshphal-lavender) / .45); }
+  .varshphal-promise { background: var(--varshphal-promise); border-color: hsl(var(--varshphal-coral) / .3); }
+  .varshphal-eyebrow { color: hsl(var(--varshphal-coral)); }
+  .varshphal-promise-topics { color: hsl(var(--varshphal-violet)); }
+  .varshphal-benefit-heading, .varshphal-body { color: hsl(var(--varshphal-muted)); }
+  .varshphal-benefit, .varshphal-offer { background: hsl(var(--card)); border-color: hsl(var(--border)); }
+  .varshphal-tone-personal { --benefit-ink: var(--varshphal-violet); --benefit-background: var(--varshphal-lavender); }
+  .varshphal-tone-language { --benefit-ink: var(--varshphal-coral); --benefit-background: var(--varshphal-rose); }
+  .varshphal-tone-remedies { --benefit-ink: var(--varshphal-green); --benefit-background: var(--varshphal-green-light); }
+  .varshphal-tone-pdf { --benefit-ink: var(--primary); --benefit-background: var(--varshphal-gold-light); }
+  .varshphal-benefit-tag { color: hsl(var(--benefit-ink)); background: hsl(var(--benefit-background)); }
+  .varshphal-cover-wrap { background: hsl(var(--varshphal-light)); }
+  .varshphal-check { color: hsl(var(--varshphal-gold)); }
+  .varshphal-selected { background: hsl(var(--varshphal-lavender)); border-color: hsl(var(--varshphal-violet) / .35); color: hsl(var(--varshphal-heading)); }
+  @media (min-width: 1440px) { .varshphal-hero-copy { padding: 90px 0 96px; } }
+  @media (max-width: 767px) {
+    .varshphal-hero-copy { width: 100%; padding: 32px 0 28px; }
+    .varshphal-hero-art { position: relative !important; inset: auto !important; height: 230px !important; object-position: center; width: 100%; }
+    .varshphal-hero { display: flex; flex-direction: column-reverse; }
+    .varshphal-hero h1 { font-size: 38px; }
+    .varshphal-hero .section-container { width: 100%; }
+    .varshphal-hero-art { object-fit: contain; }
+  }
   .name-ad-page, .report-mobile-sheet {
     --background: 26 85% 91%;
     --card: 0 0% 100%;

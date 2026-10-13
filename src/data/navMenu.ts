@@ -17,7 +17,7 @@ export const reportsNavItems: NavItem[] = [
     name: "Varshphal Report",
     path: "/reports/varshphal-report",
     icon: Calendar,
-    description: "Your complete yearly numerology guide for 2026",
+    description: "Your complete yearly numerology guide for 2027",
   },
   {
     name: "Pyaar Shaastra Report",
