@@ -1,9 +1,11 @@
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import VarshphalSections from "@/components/services/VarshphalSections";
+import { varshphalInclusions } from "@/data/varshphalReport";
 import { ArrowRight, Check, LockKeyhole, FileText } from "lucide-react";
-import { formatINR, payLink } from "@/config/pricing";
+import { formatINR } from "@/config/pricing";
 import { varshphalPackages } from "@/data/serviceCatalog";
 import hero from "@/assets/varshphal-2027-hero.webp";
 import cover from "@/assets/varshphal-2027-cover.webp";
@@ -21,24 +23,17 @@ const questions = [
   "Is this a good year for marriage?",
 ];
 const benefits = [
-  { image: personal, tag: "PERSONALISED INSIGHTS", title: "Deeply Personal", description: "Built around your birth details, Mulank, Bhagyank and Lo Shu Grid. Personalised guidance for the year ahead — not a one-size-fits-all prediction.", tone: "personal" },
+  { image: personal, tag: "PERSONALISED INSIGHTS", title: "Deeply Personal", description: "Built around your exact birth details, annual chart and Muntha. Personalised guidance for the year ahead — not a one-size-fits-all prediction.", tone: "personal" },
   { image: language, tag: "ZERO JARGON", title: "Plain Language", description: "Easy-to-understand guidance for career, relationships, health and finances. No prior numerology knowledge needed.", tone: "language" },
-  { image: remedies, tag: "SIMPLE REMEDIES", title: "Practical", description: "Personalised Lal Kitab remedy suggestions, lucky numbers, colours and directions to support your everyday decisions.", tone: "remedies" },
-  { image: pdf, tag: "YOUR PDF", title: "Yours to Keep", description: "A detailed 40+ page PDF report delivered via email. Revisit your month-by-month insights whenever you need them.", tone: "pdf" },
+  { image: remedies, tag: "MONTHLY REMEDIES", title: "Practical", description: "Month-by-month remedies for the next 12 months, alongside guidance to support more informed everyday decisions.", tone: "remedies" },
+  { image: pdf, tag: "YOUR PDF", title: "Yours to Keep", description: "A detailed 30+ page PDF report delivered via email. Revisit your month-by-month insights whenever you need them.", tone: "pdf" },
 ];
-const inclusions = [
-  "Month-by-month predictions for 2027",
-  "Career, money, relationships and health insights",
-  "Personalised Mulank, Bhagyank & Lo Shu Grid analysis",
-  "Lucky numbers, colours, directions & Lal Kitab remedies",
-  "40+ page detailed PDF report to keep",
-];
+const PaymentPage = lazy(() => import("@/pages/Payment"));
 
 export default function VarshphalReport() {
   const report = varshphalPackages[0];
-  const checkout = payLink(report.serviceTitle, report.price, report.formType);
   return <Layout minimal>
-    <SEOHead title="Varshphal Report 2027 — Yearly Predictions" description="Plan your 2027 month by month with a personalised Varshphal numerology report by Himansshu Agarwal Ji. Career, relationships, finances and remedies in one detailed PDF." canonical="/reports/varshphal-report" />
+    <SEOHead title="Varshphal Report 2027 — Yearly Predictions" description="Plan your 2027 month by month with a personalised Varshphal astrology report by Himansshu Agarwal Ji. Annual chart, Muntha, guidance and monthly remedies in a detailed 30+ page PDF." canonical="/reports/varshphal-report" />
     <div className="varshphal-page">
       <section className="varshphal-hero relative overflow-hidden">
         <img src={hero} alt="Ankshaastra Varshphal Report 2027 with golden planetary artwork" width={1536} height={1024} fetchPriority="high" className="varshphal-hero-art absolute inset-0 h-full w-full object-cover" />
@@ -91,14 +86,16 @@ export default function VarshphalReport() {
             <div className="p-6 sm:p-10 lg:p-12">
               <h3 className="varshphal-section-title font-body text-2xl sm:text-3xl font-bold">Varshphal Report 2027</h3>
               <p className="varshphal-body mt-4 text-lg leading-relaxed">Your birth details, your next 12 months, your remedies. In one detailed PDF.</p>
-              <ul className="my-7 space-y-4">{inclusions.map(item => <li key={item} className="flex items-start gap-3 text-sm"><Check className="varshphal-check mt-0.5 h-4 w-4 shrink-0" />{item}</li>)}</ul>
+              <ul className="my-7 space-y-4">{varshphalInclusions.map(item => <li key={item} className="flex items-start gap-3 text-sm"><Check className="varshphal-check mt-0.5 h-4 w-4 shrink-0" />{item}</li>)}</ul>
               <label className="varshphal-selected flex cursor-pointer items-start gap-3 rounded-lg border p-4"><input type="radio" name="varshphal-plan" defaultChecked aria-label="Varshphal Report PDF" className="mt-1 h-4 w-4 accent-primary" /><span className="flex-1"><strong className="block">Varshphal Report</strong><span className="varshphal-body mt-1 block text-sm">Your full report as a PDF via email</span></span><strong className="text-2xl">{formatINR(report.price)}</strong></label>
-              <Button asChild size="lg" className="varshphal-order mt-5 h-12 w-full"><Link to={checkout}>Get My Varshphal Report <ArrowRight /></Link></Button>
+              <Button asChild size="lg" className="varshphal-order mt-5 h-12 w-full"><a href="#varshphal-booking">Get My Varshphal Report <ArrowRight /></a></Button>
               <div className="varshphal-body mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs"><span className="flex items-center gap-1.5"><LockKeyhole className="h-3.5 w-3.5" />100% Confidential</span><span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Personalised PDF</span></div>
             </div>
           </article>
         </div>
       </section>
+      <VarshphalSections />
+      <Suspense fallback={<section id="varshphal-booking" className="section-padding text-center">Loading your booking form…</section>}><PaymentPage inline reportService={report} /></Suspense>
     </div>
   </Layout>;
 }
