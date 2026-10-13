@@ -184,6 +184,20 @@
   .varshphal-cover-wrap { background: hsl(var(--varshphal-light)); }
   .varshphal-check { color: hsl(var(--varshphal-gold)); }
   .varshphal-selected { background: hsl(var(--varshphal-lavender)); border-color: hsl(var(--varshphal-violet) / .35); color: hsl(var(--varshphal-heading)); }
+  .varshphal-feedback { background: hsl(var(--varshphal-lavender)); }
+  .varshphal-review { background: hsl(var(--card)); scroll-snap-align: center; }
+  .varshphal-review-track { scroll-snap-type: x mandatory; }
+  .varshphal-note-rule { background: hsl(var(--varshphal-gold)); }
+  .varshphal-closing { background: hsl(var(--varshphal-hero)); color: hsl(var(--varshphal-light)); }
+  .varshphal-closing > div > svg { color: hsl(var(--varshphal-title)); }
+  .varshphal-page .varshphal-closing-button { background: hsl(var(--varshphal-gold)); color: hsl(var(--varshphal-light)); }
+  .varshphal-page .varshphal-closing-button:hover { background: hsl(var(--varshphal-gold) / .85); }
+  .varshphal-checkout { --background: 34 60% 96%; --muted: 34 40% 94%; --muted-foreground: var(--varshphal-muted); --input: var(--border); --ring: var(--primary); }
+  .varshphal-form, .varshphal-addon { background: hsl(var(--card)); }
+  .varshphal-person { background: hsl(var(--varshphal-light) / .55); }
+  .varshphal-checkout input, .varshphal-checkout [role="combobox"] { background: hsl(var(--card)); }
+  .varshphal-checkout .font-display { font-family: 'DM Sans', sans-serif; }
+  .varshphal-checkout [role="radiogroup"] { flex-wrap: wrap; gap: 1rem; }
   @media (min-width: 1440px) { .varshphal-hero-copy { padding: 90px 0 96px; } }
   @media (max-width: 767px) {
     .varshphal-hero-copy { width: 100%; padding: 32px 0 28px; }
