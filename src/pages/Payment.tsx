@@ -428,8 +428,8 @@ const GenderRadio = ({ control, name = "gender" }: { control: any; name?: string
           <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
             {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
               <div key={v} className="flex items-center space-x-2">
-                <RadioGroupItem value={v} id={`g-${v}`} />
-                <Label htmlFor={`g-${v}`}>{l}</Label>
+                <RadioGroupItem value={v} id={`${name}-g-${v}`} />
+                <Label htmlFor={`${name}-g-${v}`}>{l}</Label>
               </div>
             ))}
           </RadioGroup>
