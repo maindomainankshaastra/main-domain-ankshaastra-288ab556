@@ -49,6 +49,7 @@ import { OrderSummary } from "@/components/payment/OrderSummary";
 import { inferPersonCountFromServiceTitle, resolvePurchaserName, extractServicePersonsFromSnapshot } from "@/lib/service-persons";
 import { stateCodeFromName } from "@/lib/indian-states";
 import { isIOSSafari, normalizeRazorpayContact } from "@/lib/safari-compat";
+import { makeVarshphalSchema, prepareVarshphalSnapshot, varshphalAdditionalReport, varshphalInclusions } from "@/data/varshphalReport";
 
 const KUNDLI_20_ADDON = { id: "kundli-20", label: "Personalised Premium Kundli 2.0", note: "PDF report", price: pricing.addons.kundli20 };
 const LUCKY_COLOR_ADDON = { id: "lucky-color", label: "Lucky Color and Number", note: "", price: pricing.addons.luckyColorNumber };
@@ -427,8 +428,8 @@ const GenderRadio = ({ control, name = "gender" }: { control: any; name?: string
           <RadioGroup value={field.value ?? ""} onValueChange={field.onChange} className="flex gap-6">
             {[["male", "Male"], ["female", "Female"], ["other", "Other"]].map(([v, l]) => (
               <div key={v} className="flex items-center space-x-2">
-                <RadioGroupItem value={v} id={`g-${v}`} />
-                <Label htmlFor={`g-${v}`}>{l}</Label>
+                <RadioGroupItem value={v} id={`${name}-g-${v}`} />
+                <Label htmlFor={`${name}-g-${v}`}>{l}</Label>
               </div>
             ))}
           </RadioGroup>
@@ -459,6 +460,8 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
 
   const requestedService = reportService?.serviceTitle || searchParams.get("service");
   const serviceName = requestedService && /^name check(?:\s+[23])?$/i.test(requestedService.trim()) ? "Name Check" : requestedService;
+  const isVarshphal = /varshphal/i.test(serviceName || "");
+  const [additionalVarshphal, setAdditionalVarshphal] = useState(false);
   const serviceAmount = reportService ? String(reportService.price) : searchParams.get("amount");
   const consultationType = searchParams.get("type") as keyof typeof consultationPackages;
   const formTypeParam = (reportService?.formType || searchParams.get("formType")) as FormType | null;
@@ -517,6 +520,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
   const availableAddons: Addon[] = useMemo(() => {
+    if (isVarshphal) return [varshphalAdditionalReport];
     if (formType === "pyaar-shastra") return [...PYAAR_ADDONS];
     if (formType === "kundali" || formType === "kundali-multi") return [];
     if (formType === "office-vastu") return [];
@@ -542,7 +546,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
       return [];
     }
     return [...DEFAULT_ADDONS];
-  }, [formType]);
+  }, [formType, isVarshphal]);
 
   const addonsTotal = selectedAddons.reduce((sum, id) => {
     const a = availableAddons.find((x) => x.id === id);
@@ -605,6 +609,10 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
     const baseDob = { day: "", month: "", year: "" };
     const baseTob = { hour: "", minute: "", meridiem: "" as any };
     const loc = { ...CURRENT_LOCATION_DEFAULTS };
+    if (isVarshphal) {
+      const blank = { fullName: "", gender: undefined as any, dob: baseDob, tob: baseTob, pincode: "", pob: "" };
+      return { schema: makeVarshphalSchema(additionalVarshphal), defaults: { ...blank, person2: { ...blank }, email: "", whatsapp: "+91 ", language: undefined as any, ...loc } };
+    }
     if (formType === "kundali") {
       return {
         schema: kundaliSchema,
@@ -677,7 +685,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
       schema: defaultSchema,
       defaults: { fullName: "", email: "", whatsapp: "+91 ", dob: baseDob, tob: baseTob, pob: "", gender: undefined as any, pincode: "", ...loc },
     };
-  }, [formType, kundaliCount]);
+  }, [formType, kundaliCount, isVarshphal, additionalVarshphal]);
 
   const form = useForm<any>({
     resolver: zodResolver(z.preprocess((input) => {
@@ -1127,6 +1135,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
   };
 
   const onSubmit = async (data: any) => {
+    if (isVarshphal) data = prepareVarshphalSnapshot(data, additionalVarshphal);
     if (!isServiceMode && !selectedPackage) {
       toast({ title: "Please select a plan", description: "Choose a consultation plan to proceed.", variant: "destructive" });
       return;
@@ -1207,7 +1216,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
         ? (serviceLower.includes("blueprint") ? "Delivered on WhatsApp within 24–28 Hours." : "Delivered on WhatsApp within 24–48 Hours.")
       : isExtendedReport
         ? "Delivered within 24-48 Hrs."
-        : "Delivered within 12-24 Hrs.";
+        : isVarshphal ? "Personalised PDF delivered via email · within 12–24 Hrs." : "Delivered within 12-24 Hrs.";
   const renderOrderSummary = (sticky: boolean) => (
     <OrderSummary
       serviceName={displayName || "Service"}
@@ -1266,6 +1275,11 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
   // ───── per-type field renderer ─────
   const renderFields = (step?: number) => {
     const c = form.control;
+
+    if (isVarshphal) {
+      const subject = (prefix: string, title: string) => <div className="varshphal-person space-y-4 rounded-lg border border-border p-4"><h3 className="font-body text-base font-bold">{title}</h3><div className="grid gap-4 sm:grid-cols-2"><FormField control={c} name={`${prefix}fullName`} render={({ field }) => <FormItem><FormLabel>Full Name *</FormLabel><FormControl><Input placeholder="Full name" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} /><GenderRadio control={c} name={`${prefix}gender`} /><FormField control={c} name={`${prefix}pincode`} render={({ field }) => <FormItem><FormLabel>Birth PIN Code *</FormLabel><FormControl><Input placeholder="6-digit birth PIN" inputMode="numeric" maxLength={6} {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} /><FormField control={c} name={`${prefix}pob`} render={({ field }) => <FormItem><FormLabel>Place of Birth *</FormLabel><FormControl><Input placeholder="Birth city, state, country" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>} /><DOBPicker control={c} name={`${prefix}dob`} /><TOBPicker control={c} name={`${prefix}tob`} /></div></div>;
+      return <><p className="rounded-lg border border-border bg-muted p-4 text-sm font-semibold">We only prepare reports with an exact birth time. Please provide the correct birth date, time and place for each person.</p><div className={`grid gap-4 ${additionalVarshphal ? "xl:grid-cols-2" : ""}`}>{subject("", additionalVarshphal ? "Person 1 — Your Details" : "Your Birth Details")}{additionalVarshphal && subject("person2.", "Person 2 — Additional Report")}</div><div className="grid gap-4 sm:grid-cols-2"><WhatsappField control={c} /><FormField control={c} name="language" render={({ field }) => <FormItem><FormLabel>Report Language *</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger></FormControl><SelectContent><SelectItem value="english">English</SelectItem><SelectItem value="hindi">Hindi</SelectItem><SelectItem value="gujarati">Gujarati</SelectItem></SelectContent></Select><FormMessage /></FormItem>} /></div><FormField control={c} name="email" render={({ field }) => <FormItem><FormLabel>Email Address *</FormLabel><FormControl><Input type="email" placeholder="your@email.com" {...field} /></FormControl><p className="text-xs text-muted-foreground">Your PDF report will be sent to this email address.</p><FormMessage /></FormItem>} /><h3 className="font-body text-base font-bold">Current Address</h3><div className="grid gap-4 sm:grid-cols-3">{[["currentPincode", "PIN Code"], ["currentCity", "City"], ["currentState", "State"]].map(([name, label]) => <FormField key={name} control={c} name={name} render={({ field }) => <FormItem><FormLabel>{label} *</FormLabel><FormControl><Input {...field} value={field.value ?? ""} placeholder={label} /></FormControl><FormMessage /></FormItem>} />)}</div></>;
+    }
 
     const FullName = (
       <FormField control={c} name="fullName" render={({ field }) => (
@@ -1780,6 +1794,11 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
       </>
     );
   };
+
+  if (isVarshphal) {
+    const content = <section id="varshphal-booking" className="varshphal-page varshphal-checkout section-padding scroll-mt-20"><div className="section-container max-w-6xl"><h2 className="varshphal-section-title mb-8 text-center text-3xl sm:text-4xl">Get Your Varshphal Report 2027</h2><Form {...form}><form onSubmit={form.handleSubmit(onSubmit)} className="grid items-start gap-6 lg:grid-cols-[2fr_1fr]"><div className="space-y-6"><div className="varshphal-addon flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border p-5"><div><p className="text-xs font-bold text-primary">20% OFF THE ADDITIONAL REPORT</p><h3 className="mt-1 font-body text-lg font-bold">Add one more Varshphal Report</h3><p className="mt-2 text-sm"><s className="text-muted-foreground">₹{pricing.reports.varshphal}</s> <strong>₹{varshphalAdditionalReport.price.toLocaleString("en-IN")}</strong> · For one additional person</p></div><Button type="button" variant={additionalVarshphal ? "outline" : "default"} aria-pressed={additionalVarshphal} onClick={() => { setAdditionalVarshphal(!additionalVarshphal); setSelectedAddons(additionalVarshphal ? [] : [varshphalAdditionalReport.id]); }}>{additionalVarshphal ? "Remove Additional Report" : "Add Additional Report"}</Button></div><div className="varshphal-form space-y-5 rounded-lg border border-border p-5 sm:p-7"><h3 className="font-body text-xl font-bold">Details Required</h3>{renderFields()}<p className="text-sm text-muted-foreground">By clicking Pay, I agree to Ankshaastra's <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">Terms and Conditions</a>.</p><Button type="submit" className="h-12 w-full text-base" disabled={isProcessing || isAwaitingPayment || !canSubmitService}>{isProcessing ? "Processing…" : `Pay ₹${displayPrice.toLocaleString("en-IN")}`}</Button>{serviceError && <p className="text-sm text-destructive">{serviceError}</p>}<p className="text-center text-xs text-muted-foreground">100% Confidential · Secure Payment</p></div></div><aside className="space-y-5 lg:sticky lg:top-24">{renderOrderSummary(false)}<ul className="space-y-3 text-sm">{varshphalInclusions.map(item => <li key={item} className="flex items-start gap-2"><Check className="varshphal-check mt-0.5 h-4 w-4 shrink-0" />{item}</li>)}</ul></aside></form></Form></div></section>;
+    return inline ? content : <Layout minimal hideWhatsApp>{content}</Layout>;
+  }
 
   if (isNameCheckPackage || isNameCorrectionReport) {
     const stepTitles = formType === "name-check" ? ["Where should we send it?", "Who is this report for?", "Your birth details"] : formType === "name-correction-couple" ? ["Where should we send it?", "Person 1 — Your details", "Person 2 — Your details", "Your goals"] : ["Where should we send it?", "Who is this report for?", "Your birth details", "Family & personal details"];

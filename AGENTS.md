@@ -11,3 +11,4 @@
 - Blueprint checkout uses the single-person Name Correction schema even for legacy two-person form URLs; keep its existing internal service identity for order compatibility while using shared catalog presentation labels.
 - Site images are bundled as regular Vite imports from src/assets, not Lovable Assets pointers, because the production domain is hosted on Vercel where the Lovable asset endpoint does not exist.
 - Varshphal page offers use the shared service catalog for edition, price and checkout destination so the report page and checkout stay consistent; presentation colors remain scoped to the report page.
+- Varshphal inline and standalone checkout reuse Payment with a service-scoped schema and additional-report snapshot normalization, so both report subjects reach the existing order flow without affecting other services.
