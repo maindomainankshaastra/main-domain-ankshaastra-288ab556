@@ -1,9 +1,10 @@
 # Project Roadmap
 
 ## Current
-- Match Varshphal references with a branded 2027 hero, planning questions, four benefit cards and report offer; retain ₹699 and verify booking.
+- None.
 
 ## Completed
+- Matched Varshphal references with Ankshaastra 2027 report artwork, planning questions, four illustrated benefits and a catalog-backed ₹699 offer. Verified desktop/mobile images, no horizontal overflow, and 2027 checkout total; seven regression tests passed and build OK. No payment made.
 - Renamed the visible package to Complete Blueprint and reused the single-person Name Correction form, including legacy URL protection and matching subject-count/invoice helpers. Restored dark charcoal/gold sections and white cards against the hero-orange base; replaced Challenge copy verbatim. Six tests passed and desktop details-to-review plus mobile sheet bounds were verified without payment; preview build OK.
 - Added contact-first mobile stepped booking sheets preserving existing report fields, validation and review; unified the Name Report hero-orange theme and updated Blueprint to ₹5,957 / ₹15,051 with 5 stars (8k sold). Five catalog tests passed; verified mobile entry, review and retained edits without making a payment.
 - Added moving black credibility strip, original media/Google logos, global trust heading and requested section order; updated report descriptions, inclusions, ratings and delivery labels with compact selectable mobile packages.
