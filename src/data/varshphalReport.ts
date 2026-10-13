@@ -28,7 +28,7 @@ export const varshphalPersonSchema = z.object({
   pob: z.string().trim().min(2, "Exact place of birth required").max(120),
   pincode: z.string().regex(/^\d{6}$/, "Enter a valid 6-digit birth PIN"),
   dob: z.object({ day: z.string().min(1, "Day required"), month: z.string().min(1, "Month required"), year: z.string().min(1, "Year required") }),
-  tob: z.object({ hour: z.string().regex(/^(?:[1-9]|1[0-2])$/, "Exact birth hour required"), minute: z.string().regex(/^[0-5][0-9]$/, "Exact birth minute required"), meridiem: z.enum(["AM", "PM"], { required_error: "AM/PM required" }) }),
+  tob: z.object({ hour: z.string().regex(/^(?:[1-9]|1[0-2])$/, "Exact birth hour required"), minute: z.string().regex(/^[0-5][0-9]$/, "Exact birth minute required"), meridiem: z.enum(["AM", "PM"], { required_error: "Select AM or PM", invalid_type_error: "Select AM or PM" }).or(z.literal("").refine(() => false, "Select AM or PM")) }),
 });
 
 export const makeVarshphalSchema = (additional: boolean) => varshphalPersonSchema.extend({

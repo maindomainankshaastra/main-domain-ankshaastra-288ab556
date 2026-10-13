@@ -186,7 +186,7 @@
   .varshphal-selected { background: hsl(var(--varshphal-lavender)); border-color: hsl(var(--varshphal-violet) / .35); color: hsl(var(--varshphal-heading)); }
   .varshphal-feedback { background: hsl(var(--varshphal-lavender)); }
   .varshphal-review { background: hsl(var(--card)); scroll-snap-align: center; }
-  .varshphal-review-track { scroll-snap-type: x mandatory; }
+  .varshphal-review-track { scroll-snap-type: x mandatory; justify-content: center; }
   .varshphal-note-rule { background: hsl(var(--varshphal-gold)); }
   .varshphal-closing { background: hsl(var(--varshphal-hero)); color: hsl(var(--varshphal-light)); }
   .varshphal-closing > div > svg { color: hsl(var(--varshphal-title)); }
@@ -194,7 +194,9 @@
   .varshphal-page .varshphal-closing-button:hover { background: hsl(var(--varshphal-gold) / .85); }
   .varshphal-checkout { --background: 34 60% 96%; --muted: 34 40% 94%; --muted-foreground: var(--varshphal-muted); --input: var(--border); --ring: var(--primary); }
   .varshphal-form, .varshphal-addon { background: hsl(var(--card)); }
-  .varshphal-person { background: hsl(var(--varshphal-light) / .55); }
+  .varshphal-person { background: hsl(var(--varshphal-light) / .55); container-type: inline-size; }
+  @container (max-width: 480px) { .varshphal-person > .grid { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 767px) { .varshphal-review-track { justify-content: flex-start; } }
   .varshphal-checkout input, .varshphal-checkout [role="combobox"] { background: hsl(var(--card)); }
   .varshphal-checkout .font-display { font-family: 'DM Sans', sans-serif; }
   .varshphal-checkout [role="radiogroup"] { flex-wrap: wrap; gap: 1rem; }
