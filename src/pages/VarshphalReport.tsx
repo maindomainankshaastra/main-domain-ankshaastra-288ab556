@@ -1,159 +1,104 @@
-import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import SEOHead from "@/components/SEOHead";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { 
-  Star, Calendar, ScrollText, ArrowRight, CheckCircle, 
-  Sparkles, TrendingUp, Shield, Heart, Briefcase, DollarSign
-} from "lucide-react";
-import { pricing, formatINR, payLink } from "@/config/pricing";
+import { ArrowRight, Check, LockKeyhole, FileText } from "lucide-react";
+import { formatINR, payLink } from "@/config/pricing";
+import { varshphalPackages } from "@/data/serviceCatalog";
+import hero from "@/assets/varshphal-2027-hero.webp";
+import cover from "@/assets/varshphal-2027-cover.webp";
+import saturn from "@/assets/varshphal-saturn.webp";
+import personal from "@/assets/varshphal-personal.webp";
+import language from "@/assets/varshphal-language.webp";
+import remedies from "@/assets/varshphal-remedies.webp";
+import pdf from "@/assets/varshphal-pdf.webp";
+import expert from "@/assets/name-report-expert.webp";
 
-const highlights = [
-  { icon: TrendingUp, title: "Career & Growth", desc: "Month-by-month career insights and optimal periods for key decisions." },
-  { icon: Heart, title: "Relationships", desc: "Understanding relationship dynamics and harmony periods through the year." },
-  { icon: DollarSign, title: "Financial Guidance", desc: "Favorable periods for investments, savings, and financial decisions." },
-  { icon: Shield, title: "Health & Wellness", desc: "Health alerts and wellness guidance for every month of the year." },
-  { icon: Briefcase, title: "Business Strategy", desc: "Strategic timing for business moves, partnerships, and expansions." },
-  { icon: Sparkles, title: "Lucky Periods", desc: "Identification of your most powerful and favorable time windows." },
+const questions = [
+  "When is the right time to start something new?",
+  "Which months suit big money decisions?",
+  "Is this the year to change my job?",
+  "Is this a good year for marriage?",
+];
+const benefits = [
+  { image: personal, tag: "PERSONALISED INSIGHTS", title: "Deeply Personal", description: "Built around your birth details, Mulank, Bhagyank and Lo Shu Grid. Personalised guidance for the year ahead — not a one-size-fits-all prediction.", tone: "personal" },
+  { image: language, tag: "ZERO JARGON", title: "Plain Language", description: "Easy-to-understand guidance for career, relationships, health and finances. No prior numerology knowledge needed.", tone: "language" },
+  { image: remedies, tag: "SIMPLE REMEDIES", title: "Practical", description: "Personalised Lal Kitab remedy suggestions, lucky numbers, colours and directions to support your everyday decisions.", tone: "remedies" },
+  { image: pdf, tag: "YOUR PDF", title: "Yours to Keep", description: "A detailed 40+ page PDF report delivered via email. Revisit your month-by-month insights whenever you need them.", tone: "pdf" },
+];
+const inclusions = [
+  "Month-by-month predictions for 2027",
+  "Career, money, relationships and health insights",
+  "Personalised Mulank, Bhagyank & Lo Shu Grid analysis",
+  "Lucky numbers, colours, directions & Lal Kitab remedies",
+  "40+ page detailed PDF report to keep",
 ];
 
-const features = [
-  "Personalised Mulank & Bhagyank Analysis",
-  "Month-by-Month Predictions for 2026",
-  "Lucky Numbers, Colors & Directions",
-  "Career & Business Timing",
-  "Relationship & Health Insights",
-  "Remedial Lal Kitab Suggestions",
-  "Loshu Grid Analysis",
-  "40+ Page Detailed PDF Report",
-];
-
-const VarshphalReport = () => {
-  return (
-    <Layout minimal>
-      <SEOHead title="Varshphal Report 2026" description="Your complete yearly numerology guide for 2026 – month-by-month career, health, relationship, and financial predictions by Himansshu Agarwal Ji." canonical="/reports/varshphal-report" />
-      {/* Hero */}
-      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 gradient-hero" />
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div animate={{ y: [0, -20, 0], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-20 right-[10%] w-72 h-72 rounded-full bg-white/10 blur-3xl" />
-        </div>
-        <div className="section-container relative z-10 py-20">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="text-center max-w-3xl mx-auto">
-            <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 mb-6">
-              <Calendar className="w-4 h-4 text-amber-200" />
-              <span className="text-sm text-white font-medium">Varshphal Report 2026</span>
-            </span>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-6">
-              Your Complete{" "}
-              <span className="text-gradient-amber">Yearly Numerology</span>{" "}
-              Guide for 2026
-            </h1>
-            <p className="text-lg text-white/80 mb-8 leading-relaxed max-w-2xl mx-auto">
-              A detailed, personalised prediction report covering all aspects of your life — career, relationships, 
-              health, finances, and more — powered by Numerology & Lal Kitab wisdom.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to={payLink("Varshphal Report 2026", pricing.reports.varshphal, "kundali")} className="group inline-flex items-center justify-center gap-3 bg-white text-primary font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <span><span>Order Report — {formatINR(pricing.reports.varshphal)}</span></span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
+export default function VarshphalReport() {
+  const report = varshphalPackages[0];
+  const checkout = payLink(report.serviceTitle, report.price, report.formType);
+  return <Layout minimal>
+    <SEOHead title="Varshphal Report 2027 — Yearly Predictions" description="Plan your 2027 month by month with a personalised Varshphal numerology report by Himansshu Agarwal Ji. Career, relationships, finances and remedies in one detailed PDF." canonical="/reports/varshphal-report" />
+    <div className="varshphal-page">
+      <section className="varshphal-hero relative overflow-hidden">
+        <img src={hero} alt="Ankshaastra Varshphal Report 2027 with golden planetary artwork" width={1536} height={1024} fetchPriority="high" className="varshphal-hero-art absolute inset-0 h-full w-full object-cover" />
+        <div className="section-container relative z-10">
+          <div className="varshphal-hero-copy max-w-2xl">
+            <span className="varshphal-edition inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold"><span className="varshphal-status h-1.5 w-1.5 rounded-full" />2027 Edition</span>
+            <h1 className="mt-8 font-display text-4xl sm:text-5xl lg:text-6xl leading-[1.08]">Varshphal Report —<br />Yearly Predictions</h1>
+            <p className="varshphal-hero-subtitle mt-7 font-display text-2xl sm:text-3xl leading-snug">2027 Predictions Are Here,<br className="hidden sm:block" /> More Personalised Than Ever!</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild size="lg" className="varshphal-hero-primary h-auto min-h-12 rounded-full px-6 py-3"><a href="#varshphal-report">Get Varshphal Report <ArrowRight /></a></Button>
+              <Button asChild variant="outline" size="lg" className="varshphal-hero-secondary h-auto min-h-12 rounded-full px-6 py-3"><a href="#varshphal-discover">See What You’ll Discover</a></Button>
             </div>
-          </motion.div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-            <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="hsl(var(--background))"/>
-          </svg>
-        </div>
-      </section>
-
-      {/* What's Included */}
-      <section className="section-padding">
-        <div className="section-container">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <span className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">What's Covered</span>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Comprehensive Life <span className="text-gradient-primary">Predictions</span>
-            </h2>
-          </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {highlights.map((item, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="bg-card rounded-2xl border border-border p-8 text-center hover:shadow-xl hover:border-primary/30 transition-all duration-300 group">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors">
-                  <item.icon className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="font-display text-lg font-bold text-foreground mb-3">{item.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
+            <div className="varshphal-author mt-6 flex items-center gap-3 text-sm"><img src={expert} alt="Himansshu Agarwal Ji" width={40} height={40} className="h-10 w-10 rounded-full object-cover object-top" /><span>By <strong>Himansshu Agarwal Ji</strong></span></div>
           </div>
         </div>
       </section>
 
-      {/* Report Features */}
-      <section className="section-padding bg-muted/30">
-        <div className="section-container">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
-                What Your Report <span className="text-gradient-primary">Includes</span>
-              </h2>
-              <ul className="space-y-4">
-                {features.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <div className="relative bg-card rounded-2xl border border-primary shadow-lg shadow-primary/10 p-10 text-center">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                  VARSHPHAL 2026
-                </div>
-                <ScrollText className="w-16 h-16 text-primary mx-auto mb-6" />
-                <h3 className="font-display text-2xl font-bold text-foreground mb-2">Complete Yearly Report</h3>
-                <div className="flex items-baseline justify-center gap-2 mb-2">
-                  <span className="text-4xl font-bold text-primary">{formatINR(pricing.reports.varshphal)}</span>
-                </div>
-                <p className="text-muted-foreground text-sm mb-6">40+ page detailed PDF report</p>
-                <div className="flex items-center justify-center gap-1 mb-6">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  ))}
-                  <span className="text-sm text-muted-foreground ml-2">4.9/5 rating</span>
-                </div>
-                <Link to={payLink("Varshphal Report 2026", pricing.reports.varshphal, "kundali")} className="btn-primary w-full inline-flex items-center justify-center gap-2 py-4 text-lg">
-                  Order Now <ArrowRight className="w-5 h-5" />
-                </Link>
-              </div>
-            </motion.div>
+      <section id="varshphal-discover" className="section-padding scroll-mt-20">
+        <div className="section-container grid items-center gap-8 md:grid-cols-[.7fr_2fr] lg:gap-14">
+          <img src={saturn} alt="Saturn with its planetary rings" width={768} height={768} loading="lazy" className="mx-auto w-44 md:w-full max-w-xs" />
+          <div>
+            <h2 className="varshphal-section-title text-3xl sm:text-4xl lg:text-5xl leading-tight italic">Planning the year ahead?<br />You may be asking…</h2>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">{questions.map(question => <div key={question} className="varshphal-question flex min-h-24 items-center rounded-lg border-l-[3px] px-5 py-5 font-display text-xl font-semibold italic">{question}</div>)}</div>
+            <p className="varshphal-decision mt-6 rounded-full px-5 py-4 text-center font-semibold">The right month for every decision in your life.</p>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="section-padding">
-        <div className="section-container text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-2xl mx-auto">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Start 2026 with <span className="text-gradient-primary">Clarity & Confidence</span>
-            </h2>
-            <p className="text-muted-foreground text-lg mb-8">
-              Know what's coming. Plan smarter. Make empowered decisions with your personalised Varshphal Report.
-            </p>
-            <Link to="/payment?service=Varshphal%20Report%202026&amount=699" className="btn-primary inline-flex items-center gap-2 text-lg px-10 py-4">
-              Get Your Report Now <ArrowRight className="w-5 h-5" />
-            </Link>
-          </motion.div>
+      <section className="varshphal-benefits section-padding">
+        <div className="section-container">
+          <div className="varshphal-promise border-y py-8 text-center">
+            <p className="varshphal-eyebrow text-xs font-bold">YOUR YEAR, WITH GREATER CLARITY</p>
+            <h2 className="mt-3 font-display text-2xl sm:text-3xl">Every part of your life, explored month by month.</h2>
+            <p className="varshphal-promise-topics mt-3 font-display text-xl sm:text-2xl font-semibold">Career moves · Money decisions · Travel · Health · Relationships</p>
+          </div>
+          <h3 className="varshphal-benefit-heading mb-7 mt-12 text-center font-body text-sm font-bold">WHAT MAKES THIS VARSHPHAL DIFFERENT</h3>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{benefits.map(benefit => <article key={benefit.title} className={`varshphal-benefit varshphal-tone-${benefit.tone} overflow-hidden rounded-lg border`}>
+            <img src={benefit.image} alt={benefit.title} width={384} height={512} loading="lazy" className="h-44 w-full object-cover" />
+            <div className="p-5"><span className="varshphal-benefit-tag inline-block rounded-full px-3 py-1 text-[10px] font-bold">{benefit.tag}</span><h4 className="mt-4 font-display text-2xl font-bold">{benefit.title}</h4><p className="varshphal-body mt-3 text-sm leading-relaxed">{benefit.description}</p></div>
+          </article>)}</div>
         </div>
       </section>
-    </Layout>
-  );
-};
 
-export default VarshphalReport;
+      <section id="varshphal-report" className="section-padding scroll-mt-20">
+        <div className="section-container">
+          <h2 className="varshphal-section-title mx-auto max-w-3xl text-center text-3xl sm:text-4xl lg:text-5xl leading-tight italic">Plan The Year Ahead,<br />Month by Month</h2>
+          <p className="varshphal-body mb-10 mt-5 text-center">Your next 12 months, in one personalised report.</p>
+          <article className="varshphal-offer grid overflow-hidden rounded-lg border md:grid-cols-[.85fr_1.15fr]">
+            <div className="varshphal-cover-wrap flex items-center justify-center p-7 sm:p-10"><img src={cover} alt="Varshphal Report 2027 by Ankshaastra" width={706} height={942} loading="lazy" className="w-52 md:w-full max-w-[310px] rounded-sm" /></div>
+            <div className="p-6 sm:p-10 lg:p-12">
+              <h3 className="varshphal-section-title font-body text-2xl sm:text-3xl font-bold">Varshphal Report 2027</h3>
+              <p className="varshphal-body mt-4 text-lg leading-relaxed">Your birth details, your next 12 months, your remedies. In one detailed PDF.</p>
+              <ul className="my-7 space-y-4">{inclusions.map(item => <li key={item} className="flex items-start gap-3 text-sm"><Check className="varshphal-check mt-0.5 h-4 w-4 shrink-0" />{item}</li>)}</ul>
+              <label className="varshphal-selected flex cursor-pointer items-start gap-3 rounded-lg border p-4"><input type="radio" name="varshphal-plan" defaultChecked aria-label="Varshphal Report PDF" className="mt-1 h-4 w-4 accent-primary" /><span className="flex-1"><strong className="block">Varshphal Report</strong><span className="varshphal-body mt-1 block text-sm">Your full report as a PDF via email</span></span><strong className="text-2xl">{formatINR(report.price)}</strong></label>
+              <Button asChild size="lg" className="varshphal-order mt-5 h-12 w-full"><Link to={checkout}>Get My Varshphal Report <ArrowRight /></Link></Button>
+              <div className="varshphal-body mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs"><span className="flex items-center gap-1.5"><LockKeyhole className="h-3.5 w-3.5" />100% Confidential</span><span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />Personalised PDF</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </Layout>;
+}
