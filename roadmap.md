@@ -1,9 +1,10 @@
 # Project Roadmap
 
 ## Current
-- Remove Varshphal monthly-remedy claims, refine mobile layout, and eliminate payment-confirmation delays; verify without a real payment.
+- None.
 
 ## Completed
+- Removed Varshphal monthly-remedy claims from page content and shared checkout inclusions; refined mobile headings, compact benefit rows and full-width CTAs. Separated signed callback and recovery guards to prevent slow reconciliation blocking confirmation; background invoice status no longer spins indefinitely. Ten regression tests passed; simulated filled checkout with an eight-second recovery request showed confirmation in 0.11 seconds, no page errors and no desktop/mobile overflow. No real payment made; preview has no configured payment key, so the test used a browser-only simulation.
 - Refined Varshphal mobile spacing and restrained surfaces; added sticky ₹699 Unlock CTA. Booking is absent initially and opens as a form-only view from every report CTA; returning preserves details and additional-report selection. Verified desktop/mobile entry, back navigation and no overflow/runtime errors; ten tests passed and build OK. No payment made.
 - Updated Varshphal inclusions to monthly guidance/remedies, Muntha and a 30+ page PDF; added reference-style consultation feedback, expert note, closing CTA and supplied FAQs. Reused inline/standalone checkout with exact birth time required for both people, one additional report at 20% off (₹559.20), ₹1,258.20 total and brand terms link; no coupons or unrelated upsells. Ten tests passed; desktop/mobile and filled two-person submission verified against an intercepted order endpoint, with no real order or payment. Fixed narrow birth-field columns and duplicate gender-label IDs found during verification; build OK.
 - Matched Varshphal references with Ankshaastra 2027 report artwork, planning questions, four illustrated benefits and a catalog-backed ₹699 offer. Verified desktop/mobile images, no horizontal overflow, and 2027 checkout total; seven regression tests passed and build OK. No payment made.
