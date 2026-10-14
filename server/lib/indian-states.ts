@@ -54,8 +54,18 @@ export function stateNameFromCode(code?: string | null): string | undefined {
 
 export function stateCodeFromName(name?: string | null): string | undefined {
   if (!name) return undefined;
-  const normalized = String(name).trim().toUpperCase();
+  // "U.P." / "U. P." ko "U P" bana do, extra spaces hata do
+  const normalized = String(name).trim().toUpperCase().replace(/\./g, ' ').replace(/\s+/g, ' ').trim();
+  if (!normalized) return undefined;
   if (/^\d{1,2}$/.test(normalized)) return normalized.padStart(2, '0');
+
+  const aliases: Record<string, string> = {
+    'UP': '09',
+    'U P': '09',
+    'UTTER PRADESH': '09',
+    'UTTARPRADESH': '09',
+  };
+  if (aliases[normalized]) return aliases[normalized];
 
   for (const [code, stateName] of Object.entries(INDIAN_STATE_NAMES)) {
     if (stateName === normalized || stateName.includes(normalized) || normalized.includes(stateName)) {
