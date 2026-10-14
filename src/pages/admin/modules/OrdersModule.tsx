@@ -760,6 +760,11 @@ export default function OrdersModule() {
       (o) => isPaidStatus(o.status) && !(o.metadata && (o.metadata as Record<string, unknown>).manualEntry === true)
     );
 
+    
+    // Shopify store orders are handled in Shopify itself (its invoices live in "Shop Invoices"),
+    // so they are left out of this list.
+    data = data.filter((o) => !String(o.source_website || "").startsWith("shop."));
+
     if (siteFilter !== "all") {
       data = data.filter(
         (o) => (o.source_website || "ankshaastra.com") === siteFilter
@@ -867,7 +872,7 @@ export default function OrdersModule() {
           </SelectTrigger>
 
           <SelectContent>
-            {CONNECTED_SITE_OPTIONS.map((opt) => (
+                        {CONNECTED_SITE_OPTIONS.filter((opt) => !opt.value.startsWith("shop.")).map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>
