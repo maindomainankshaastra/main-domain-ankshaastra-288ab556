@@ -3,7 +3,6 @@ import { pricing } from "@/config/pricing";
 
 export const varshphalInclusions = [
   "Month-by-month guidance for the next 12 months",
-  "Month-by-month remedies for the next 12 months",
   "Your year's main focus, shown by your Muntha",
   "Detailed 30+ page PDF to keep forever",
 ];

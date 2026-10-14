@@ -25,7 +25,7 @@ const questions = [
 const benefits = [
   { image: personal, tag: "PERSONALISED INSIGHTS", title: "Deeply Personal", description: "Built around your exact birth details, annual chart and Muntha. Personalised guidance for the year ahead — not a one-size-fits-all prediction.", tone: "personal" },
   { image: language, tag: "ZERO JARGON", title: "Plain Language", description: "Easy-to-understand guidance for career, relationships, health and finances. No prior numerology knowledge needed.", tone: "language" },
-  { image: remedies, tag: "MONTHLY REMEDIES", title: "Practical", description: "Month-by-month remedies for the next 12 months, alongside guidance to support more informed everyday decisions.", tone: "remedies" },
+  { image: remedies, tag: "INFORMED DECISIONS", title: "Practical", description: "Understand favourable periods and the months that need greater care, with guidance for more informed everyday decisions.", tone: "remedies" },
   { image: pdf, tag: "YOUR PDF", title: "Yours to Keep", description: "A detailed 30+ page PDF report delivered via email. Revisit your month-by-month insights whenever you need them.", tone: "pdf" },
 ];
 const PaymentPage = lazy(() => import("@/pages/Payment"));
@@ -44,7 +44,7 @@ export default function VarshphalReport() {
     window.scrollTo({ top: 0, behavior: "instant" });
   };
   return <Layout minimal>
-    <SEOHead title="Varshphal Report 2027 — Yearly Predictions" description="Plan your 2027 month by month with a personalised Varshphal astrology report by Himansshu Agarwal Ji. Annual chart, Muntha, guidance and monthly remedies in a detailed 30+ page PDF." canonical="/reports/varshphal-report" />
+    <SEOHead title="Varshphal Report 2027 — Yearly Predictions" description="Plan your 2027 month by month with a personalised Varshphal astrology report by Himansshu Agarwal Ji. Annual chart, Muntha and guidance in a detailed 30+ page PDF." canonical="/reports/varshphal-report" />
     <div className="varshphal-page">
       <div hidden={bookingOpen} className="varshphal-content">
       <section className="varshphal-hero relative overflow-hidden">
@@ -97,7 +97,7 @@ export default function VarshphalReport() {
             <div className="varshphal-cover-wrap flex items-center justify-center p-7 sm:p-10"><img src={cover} alt="Varshphal Report 2027 by Ankshaastra" width={706} height={942} loading="lazy" className="w-52 md:w-full max-w-[310px] rounded-sm" /></div>
             <div className="p-6 sm:p-10 lg:p-12">
               <h3 className="varshphal-section-title font-body text-2xl sm:text-3xl font-bold">Varshphal Report 2027</h3>
-              <p className="varshphal-body mt-4 text-lg leading-relaxed">Your birth details, your next 12 months, your remedies. In one detailed PDF.</p>
+              <p className="varshphal-body mt-4 text-lg leading-relaxed">Your birth details, your next 12 months, your personalised guidance. In one detailed PDF.</p>
               <ul className="my-7 space-y-4">{varshphalInclusions.map(item => <li key={item} className="flex items-start gap-3 text-sm"><Check className="varshphal-check mt-0.5 h-4 w-4 shrink-0" />{item}</li>)}</ul>
               <label className="varshphal-selected flex cursor-pointer items-start gap-3 rounded-lg border p-4"><input type="radio" name="varshphal-plan" defaultChecked aria-label="Varshphal Report PDF" className="mt-1 h-4 w-4 accent-primary" /><span className="flex-1"><strong className="block">Varshphal Report</strong><span className="varshphal-body mt-1 block text-sm">Your full report as a PDF via email</span></span><strong className="text-2xl">{formatINR(report.price)}</strong></label>
               <Button onClick={openBooking} size="lg" className="varshphal-order mt-5 h-12 w-full">Unlock My Varshphal <ArrowRight /></Button>
