@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Remove Varshphal monthly-remedy claims, refine mobile layout, and eliminate payment-confirmation delays; verify without a real payment.
 
 ## Completed
 - Refined Varshphal mobile spacing and restrained surfaces; added sticky ₹699 Unlock CTA. Booking is absent initially and opens as a form-only view from every report CTA; returning preserves details and additional-report selection. Verified desktop/mobile entry, back navigation and no overflow/runtime errors; ten tests passed and build OK. No payment made.

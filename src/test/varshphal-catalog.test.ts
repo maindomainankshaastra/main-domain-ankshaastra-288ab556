@@ -21,7 +21,8 @@ describe("Varshphal report offer", () => {
   it("discounts only the additional report by 20 percent", () => {
     expect(varshphalAdditionalReport.price).toBe(559.2);
     expect(varshphalPackages[0].price + varshphalAdditionalReport.price).toBe(1258.2);
-    expect(varshphalInclusions).toHaveLength(4);
+    expect(varshphalInclusions).toHaveLength(3);
+    expect(varshphalInclusions.join(" ")).not.toMatch(/remed/i);
     expect(varshphalInclusions.join(" ")).toContain("30+");
   });
   it("requires exact birth time for every report", () => {
