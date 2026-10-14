@@ -13,3 +13,4 @@
 - Varshphal page offers use the shared service catalog for edition, price and checkout destination so the report page and checkout stay consistent; presentation colors remain scoped to the report page.
 - Varshphal inline and standalone checkout reuse Payment with a service-scoped schema and additional-report snapshot normalization, so both report subjects reach the existing order flow without affecting other services.
 - Varshphal report CTAs share page-level booking state and mount checkout only on first activation, preserving entered details when returning to the report while avoiding initial payment downloads.
+- Signed payment callbacks take priority over background reconciliation; separate their concurrency guards and keep invoice verification asynchronous on the eagerly loaded confirmation page so payment recovery cannot block navigation.

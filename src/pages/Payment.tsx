@@ -516,6 +516,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
     razorpayOrderId?: string;
   } | null>(null);
   const finalizingRef = useRef(false);
+  const syncingRef = useRef(false);
   const paymentCompletedRef = useRef(false);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
@@ -924,12 +925,12 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
   );
 
   const reconcilePendingPayment = useCallback(async (force = false) => {
-    if (paymentCompletedRef.current || finalizingRef.current) return false;
+    if (paymentCompletedRef.current || finalizingRef.current || syncingRef.current) return false;
     const ctx = paymentCtxRef.current;
     if (!ctx?.razorpayOrderId) return false;
     if (!force && !isAwaitingPayment) return false;
 
-    finalizingRef.current = true;
+    syncingRef.current = true;
     try {
       const synced = await syncPaymentStatus({
         razorpay_order_id: ctx.razorpayOrderId,
@@ -937,9 +938,11 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
         formData: { ...ctx.formData, userId: user?.id },
         service: serviceName || undefined,
         amount: ctx.amount,
-        pollAttempts: 6,
+        pollAttempts: 1,
       });
 
+      // A signed checkout callback takes priority over a background status request.
+      if (paymentCompletedRef.current) return true;
       if (!synced.paid || !synced.razorpay_payment_id) return false;
 
       paymentCompletedRef.current = true;
@@ -961,7 +964,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
       );
       return true;
     } finally {
-      finalizingRef.current = false;
+      syncingRef.current = false;
     }
   }, [goToThankYou, isAwaitingPayment, serviceName, toast, user?.id]);
 
@@ -977,7 +980,7 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
     document.addEventListener("visibilitychange", onVisible);
     const pollId = window.setInterval(() => {
       void reconcilePendingPayment();
-    }, 8000);
+    }, 3000);
 
     return () => {
       document.removeEventListener("visibilitychange", onVisible);

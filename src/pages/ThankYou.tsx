@@ -23,10 +23,12 @@ const ThankYou = () => {
 
   const [pendingVerification] = useState(() => consumePendingPaymentVerification());
   const [invoice, setInvoice] = useState(invoiceFromUrl);
-  const [confirming, setConfirming] = useState(() => Boolean(pendingVerification));
+  const [confirming, setConfirming] = useState(() => Boolean(pendingVerification && !invoiceFromUrl));
 
   const isKundli = /kundli|kundali/i.test(service);
   const isNameReport = /name check|name correction|complete.*blueprint/i.test(service);
+  const isVarshphal = /varshphal/i.test(service);
+  const deliveryMessage = isNameReport ? nameReportConfirmation(service) : isVarshphal ? "Your personalised PDF will be delivered via email within 12–24 hours. Please check your Spam / Junk folder too." : "Our team will connect with you shortly to begin your consultation.";
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -53,6 +55,8 @@ const ThankYou = () => {
     if (!pendingVerification) return;
 
     let cancelled = false;
+    // Invoice work continues in the background; never leave the confirmation looking stuck.
+    const statusTimer = window.setTimeout(() => setConfirming(false), 6000);
 
     void (async () => {
       try {
@@ -70,6 +74,7 @@ const ThankYou = () => {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(statusTimer);
     };
   }, [pendingVerification]);
 
@@ -82,9 +87,9 @@ const ThankYou = () => {
       />
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 gradient-hero" />
-        <div className="section-container relative z-10 py-16">
+        <div className="section-container relative z-10 py-8 sm:py-16">
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/15 p-8 md:p-12 text-center">
+            <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/15 p-5 sm:p-8 md:p-12 text-center">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 border border-green-400/40 flex items-center justify-center">
                 <CheckCircle2 className="w-12 h-12 text-green-300" />
               </div>
@@ -96,13 +101,13 @@ const ThankYou = () => {
                 Thank you{name ? `, ${name.split(" ")[0]}` : ""}!
               </h1>
               <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-                We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{serviceLabel}</span>. {isNameReport ? nameReportConfirmation(service) : "Our team will connect with you shortly to begin your consultation."}
+                We&apos;ve received your payment for <span className="text-amber-200 font-semibold">{serviceLabel}</span>. {deliveryMessage}
               </p>
 
               {confirming && (
                 <div className="flex items-center justify-center gap-2 text-white/70 text-sm mb-6">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Confirming your order and preparing invoice…
+                  Your invoice is being prepared in the background…
                 </div>
               )}
 
@@ -139,8 +144,8 @@ const ThankYou = () => {
                 </h2>
                 <ul className="space-y-3 text-white/80 text-sm">
                   <li className="flex gap-3"><span className="text-amber-200 font-bold">1.</span> You&apos;ll receive an invoice and confirmation on your email{email ? ` (${email})` : ""}.</li>
-                  <li className="flex gap-3"><span className="text-amber-200 font-bold">2.</span> {isNameReport ? nameReportConfirmation(service) : "Our team will reach out to schedule or deliver your service."}</li>
-                  {!isNameReport && <li className="flex gap-3"><span className="text-amber-200 font-bold">3.</span> For premium reports, expect delivery within 3–7 working days.</li>}
+                  <li className="flex gap-3"><span className="text-amber-200 font-bold">2.</span> {isNameReport || isVarshphal ? deliveryMessage : "Our team will reach out to schedule or deliver your service."}</li>
+                  {!isNameReport && !isVarshphal && <li className="flex gap-3"><span className="text-amber-200 font-bold">3.</span> For premium reports, expect delivery within 3–7 working days.</li>}
                 </ul>
               </div>
 
