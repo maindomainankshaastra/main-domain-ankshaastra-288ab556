@@ -4343,6 +4343,11 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
     // invoices, Trash only shows soft-deleted ones.
     let data = rows.filter((i) => (showDeleted ? !!i.deleted_at : !i.deleted_at));
 
+    // The Shopify store has its own "Shop Invoices" module, so the main Invoice Manager leaves it out.
+    if (!lockedSite) {
+      data = data.filter((i) => !String(i.source_website || "").startsWith("shop."));
+    }
+
     if (siteFilter !== "all") {
       data = data.filter((i) => (i.source_website || "ankshaastra.com") === siteFilter);
     }
@@ -4915,7 +4920,7 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
           <Select value={siteFilter} onValueChange={setSiteFilter}>
             <SelectTrigger className="w-[200px]"><SelectValue placeholder="All sites" /></SelectTrigger>
             <SelectContent>
-              {CONNECTED_SITE_OPTIONS.map((opt) => (
+                            {CONNECTED_SITE_OPTIONS.filter((opt) => !opt.value.startsWith("shop.")).map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
               ))}
             </SelectContent>
