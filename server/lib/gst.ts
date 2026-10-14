@@ -16,12 +16,20 @@ export type GstInput = {
   businessStateCode?: string;
 };
 
+export function normalizeStateCode(code?: string | number | null): string | undefined {
+  const raw = String(code ?? "").trim();
+  if (!/^\d{1,2}$/.test(raw)) return undefined;
+  const padded = raw.padStart(2, "0");
+  return padded === "00" ? undefined : padded;
+}
+
 export function calculateGst(input: GstInput): GstBreakdown {
   const rate = input.gstRate ?? 18;
   const isInclusive = input.isGstInclusive ?? true;
   const businessState = input.businessStateCode ?? "09";
-  const customerState = input.customerStateCode ?? businessState;
-  const isIntraState = businessState === customerState;
+const customerState = input.customerStateCode ?? businessState;
+const isIntraState = businessState === customerState;
+  
 
   let subtotal: number;
   let gstTotal: number;
