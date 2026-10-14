@@ -4,6 +4,7 @@ import { detectCustomerState } from './gst-state-detection.js';
 import { formatPlaceOfSupply } from './indian-states.js';
 import { resolveSacCode } from './invoice-constants.js';
 import type { GstValidationIssue } from './gst-validation.js';
+import { normalizeStateCode } from './gst.js';
 
 export type GstInvoiceRow = Record<string, unknown>;
 
@@ -81,6 +82,24 @@ export function buildGstFixPatch(
       invoiceNumber: num,
     });
   }
+  {
+  const cur = { ...invoice, ...patch };
+  const custState = normalizeStateCode(cur.customer_state_code as string | null);
+  const igst = Number(cur.igst_amount || 0);
+  const cg = Number(cur.cgst_amount || 0);
+  const sg = Number(cur.sgst_amount || 0);
+  if (custState === GST_COMPANY_DEFAULTS.stateCode && igst > 0 && cg === 0 && sg === 0) {
+    const halfCgst = Math.round((igst / 2) * 100) / 100;
+    const halfSgst = Math.round((igst - halfCgst) * 100) / 100;
+    const igstRate = Number(cur.igst_rate || 0);
+    patch.cgst_amount = halfCgst;
+    patch.sgst_amount = halfSgst;
+    patch.igst_amount = 0;
+    patch.cgst_rate = igstRate / 2;
+    patch.sgst_rate = igstRate / 2;
+    patch.igst_rate = 0;
+  }
+}
 
   const merged = { ...invoice, ...patch };
   const supplierState = GST_COMPANY_DEFAULTS.stateCode;
