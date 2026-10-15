@@ -37,7 +37,7 @@ const REPORT_TYPES: ReportTypeCard[] = [
     title: "Name Correction Report",
     description: "Corrected name suggestions and rationale for customers whose current name isn't well-aligned.",
     icon: Wand2,
-    to: null,
+        to: "/admin/reports/name-correction",
   },
   {
     key: "perfect-baby-name",
