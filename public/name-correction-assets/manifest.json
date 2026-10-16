@@ -1,0 +1,324 @@
+{
+  "a4": [
+    595.28,
+    841.89
+  ],
+  "pages": [
+    {
+      "file": "static-p01.jpg",
+      "samplePage": 1,
+      "links": []
+    },
+    {
+      "file": "static-p02.jpg",
+      "samplePage": 2,
+      "links": []
+    },
+    {
+      "file": "static-p03.jpg",
+      "samplePage": 3,
+      "links": []
+    },
+    {
+      "file": "static-p06.jpg",
+      "samplePage": 6,
+      "links": []
+    },
+    {
+      "file": "static-p07.jpg",
+      "samplePage": 7,
+      "links": []
+    },
+    {
+      "file": "static-p08.jpg",
+      "samplePage": 8,
+      "links": []
+    },
+    {
+      "file": "static-p09.jpg",
+      "samplePage": 9,
+      "links": []
+    },
+    {
+      "file": "static-p25.jpg",
+      "samplePage": 25,
+      "links": []
+    },
+    {
+      "file": "static-p26.jpg",
+      "samplePage": 26,
+      "links": []
+    },
+    {
+      "file": "static-p27.jpg",
+      "samplePage": 27,
+      "links": [
+        {
+          "x": 77.9,
+          "y": 541.7,
+          "width": 105.6,
+          "height": 131.6,
+          "url": "https://www.instagram.com/ankshaastra?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+        },
+        {
+          "x": 78.4,
+          "y": 468.7,
+          "width": 105.1,
+          "height": 131.1,
+          "url": "https://www.facebook.com/p/Ankshaastra-61561549995939/"
+        },
+        {
+          "x": 282.9,
+          "y": 542.6,
+          "width": 103.9,
+          "height": 129.7,
+          "url": "https://www.linkedin.com/company/ankshaastra/?viewAsMember=true"
+        },
+        {
+          "x": 285.9,
+          "y": 468.9,
+          "width": 107.3,
+          "height": 133.5,
+          "url": "https://www.youtube.com/@Ankshaastra"
+        },
+        {
+          "x": 117.2,
+          "y": 203.0,
+          "width": 141.1,
+          "height": 39.0,
+          "url": "https://share.google/RzRonHbVF8Q1lUHc4"
+        },
+        {
+          "x": 177.6,
+          "y": 595.5,
+          "width": 85.5,
+          "height": 23.9,
+          "url": "https://www.instagram.com/ankshaastra?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+        },
+        {
+          "x": 381.1,
+          "y": 595.5,
+          "width": 85.5,
+          "height": 23.9,
+          "url": "https://www.linkedin.com/company/ankshaastra/?viewAsMember=true"
+        },
+        {
+          "x": 381.1,
+          "y": 523.6,
+          "width": 85.5,
+          "height": 23.9,
+          "url": "https://www.youtube.com/@Ankshaastra"
+        },
+        {
+          "x": 177.6,
+          "y": 522.3,
+          "width": 85.5,
+          "height": 23.9,
+          "url": "https://www.facebook.com/p/Ankshaastra-61561549995939/"
+        },
+        {
+          "x": 129.1,
+          "y": 254.8,
+          "width": 116.4,
+          "height": 20.1,
+          "url": "https://share.google/RzRonHbVF8Q1lUHc4"
+        },
+        {
+          "x": 131.0,
+          "y": 214.9,
+          "width": 105.6,
+          "height": 15.6,
+          "url": "https://share.google/RzRonHbVF8Q1lUHc4"
+        }
+      ]
+    },
+    {
+      "file": "static-p28.jpg",
+      "samplePage": 28,
+      "links": []
+    },
+    {
+      "file": "static-p29.jpg",
+      "samplePage": 29,
+      "links": []
+    },
+    {
+      "file": "static-p30.jpg",
+      "samplePage": 30,
+      "links": []
+    },
+    {
+      "file": "static-p31.jpg",
+      "samplePage": 31,
+      "links": []
+    },
+    {
+      "file": "static-p32.jpg",
+      "samplePage": 32,
+      "links": []
+    },
+    {
+      "file": "static-p33.jpg",
+      "samplePage": 33,
+      "links": []
+    },
+    {
+      "file": "static-p34.jpg",
+      "samplePage": 34,
+      "links": []
+    },
+    {
+      "file": "static-p35.jpg",
+      "samplePage": 35,
+      "links": []
+    },
+    {
+      "file": "static-p36.jpg",
+      "samplePage": 36,
+      "links": []
+    },
+    {
+      "file": "static-p37.jpg",
+      "samplePage": 37,
+      "links": []
+    },
+    {
+      "file": "static-p39.jpg",
+      "samplePage": 39,
+      "links": []
+    },
+    {
+      "file": "static-p40.jpg",
+      "samplePage": 40,
+      "links": []
+    },
+    {
+      "file": "static-p41.jpg",
+      "samplePage": 41,
+      "links": []
+    },
+    {
+      "file": "static-p42.jpg",
+      "samplePage": 42,
+      "links": []
+    },
+    {
+      "file": "static-p43.jpg",
+      "samplePage": 43,
+      "links": []
+    },
+    {
+      "file": "static-p44.jpg",
+      "samplePage": 44,
+      "links": [
+        {
+          "x": 77.9,
+          "y": 541.7,
+          "width": 105.6,
+          "height": 131.6,
+          "url": "https://www.instagram.com/ankshaastra?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+        },
+        {
+          "x": 78.4,
+          "y": 468.7,
+          "width": 105.1,
+          "height": 131.1,
+          "url": "https://www.facebook.com/p/Ankshaastra-61561549995939/"
+        },
+        {
+          "x": 282.9,
+          "y": 542.6,
+          "width": 103.9,
+          "height": 129.7,
+          "url": "https://www.linkedin.com/company/ankshaastra/?viewAsMember=true"
+        },
+        {
+          "x": 285.9,
+          "y": 468.9,
+          "width": 107.3,
+          "height": 133.5,
+          "url": "https://www.youtube.com/@Ankshaastra"
+        },
+        {
+          "x": 117.2,
+          "y": 203.0,
+          "width": 141.1,
+          "height": 39.0,
+          "url": "https://share.google/RzRonHbVF8Q1lUHc4"
+        },
+        {
+          "x": 177.6,
+          "y": 595.5,
+          "width": 85.5,
+          "height": 23.9,
+          "url": "https://www.instagram.com/ankshaastra?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+        },
+        {
+          "x": 381.1,
+          "y": 595.5,
+          "width": 85.5,
+          "height": 23.9,
+          "url": "https://www.linkedin.com/company/ankshaastra/?viewAsMember=true"
+        },
+        {
+          "x": 381.1,
+          "y": 523.6,
+          "width": 85.5,
+          "height": 23.9,
+          "url": "https://www.youtube.com/@Ankshaastra"
+        },
+        {
+          "x": 177.6,
+          "y": 522.3,
+          "width": 85.5,
+          "height": 23.9,
+          "url": "https://www.facebook.com/p/Ankshaastra-61561549995939/"
+        },
+        {
+          "x": 129.1,
+          "y": 254.8,
+          "width": 116.4,
+          "height": 20.1,
+          "url": "https://share.google/RzRonHbVF8Q1lUHc4"
+        },
+        {
+          "x": 131.0,
+          "y": 214.9,
+          "width": 105.6,
+          "height": 15.6,
+          "url": "https://share.google/RzRonHbVF8Q1lUHc4"
+        }
+      ]
+    },
+    {
+      "file": "static-p45.jpg",
+      "samplePage": 45,
+      "links": []
+    },
+    {
+      "file": "static-p46.jpg",
+      "samplePage": 46,
+      "links": []
+    },
+    {
+      "file": "static-p47.jpg",
+      "samplePage": 47,
+      "links": []
+    },
+    {
+      "file": "static-p48.jpg",
+      "samplePage": 48,
+      "links": []
+    },
+    {
+      "file": "static-p49.jpg",
+      "samplePage": 49,
+      "links": []
+    },
+    {
+      "file": "static-p50.jpg",
+      "samplePage": 50,
+      "links": []
+    }
+  ]
+}
