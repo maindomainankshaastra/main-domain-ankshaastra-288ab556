@@ -120,6 +120,7 @@ import {
   paymentInvoiceGenerationActive,
 } from "../lib/invoice-engine.js";
 import { scheduleInvoiceGeneration } from "../lib/schedule-invoice.js";
+import { fulfillPayment } from "../lib/fulfill-payment.js";
 
 async function readRawBody(req: { on: (e: string, cb: (c: Buffer) => void) => void }): Promise<string> {
   const chunks: Buffer[] = [];
@@ -184,6 +185,18 @@ export default async function handler(req: any, res: any) {
           .eq("razorpay_order_id", entity.order_id)
           .maybeSingle();
         orderRecord = byRzOrder;
+      }
+
+      // Safety net: no DB row yet -> create it from the payment.
+      if (!orderRecord && entity.id) {
+        const result = await fulfillPayment({
+          razorpay_order_id: entity.order_id,
+          razorpay_payment_id: entity.id,
+          service: (entity.notes && entity.notes.service) || "Service",
+          amount: Number(entity.amount || 0) / 100,
+          formData: {},
+        });
+        orderRecord = { id: result.order_id, status: "paid" };
       }
 
       if (orderRecord) {
