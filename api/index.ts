@@ -31,6 +31,7 @@ import adminAuditLogs from "../server/handlers/admin-audit-logs.js";
 import operationsTriggerInvoice from "../server/handlers/operations-trigger-invoice.js";
 import abandonedCarts from "../server/handlers/abandoned-carts.js";
 import saveFormProgress from "../server/handlers/save-form-progress.js";
+import paymentCallback from "../server/handlers/payment-callback.js";
 
 /** Single serverless function for all /api/* routes (Vercel Hobby: max 12 functions). */
 export const config = { api: { bodyParser: false } };
@@ -83,6 +84,7 @@ const routes: Record<string, ApiHandler> = {
 "admin/audit-logs": adminAuditLogs,
  "admin/abandoned-carts": abandonedCarts,
   "save-form-progress": saveFormProgress,
+   "payment-callback": paymentCallback,
 };
 
 function resolveRoute(req: IncomingReq): string {
@@ -114,7 +116,11 @@ export default async function handler(req: Parameters<ApiHandler>[0], res: Param
       .json({ error: "Not found", path: routeKey || "(empty)" });
   }
 
-  if (routeKey !== "webhooks/razorpay" && routeKey !== "webhooks/shopify") {
+  if (
+  routeKey !== "webhooks/razorpay" &&
+  routeKey !== "webhooks/shopify" &&
+  routeKey !== "payment-callback"
+) {
     await attachJsonBody(req as Parameters<typeof attachJsonBody>[0]);
   }
 
