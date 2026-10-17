@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Fix mobile payment returns and verify signed callback, reload recovery and Thank You display without a real charge.
 
 ## Completed
 - Removed Varshphal monthly-remedy claims from page content and shared checkout inclusions; refined mobile headings, compact benefit rows and full-width CTAs. Separated signed callback and recovery guards to prevent slow reconciliation blocking confirmation; background invoice status no longer spins indefinitely. Ten regression tests passed; simulated filled checkout with an eight-second recovery request showed confirmation in 0.11 seconds, no page errors and no desktop/mobile overflow. No real payment made; preview has no configured payment key, so the test used a browser-only simulation.

@@ -12773,7 +12773,6 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
     const wasSheetOpen = sheetOpen;
     if (wasSheetOpen) setSheetOpen(false);
 
-    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const options = {
       key: razorpayKey,
       amount: order.amount,
@@ -12782,14 +12781,10 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
       description: isServiceMode ? serviceName : "Consultation Booking",
       order_id: order.id,
       retry: { enabled: true, max_count: 3 },
-      // Mobile: full-page redirect flow so payment completes even if the UPI app
-      // reloads/kills this tab. Razorpay POSTs the result to our server.
-      ...(isMobileDevice
-        ? {
-            redirect: true,
-            callback_url: `${window.location.origin}/api/payment-callback`,
-          }
-        : {}),
+      // Keep the instant success handler on mobile too. The signed server
+      // callback remains available for payment methods requiring a redirect.
+      redirect: false,
+      callback_url: `${window.location.origin}/api/payment-callback`,
       handler: async function (response: {
         razorpay_order_id?: string;
         razorpay_payment_id?: string;
