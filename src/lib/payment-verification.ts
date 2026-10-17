@@ -324,3 +324,22 @@ export function clearPendingCheckout(): void {
     // ignore
   }
 }
+
+/** Restore only the checkout matching the signed mobile return's order. */
+export function resolveMobilePaymentReturn(url: URL, saved: PendingCheckout | null): PendingPaymentVerification | null {
+  const signature = new URLSearchParams(url.hash.slice(1)).get("razorpay_signature");
+  const orderId = url.searchParams.get("order_id");
+  const paymentId = url.searchParams.get("payment_id");
+  if (!signature || !orderId || !paymentId) return null;
+  const matching = saved?.razorpayOrderId === orderId ? saved : null;
+  return {
+    razorpay_order_id: orderId,
+    razorpay_payment_id: paymentId,
+    razorpay_signature: signature,
+    dbOrderId: matching?.dbOrderId,
+    formData: matching?.formData || {},
+    service: matching?.service,
+    amount: matching?.amount || 0,
+    userId: matching?.userId,
+  };
+}

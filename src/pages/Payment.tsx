@@ -12649,10 +12649,13 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
   // state and Razorpay's handler(). Re-check the saved order with Razorpay and finish the flow.
   useEffect(() => {
     let cancelled = false;
+    let attempts = 0;
     const recover = async () => {
       if (paymentCompletedRef.current || syncingRef.current || paymentCtxRef.current) return;
+      if (attempts >= 40 || document.visibilityState !== "visible") return;
       const saved = loadPendingCheckout();
       if (!saved) return;
+      attempts += 1;
       syncingRef.current = true;
       try {
         const synced = await syncPaymentStatus({
@@ -12684,10 +12687,14 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
     };
     document.addEventListener("visibilitychange", onShow);
     window.addEventListener("pageshow", onShow);
+    window.addEventListener("focus", onShow);
+    const recoveryPoll = window.setInterval(() => void recover(), 3000);
     return () => {
       cancelled = true;
+      window.clearInterval(recoveryPoll);
       document.removeEventListener("visibilitychange", onShow);
       window.removeEventListener("pageshow", onShow);
+      window.removeEventListener("focus", onShow);
     };
   }, [goToThankYou]);
 
@@ -12773,7 +12780,6 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
     const wasSheetOpen = sheetOpen;
     if (wasSheetOpen) setSheetOpen(false);
 
-    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const options = {
       key: razorpayKey,
       amount: order.amount,
@@ -12782,14 +12788,10 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
       description: isServiceMode ? serviceName : "Consultation Booking",
       order_id: order.id,
       retry: { enabled: true, max_count: 3 },
-      // Mobile: full-page redirect flow so payment completes even if the UPI app
-      // reloads/kills this tab. Razorpay POSTs the result to our server.
-      ...(isMobileDevice
-        ? {
-            redirect: true,
-            callback_url: `${window.location.origin}/api/payment-callback`,
-          }
-        : {}),
+      // Keep the instant success handler on mobile too. The signed server
+      // callback remains available for payment methods requiring a redirect.
+      redirect: false,
+      callback_url: `${window.location.origin}/api/payment-callback`,
       handler: async function (response: {
         razorpay_order_id?: string;
         razorpay_payment_id?: string;

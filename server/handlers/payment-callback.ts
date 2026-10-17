@@ -1,12 +1,11 @@
 import crypto from "crypto";
-import { getSupabaseAdmin } from "../lib/supabase-admin.js";
-import { fulfillPayment } from "../lib/fulfill-payment.js";
 
 /**
  * POST /api/payment-callback
  * Razorpay mobile redirect flow: after payment, Razorpay POSTs
  * (form-urlencoded) razorpay_payment_id / razorpay_order_id / razorpay_signature here.
- * We verify, fulfil the order, and redirect the browser to /thank-you.
+ * Verify and immediately return the browser to /thank-you. Fulfilment is
+ * resumed there, independently of navigation, with webhook recovery as backup.
  */
 async function readRaw(req: any): Promise<string> {
   const chunks: Buffer[] = [];
@@ -18,7 +17,7 @@ async function readRaw(req: any): Promise<string> {
 }
 
 function redirect(res: any, location: string) {
-  res.writeHead(302, { Location: location, "Cache-Control": "no-store" });
+  res.writeHead(303, { Location: location, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" });
   res.end();
 }
 
@@ -63,46 +62,12 @@ export default async function handler(req: any, res: any) {
     return redirect(res, "/?payment_status=failed");
   }
 
-  try {
-    const supabase = getSupabaseAdmin();
-    const { data: order } = await supabase
-      .from("orders")
-      .select("id, service_title, total_amount, customer_name, customer_email, metadata")
-      .eq("razorpay_order_id", razorpay_order_id)
-      .maybeSingle();
-
-    const meta = (order?.metadata as Record<string, any> | null) || {};
-    const formData = (meta.formSnapshot as Record<string, unknown>) || {};
-    const amount = Number(order?.total_amount) || 0;
-    const service = order?.service_title || "Service";
-
-    const result = await fulfillPayment({
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      formData,
-      service,
-      amount,
-      dbOrderId: order?.id ?? null,
-    });
-
-    const params = new URLSearchParams({
-      service,
-      amount: String(amount),
-      payment_id: razorpay_payment_id,
-      order_id: razorpay_order_id,
-      invoice: result.invoice_number || "",
-      name: String(order?.customer_name || formData.fullName || ""),
-      email: String(order?.customer_email || formData.email || ""),
-    });
-    return redirect(res, `/thank-you?${params.toString()}`);
-  } catch (e) {
-    console.error("[payment-callback]", e);
-    // Payment is verified & captured at Razorpay; webhook/sync will still fulfil it.
-    const params = new URLSearchParams({
-      payment_id: razorpay_payment_id,
-      order_id: razorpay_order_id,
-    });
-    return redirect(res, `/thank-you?${params.toString()}`);
-  }
+  const params = new URLSearchParams({
+    payment_id: razorpay_payment_id,
+    order_id: razorpay_order_id,
+  });
+  // A fragment is never sent to the hosting server or as an HTTP referrer.
+  // The confirmation page consumes and removes it before rendering.
+  const handoff = new URLSearchParams({ razorpay_signature });
+  return redirect(res, `/thank-you?${params.toString()}#${handoff.toString()}`);
 }
