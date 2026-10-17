@@ -28,7 +28,7 @@ import { getMulank, getBhagyank } from "@/lib/name-check/lo-shu";
 import type { DateRange } from "react-day-picker";
 
 import { AdminPage } from "@/components/admin/AdminPage";
-import { supabase } from "@/integrations/supabase/client";
+import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";

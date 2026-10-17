@@ -12649,10 +12649,13 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
   // state and Razorpay's handler(). Re-check the saved order with Razorpay and finish the flow.
   useEffect(() => {
     let cancelled = false;
+    let attempts = 0;
     const recover = async () => {
       if (paymentCompletedRef.current || syncingRef.current || paymentCtxRef.current) return;
+      if (attempts >= 40 || document.visibilityState !== "visible") return;
       const saved = loadPendingCheckout();
       if (!saved) return;
+      attempts += 1;
       syncingRef.current = true;
       try {
         const synced = await syncPaymentStatus({
@@ -12684,10 +12687,14 @@ const PaymentPage = ({ inline = false, reportService }: { inline?: boolean; repo
     };
     document.addEventListener("visibilitychange", onShow);
     window.addEventListener("pageshow", onShow);
+    window.addEventListener("focus", onShow);
+    const recoveryPoll = window.setInterval(() => void recover(), 3000);
     return () => {
       cancelled = true;
+      window.clearInterval(recoveryPoll);
       document.removeEventListener("visibilitychange", onShow);
       window.removeEventListener("pageshow", onShow);
+      window.removeEventListener("focus", onShow);
     };
   }, [goToThankYou]);
 

@@ -191,23 +191,30 @@ import { nameReportConfirmation, nameReportOffers } from "@/data/nameReportOffer
 import {
   clearPendingCheckout,
   consumePendingPaymentVerification,
+  loadPendingCheckout,
+  resolveMobilePaymentReturn,
   verifyPaymentAndInvoice,
 } from "@/lib/payment-verification";
 
 const ThankYou = () => {
   const [params] = useSearchParams();
-  const service = params.get("service") || "Your Order";
+  const [pendingVerification] = useState(() =>
+    resolveMobilePaymentReturn(new URL(window.location.href), loadPendingCheckout()) || consumePendingPaymentVerification(),
+  );
+  const service = params.get("service") || pendingVerification?.service || "Your Order";
   const serviceLabel = nameReportOffers.find(offer => offer.serviceTitle === service)?.title || service;
-  const amount = Number(params.get("amount") || 0);
+  const amount = Number(params.get("amount") || pendingVerification?.amount || 0);
   const paymentId = params.get("payment_id") || "";
   const invoiceFromUrl = params.get("invoice") || "";
-  const name = params.get("name") || "";
-  const email = params.get("email") || "";
-
-  const [pendingVerification] = useState(() => consumePendingPaymentVerification());
+  const formData = pendingVerification?.formData;
+  const name = params.get("name") || String(formData?.fullName || [formData?.firstName, formData?.lastName].filter(Boolean).join(" "));
+  const email = params.get("email") || String(formData?.email || "");
 
   // Redirect flow (mobile) never runs goToThankYou, so clear saved checkout here.
   useEffect(() => {
+    if (new URLSearchParams(window.location.hash.slice(1)).has("razorpay_signature")) {
+      window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    }
     clearPendingCheckout();
   }, []);
   const [invoice, setInvoice] = useState(invoiceFromUrl);
