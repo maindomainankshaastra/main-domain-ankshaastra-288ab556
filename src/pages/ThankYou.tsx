@@ -116,7 +116,7 @@ const ThankYou = () => {
 
         <section className="text-sm leading-relaxed" aria-labelledby="delivery-heading">
           <h2 id="delivery-heading" className="mb-1 flex items-center gap-2 font-body text-base font-semibold"><Mail className="thank-you-accent h-4 w-4" /> Report delivery by email</h2>
-          <p className="thank-you-muted">Your invoice and confirmation email are sent from <span className="thank-you-accent break-all">{reportConfirmationPolicy.sender}</span>. Your report will also be delivered by email.</p>
+          <p className="thank-you-muted">Confirmation and invoice from <span className="thank-you-accent break-all">{reportConfirmationPolicy.sender}</span>. Your report will arrive by email.</p>
           <p className="thank-you-notice mt-3 rounded-lg border p-3">{reportMailboxInstruction}</p>
         </section>
 
