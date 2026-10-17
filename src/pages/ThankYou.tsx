@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import logo from "@/assets/ankshaastra-logo-color-text-transparent-cropped.png";
 import SEOHead from "@/components/SEOHead";
-import { CheckCircle2, Mail, ArrowRight } from "lucide-react";
+import { CheckCircle2, Mail } from "lucide-react";
 import { business } from "@/config/business";
 import { formatINR } from "@/config/pricing";
 import { nameReportOffers } from "@/data/nameReportOffers";
@@ -38,7 +37,6 @@ const ThankYou = () => {
     clearPendingCheckout();
   }, []);
   const [invoice, setInvoice] = useState(invoiceFromUrl);
-  const isNameReport = /name check|name correction|complete.*blueprint/i.test(service);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -122,7 +120,6 @@ const ThankYou = () => {
           <p className="thank-you-notice mt-3 rounded-lg border p-3">{reportMailboxInstruction}</p>
         </section>
 
-        {!isNameReport && <Button asChild variant="outline" size="sm" className="thank-you-home self-center"><Link to="/">Back to Home <ArrowRight /></Link></Button>}
         <p className="thank-you-muted text-center text-xs">Need help? <a href={`mailto:${business.supportEmail}`} className="underline break-all">{business.supportEmail}</a></p>
       </main>
     </div>
