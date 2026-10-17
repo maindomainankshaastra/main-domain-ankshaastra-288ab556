@@ -824,12 +824,18 @@ export async function fulfillPayment(input: FulfillPaymentInput): Promise<Fulfil
     console.warn("[fulfill-payment] Could not sync service persons:", err);
   }
 
-  const hasInvoice =
+  let hasInvoice =
     (await paymentHasDeliverableInvoice(razorpay_payment_id)) ||
     (await orderHasDeliverableInvoice(orderId));
 
   if (!hasInvoice) {
     await scheduleInvoiceGeneration(orderId, razorpay_payment_id);
+    // Generation is awaited on this host. Return its current status rather
+    // than the stale pre-generation result, which triggers a second full
+    // invoice-completion request in the customer's browser.
+    hasInvoice =
+      (await paymentHasDeliverableInvoice(razorpay_payment_id)) ||
+      (await orderHasDeliverableInvoice(orderId));
   }
 
   let invoice_number: string | undefined;
