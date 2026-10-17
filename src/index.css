@@ -131,6 +131,22 @@
 }
 
 @layer components {
+  .thank-you-page {
+    --confirmation-surface: var(--brown-dark);
+    --confirmation-foreground: var(--secondary-foreground);
+    --confirmation-accent: var(--amber-light);
+    --confirmation-success: var(--report-saving);
+    background: hsl(var(--confirmation-surface));
+    color: hsl(var(--confirmation-foreground));
+  }
+  .thank-you-page h1, .thank-you-page h2 { letter-spacing: 0; }
+  .thank-you-muted { color: hsl(var(--confirmation-foreground) / .75); }
+  .thank-you-accent { color: hsl(var(--confirmation-accent)); }
+  .thank-you-success { background: hsl(var(--confirmation-success)); color: hsl(var(--confirmation-foreground)); }
+  .thank-you-receipt { border-color: hsl(var(--confirmation-foreground) / .2); }
+  .thank-you-notice { background: hsl(var(--confirmation-foreground) / .08); border-color: hsl(var(--confirmation-accent) / .3); }
+  .thank-you-page .thank-you-home { border-color: hsl(var(--confirmation-foreground) / .3); color: hsl(var(--confirmation-foreground)); background: transparent; }
+  .thank-you-page .thank-you-home:hover { background: hsl(var(--confirmation-foreground) / .1); }
   .varshphal-page {
     --background: 0 0% 100%;
     --foreground: 24 35% 17%;

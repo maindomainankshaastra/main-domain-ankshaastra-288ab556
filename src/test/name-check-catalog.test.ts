@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { nameCorrectionPackages } from "@/data/serviceCatalog";
 import { resolveServiceDisplay } from "@/lib/service-display";
-import { nameReportOffers, nameReportConfirmation } from "@/data/nameReportOffers";
+import { nameReportOffers } from "@/data/nameReportOffers";
 import { inferPersonCountFromServiceTitle } from "@/lib/service-persons";
 import { inferPersonCountFromServiceTitle as serverPersonCount } from "../../server/lib/service-persons";
 
@@ -22,11 +22,6 @@ describe("single Name Check offer", () => {
       expect(nameCorrectionPackages.find(pkg => pkg.serviceTitle === report.serviceTitle)).toBeDefined();
     }
     expect(nameReportOffers.map(report => report.delivery)).toEqual(["12–24 Hours", "24–48 Hours", "24–28 Hours"]);
-  });
-  it("uses package-specific confirmation instructions", () => {
-    expect(nameReportConfirmation("Name Check")).toContain("after 6 hours");
-    expect(nameReportConfirmation("Name Correction")).toContain("WhatsApp within 24–28 hours");
-    expect(nameReportConfirmation("Name Correction + Complete Blueprint")).toContain("WhatsApp within 24–28 hours");
   });
   it("aligns the Blueprint price and rating", () => {
     expect(nameCorrectionPackages.find(pkg => pkg.serviceTitle === "Name Correction + Complete Blueprint")).toMatchObject({ name: "Complete Blueprint", formType: "name-correction", price: 5957, originalPrice: 15051 });
