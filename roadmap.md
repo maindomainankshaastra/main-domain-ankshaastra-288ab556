@@ -1,9 +1,10 @@
 # Project Roadmap
 
 ## Current
-- Update Thank You email instructions and single-screen mobile layout; check payment-return and invoice performance, then verify.
+- None.
 
 ## Completed
+- Updated Thank You with email delivery, no-reply@ankshaastra.in sender and one-hour mailbox/spam guidance excluding 11 PM–7 AM IST; removed outreach promises, redundant sections and animated layout. Receipt fits 320×568, 375×667 and 393×852; simulated signed mobile return displayed in 0.79 seconds despite eight-second invoice verification. Corrected stale invoice-ready status after awaited generation to avoid redundant completion calls. Sixteen tests passed, build OK, no browser errors; no real transaction or production deployment performed.
 - Fixed mobile payment return: retained instant success handler on all devices, removed fulfilment from the signed server redirect, used 303 with a fragment handoff, restored matching checkout details before clearing storage, and retried reload recovery when capture arrives later. Fifteen tests passed; iPhone/Android browser simulations showed Thank You before eight-second invoice verification and reload recovery after an initially unpaid response. Build OK; no real payment or production deployment performed.
 - Removed Varshphal monthly-remedy claims from page content and shared checkout inclusions; refined mobile headings, compact benefit rows and full-width CTAs. Separated signed callback and recovery guards to prevent slow reconciliation blocking confirmation; background invoice status no longer spins indefinitely. Ten regression tests passed; simulated filled checkout with an eight-second recovery request showed confirmation in 0.11 seconds, no page errors and no desktop/mobile overflow. No real payment made; preview has no configured payment key, so the test used a browser-only simulation.
 - Refined Varshphal mobile spacing and restrained surfaces; added sticky ₹699 Unlock CTA. Booking is absent initially and opens as a form-only view from every report CTA; returning preserves details and additional-report selection. Verified desktop/mobile entry, back navigation and no overflow/runtime errors; ten tests passed and build OK. No payment made.
