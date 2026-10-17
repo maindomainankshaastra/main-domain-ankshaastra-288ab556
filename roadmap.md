@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Update Thank You email instructions and single-screen mobile layout; check payment-return and invoice performance, then verify.
 
 ## Completed
 - Fixed mobile payment return: retained instant success handler on all devices, removed fulfilment from the signed server redirect, used 303 with a fragment handoff, restored matching checkout details before clearing storage, and retried reload recovery when capture arrives later. Fifteen tests passed; iPhone/Android browser simulations showed Thank You before eight-second invoice verification and reload recovery after an initially unpaid response. Build OK; no real payment or production deployment performed.
