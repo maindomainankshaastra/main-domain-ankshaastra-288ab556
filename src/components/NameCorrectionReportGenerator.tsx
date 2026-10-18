@@ -40,6 +40,15 @@ import {
   LOSHU_OVERAMP_FIRST_NAME_BLOCK, LOSHU_OVERAMP_FULL_NAME_BLOCK,
 } from "@/lib/name-check/content-blocks";
 
+/** Form dropdown "Preference". Stored with the report; the recommendation itself is always computed. */
+export type NameCorrectionPreference = "na" | "option1" | "option2" | "both";
+export const NAME_CORRECTION_PREFERENCE_OPTIONS: { value: NameCorrectionPreference; label: string }[] = [
+  { value: "na", label: "NA" },
+  { value: "option1", label: "Option 1" },
+  { value: "option2", label: "Option 2" },
+  { value: "both", label: "Both" },
+];
+
 export interface NameCorrectionReportInput {
   reportId: string;
   customerName: string;
@@ -58,6 +67,8 @@ export interface NameCorrectionReportInput {
   /** The two candidate new names compared on the New Name Recommendation pages. */
   option1Name?: string;
   option2Name?: string;
+  /** Form dropdown "Preference" (NA / Option 1 / Option 2 / Both). Not used for drawing. */
+  preference?: NameCorrectionPreference;
   /** Per-profile call on whether 2 is favourable (feeds the Rajyog check). Defaults to false (never over-claims). */
   isTwoFavorableForProfile?: boolean;
   /** Admin correction — same override pattern as the Name Check report. */
@@ -1008,268 +1019,4 @@ const RAJYOG_COPY: Record<string, { subtitle: string; text: string }> = {
   },
   "Rajyog-3": {
     subtitle: "(2-5-8 Line)",
-    text: "Your Loshu Grid contains the beneficial Silver Rajyog, formed by the presence of numbers 2, 5, and 8. This combination merges the emotional intelligence and intuition of the Moon (2), the versatility and quick thinking of Mercury (5), and the discipline and perseverance of Saturn (8). Individuals with this Rajyog tend to be hardworking, patient, and capable of building long-term stability through consistent effort. It supports steady progress in career and finances, though success often comes through sustained discipline rather than sudden gains.",
-  },
-};
-
-/** Gold plate + navy pill (Rajyog status, Important Note). `top` = plate top. */
-function drawPill(page: PDFPage, top: number) {
-  drawRoundedRect(page, { x: 179.2, y: T(top) - 48.8, width: 236.9, height: 48.8, radius: 24.4, color: COLOR.boxStroke });
-  drawRoundedRect(page, { x: 180.8, y: T(top + 1.5) - 41.4, width: 229.2, height: 41.4, radius: 20.7, color: COLOR.bg });
-}
-
-/** Pages 21–23 — one Rajyog each. */
-function drawRajyogPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, result: RajyogResult) {
-  drawFrame(page, assets);
-  drawHeader(page, fonts, assets, "Your Rajyog", "ANALYSIS", HEADER_B, COLOR.gold);
-  const copy = RAJYOG_COPY[result.id];
-  txtC(page, result.id, { base: 201.5, font: fonts.cinzel, size: SZ.small, color: COLOR.gold });
-  txtC(page, copy.subtitle, { base: 232.0, font: fonts.cinzel, size: 22.4, color: COLOR.gold });
-
-  const bx = 70.7;
-  const bw = 453.9;
-  const top = 258.7;
-  const n = lineCount(copy.text, fonts.sans, SZ.body, 421.5, BODY.track);
-  const h = Math.max(205, 31.1 + (n - 1) * BODY.line + 17.6);
-  drawBox(page, bx, top, bw, h, 10);
-  para(page, copy.text, { x: 86.6, base: top + 31.1, maxW: 421.5, lh: BODY.line, font: fonts.sans, size: BODY.size, color: COLOR.white, track: BODY.track, align: "justify" });
-  drawIcon(page, assets.badgeCrown, bx, top, 45);
-  drawIcon(page, assets.badgeCrown, bx + bw, top, 45);
-
-  const pillTop = top + h + 32;
-  drawPill(page, pillTop);
-  txtC(page, `YOUR ${result.id.toUpperCase()} STATUS`, { base: pillTop + 29.5, font: fonts.cinzel, size: 14.7, color: COLOR.gold, cx: 297.0 });
-
-  const statuses: RajyogStatus[] = ["Naturally Present", "Completed Through Numerologically Aligned Name", "Not Present"];
-  const sTop = pillTop + 73.7;
-  drawBox(page, 70.9, sTop, 454.1, 116.3, 10);
-  statuses.forEach((s, i) => {
-    const base = sTop + 29.1 + i * 35.7;
-    const cy = base - 6.8;
-    const on = result.status === s;
-    drawRoundedRect(page, { x: 89.2, y: T(cy) - 5.65, width: 11.3, height: 11.3, radius: 2.5, color: on ? COLOR.white : COLOR.bg, borderColor: COLOR.white, borderWidth: 0.9 });
-    if (on) {
-      page.drawLine({ start: { x: 91.4, y: T(cy) - 0.2 }, end: { x: 93.9, y: T(cy) - 3 }, thickness: 1.3, color: COLOR.bg });
-      page.drawLine({ start: { x: 93.9, y: T(cy) - 3 }, end: { x: 98.4, y: T(cy) + 3 }, thickness: 1.3, color: COLOR.bg });
-    }
-    txt(page, s, { x: 114.9, y: T(base), font: fonts.sans, size: SZ.body, color: COLOR.white, track: TRACK.label });
-  });
-  drawFooter(page, fonts, assets, data.brand, { withUrl: true });
-}
-
-/** Page 24 — important note about Rajyogs. */
-function drawRajyogNotePage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput) {
-  drawFrame(page, assets);
-  drawHeader(page, fonts, assets, "Your Rajyog", "ANALYSIS", HEADER_B, COLOR.gold);
-  drawPill(page, 222.2);
-  txtC(page, "Important Note", { base: 251.3, font: fonts.cinzelBold, size: SZ.small, color: COLOR.white, cx: 297.0 });
-
-  const text =
-    "Numerologically Aligned Names can only create / strengthen a Rajyog when the missing number is one that is safe and beneficial to carry in a name — specifically 1, 5, 6, or 2 (when favorable to your profile). Numbers 4 (Rahu), 8 (Saturn), and 9 (Mars) are never used in name alignment, even when doing so would complete a Rajyog, as these energies are considered unstable or restrictive when carried in a name's vibration on a daily basis. Where a Rajyog remains incomplete for this reason, it reflects a deliberate numerological safeguard, not an oversight.";
-  const n = lineCount(text, fonts.sans, SZ.body, 380.4, BODY.track);
-  const h = 34 + (n - 1) * BODY.line + 20.5;
-  drawPlate(page, 74.7, 301.9, 445.8, h, 6, 6.2, 6.3);
-  para(page, text, { x: 107.2, base: 301.9 + 34, maxW: 380.4, lh: BODY.line, font: fonts.sans, size: BODY.size, color: COLOR.white, track: BODY.track, align: "justify" });
-  drawFooter(page, fonts, assets, data.brand, { withUrl: true });
-}
-
-/** Page 38 — success mantra (uses the recommended new name). */
-function drawMantraPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, newName: string) {
-  drawFrame(page, assets);
-  drawHeader(page, fonts, assets, "Success", "Mantra", { smallBase: 53.4, bigBase: 88.2, dividerY: 112.3 });
-  drawBox(page, BOX_X, 186.2, BOX_W, 152.4, 10);
-  const mantra = `“My name is my frequency. I align with my highest vibration. I welcome the transformation that is my birthright. I am ${newName || "[New Name]"}, and I claim my destiny.”`;
-  const lines = wrap(mantra, fonts.sans, 16, 392, 0);
-  lines.forEach((ln, i) => {
-    const base = 238.9 + i * 31.95;
-    const segs: { t: string; c: RGB }[] = [];
-    let body = ln;
-    if (i === 0) { segs.push({ t: body[0], c: COLOR.gold }); body = body.slice(1); }
-    if (i === lines.length - 1 && body.endsWith("”")) {
-      segs.push({ t: body.slice(0, -1), c: COLOR.white }, { t: "”", c: COLOR.gold });
-    } else segs.push({ t: body, c: COLOR.white });
-    txtSegC(page, segs, { base, font: fonts.sans, size: 16 });
-  });
-  wrap("Chant this daily during your name transition.", fonts.cinzel, 19.2, 360).forEach((ln, i) => {
-    txtC(page, ln, { base: 437.0 + i * 28.8, font: fonts.cinzel, size: 19.2, color: COLOR.gold });
-  });
-  drawIcon(page, assets.person, CENTER_X, 595.35, 119.1);
-  drawFooter(page, fonts, assets, data.brand, { withUrl: true });
-}
-
-/* ------------------------------------------------------------------ */
-/*  Main entry point                                                    */
-/* ------------------------------------------------------------------ */
-
-export async function generateNameCorrectionReportPdf(input: NameCorrectionReportInput): Promise<Uint8Array> {
-  const split = splitName(input.customerName);
-  const data: ResolvedInput = {
-    generatedDate: new Date().toISOString(),
-    firstName: split.first,
-    middleName: split.middle,
-    lastName: split.last,
-    isMiddleNameFatherHusband: false,
-    fatherName: "",
-    option1Name: "",
-    option2Name: "",
-    isTwoFavorableForProfile: false,
-    ...input,
-    brand: { ...DEFAULT_BRAND, ...input.brand },
-    contentOverride: input.contentOverride ?? {},
-  } as ResolvedInput;
-
-  const computed = computeNameCorrectionReportContent(data);
-  const content: NameCorrectionReportContent = { ...computed, ...input.contentOverride };
-  if (content.isFallback) {
-    console.warn(`Name Correction PDF: rule engine hit FALLBACK for "${data.customerName}" (report ${data.reportId}) — matched ${content.matchedRuleId} by default. Recommend manual review before sending to customer.`);
-  }
-
-  const dob = parseDob(data.dob);
-  const mulank = content.mulank;
-  const bhagyank = content.bhagyank;
-  const fullNameForNumerology = [data.firstName, data.isMiddleNameFatherHusband ? "" : data.middleName, data.lastName].filter(Boolean).join(" ");
-  const current = analyseName(fullNameForNumerology, mulank, bhagyank, dob);
-  const kua = computeKuaNumber(dob.year, data.gender);
-
-  // --- candidate (new) names -------------------------------------------------
-  const opt1 = data.option1Name.trim() ? analyseName(data.option1Name, mulank, bhagyank, dob) : null;
-  const opt2 = data.option2Name.trim() ? analyseName(data.option2Name, mulank, bhagyank, dob) : null;
-  if (!opt1 || !opt2) {
-    console.warn(`Name Correction PDF: report ${data.reportId} has no Option ${!opt1 ? "1" : ""}${!opt1 && !opt2 ? " / " : ""}${!opt2 ? "2" : ""} name — the New Name Recommendation pages will show placeholders.`);
-  }
-  const rank1 = opt1 ? favourabilityRank(opt1) : 99;
-  const rank2 = opt2 ? favourabilityRank(opt2) : 99;
-  const recCase: RecommendationCase =
-    opt1 && opt2
-      ? pickRecommendationCase(
-          { firstNameNumber: opt1.firstNumber, fullNameNumber: opt1.fullNumber, compoundNumber: opt1.compound, favorabilityRank: rank1 },
-          { firstNameNumber: opt2.firstNumber, fullNameNumber: opt2.fullNumber, compoundNumber: opt2.compound, favorabilityRank: rank2 },
-        )
-      : "equal";
-  const bestRank = Math.min(rank1, rank2);
-  const label1 = impactLabel(rank1, rank1 === bestRank);
-  const label2 = impactLabel(rank2, rank2 === bestRank);
-  const recommended = recCase === "option1Better" ? opt1 : recCase === "option2Better" ? opt2 : opt2 ?? opt1;
-
-  // --- loshu + rajyog (computed against the RECOMMENDED corrected name) -----
-  const grid = buildStandardLoShuGrid(dob.day, dob.month, dob.year);
-  const rajyogs = evaluateAllRajyogs({
-    naturalGridPresent: grid.present,
-    correctedFirstNameNumber: recommended?.firstNumber ?? current.firstNumber,
-    correctedFullNameNumber: recommended?.fullNumber ?? current.fullNumber,
-    isTwoFavorableForProfile: data.isTwoFavorableForProfile,
-  });
-
-  const letter = getLetterBlock((data.firstName || "A").charAt(0));
-  if (!letter) throw new Error(`Name Correction PDF: no First Letter content for "${data.firstName}".`);
-
-  // --- current-name paragraphs (pages 10–12) -------------------------------
-  const firstParas = current.firstOverAmp
-    ? LOSHU_OVERAMP_FIRST_NAME_BLOCK
-    : FIRST_NAME_BLOCKS[comboKey(current.firstVsMulank, current.firstVsBhagyank)];
-  const fullParas = current.fullOverAmp
-    ? LOSHU_OVERAMP_FULL_NAME_BLOCK
-    : FULL_NAME_BLOCKS[comboKey(current.fullVsMulank, current.fullVsBhagyank)];
-  const compoundParas = COMPOUND_BLOCKS[content.compoundTier];
-
-  // --- document --------------------------------------------------------------
-  const pdfDoc = await PDFDocument.create();
-  pdfDoc.setTitle(`Name Correction Report - ${data.customerName}`);
-  pdfDoc.setSubject("Chaldean Numerology Name Correction Report");
-  pdfDoc.setProducer(data.brand.companyName);
-  pdfDoc.setCreator(data.brand.companyName);
-  pdfDoc.registerFontkit(fontkit);
-
-  const iconKeys = ["logo", "hands", "lotus", "star", "person", "badgeWarning", "badgeFist", "badgeCrown", "badgeStar"] as const;
-  const [
-    backgroundBytes, quicksandRegularBytes, quicksandBoldBytes, cinzelDecBoldBytes,
-    cinzelDecRegBytes, cinzelRegBytes, cinzelBoldBytes, ...restBytes
-  ] = await Promise.all([
-    fetchAssetBytes(ASSET_PATHS.background),
-    fetchAssetBytes(ASSET_PATHS.fonts.quicksandRegular),
-    fetchAssetBytes(ASSET_PATHS.fonts.quicksandBold),
-    fetchAssetBytes(ASSET_PATHS.fonts.cinzelDecorativeBold),
-    fetchOptionalFont(ASSET_PATHS.fonts.cinzelDecorativeRegular),
-    fetchOptionalFont(ASSET_PATHS.fonts.cinzelRegular),
-    fetchOptionalFont(ASSET_PATHS.fonts.cinzelBold),
-    ...iconKeys.map((k) => fetchAssetBytes(ASSET_PATHS[k])),
-    ...STATIC_PAGE_NUMBERS.map((n) => fetchAssetBytes(staticPagePath(n))),
-  ]);
-  const iconBytes = restBytes.slice(0, iconKeys.length);
-  const staticBytes = restBytes.slice(iconKeys.length);
-
-  const statics = new Map<number, PDFImage>();
-  for (let i = 0; i < STATIC_PAGE_NUMBERS.length; i++) {
-    statics.set(STATIC_PAGE_NUMBERS[i], await pdfDoc.embedJpg(staticBytes[i]));
-  }
-  const icons = {} as Record<(typeof iconKeys)[number], PDFImage>;
-  for (let i = 0; i < iconKeys.length; i++) icons[iconKeys[i]] = await pdfDoc.embedPng(iconBytes[i]);
-  const assets: Assets = { background: await pdfDoc.embedPng(backgroundBytes), ...icons, statics };
-
-  const NO_LIGATURES = { features: { liga: false } } as const;
-  const headingBold = await pdfDoc.embedFont(cinzelDecBoldBytes, NO_LIGATURES);
-  const heading = cinzelDecRegBytes ? await pdfDoc.embedFont(cinzelDecRegBytes, NO_LIGATURES) : headingBold;
-  if (!cinzelDecRegBytes) console.warn("Name Correction PDF: CinzelDecorative-Regular.ttf missing — falling back to Bold headings.");
-  const fonts: Fonts = {
-    sans: await pdfDoc.embedFont(quicksandRegularBytes, NO_LIGATURES),
-    sansBold: await pdfDoc.embedFont(quicksandBoldBytes, NO_LIGATURES),
-    heading,
-    headingBold,
-    cinzel: cinzelRegBytes ? await pdfDoc.embedFont(cinzelRegBytes, NO_LIGATURES) : heading,
-    cinzelBold: cinzelBoldBytes ? await pdfDoc.embedFont(cinzelBoldBytes, NO_LIGATURES) : headingBold,
-  };
-
-  /** Page-number -> builder for the 18 pages that change per customer. */
-  const dynamicPages: Record<number, (page: PDFPage) => void> = {
-    4: (p) => drawWelcomePage(p, fonts, assets, data),
-    5: (p) => drawBlueprintPage(p, fonts, assets, data, content, kua),
-    10: (p) => drawCurrentNamePage(p, fonts, assets, data, { heading: "First Name Number", nameLabel: "First Name", nameValue: data.firstName, total: current.firstRawSum, reducedTo: content.firstNameNumber, paragraphs: [...firstParas] }),
-    11: (p) => drawCurrentNamePage(p, fonts, assets, data, { heading: "Full Name Number", nameLabel: "Full Name", nameValue: current.displayName, total: current.fullRawSum, reducedTo: content.fullNameNumber, paragraphs: [...fullParas] }),
-    12: (p) => drawCurrentNamePage(p, fonts, assets, data, { heading: "Full Name Compound Number", nameLabel: "Full Name", nameValue: current.displayName, total: content.fullNameCompound, paragraphs: [...compoundParas] }),
-    13: (p) => drawWhyCriticalPage(p, fonts, assets, data, content),
-    14: (p) => drawLetterAnalysisPage(p, fonts, assets, data, letter),
-    15: (p) => drawLetterTraitsPage(p, fonts, assets, data, letter),
-    16: (p) => drawLetterSpiritPage(p, fonts, assets, data, letter),
-    17: (p) => drawOptionPage(p, fonts, assets, data, 1, opt1, opt1?.displayName ?? data.option1Name),
-    18: (p) => drawOptionPage(p, fonts, assets, data, 2, opt2, opt2?.displayName ?? data.option2Name),
-    19: (p) => drawRecommendationLevelPage(p, fonts, assets, data, [label1, label2], recCase),
-    20: (p) => drawLoshuPage(p, fonts, assets, data),
-    21: (p) => drawRajyogPage(p, fonts, assets, data, rajyogs[0]),
-    22: (p) => drawRajyogPage(p, fonts, assets, data, rajyogs[1]),
-    23: (p) => drawRajyogPage(p, fonts, assets, data, rajyogs[2]),
-    24: (p) => drawRajyogNotePage(p, fonts, assets, data),
-    38: (p) => drawMantraPage(p, fonts, assets, data, recommended?.displayName ?? ""),
-  };
-
-  const TOTAL_PAGES = 50;
-  for (let n = 1; n <= TOTAL_PAGES; n++) {
-    const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    const build = dynamicPages[n];
-    if (build) {
-      build(page);
-    } else {
-      const img = assets.statics.get(n);
-      if (!img) throw new Error(`Name Correction PDF: page ${n} is neither dynamic nor a static asset.`);
-      page.drawImage(img, { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT });
-      if (CONNECT_PAGES.includes(n)) addLinkAnnotations(pdfDoc, page, CONNECT_PAGE_LINKS);
-    }
-  }
-
-  return pdfDoc.save();
-}
-
-export function nameCorrectionReportPdfToBlob(bytes: Uint8Array): Blob {
-  return new Blob([new Uint8Array(bytes).buffer], { type: "application/pdf" });
-}
-
-export function downloadNameCorrectionReportPdf(bytes: Uint8Array, filename: string) {
-  const blob = nameCorrectionReportPdfToBlob(bytes);
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
+    text: "Your Loshu Grid contains the beneficial Silver Rajyog, formed by the presence of numbers 2, 5, and 8. This combination merges the emotional intelligence and intuition of the Moon (2), the versatility and quick thinking of Mercury (5), and the discipline and perseverance of Saturn (8). Individuals with this Rajyog tend to be hardworking, patient, and capable of building long-term stability through consistent effort. It supports steady progress in career and finances, though
