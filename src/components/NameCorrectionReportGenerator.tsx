@@ -1,5 +1,7 @@
 
 
+
+
 // /**
 //  * NameCorrectionReportGenerator.tsx
 //  * -----------------------------------------------------------------------
@@ -42,6 +44,15 @@
 //   LOSHU_OVERAMP_FIRST_NAME_BLOCK, LOSHU_OVERAMP_FULL_NAME_BLOCK,
 // } from "@/lib/name-check/content-blocks";
 
+// /** Form dropdown "Preference". Stored with the report; the recommendation itself is always computed. */
+// export type NameCorrectionPreference = "na" | "option1" | "option2" | "both";
+// export const NAME_CORRECTION_PREFERENCE_OPTIONS: { value: NameCorrectionPreference; label: string }[] = [
+//   { value: "na", label: "NA" },
+//   { value: "option1", label: "Option 1" },
+//   { value: "option2", label: "Option 2" },
+//   { value: "both", label: "Both" },
+// ];
+
 // export interface NameCorrectionReportInput {
 //   reportId: string;
 //   customerName: string;
@@ -60,6 +71,8 @@
 //   /** The two candidate new names compared on the New Name Recommendation pages. */
 //   option1Name?: string;
 //   option2Name?: string;
+//   /** Form dropdown "Preference" (NA / Option 1 / Option 2 / Both). Not used for drawing. */
+//   preference?: NameCorrectionPreference;
 //   /** Per-profile call on whether 2 is favourable (feeds the Rajyog check). Defaults to false (never over-claims). */
 //   isTwoFavorableForProfile?: boolean;
 //   /** Admin correction — same override pattern as the Name Check report. */
@@ -1306,7 +1319,7 @@ import type { Verdict } from "@/lib/baby-reports/name-correction/hr-oa-nr-blocks
 import { getLetterBlock, type LetterBlock } from "@/lib/baby-reports/shared/first-letter-index";
 import { buildStandardLoShuGrid, toGridCells } from "@/lib/baby-reports/shared/loshu-grid";
 import { evaluateAllRajyogs, type RajyogResult, type RajyogStatus } from "@/lib/baby-reports/shared/rajyog";
-import { RECOMMENDATION_BLOCKS, pickRecommendationCase, type RecommendationCase } from "@/lib/baby-reports/shared/recommendation";
+import { RECOMMENDATION_BLOCKS, pickRecommendationCase, applyPreference, type RecommendationCase } from "@/lib/baby-reports/shared/recommendation";
 import { getFirstNameExplanation, getFullNameExplanation, getCompoundExplanation } from "@/lib/baby-reports/shared/number-explanations";
 import { getRelation, type Relation } from "@/lib/name-check/friendship-table";
 import { getCompoundTier, type CompoundTier } from "@/lib/name-check/compound-table";
@@ -1319,7 +1332,7 @@ import {
   LOSHU_OVERAMP_FIRST_NAME_BLOCK, LOSHU_OVERAMP_FULL_NAME_BLOCK,
 } from "@/lib/name-check/content-blocks";
 
-/** Form dropdown "Preference". Stored with the report; the recommendation itself is always computed. */
+/** Form dropdown "Preference": NA = auto (numerology decides), Option 1 / Option 2 / Both = the admin's call (drives page 19). */
 export type NameCorrectionPreference = "na" | "option1" | "option2" | "both";
 export const NAME_CORRECTION_PREFERENCE_OPTIONS: { value: NameCorrectionPreference; label: string }[] = [
   { value: "na", label: "NA" },
@@ -1346,7 +1359,7 @@ export interface NameCorrectionReportInput {
   /** The two candidate new names compared on the New Name Recommendation pages. */
   option1Name?: string;
   option2Name?: string;
-  /** Form dropdown "Preference" (NA / Option 1 / Option 2 / Both). Not used for drawing. */
+  /** Form dropdown "Preference" (NA / Option 1 / Option 2 / Both). NA = computed automatically; otherwise decides "I Suggest" on page 19. */
   preference?: NameCorrectionPreference;
   /** Per-profile call on whether 2 is favourable (feeds the Rajyog check). Defaults to false (never over-claims). */
   isTwoFavorableForProfile?: boolean;
@@ -1424,14 +1437,14 @@ export function computeNameCorrectionReportContent(
 }
 
 
-type ResolvedInput = Omit<Required<NameCorrectionReportInput>, "brand" | "option1Name" | "option2Name" | "isTwoFavorableForProfile"> & {
+export type ResolvedInput = Omit<Required<NameCorrectionReportInput>, "brand" | "option1Name" | "option2Name" | "isTwoFavorableForProfile"> & {
   brand: BrandConfig;
   option1Name: string;
   option2Name: string;
   isTwoFavorableForProfile: boolean;
 };
 
-interface BrandConfig {
+export interface BrandConfig {
   companyName: string;
   tagline: string;
   numerologistName: string;
@@ -1440,7 +1453,7 @@ interface BrandConfig {
   website: string;
 }
 
-const DEFAULT_BRAND: BrandConfig = {
+export const DEFAULT_BRAND: BrandConfig = {
   companyName: "Ankshaastra",
   tagline: "Empower Your Name",
   numerologistName: "Himansshu Agarwal Ji",
@@ -1449,7 +1462,7 @@ const DEFAULT_BRAND: BrandConfig = {
   website: "www.ankshaastra.com",
 };
 
-function splitName(fullName: string): { first: string; middle: string; last: string } {
+export function splitName(fullName: string): { first: string; middle: string; last: string } {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return { first: "", middle: "", last: "" };
   if (parts.length === 1) return { first: parts[0], middle: "", last: "" };
@@ -1457,17 +1470,17 @@ function splitName(fullName: string): { first: string; middle: string; last: str
   return { first: parts[0], middle: parts.slice(1, -1).join(" "), last: parts[parts.length - 1] };
 }
 
-const PAGE_WIDTH = 595.28; // A4 portrait, points
-const PAGE_HEIGHT = 841.89;
-const CENTER_X = PAGE_WIDTH / 2;
+export const PAGE_WIDTH = 595.28; // A4 portrait, points
+export const PAGE_HEIGHT = 841.89;
+export const CENTER_X = PAGE_WIDTH / 2;
 /** Convert a distance measured from the TOP of the page into a pdf-lib y coordinate. */
-const T = (fromTop: number) => PAGE_HEIGHT - fromTop;
+export const T = (fromTop: number) => PAGE_HEIGHT - fromTop;
 
 /**
  * Palette — sampled directly from the client's reference PDF
  * (Prashanth_Name_Correction_Report_Ankshaastra.pdf, Canva export).
  */
-const COLOR = {
+export const COLOR = {
   bg: rgb(0.0275, 0.051, 0.102), // box / pill fill  #070D1A
   white: rgb(1, 1, 1), // body text
   gold: rgb(1, 0.839, 0.6), // section labels, hairlines, page border, URL  #FFD699
@@ -1477,12 +1490,12 @@ const COLOR = {
 };
 
 /** Letter-spacing (in em) used by the reference. Quicksand is tracked; Cinzel is not. */
-const TRACK = { body: 0.05, label: 0.1, head: 0.08 };
+export const TRACK = { body: 0.05, label: 0.1, head: 0.08 };
 
 /** Type scale (pt) used by the reference. */
-const SZ = { small: 16, big: 25.6, h1: 17.6, label: 14.4, table: 12.8, body: 11.2, url: 14.1 };
+export const SZ = { small: 16, big: 25.6, h1: 17.6, label: 14.4, table: 12.8, body: 11.2, url: 14.1 };
 
-interface Fonts {
+export interface Fonts {
   sans: PDFFont; // Quicksand Regular
   sansBold: PDFFont; // Quicksand Bold
   heading: PDFFont; // Cinzel Decorative REGULAR (falls back to Bold if the file is missing)
@@ -1491,9 +1504,9 @@ interface Fonts {
   cinzelBold: PDFFont; // Cinzel Bold (falls back to headingBold)
 }
 
-const ASSET_BASE = "/name-correction-assets";
-const FONT_BASE = "/name-check-assets/fonts";
-const ASSET_PATHS = {
+export const ASSET_BASE = "/name-correction-assets";
+export const FONT_BASE = "/name-check-assets/fonts";
+export const ASSET_PATHS = {
   background: `${ASSET_BASE}/background-plain.png`, // plain navy gradient, NO border (border is drawn as a thin vector)
   logo: `${ASSET_BASE}/logo-ankshaastra-white-hd.png`, // white/cream logo, as in the reference
   hands: `${ASSET_BASE}/icon-hands-ref.png`,
@@ -1554,7 +1567,7 @@ const CONNECT_PAGE_LINKS: { url: string; box: [number, number, number, number] }
 ];
 const CONNECT_PAGES = [27, 44];
 
-function addLinkAnnotations(doc: PDFDocument, page: PDFPage, links: typeof CONNECT_PAGE_LINKS) {
+export function addLinkAnnotations(doc: PDFDocument, page: PDFPage, links: typeof CONNECT_PAGE_LINKS) {
   const sx = PAGE_WIDTH / LINK_REF_W;
   const sy = PAGE_HEIGHT / LINK_REF_H;
   const annots = links.map(({ url, box }) => {
@@ -1572,7 +1585,7 @@ function addLinkAnnotations(doc: PDFDocument, page: PDFPage, links: typeof CONNE
   page.node.set(PDFName.of("Annots"), doc.context.obj(annots));
 }
 
-async function fetchAssetBytes(path: string): Promise<Uint8Array> {
+export async function fetchAssetBytes(path: string): Promise<Uint8Array> {
   const res = await fetch(path);
   if (!res.ok) {
     throw new Error(`Name Correction PDF: failed to fetch design asset "${path}" (${res.status}). Check it was uploaded to /public${path}.`);
@@ -1581,7 +1594,7 @@ async function fetchAssetBytes(path: string): Promise<Uint8Array> {
 }
 
 /** Optional font: returns null (instead of throwing) when the file is absent or the SPA served index.html for it. */
-async function fetchOptionalFont(path: string): Promise<Uint8Array | null> {
+export async function fetchOptionalFont(path: string): Promise<Uint8Array | null> {
   try {
     const res = await fetch(path);
     if (!res.ok) return null;
@@ -1600,13 +1613,13 @@ async function fetchOptionalFont(path: string): Promise<Uint8Array | null> {
 /* ------------------------------------------------------------------ */
 
 /** Width of `text` including tracking (no trailing space after the last glyph). */
-function tw(font: PDFFont, text: string, size: number, trackEm = 0) {
+export function tw(font: PDFFont, text: string, size: number, trackEm = 0) {
   return font.widthOfTextAtSize(text, size) + Math.max(0, text.length - 1) * trackEm * size;
 }
 
-interface TxtOpts { x: number; y: number; font: PDFFont; size: number; color: RGB; track?: number }
+export interface TxtOpts { x: number; y: number; font: PDFFont; size: number; color: RGB; track?: number }
 /** Draw tracked text. `y` is a pdf-lib baseline (use T(baselineFromTop)). */
-function txt(page: PDFPage, text: string, o: TxtOpts) {
+export function txt(page: PDFPage, text: string, o: TxtOpts) {
   const t = (o.track ?? 0) * o.size;
   if (t) page.pushOperators(setCharacterSpacing(t));
   page.drawText(text, { x: o.x, y: o.y, size: o.size, font: o.font, color: o.color });
@@ -1614,13 +1627,13 @@ function txt(page: PDFPage, text: string, o: TxtOpts) {
 }
 
 /** Centered tracked text. `base` = baseline measured from the TOP of the page. */
-function txtC(page: PDFPage, text: string, o: { base: number; font: PDFFont; size: number; color: RGB; track?: number; cx?: number }) {
+export function txtC(page: PDFPage, text: string, o: { base: number; font: PDFFont; size: number; color: RGB; track?: number; cx?: number }) {
   const cx = o.cx ?? CENTER_X;
   txt(page, text, { x: cx - tw(o.font, text, o.size, o.track) / 2, y: T(o.base), font: o.font, size: o.size, color: o.color, track: o.track });
 }
 
 /** Centered run of differently-coloured segments on one baseline. */
-function txtSegC(page: PDFPage, segs: { t: string; c: RGB }[], o: { base: number; font: PDFFont; size: number; track?: number; cx?: number }) {
+export function txtSegC(page: PDFPage, segs: { t: string; c: RGB }[], o: { base: number; font: PDFFont; size: number; track?: number; cx?: number }) {
   const cx = o.cx ?? CENTER_X;
   const tr = (o.track ?? 0) * o.size;
   const widths = segs.map((s) => o.font.widthOfTextAtSize(s.t, o.size) + s.t.length * tr);
@@ -1632,7 +1645,7 @@ function txtSegC(page: PDFPage, segs: { t: string; c: RGB }[], o: { base: number
   });
 }
 
-function wrap(text: string, font: PDFFont, size: number, maxWidth: number, trackEm = 0): string[] {
+export function wrap(text: string, font: PDFFont, size: number, maxWidth: number, trackEm = 0): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let current = "";
@@ -1649,13 +1662,13 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number, track
   return lines;
 }
 
-interface ParaOpts {
+export interface ParaOpts {
   x: number; base: number; maxW: number; lh: number;
   font: PDFFont; size: number; color: RGB; track?: number;
   align?: "left" | "center" | "justify";
 }
 /** Wrapped paragraph. `base` = FIRST baseline from the page top. Returns the LAST baseline (from top). */
-function para(page: PDFPage, text: string, o: ParaOpts): number {
+export function para(page: PDFPage, text: string, o: ParaOpts): number {
   const lines = wrap(text, o.font, o.size, o.maxW, o.track);
   lines.forEach((line, i) => {
     const base = o.base + i * o.lh;
@@ -1678,7 +1691,7 @@ function para(page: PDFPage, text: string, o: ParaOpts): number {
   return o.base + (lines.length - 1) * o.lh;
 }
 
-function lineCount(text: string, font: PDFFont, size: number, maxW: number, track = 0) {
+export function lineCount(text: string, font: PDFFont, size: number, maxW: number, track = 0) {
   return wrap(text, font, size, maxW, track).length;
 }
 
@@ -1686,7 +1699,7 @@ function lineCount(text: string, font: PDFFont, size: number, maxW: number, trac
 /*  Shape helpers                                                       */
 /* ------------------------------------------------------------------ */
 
-function roundedRectSvgPath(width: number, height: number, radius: number): string {
+export function roundedRectSvgPath(width: number, height: number, radius: number): string {
   const r = Math.min(radius, width / 2, height / 2);
   return [
     `M ${r} 0`, `H ${width - r}`, `A ${r} ${r} 0 0 1 ${width} ${r}`, `V ${height - r}`,
@@ -1696,7 +1709,7 @@ function roundedRectSvgPath(width: number, height: number, radius: number): stri
 }
 
 /** (x, y) is the BOTTOM-left corner in pdf-lib coordinates. */
-function drawRoundedRect(
+export function drawRoundedRect(
   page: PDFPage,
   opts: { x: number; y: number; width: number; height: number; radius: number; color?: RGB; borderColor?: RGB; borderWidth?: number },
 ) {
@@ -1706,68 +1719,68 @@ function drawRoundedRect(
   });
 }
 
-const BOX_STROKE = 0.9;
+export const BOX_STROKE = 0.9;
 /** Navy box with the reference's soft-gold outline. `top` is measured from the page top. */
-function drawBox(page: PDFPage, x: number, top: number, w: number, h: number, r = 10) {
+export function drawBox(page: PDFPage, x: number, top: number, w: number, h: number, r = 10) {
   drawRoundedRect(page, { x, y: T(top) - h, width: w, height: h, radius: r, color: COLOR.bg, borderColor: COLOR.boxStroke, borderWidth: BOX_STROKE });
 }
 
 /** Navy "pill / card" with the offset gold plate behind it (Rajyog status pill, Important Note, etc). */
-function drawPlate(page: PDFPage, x: number, top: number, w: number, h: number, r: number, dx = 6.1, dy = 5.8) {
+export function drawPlate(page: PDFPage, x: number, top: number, w: number, h: number, r: number, dx = 6.1, dy = 5.8) {
   drawRoundedRect(page, { x: x + dx, y: T(top) - h - dy, width: w, height: h, radius: r, color: COLOR.boxStroke });
   drawRoundedRect(page, { x, y: T(top) - h, width: w, height: h, radius: r, color: COLOR.bg, borderColor: COLOR.boxStroke, borderWidth: BOX_STROKE });
 }
 
 /** Hairline (0.3pt) horizontal rule centred on CENTER_X — the reference's divider / underline weight. */
-function drawRule(page: PDFPage, y: number, w: number, cx = CENTER_X) {
+export function drawRule(page: PDFPage, y: number, w: number, cx = CENTER_X) {
   page.drawRectangle({ x: cx - w / 2, y: T(y) - 0.15, width: w, height: 0.3, color: COLOR.gold });
 }
 
 /** Table rule: 0.96pt line in the reference's box-stroke colour. */
-function drawTableLine(page: PDFPage, x1: number, y1Top: number, x2: number, y2Top: number, thickness = 0.9) {
+export function drawTableLine(page: PDFPage, x1: number, y1Top: number, x2: number, y2Top: number, thickness = 0.9) {
   page.drawLine({ start: { x: x1, y: T(y1Top) }, end: { x: x2, y: T(y2Top) }, thickness, color: COLOR.boxStroke });
 }
 
 /** Image centred on (cx, cyFromTop) at the given width. */
-function drawIcon(page: PDFPage, img: PDFImage, cx: number, cyFromTop: number, width: number) {
+export function drawIcon(page: PDFPage, img: PDFImage, cx: number, cyFromTop: number, width: number) {
   const h = (img.height / img.width) * width;
   page.drawImage(img, { x: cx - width / 2, y: T(cyFromTop) - h / 2, width, height: h });
 }
 
 /** Page background (plain navy gradient) + the thin reference border (0.65pt, #FFD699, r≈11.8). */
-function drawFrame(page: PDFPage, assets: Assets) {
+export function drawFrame(page: PDFPage, assets: Assets) {
   page.drawImage(assets.background, { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT });
   drawRoundedRect(page, { x: 24.9, y: T(816.5), width: 545.5, height: 796.1, radius: 11.8, borderColor: COLOR.gold, borderWidth: 0.65 });
 }
 
 /** Hairline divider with the sparkle in the middle. `y` = distance from page top. */
-function drawDivider(page: PDFPage, assets: Assets, y: number, cx = CENTER_X) {
+export function drawDivider(page: PDFPage, assets: Assets, y: number, cx = CENTER_X) {
   const yy = T(y);
   page.drawRectangle({ x: cx - 130.55, y: yy - 0.15, width: 110.1, height: 0.3, color: COLOR.gold });
   page.drawRectangle({ x: cx + 20.45, y: yy - 0.15, width: 110.1, height: 0.3, color: COLOR.gold });
   drawIcon(page, assets.star, cx, y, 31.5);
 }
 
-interface HeaderPos { smallBase: number; bigBase: number; dividerY: number }
+export interface HeaderPos { smallBase: number; bigBase: number; dividerY: number }
 /** Title block geometry used by the reference (two layouts: "A" for pages 10-19, "B" for pages 16 & 20-24). */
-const HEADER_A: HeaderPos = { smallBase: 58.6, bigBase: 94.4, dividerY: 119.2 };
-const HEADER_B: HeaderPos = { smallBase: 74.9, bigBase: 114.0, dividerY: 142.0 };
+export const HEADER_A: HeaderPos = { smallBase: 58.6, bigBase: 94.4, dividerY: 119.2 };
+export const HEADER_B: HeaderPos = { smallBase: 74.9, bigBase: 114.0, dividerY: 142.0 };
 
 /** "Small line / Big line" title (Cinzel Decorative Regular 16 / 25.6) with the sparkle divider. */
-function drawHeader(page: PDFPage, fonts: Fonts, assets: Assets, small: string, big: string, pos: HeaderPos = HEADER_A, bigColor: RGB = COLOR.goldLabel) {
+export function drawHeader(page: PDFPage, fonts: Fonts, assets: Assets, small: string, big: string, pos: HeaderPos = HEADER_A, bigColor: RGB = COLOR.goldLabel) {
   txtC(page, small, { base: pos.smallBase, font: fonts.heading, size: SZ.small, color: COLOR.white });
   txtC(page, big, { base: pos.bigBase, font: fonts.heading, size: SZ.big, color: bigColor });
   drawDivider(page, assets, pos.dividerY);
 }
 
 /** Section label (Quicksand 14.4, gold, 0.08em) with an optional hairline under it. */
-function drawLabel(page: PDFPage, fonts: Fonts, text: string, base: number, rule?: { y: number; w: number }) {
+export function drawLabel(page: PDFPage, fonts: Fonts, text: string, base: number, rule?: { y: number; w: number }) {
   txtC(page, text, { base, font: fonts.sans, size: SZ.label, color: COLOR.gold, track: TRACK.head });
   if (rule) drawRule(page, rule.y, rule.w);
 }
 
 /** Page footer: lotus ornament (+ tracked URL on the pages that carry it). */
-function drawFooter(page: PDFPage, fonts: Fonts, assets: Assets, brand: BrandConfig, opts: { withUrl: boolean }) {
+export function drawFooter(page: PDFPage, fonts: Fonts, assets: Assets, brand: BrandConfig, opts: { withUrl: boolean }) {
   if (!opts.withUrl) {
     drawIcon(page, assets.lotus, CENTER_X, 787.9, 75.8);
     return;
@@ -1779,13 +1792,13 @@ function drawFooter(page: PDFPage, fonts: Fonts, assets: Assets, brand: BrandCon
   txt(page, url, { x: CENTER_X - 309.1 / 2, y: T(798.2), font: fonts.sans, size: SZ.url, color: COLOR.gold, track: track / SZ.url });
 }
 
-const BODY = { size: SZ.body, line: 22.3, track: TRACK.body };
+export const BODY = { size: SZ.body, line: 22.3, track: TRACK.body };
 
 /**
  * "What this name will do for you" style box: navy rounded box, paragraphs justified,
  * thin rail with a gold dot at the start of each paragraph. `top` from page top.
  */
-function drawRailBox(page: PDFPage, fonts: Fonts, paragraphs: string[], box: { top: number; minH: number }) {
+export function drawRailBox(page: PDFPage, fonts: Fonts, paragraphs: string[], box: { top: number; minH: number }) {
   const x = 59.5;
   const w = 476.3;
   const textX = x + 37.7;
@@ -1809,7 +1822,7 @@ function drawRailBox(page: PDFPage, fonts: Fonts, paragraphs: string[], box: { t
 }
 
 /** Vertical gold rail with a dot at every y (distances from the page top). */
-function railDots(page: PDFPage, ys: number[], x: number) {
+export function railDots(page: PDFPage, ys: number[], x: number) {
   if (!ys.length) return;
   if (ys.length > 1) {
     page.drawLine({ start: { x, y: T(ys[0]) }, end: { x, y: T(ys[ys.length - 1]) }, thickness: 1, color: COLOR.goldDeep });
@@ -1817,7 +1830,7 @@ function railDots(page: PDFPage, ys: number[], x: number) {
   ys.forEach((y) => page.drawCircle({ x, y: T(y), size: 3.55, color: COLOR.goldDeep }));
 }
 
-function formatDate(iso: string): string {
+export function formatDate(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   const d = new Date(iso);
@@ -1825,7 +1838,7 @@ function formatDate(iso: string): string {
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 }
 
-function parseDob(iso: string): { day: number; month: number; year: number } {
+export function parseDob(iso: string): { day: number; month: number; year: number } {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (m) return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) };
   const d = new Date(iso);
@@ -1845,7 +1858,7 @@ export function computeKuaNumber(year: number, gender: string): number | null {
   return kua;
 }
 
-interface Assets {
+export interface Assets {
   background: PDFImage;
   logo: PDFImage;
   hands: PDFImage;
@@ -1863,7 +1876,7 @@ interface Assets {
 /*  Derived numerology for a candidate (current or new) name            */
 /* ------------------------------------------------------------------ */
 
-interface NameFacts {
+export interface NameFacts {
   displayName: string;
   firstName: string;
   firstRawSum: number;
@@ -1880,7 +1893,7 @@ interface NameFacts {
   fullOverAmp: boolean;
 }
 
-function analyseName(fullName: string, mulank: number, bhagyank: number, dob: { day: number; month: number; year: number }): NameFacts {
+export function analyseName(fullName: string, mulank: number, bhagyank: number, dob: { day: number; month: number; year: number }): NameFacts {
   const clean = fullName.trim().replace(/\s+/g, " ");
   const firstName = clean.split(" ")[0] ?? "";
   const grid = buildLoShuGrid(dob.day, dob.month, dob.year);
@@ -1909,7 +1922,7 @@ const REL_SCORE: Record<Relation, number> = { friendly: 0, neutral: 1, enemy: 2 
 const TIER_SCORE: Record<CompoundTier, number> = { excellent: 0, good: 1, neutral: 2, conditional: 3, avoid: 4 };
 
 /** Lower = more favourable. Same ingredients as the client's HR/OA/NR rules (relations, restricted numbers, compound tier). */
-function favourabilityRank(f: NameFacts): number {
+export function favourabilityRank(f: NameFacts): number {
   return (
     REL_SCORE[f.firstVsMulank] + REL_SCORE[f.firstVsBhagyank] +
     REL_SCORE[f.fullVsMulank] + REL_SCORE[f.fullVsBhagyank] +
@@ -1919,7 +1932,7 @@ function favourabilityRank(f: NameFacts): number {
   );
 }
 
-function impactLabel(rank: number, best: boolean): string {
+export function impactLabel(rank: number, best: boolean): string {
   if (rank <= 3) return best ? "Highest" : "High";
   if (rank <= 6) return best ? "High" : "Moderate";
   return best ? "Moderate" : "Low";
@@ -1930,11 +1943,23 @@ function impactLabel(rank: number, best: boolean): string {
 /*  (all positions in pt; "base" = text baseline measured from top)     */
 /* ------------------------------------------------------------------ */
 
-const BOX_X = 59.5; // every full-width box: x 59.5 → 535.8 (centred on the page)
-const BOX_W = 476.3;
+export const BOX_X = 59.5; // every full-width box: x 59.5 → 535.8 (centred on the page)
+export const BOX_W = 476.3;
 
 /** Page 4 — personalised welcome note. */
-function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput) {
+export interface WelcomeCopy {
+  /** Text before the gold "Astro-Numerologist <name>." run (include the opening quote). */
+  lead: string;
+  /** Text after the gold run. */
+  tail: string;
+}
+
+const NAME_CORRECTION_WELCOME_COPY: WelcomeCopy = {
+  lead: "“This personalized name correction report has been prepared after careful analysis of your birth date and current name by celebrity ",
+  tail: " The new name suggested is rooted in the approach of Chaldean Numerology and the Loshu Grid. The purpose of this report is to harmonize the cosmic energies influencing your life.",
+};
+
+export function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, copy: WelcomeCopy = NAME_CORRECTION_WELCOME_COPY) {
   drawFrame(page, assets);
   drawIcon(page, assets.logo, CENTER_X, 79.6, 335.5);
   drawDivider(page, assets, 261.3);
@@ -1946,9 +1971,9 @@ function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: Reso
   const maxW = 432;
   const track = TRACK.body;
   const name = data.brand.numerologistName;
-  const lead = "“This personalized name correction report has been prepared after careful analysis of your birth date and current name by celebrity ";
+  const lead = copy.lead;
   const gold = `Astro-Numerologist ${name}.`;
-  const tail = " The new name suggested is rooted in the approach of Chaldean Numerology and the Loshu Grid. The purpose of this report is to harmonize the cosmic energies influencing your life.";
+  const tail = copy.tail;
   // word list with colour, wrapped as plain text
   const goldWords = gold.split(/\s+/).length;
   const words = (lead + gold + tail).split(/\s+/).filter(Boolean);
@@ -2075,7 +2100,7 @@ function drawWhyCriticalPage(page: PDFPage, fonts: Fonts, assets: Assets, data: 
 }
 
 /** Page 14 — First Letter: identity table, core essence, communication style. */
-function drawLetterAnalysisPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, letter: LetterBlock) {
+export function drawLetterAnalysisPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, letter: LetterBlock) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "The Power Of Your", "First Letter");
   drawLabel(page, fonts, "First Letter Analysis", 185.3, { y: 194.4, w: 124.3 });
@@ -2111,7 +2136,7 @@ function drawLetterAnalysisPage(page: PDFPage, fonts: Fonts, assets: Assets, dat
 }
 
 /** Page 15 — First Letter: challenges and strengths. */
-function drawLetterTraitsPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, letter: LetterBlock) {
+export function drawLetterTraitsPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, letter: LetterBlock) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "The Power Of Your", "First Letter");
   page.drawCircle({ x: CENTER_X, y: T(163.05), size: 34.05, color: COLOR.bg, borderColor: COLOR.gold, borderWidth: 0.9 });
@@ -2136,7 +2161,7 @@ function drawLetterTraitsPage(page: PDFPage, fonts: Fonts, assets: Assets, data:
 }
 
 /** Page 16 — First Letter: famous names, spiritual significance, mantra, how to maximise. */
-function drawLetterSpiritPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, letter: LetterBlock) {
+export function drawLetterSpiritPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, letter: LetterBlock) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "THE POWER OF YOUR", "FIRST LETTER", HEADER_B, COLOR.gold);
   const L = letter.letter;
@@ -2174,7 +2199,7 @@ function drawLetterSpiritPage(page: PDFPage, fonts: Fonts, assets: Assets, data:
 }
 
 /** Pages 17–18 — New Name Recommendation, Option N. */
-function drawOptionPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, optionNo: 1 | 2, f: NameFacts | null, optionName: string) {
+export function drawOptionPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, optionNo: 1 | 2, f: NameFacts | null, optionName: string) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "NEW NAME", "RECOMMENDATION");
   txtC(page, `OPTION ${optionNo}: ${(optionName || "—").toUpperCase()}`, { base: 163.5, font: fonts.sans, size: SZ.h1, color: COLOR.gold, track: TRACK.head });
@@ -2212,9 +2237,11 @@ function drawOptionPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Resol
 }
 
 /** Page 19 — comparison table + professional recommendation. */
-function drawRecommendationLevelPage(
+export function drawRecommendationLevelPage(
   page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput,
   labels: [string, string], recCase: RecommendationCase,
+  /** Wording for the "both are equal" case (client: "BOTH" in both reports). */
+  equalPickLabel = "BOTH",
 ) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "New Name", "Recommendation Level");
@@ -2244,7 +2271,7 @@ function drawRecommendationLevelPage(
   drawIcon(page, assets.badgeStar, lcx, 517.0, 89.3);
   txtC(page, "For You,", { base: 598.6, font: fonts.heading, size: SZ.small, color: COLOR.white, cx: lcx });
   txtC(page, "I Suggest:", { base: 622.3, font: fonts.heading, size: SZ.small, color: COLOR.white, cx: lcx });
-  const pick = recCase === "option1Better" ? "OPTION 1" : recCase === "option2Better" ? "OPTION 2" : "EITHER OPTION";
+  const pick = recCase === "option1Better" ? "OPTION 1" : recCase === "option2Better" ? "OPTION 2" : equalPickLabel;
   const pickSize = Math.min(SZ.big, (leftW - 24) / (fonts.headingBold.widthOfTextAtSize(pick, 1)));
   txtC(page, pick, { base: 656.4, font: fonts.headingBold, size: pickSize, color: COLOR.gold, cx: lcx });
 
@@ -2259,7 +2286,7 @@ function drawRecommendationLevelPage(
 }
 
 /** Page 20 — personal Loshu Grid. */
-function drawLoshuPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput) {
+export function drawLoshuPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "YOUR PERSONAL", "LOSHU GRID", HEADER_B, COLOR.gold);
   drawLabel(page, fonts, "Your Personal Loshu Grid", 208.3, { y: 216.6, w: 43.5 });
@@ -2287,7 +2314,7 @@ function drawLoshuPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Resolv
   drawFooter(page, fonts, assets, data.brand, { withUrl: true });
 }
 
-const RAJYOG_COPY: Record<string, { subtitle: string; text: string }> = {
+export const RAJYOG_COPY: Record<string, { subtitle: string; text: string }> = {
   "Rajyog-1": {
     subtitle: "(9-5-1 Line)",
     text: "Your Loshu Grid contains the powerful Rajyog, formed by the diagonal presence of numbers 9, 5, and 1. This combination blends the leadership and authority of Mars (9), the adaptability and business acumen of Mercury (5), and the confidence and vitality of the Sun (1). Individuals with this Rajyog are naturally driven towards success, recognition, and financial prosperity. It indicates strong willpower, sharp decision-making ability, and the potential to rise to positions of influence through consistent effort and self-belief.",
@@ -2303,13 +2330,13 @@ const RAJYOG_COPY: Record<string, { subtitle: string; text: string }> = {
 };
 
 /** Gold plate + navy pill (Rajyog status, Important Note). `top` = plate top. */
-function drawPill(page: PDFPage, top: number) {
+export function drawPill(page: PDFPage, top: number) {
   drawRoundedRect(page, { x: 179.2, y: T(top) - 48.8, width: 236.9, height: 48.8, radius: 24.4, color: COLOR.boxStroke });
   drawRoundedRect(page, { x: 180.8, y: T(top + 1.5) - 41.4, width: 229.2, height: 41.4, radius: 20.7, color: COLOR.bg });
 }
 
 /** Pages 21–23 — one Rajyog each. */
-function drawRajyogPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, result: RajyogResult) {
+export function drawRajyogPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, result: RajyogResult) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "Your Rajyog", "ANALYSIS", HEADER_B, COLOR.gold);
   const copy = RAJYOG_COPY[result.id];
@@ -2348,7 +2375,7 @@ function drawRajyogPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Resol
 }
 
 /** Page 24 — important note about Rajyogs. */
-function drawRajyogNotePage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput) {
+export function drawRajyogNotePage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "Your Rajyog", "ANALYSIS", HEADER_B, COLOR.gold);
   drawPill(page, 222.2);
@@ -2364,7 +2391,7 @@ function drawRajyogNotePage(page: PDFPage, fonts: Fonts, assets: Assets, data: R
 }
 
 /** Page 38 — success mantra (uses the recommended new name). */
-function drawMantraPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, newName: string) {
+export function drawMantraPage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput, newName: string) {
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, "Success", "Mantra", { smallBase: 53.4, bigBase: 88.2, dividerY: 112.3 });
   drawBox(page, BOX_X, 186.2, BOX_W, 152.4, 10);
@@ -2429,13 +2456,15 @@ export async function generateNameCorrectionReportPdf(input: NameCorrectionRepor
   }
   const rank1 = opt1 ? favourabilityRank(opt1) : 99;
   const rank2 = opt2 ? favourabilityRank(opt2) : 99;
-  const recCase: RecommendationCase =
+  const computedCase: RecommendationCase =
     opt1 && opt2
       ? pickRecommendationCase(
           { firstNameNumber: opt1.firstNumber, fullNameNumber: opt1.fullNumber, compoundNumber: opt1.compound, favorabilityRank: rank1 },
           { firstNameNumber: opt2.firstNumber, fullNameNumber: opt2.fullNumber, compoundNumber: opt2.compound, favorabilityRank: rank2 },
         )
       : "equal";
+  // The form's Preference (Option 1 / Option 2 / Both) decides "I Suggest"; NA keeps the computed case.
+  const recCase = applyPreference(computedCase, data.preference);
   const bestRank = Math.min(rank1, rank2);
   const label1 = impactLabel(rank1, rank1 === bestRank);
   const label2 = impactLabel(rank2, rank2 === bestRank);
