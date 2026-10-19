@@ -1,0 +1,258 @@
+{
+  "a4": [
+    595.28,
+    841.89
+  ],
+  "totalPages": 65,
+  "staticPages": [
+    1,
+    2,
+    3,
+    4,
+    7,
+    8,
+    9,
+    10,
+    28,
+    29,
+    32,
+    33,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65
+  ],
+  "dynamicPages": [
+    5,
+    6,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    30,
+    31,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    52
+  ],
+  "pages": [
+    {
+      "file": "static-p01.jpg",
+      "samplePage": 1,
+      "links": []
+    },
+    {
+      "file": "static-p02.jpg",
+      "samplePage": 2,
+      "links": []
+    },
+    {
+      "file": "static-p03.jpg",
+      "samplePage": 3,
+      "links": []
+    },
+    {
+      "file": "static-p04.jpg",
+      "samplePage": 4,
+      "links": []
+    },
+    {
+      "file": "static-p07.jpg",
+      "samplePage": 7,
+      "links": []
+    },
+    {
+      "file": "static-p08.jpg",
+      "samplePage": 8,
+      "links": []
+    },
+    {
+      "file": "static-p09.jpg",
+      "samplePage": 9,
+      "links": []
+    },
+    {
+      "file": "static-p10.jpg",
+      "samplePage": 10,
+      "links": []
+    },
+    {
+      "file": "static-p28.jpg",
+      "samplePage": 28,
+      "links": []
+    },
+    {
+      "file": "static-p29.jpg",
+      "samplePage": 29,
+      "links": []
+    },
+    {
+      "file": "static-p32.jpg",
+      "samplePage": 32,
+      "links": []
+    },
+    {
+      "file": "static-p33.jpg",
+      "samplePage": 33,
+      "links": []
+    },
+    {
+      "file": "static-p41.jpg",
+      "samplePage": 41,
+      "links": []
+    },
+    {
+      "file": "static-p42.jpg",
+      "samplePage": 42,
+      "links": []
+    },
+    {
+      "file": "static-p43.jpg",
+      "samplePage": 43,
+      "links": []
+    },
+    {
+      "file": "static-p44.jpg",
+      "samplePage": 44,
+      "links": []
+    },
+    {
+      "file": "static-p45.jpg",
+      "samplePage": 45,
+      "links": []
+    },
+    {
+      "file": "static-p46.jpg",
+      "samplePage": 46,
+      "links": []
+    },
+    {
+      "file": "static-p47.jpg",
+      "samplePage": 47,
+      "links": []
+    },
+    {
+      "file": "static-p48.jpg",
+      "samplePage": 48,
+      "links": []
+    },
+    {
+      "file": "static-p49.jpg",
+      "samplePage": 49,
+      "links": []
+    },
+    {
+      "file": "static-p50.jpg",
+      "samplePage": 50,
+      "links": []
+    },
+    {
+      "file": "static-p51.jpg",
+      "samplePage": 51,
+      "links": []
+    },
+    {
+      "file": "static-p53.jpg",
+      "samplePage": 53,
+      "links": []
+    },
+    {
+      "file": "static-p54.jpg",
+      "samplePage": 54,
+      "links": []
+    },
+    {
+      "file": "static-p55.jpg",
+      "samplePage": 55,
+      "links": []
+    },
+    {
+      "file": "static-p56.jpg",
+      "samplePage": 56,
+      "links": []
+    },
+    {
+      "file": "static-p57.jpg",
+      "samplePage": 57,
+      "links": []
+    },
+    {
+      "file": "static-p58.jpg",
+      "samplePage": 58,
+      "links": []
+    },
+    {
+      "file": "static-p59.jpg",
+      "samplePage": 59,
+      "links": []
+    },
+    {
+      "file": "static-p60.jpg",
+      "samplePage": 60,
+      "links": []
+    },
+    {
+      "file": "static-p61.jpg",
+      "samplePage": 61,
+      "links": []
+    },
+    {
+      "file": "static-p62.jpg",
+      "samplePage": 62,
+      "links": []
+    },
+    {
+      "file": "static-p63.jpg",
+      "samplePage": 63,
+      "links": []
+    },
+    {
+      "file": "static-p64.jpg",
+      "samplePage": 64,
+      "links": []
+    },
+    {
+      "file": "static-p65.jpg",
+      "samplePage": 65,
+      "links": []
+    }
+  ]
+}
