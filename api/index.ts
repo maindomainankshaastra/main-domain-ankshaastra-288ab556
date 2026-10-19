@@ -26,6 +26,7 @@ import adminGstMaintenance from "../server/handlers/admin-gst-maintenance.js";
 import operationsSiteManifest from "../server/handlers/operations-site-manifest.js";
 import invoicesSendEmail from "../server/handlers/invoices-send-email.js";
 import nameCheckReportsSendEmail from "../server/handlers/name-check-reports-send-email.js";
+import perfectBabyNameReportsSendEmail from "../server/handlers/perfect-baby-name-reports-send-email.js";
 import invoicesCreateManual from "../server/handlers/invoices-create-manual.js";
 import adminAuditLogs from "../server/handlers/admin-audit-logs.js";
 import operationsTriggerInvoice from "../server/handlers/operations-trigger-invoice.js";
@@ -67,6 +68,7 @@ const routes: Record<string, ApiHandler> = {
   "invoices/file": invoicesFile,
   "invoices/send-email": invoicesSendEmail, 
    "name-check-reports/send-email": nameCheckReportsSendEmail,
+   "perfect-baby-name-reports/send-email": perfectBabyNameReportsSendEmail,
   "webhooks/razorpay": webhooksRazorpay,
    "webhooks/shopify": webhooksShopify,
   "operations/process-jobs": operationsProcessJobs,
