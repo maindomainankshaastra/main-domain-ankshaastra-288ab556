@@ -59,6 +59,7 @@ const ReportsModule = lazy(() => import("./pages/admin/modules/ReportsModule"));
 const NameCheckReportsModule = lazy(() => import("./pages/admin/modules/NameCheckReportsModule"));
 const NameCorrectionReports = lazy(() => import("./pages/admin/modules/NameCorrectionReports"));
 const PerfectBabyNameReports = lazy(() => import("./pages/admin/modules/PerfectBabyNameReports"));
+     const CompleteBabyBlueprintReports = lazy(() => import("./pages/admin/modules/CompleteBabyBlueprintReports"));
 const AuditLogsModule = lazy(() => import("./pages/admin/modules/AuditLogsModule"));
 
 const queryClient = new QueryClient();
@@ -137,6 +138,7 @@ const App = () => (
 <Route path="reports/name-check" element={<NameCheckReportsModule />} />
                         <Route path="reports/name-correction" element={<NameCorrectionReports />} />
               <Route path="reports/perfect-baby-name" element={<PerfectBabyNameReports />} />
+                   <Route path="reports/complete-baby-blueprint" element={<CompleteBabyBlueprintReports />} />
 <Route path="name-check-reports" element={<Navigate to="/admin/reports/name-check" replace />} />
               {/* Audit Logs — nested under the same requireAdmin-protected
                   /admin layout as everything else. The extra Super-Admin-only
