@@ -44,7 +44,7 @@ const REPORT_TYPES: ReportTypeCard[] = [
     title: "Perfect Baby Name Report",
     description: "Numerology-aligned name shortlist for a newborn, based on birth details.",
     icon: Baby,
-    to: null,
+    to: "/admin/reports/perfect-baby-name",
   },
   {
     key: "complete-baby-blueprint",
