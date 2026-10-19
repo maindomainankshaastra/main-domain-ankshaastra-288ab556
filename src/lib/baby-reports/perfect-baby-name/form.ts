@@ -21,6 +21,8 @@ export interface BabyReportFormValues {
   first_alphabet: string;
   option1_name: string;
   option2_name: string;
+  /** Optional. When filled, the report includes the "Nick Name Recommendation" page (page 22). */
+  nick_name: string;
   preference: BabyNamePreference;
   status: BabyReportStatus;
 }
@@ -28,7 +30,7 @@ export interface BabyReportFormValues {
 export const EMPTY_BABY_FORM: BabyReportFormValues = {
   first_name: "", middle_name: "", is_middle_name_father_husband: false, last_name: "",
   gender: "", email: "", phone: "", dob: "", first_alphabet: "",
-  option1_name: "", option2_name: "", preference: "na", status: "draft",
+  option1_name: "", option2_name: "", nick_name: "", preference: "na", status: "draft",
 };
 
 export function buildBabyCustomerName(v: Pick<BabyReportFormValues, "first_name" | "middle_name" | "last_name">): string {
