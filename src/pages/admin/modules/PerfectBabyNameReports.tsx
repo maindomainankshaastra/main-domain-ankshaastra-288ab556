@@ -328,7 +328,7 @@ export default function PerfectBabyNameReports() {
   };
 
   return (
-    <AdminPage title="Perfect Baby Name Reports" loading={loading} empty={!loading && rows.length === 0} emptyMessage="No reports yet. Click “Generate Report” to add one.">
+    <AdminPage title="Perfect Baby Name Reports" loading={loading}>
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4">
           <Link to="/admin/reports" className="text-sm text-muted-foreground hover:text-foreground">← Reports</Link>
@@ -345,6 +345,9 @@ export default function PerfectBabyNameReports() {
               </tr>
             </thead>
             <tbody>
+              {rows.length === 0 && (
+  <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">No reports yet. Click “Generate Report” to add one.</td></tr>
+)}
               {rows.map((r) => (
                 <tr key={r.id} className="border-t">
                   <td className="p-3 font-mono text-xs">{r.report_id}</td>
