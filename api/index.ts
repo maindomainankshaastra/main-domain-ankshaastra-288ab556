@@ -28,6 +28,7 @@ import invoicesSendEmail from "../server/handlers/invoices-send-email.js";
 import nameCheckReportsSendEmail from "../server/handlers/name-check-reports-send-email.js";
 import nameCorrectionReportsSendEmail from "../server/handlers/name-correction-reports-send-email.js";
 import perfectBabyNameReportsSendEmail from "../server/handlers/perfect-baby-name-reports-send-email.js";
+     import completeBabyBlueprintReportsSendEmail from "../server/handlers/complete-baby-blueprint-reports-send-email.js";
 import invoicesCreateManual from "../server/handlers/invoices-create-manual.js";
 import adminAuditLogs from "../server/handlers/admin-audit-logs.js";
 import operationsTriggerInvoice from "../server/handlers/operations-trigger-invoice.js";
@@ -71,6 +72,7 @@ const routes: Record<string, ApiHandler> = {
    "name-check-reports/send-email": nameCheckReportsSendEmail,
    "name-correction-reports/send-email": nameCorrectionReportsSendEmail,
    "perfect-baby-name-reports/send-email": perfectBabyNameReportsSendEmail,
+      "complete-baby-blueprint-reports/send-email": completeBabyBlueprintReportsSendEmail,
   "webhooks/razorpay": webhooksRazorpay,
    "webhooks/shopify": webhooksShopify,
   "operations/process-jobs": operationsProcessJobs,
