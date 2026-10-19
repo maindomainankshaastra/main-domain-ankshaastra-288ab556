@@ -51,7 +51,7 @@ const REPORT_TYPES: ReportTypeCard[] = [
     title: "Complete Baby Blueprint",
     description: "Full birth-chart blueprint covering naming, core numbers, and early-life guidance.",
     icon: BookOpen,
-    to: null,
+         to: "/admin/reports/complete-baby-blueprint",
   },
 ];
 
