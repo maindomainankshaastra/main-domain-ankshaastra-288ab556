@@ -9,6 +9,7 @@
       "excludeFiles": "{node_modules/@sparticuz/**,node_modules/puppeteer-core/**,node_modules/@puppeteer/**}"
     }
   },
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- src public api server index.html package.json package-lock.json bun.lock vite.config.ts tailwind.config.ts postcss.config.js tsconfig.json vercel.json components.json",
   "crons": [
     {
       "path": "/api/operations/process-jobs",
