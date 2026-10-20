@@ -1328,6 +1328,41 @@ const SERVICE_TEMPLATES: Record<string, (snapshot: Record<string, unknown>) => F
 };
 
 
+// FIX (client request 2026-10-20): Empower's current Name Check package
+// (packageType "name-check") had no template, so it was being caught by the
+// baby-report shape check below (it also saves fatherFullName) and printed
+// "Baby Name Details" with empty Child's DOB / Time of Birth rows. It now
+// has its own template showing the fields the Name Check form really saves.
+// Person 2 / Person 3 only appear when that person was actually filled in.
+function nameCheckPersonRows(n: 1 | 2 | 3, s: Record<string, unknown>): FormRow[] {
+  const k = (suffix: string) => `person${n}${suffix}`;
+  return [
+    section(`Person ${n} Details`),
+    field('First Name', s[k('FirstName')], k('FirstName')),
+    field('Middle Name', s[k('MiddleName')], k('MiddleName')),
+    field('Last Name', s[k('SurName')], k('SurName')),
+    field("Is the middle name father's / husband's name?", s[k('MiddleNameType')], k('MiddleNameType')),
+    field('Date of Birth', s[k('Dob')], k('Dob')),
+    field('Gender', s[k('Gender')], k('Gender')),
+  ];
+}
+
+function nameCheckTemplate(s: Record<string, unknown>): FormRow[] {
+  return [
+    ...nameCheckPersonRows(1, s),
+    ...(s.person2FirstName ? nameCheckPersonRows(2, s) : []),
+    ...(s.person3FirstName ? nameCheckPersonRows(3, s) : []),
+    field("Father's Full Name", s.fatherFullName, 'fatherFullName'),
+    section('Location Details'),
+    field('City', s.city, 'city'),
+    field('State/Province', s.state ?? s.customerState, 'state'),
+    field('PIN Code', s.pinCode ?? s.pincode, 'pinCode'),
+    field('Parents Profession', s.parentsProfession ?? s.parentProfession, 'parentsProfession'),
+  ];
+}
+SERVICE_TEMPLATES['empower.ankshaastra.com::name-check'] = nameCheckTemplate;
+SERVICE_TEMPLATES['empower.ankshaastra.com::Name Check'] = nameCheckTemplate;
+
 // Covers both "Perfect Baby Name Report" and "Complete Baby Name
 // Blueprint" — both save an identical field set; the add-ons each package
 // offers already come through inside nameOptions' "[ADD-ON: ...]" tag(s),
