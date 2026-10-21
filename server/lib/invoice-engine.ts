@@ -1,655 +1,7 @@
-// // import { getSupabaseAdmin } from './supabase-admin.js';
-// // import { nextInvoiceNumber } from './gst.js';
-// // import { type InvoiceTemplateData } from './templates/invoice-html.js';
-// // import { buildInvoiceTemplateData, resolveCustomerBilling } from './build-invoice-template.js';
-// // import { classifyGstrInvoice } from './gstr-classification.js';
-// // import { detectCustomerState } from './gst-state-detection.js';
-// // import { UNKNOWN_STATE_CODE, UNKNOWN_STATE_NAME } from './gst-company-defaults.js';
-// // import { resolveSacCode } from './invoice-constants.js';
-// // import { formatPlaceOfSupply } from './indian-states.js';
-// // import { generateInvoicePdf } from './pdf-engine.js';
-// // import { sendEmail, type SendEmailInput } from './email-engine.js';
-// // import { advanceWorkflow } from './workflow-engine.js';
-// // import { downloadInvoicePdfBuffer, invoiceStoragePath, uploadInvoicePdf } from './invoice-storage.js';
-
-// // import { wrapEmailLayout } from './templates/email-layout.js';
-// // import { buildInvoicePaymentEmailHtml } from './templates/invoice-email.js';
-// // import { buildOrderDetailsHtml } from './order-form-details.js';
-// // import { buildInvoiceEmailSubject } from './schedule-invoice.js';
-// // import { resolveGstConfigBillingTexts } from './gst-config-fields.js';
-// // import {
-// //   resolveOrderServiceSubjects,
-// //   syncServicePersonsForOrder,
-// // } from './service-persons-store.js';
-
-// // export type GenerateInvoiceInput = {
-// //   orderId: string;
-// //   paymentId?: string;
-// //   paymentMethod?: string;
-// // };
-
-// // const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// // // FIX (website field): strips accidental Markdown link syntax
-// // // ("[label](url)" -> "label") and any protocol prefix, so the email footer
-// // // never shows raw "[www.x.com](https://www.x.com)" text regardless of what
-// // // was typed into a config field somewhere upstream.
-// // function cleanWebsiteText(text?: string | null): string {
-// //   if (!text) return 'ankshaastra.com';
-// //   const withoutMarkdown = String(text).replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
-// //   return withoutMarkdown.replace(/^https?:\/\//, '').replace(/\/$/, '').trim() || 'ankshaastra.com';
-// // }
-
-// // export async function upsertCustomerFromOrder(order: Record<string, unknown>) {
-// //   const supabase = getSupabaseAdmin();
-// //   const email = order.customer_email as string | undefined;
-// //   const phone = order.customer_phone as string | undefined;
-// //   const name = (order.customer_name as string) || 'Customer';
-
-// //   if (order.customer_id) return order.customer_id as string;
-
-// //   let query = supabase.from('customers').select('id');
-// //   if (email) query = query.eq('email', email);
-// //   else if (phone) query = query.eq('phone', phone);
-// //   const { data: existing } = await query.maybeSingle();
-
-// //   if (existing?.id) {
-// //     await supabase.from('orders').update({ customer_id: existing.id }).eq('id', order.id);
-// //     return existing.id;
-// //   }
-
-// //   const { data: created } = await supabase
-// //     .from('customers')
-// //     .insert({
-// //       full_name: name,
-// //       email,
-// //       phone,
-// //       whatsapp: phone,
-// //       source_website: order.source_website || 'ankshaastra.com',
-// //       user_id: order.user_id || null,
-// //     })
-// //     .select('id')
-// //     .single();
-
-// //   if (created?.id) await supabase.from('orders').update({ customer_id: created.id }).eq('id', order.id);
-// //   return created?.id;
-// // }
-
-// // async function resolveInvoiceUserId(
-// //   order: Record<string, unknown>,
-// //   customerId?: string | null,
-// // ): Promise<string | null> {
-// //   if (order.user_id) return order.user_id as string;
-
-// //   const supabase = getSupabaseAdmin();
-
-// //   if (customerId) {
-// //     const { data: customer } = await supabase.from('customers').select('user_id').eq('id', customerId).maybeSingle();
-// //     if (customer?.user_id) return customer.user_id;
-// //   }
-
-// //   const email = order.customer_email ? String(order.customer_email).toLowerCase() : '';
-// //   if (email) {
-// //     const { data: profile } = await supabase.from('profiles').select('user_id').ilike('email', email).maybeSingle();
-// //     if (profile?.user_id) return profile.user_id;
-// //   }
-
-// //   return null;
-// // }
-
-// // export async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput['attachments']> {
-
-// //   const storagePath = invoice.pdf_storage_path as string | undefined;
-// //   if (!storagePath) {
-// //     console.warn('[invoice] Missing pdf_storage_path on invoice:', invoice?.id);
-// //     return undefined;
-// //   }
-
-// //   try {
-// //     const bytes = await downloadInvoicePdfBuffer(storagePath);
-// //     if (!bytes) {
-// //       console.error('[invoice] Failed to download invoice pdf from storage:', storagePath);
-// //       return undefined;
-// //     }
-
-// //     const invoiceNumber = String(invoice.invoice_number || invoice.id || 'invoice').replace(/[^\w.-]+/g, '_');
-
-// //     return [
-// //       {
-// //         filename: `${invoiceNumber}.pdf`,
-// //         content: bytes,
-// //         contentType: 'application/pdf',
-// //       },
-// //     ];
-// //   } catch (e) {
-// //     console.error('[invoice] getInvoiceAttachment threw:', e);
-// //     return undefined;
-// //   }
-// // }
-
-// // async function getExistingInvoiceForOrder(orderId: string) {
-// //   const supabase = getSupabaseAdmin();
-// //   const { data } = await supabase
-// //     .from('invoices')
-// //     .select('id, invoice_number, pdf_storage_path, pdf_url, status, order_id, razorpay_payment_id')
-// //     .eq('order_id', orderId)
-// //     .order('created_at', { ascending: true })
-// //     .limit(1)
-// //     .maybeSingle();
-// //   return data;
-// // }
-
-// // async function getExistingInvoiceByPaymentId(paymentId: string) {
-// //   if (!paymentId) return null;
-// //   const supabase = getSupabaseAdmin();
-// //   const { data } = await supabase
-// //     .from('invoices')
-// //     .select('id, invoice_number, pdf_storage_path, pdf_url, status, order_id, razorpay_payment_id')
-// //     .eq('razorpay_payment_id', paymentId)
-// //     .maybeSingle();
-// //   return data;
-// // }
-
-// // async function tryAcquireInvoiceLock(orderId: string): Promise<boolean> {
-// //   const supabase = getSupabaseAdmin();
-// //   const { data, error } = await supabase.rpc('try_invoice_generation_lock', { p_order_id: orderId });
-// //   if (error) {
-// //     console.warn('[invoice] Advisory lock RPC unavailable, continuing without lock:', error.message);
-// //     return true;
-// //   }
-// //   return Boolean(data);
-// // }
-
-// // async function waitForExistingInvoice(orderId: string, attempts = 8) {
-// //   for (let i = 0; i < attempts; i++) {
-// //     const existing = await getExistingInvoiceForOrder(orderId);
-// //     if (existing?.pdf_storage_path || existing?.pdf_url) {
-// //       return existing;
-// //     }
-// //     await sleep(400);
-// //   }
-// //   return null;
-// // }
-
-// // function hasDeliverablePdf(invoice: { pdf_storage_path?: string | null; pdf_url?: string | null } | null | undefined) {
-// //   return Boolean(invoice?.pdf_storage_path || invoice?.pdf_url);
-// // }
-
-// // async function removeIncompleteInvoice(invoiceId: string): Promise<void> {
-// //   const supabase = getSupabaseAdmin();
-// //   await supabase.from('invoice_items').delete().eq('invoice_id', invoiceId);
-// //   await supabase.from('invoices').delete().eq('id', invoiceId);
-// // }
-
-// // async function clearIncompleteInvoiceIfNeeded(
-// //   invoice: { id: string; pdf_storage_path?: string | null; pdf_url?: string | null } | null | undefined,
-// // ): Promise<boolean> {
-// //   if (!invoice?.id || hasDeliverablePdf(invoice)) return false;
-// //   await removeIncompleteInvoice(invoice.id);
-// //   return true;
-// // }
-
-// // async function wasOrderInvoiceEmailSent(orderId: string, templateSlug: string): Promise<boolean> {
-// //   if (!orderId) return false;
-// //   const supabase = getSupabaseAdmin();
-// //   const { data } = await supabase
-// //     .from('email_logs')
-// //     .select('id')
-// //     .eq('order_id', orderId)
-// //     .eq('template_slug', templateSlug)
-// //     .eq('status', 'sent')
-// //     .limit(1)
-// //     .maybeSingle();
-// //   return Boolean(data?.id);
-// // }
-
-// // async function wasInvoiceEmailSent(invoiceId: string, templateSlug: string): Promise<boolean> {
-// //   const supabase = getSupabaseAdmin();
-// //   const { data } = await supabase
-// //     .from('email_logs')
-// //     .select('id')
-// //     .eq('invoice_id', invoiceId)
-// //     .eq('template_slug', templateSlug)
-// //     .eq('status', 'sent')
-// //     .limit(1)
-// //     .maybeSingle();
-// //   return Boolean(data?.id);
-// // }
-
-// // export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
-// //   const supabase = getSupabaseAdmin();
-// //   const { data: order, error } = await supabase.from('orders').select('*').eq('id', input.orderId).single();
-// //   if (error || !order) throw new Error('Order not found');
-
-// //   const paymentId = input.paymentId || (order.razorpay_payment_id as string | undefined);
-
-// //   if (paymentId) {
-// //     const byPayment = await getExistingInvoiceByPaymentId(paymentId);
-// //     if (hasDeliverablePdf(byPayment)) {
-// //       return {
-// //         invoiceId: byPayment!.id,
-// //         invoiceNumber: byPayment!.invoice_number,
-// //         duplicate: true,
-// //         orderId: byPayment!.order_id,
-// //       };
-// //     }
-// //     if (byPayment?.id) {
-// //       await clearIncompleteInvoiceIfNeeded(byPayment);
-// //     }
-// //   }
-
-// //   const existing = await getExistingInvoiceForOrder(order.id);
-// //   if (hasDeliverablePdf(existing)) {
-// //     return { invoiceId: existing!.id, invoiceNumber: existing!.invoice_number, duplicate: true };
-// //   }
-// //   if (existing?.id) {
-// //     await clearIncompleteInvoiceIfNeeded(existing);
-// //   }
-
-// //   const lockAcquired = await tryAcquireInvoiceLock(order.id);
-// //   if (!lockAcquired) {
-// //     const waited = await waitForExistingInvoice(order.id);
-// //     if (waited?.id) {
-// //       return { invoiceId: waited.id, invoiceNumber: waited.invoice_number, duplicate: true };
-// //     }
-// //     return { invoiceId: undefined, invoiceNumber: undefined, duplicate: true, skipped: true };
-// //   }
-
-// //   const afterLock = await getExistingInvoiceForOrder(order.id);
-// //   if (afterLock?.pdf_storage_path || afterLock?.pdf_url) {
-// //     return { invoiceId: afterLock.id, invoiceNumber: afterLock.invoice_number, duplicate: true };
-// //   }
-
-// //   const customerId = await upsertCustomerFromOrder(order);
-// //   const { data: gstConfig } = await supabase.from('gst_config').select('*').limit(1).single();
-
-// //    const invoiceNumber = await nextInvoiceNumber(supabase);
-// //   const invoiceUserId = await resolveInvoiceUserId(order, customerId);
-
-// //   if (invoiceUserId && !order.user_id) {
-// //     await supabase.from('orders').update({ user_id: invoiceUserId }).eq('id', order.id);
-// //   }
-
-// //   const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
-// //   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
-// //   try {
-// //     await syncServicePersonsForOrder(String(order.id), snapshot);
-// //   } catch (err) {
-// //     console.warn('[invoice-engine] service persons sync skipped:', err);
-// //   }
-// //   const serviceSubjects = await resolveOrderServiceSubjects(order);
-
-// //   const { templateData, gst } = buildInvoiceTemplateData({
-// //     order,
-// //     gstConfig,
-// //     invoiceNumber,
-// //     paymentId,
-// //     paymentMethod: input.paymentMethod || (order.payment_method as string | undefined),
-// //     serviceSubjects: serviceSubjects.map((p) => ({
-// //       person_index: p.person_index,
-// //       full_name: p.full_name,
-// //     })),
-// //   });
-
-// //   const billing = resolveCustomerBilling(order);
-// //   let customerStateCode = billing.stateCode;
-// //   let customerStateName = billing.stateName;
-// //   if (!customerStateCode) {
-// //     const detected = detectCustomerState(
-// //       { billing_address: billing.billingAddress, customer_state: billing.stateName },
-// //       order,
-// //     );
-// //     customerStateCode = detected.stateCode;
-// //     customerStateName = detected.stateName;
-// //   }
-// //   if (!customerStateCode) {
-// //     customerStateCode = UNKNOWN_STATE_CODE;
-// //     customerStateName = UNKNOWN_STATE_NAME;
-// //   }
-
-// //   const supplierState = String(gstConfig?.state_code || '09').padStart(2, '0').slice(-2);
-// //   const gstrCategory = classifyGstrInvoice({
-// //     customerGstin: billing.customerGstin,
-// //     invoiceValue: gst.grandTotal,
-// //     customerStateCode,
-// //     supplierStateCode: supplierState,
-// //   });
-// //   const sacCode = resolveSacCode(gstConfig);
-
-// //   if (!invoiceNumber?.trim()) {
-// //     throw new Error('Invoice number is required');
-// //   }
-// //   if (!/^\d{6}$/.test(sacCode)) {
-// //     throw new Error('Valid SAC code is required');
-// //   }
-// //   if (!Number.isFinite(gst.subtotal) || gst.subtotal <= 0) {
-// //     throw new Error('Taxable value is required');
-// //   }
-
-// //   const placeOfSupply =
-// //     billing.placeOfSupply || formatPlaceOfSupply(customerStateCode) || customerStateName;
-// //   const invoiceDate = new Date().toISOString().slice(0, 10);
-
-// //   // Reserve invoice row BEFORE PDF generation so concurrent requests hit unique constraint.
-// //   const { data: reserved, error: reserveErr } = await supabase
-// //     .from('invoices')
-// //     .insert({
-// //       invoice_number: invoiceNumber,
-// //       order_id: order.id,
-// //       user_id: invoiceUserId,
-// //       customer_id: customerId,
-// //       customer_name: order.customer_name || 'Customer',
-// //       customer_email: order.customer_email,
-// //       customer_phone: order.customer_phone,
-// //       customer_gstin: billing.customerGstin || null,
-// //       customer_state: customerStateName || null,
-// //       customer_state_code: customerStateCode,
-// //       place_of_supply: placeOfSupply,
-// //       gstr_category: gstrCategory,
-// //       sac_code: sacCode,
-// //       hsn_sac_code: sacCode,
-// //       billing_address: billing.billingAddress || null,
-// //       service_title: order.service_title,
-// //       invoice_date: invoiceDate,
-// //       base_amount: gst.subtotal,
-// //       subtotal: gst.subtotal,
-// //       gst_total: gst.gstTotal,
-// //       cgst_rate: gst.isIntraState ? templateData.gstRate / 2 : 0,
-// //       cgst_amount: gst.cgst,
-// //       sgst_rate: gst.isIntraState ? templateData.gstRate / 2 : 0,
-// //       sgst_amount: gst.sgst,
-// //       igst_rate: gst.isIntraState ? 0 : templateData.gstRate,
-// //       igst_amount: gst.igst,
-// //       total_amount: gst.grandTotal,
-// //       gst_inclusive: true,
-// //       status: 'generating',
-// //       source_website: order.source_website,
-// //       payment_method: input.paymentMethod || order.payment_method || 'razorpay',
-// //       razorpay_payment_id: paymentId || input.paymentId || order.razorpay_payment_id,
-// //     })
-// //     .select('id')
-// //     .single();
-
-// //   if (reserveErr) {
-// //     if (reserveErr.code === '23505') {
-// //       if (paymentId) {
-// //         const dupByPayment = await getExistingInvoiceByPaymentId(paymentId);
-// //         if (dupByPayment?.id) {
-// //           return {
-// //             invoiceId: dupByPayment.id,
-// //             invoiceNumber: dupByPayment.invoice_number,
-// //             duplicate: true,
-// //             orderId: dupByPayment.order_id,
-// //           };
-// //         }
-// //       }
-// //       const dup = await getExistingInvoiceForOrder(order.id);
-// //       if (dup?.id) {
-// //         return { invoiceId: dup.id, invoiceNumber: dup.invoice_number, duplicate: true };
-// //       }
-// //     }
-// //     throw reserveErr;
-// //   }
-
-// //   const invoiceId = reserved.id as string;
-// //   const qrPayload = `upi://pay?pa=${gstConfig?.upi_id || 'ankshaastra@upi'}&am=${gst.grandTotal}&tn=${invoiceNumber}`;
-
-// //   let qrCodeDataUrl: string | undefined;
-// //   try {
-// //     const QRCode = await import('qrcode');
-// //     qrCodeDataUrl = await QRCode.toDataURL(qrPayload, {
-// //       margin: 1,
-// //       width: 120,
-// //       color: { dark: '#4b77be', light: '#ffffff' },
-// //     });
-// //   } catch {
-// //     /* optional */
-// //   }
-
-// //   const finalTemplateData: InvoiceTemplateData = {
-// //     ...templateData,
-// //     qrCodeDataUrl,
-// //   };
-
-// //   try {
-// //     const { buffer, mimeType } = await generateInvoicePdf(finalTemplateData);
-// //     const storagePath = invoiceStoragePath(invoiceNumber);
-// //     const pdfUrl = await uploadInvoicePdf(storagePath, buffer, mimeType);
-
-// //     const { data: invoice, error: updateErr } = await supabase
-// //       .from('invoices')
-// //       .update({
-// //         status: 'paid',
-// //         qr_code_data: qrPayload,
-// //         pdf_url: pdfUrl,
-// //         pdf_storage_path: storagePath,
-// //       })
-// //       .eq('id', invoiceId)
-// //       .select('*')
-// //       .single();
-
-// //     if (updateErr) throw updateErr;
-
-// //     await supabase.from('invoice_items').insert({
-// //       invoice_id: invoiceId,
-// //       description: order.service_title,
-// //       quantity: 1,
-// //       unit_price: gst.subtotal,
-// //       hsn_sac_code: sacCode,
-// //       taxable_amount: gst.subtotal,
-// //       gst_rate: templateData.gstRate,
-// //       cgst_amount: gst.cgst,
-// //       sgst_amount: gst.sgst,
-// //       igst_amount: gst.igst,
-// //       line_total: gst.grandTotal,
-// //     });
-
-// //     if (input.paymentId) {
-// //       const { error: payErr } = await supabase.from('payments').insert({
-// //         order_id: order.id,
-// //         invoice_id: invoiceId,
-// //         customer_id: customerId,
-// //         amount: gst.grandTotal,
-// //         provider: 'razorpay',
-// //         provider_payment_id: input.paymentId,
-// //         provider_order_id: order.razorpay_order_id,
-// //         status: 'captured',
-// //       });
-// //       if (payErr && payErr.code !== '23505') throw payErr;
-// //     }
-
-// //     await advanceWorkflow(order.id, 'invoice_generated', 'invoice.created', { invoiceId });
-// //     return { invoiceId, invoiceNumber, invoice, pdfUrl, duplicate: false };
-// //   } catch (genErr) {
-// //     await supabase.from('invoices').delete().eq('id', invoiceId);
-// //     throw genErr;
-// //   }
-// // }
-
-// // export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean }) {
-// //   const supabase = getSupabaseAdmin();
-// //   const { data: invoice } = await supabase.from('invoices').select('*, orders(*)').eq('id', invoiceId).single();
-// //   if (!invoice) throw new Error('Invoice not found');
-
-// //   const attachments = await getInvoiceAttachment(invoice);
-// //   const force = opts?.force ?? false;
-// //   const orderId = invoice.order_id as string | null;
-// //   const order = (invoice.orders as Record<string, unknown> | null) || {};
-// //   const orderDetailsHtml = buildOrderDetailsHtml(order);
-// //   const billing = resolveCustomerBilling(order);
-// //   const serviceTitle = String(invoice.service_title || order.service_title || 'Service');
-// //   const emailSubject = buildInvoiceEmailSubject(serviceTitle, String(invoice.invoice_number));
-// //   const gstRate = Number(invoice.cgst_rate || 0) + Number(invoice.sgst_rate || 0) + Number(invoice.igst_rate || 0) || 18;
-// //   const gst = {
-// //     subtotal: Number(invoice.subtotal || 0),
-// //     gstTotal: Number(invoice.gst_total || 0),
-// //     cgst: Number(invoice.cgst_amount || 0),
-// //     sgst: Number(invoice.sgst_amount || 0),
-// //     igst: Number(invoice.igst_amount || 0),
-// //     grandTotal: Number(invoice.total_amount || 0),
-// //     isIntraState: Number(invoice.igst_amount || 0) === 0,
-// //   };
-// //   const downloadLink = invoice.pdf_url
-// //     ? `<p style="margin-top:16px;">You can also <a href="${invoice.pdf_url}" style="color:#4b77be;font-weight:600;">download your invoice PDF</a>.</p>`
-// //     : '';
-
-// //   const { data: gstConfigRow } = await supabase.from('gst_config').select('*').limit(1).maybeSingle();
-// //   const billingTexts = resolveGstConfigBillingTexts(gstConfigRow as Record<string, unknown> | null);
-// //   const thankYouMessage = billingTexts.thank_you_message || undefined;
-
-// //   // FIX (website field): resolve the per-order website once here, from the
-// //   // invoice's own source_website (falls back to the order's, then a
-// //   // hardcoded default) — same priority as build-invoice-template.js — and
-// //   // pass it into every wrapEmailLayout() call below so the email footer
-// //   // matches whichever of the three sites this order actually came from.
-// //   const emailFooterWebsite = cleanWebsiteText(
-// //     (invoice.source_website as string | undefined) || (order.source_website as string | undefined),
-// //   );
-
-// //   if (invoice.customer_email) {
-// //     const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
-// //     const invoiceAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
-// //     if (!orderAlreadySent && !invoiceAlreadySent) {
-// //       const customerHtml = wrapEmailLayout(
-// //         buildInvoicePaymentEmailHtml({
-// //           customerName: String(invoice.customer_name || 'Customer'),
-// //           serviceTitle,
-// //           invoiceNumber: String(invoice.invoice_number),
-// //           gst,
-// //           gstRate,
-// //           placeOfSupply: billing.placeOfSupply,
-// //           paymentMethod: String(invoice.payment_method || order.payment_method || 'Razorpay'),
-// //           transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
-// //           orderDetailsHtml,
-// //           downloadLinkHtml: downloadLink,
-// //           thankYouMessage,
-// //         }),
-// //         emailSubject,
-// //         'Ankshaastra Occult Experts LLP',
-// //         emailFooterWebsite,
-// //       );
-
-// //       try {
-// //         await sendEmail({
-// //           to: invoice.customer_email,
-// //           subject: emailSubject,
-// //           html: customerHtml,
-// //           attachments,
-// //           templateSlug: 'invoice_email',
-// //           customerId: invoice.customer_id,
-// //           orderId: invoice.order_id,
-// //           invoiceId: invoice.id,
-// //         });
-// //         if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
-// //       } catch (emailErr) {
-// //         console.error('[invoice] Customer email failed:', emailErr);
-// //       }
-// //     }
-// //   }
-
-// //   // Route admin email based on source website
-// // const website = String(invoice.source_website || order.source_website || '').toLowerCase();
-
-// // let adminEmail = process.env.ANKSHAASTRA_ADMIN_EMAIL || process.env.ADMIN_EMAIL || '';
-
-// // if (website.includes('miracle')) {
-// //   adminEmail = process.env.MIRACLE_ADMIN_EMAIL || adminEmail;
-// // } else if (website.includes('empower')) {
-// //   adminEmail = process.env.EMPOWER_ADMIN_EMAIL || adminEmail;
-// // }
-// //   if (adminEmail) {
-// //     const orderAdminSent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : false;
-// //     const adminAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_admin'));
-// //     if (!orderAdminSent && !adminAlreadySent) {
-// //       const adminHtml = wrapEmailLayout(
-// //         `
-// //       <p style="margin:0 0 16px;font-size:16px;color:#4b77be;font-weight:700;">New Order Received</p>
-// //       ${buildInvoicePaymentEmailHtml({
-// //         customerName: String(invoice.customer_name || 'Customer'),
-// //         serviceTitle,
-// //         invoiceNumber: String(invoice.invoice_number),
-// //         gst,
-// //         gstRate,
-// //         paymentMethod: String(invoice.payment_method || order.payment_method || 'Razorpay'),
-// //         transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
-// //         orderDetailsHtml,
-// //       })}
-// //       <p style="margin-top:16px;">Invoice PDF is attached.</p>
-// //     `,
-// //         `New order: ${serviceTitle}`,
-// //         'Ankshaastra Occult Experts LLP',
-// //         emailFooterWebsite,
-// //       );
-
-// //       try {
-// //         await sendEmail({
-// //           to: adminEmail,
-// //           subject: emailSubject,
-// //           html: adminHtml,
-// //           attachments,
-// //           templateSlug: 'invoice_admin',
-// //           orderId: invoice.order_id,
-// //           invoiceId: invoice.id,
-// //         });
-// //       } catch (emailErr) {
-// //         console.error('[invoice] Admin email failed:', emailErr);
-// //       }
-// //     }
-// //   }
-
-// //   if (invoice.order_id) {
-// //     await advanceWorkflow(invoice.order_id, 'completed', 'invoice.delivery_completed');
-// //   }
-
-// //   return { ok: true };
-// // }
-
-// // /** Single entry point: generate invoice once and send email once per order. */
-// // export async function processInvoiceJob(orderId: string, opts?: { paymentId?: string; forceDeliver?: boolean }) {
-// //   const result = await generateInvoiceForOrder({
-// //     orderId,
-// //     paymentId: opts?.paymentId,
-// //   });
-
-// //   if (!result.invoiceId) return result;
-
-// //   // Never auto-send email for duplicate/skipped invoices — only the first successful generation.
-// //   if (result.duplicate && !opts?.forceDeliver) {
-// //     return result;
-// //   }
-
-// //   await deliverInvoice(result.invoiceId, { force: opts?.forceDeliver });
-// //   return result;
-// // }
-
-// // export async function orderHasDeliverableInvoice(orderId: string): Promise<boolean> {
-// //   const existing = await getExistingInvoiceForOrder(orderId);
-// //   return Boolean(existing?.pdf_storage_path || existing?.pdf_url);
-// // }
-
-// // export async function paymentHasDeliverableInvoice(paymentId: string): Promise<boolean> {
-// //   const existing = await getExistingInvoiceByPaymentId(paymentId);
-// //   return Boolean(existing?.pdf_storage_path || existing?.pdf_url);
-// // }
-
-// // /** True when an invoice row exists (including in-progress PDF generation). */
-// // export async function orderInvoiceGenerationActive(orderId: string): Promise<boolean> {
-// //   const existing = await getExistingInvoiceForOrder(orderId);
-// //   return Boolean(existing?.id);
-// // }
-
-// // export async function paymentInvoiceGenerationActive(paymentId: string): Promise<boolean> {
-// //   const existing = await getExistingInvoiceByPaymentId(paymentId);
-// //   return Boolean(existing?.id);
-// // }
-
-
-
-
-
 
 // import { getSupabaseAdmin } from './supabase-admin.js';
 // import { nextInvoiceNumber } from './gst.js';
+// import { SHOP_DEFAULT_ADMIN_EMAIL } from './smtp-config.js';
 // import { type InvoiceTemplateData } from './templates/invoice-html.js';
 // import { buildInvoiceTemplateData, resolveCustomerBilling } from './build-invoice-template.js';
 // import { classifyGstrInvoice } from './gstr-classification.js';
@@ -661,7 +13,7 @@
 // import { sendEmail, type SendEmailInput } from './email-engine.js';
 // import { advanceWorkflow } from './workflow-engine.js';
 // import { downloadInvoicePdfBuffer, invoiceStoragePath, uploadInvoicePdf } from './invoice-storage.js';
-
+ 
 // import { wrapEmailLayout } from './templates/email-layout.js';
 // import { buildInvoicePaymentEmailHtml } from './templates/invoice-email.js';
 // import { buildOrderDetailsHtml, formatServiceDisplayName, getOrderFormRows } from './order-form-details.js';
@@ -671,15 +23,27 @@
 //   resolveOrderServiceSubjects,
 //   syncServicePersonsForOrder,
 // } from './service-persons-store.js';
-
+ 
 // export type GenerateInvoiceInput = {
 //   orderId: string;
 //   paymentId?: string;
 //   paymentMethod?: string;
 // };
-
+ 
 // const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
+ 
+// // TEMPORARY (2026-09-01): simple step-timing tracker so we can see WHERE
+// // invoice creation is spending its time without needing to dig through
+// // Vercel's log UI. processInvoiceJob() resets this and attaches it to its
+// // return value, and invoices-create-manual.ts puts it straight into the API
+// // response so it can be shown right in the admin UI. Remove once the slow
+// // step is found and fixed.
+// let currentTimings: Record<string, number> = {};
+// function recordTiming(key: string, ms: number) {
+//   currentTimings[key] = ms;
+//   console.log(`[TIMING] ${key} took ${ms}ms`);
+// }
+ 
 // // FIX (website field): strips accidental Markdown link syntax
 // // ("[label](url)" -> "label") and any protocol prefix, so the email footer
 // // never shows raw "[www.x.com](https://www.x.com)" text regardless of what
@@ -689,25 +53,25 @@
 //   const withoutMarkdown = String(text).replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
 //   return withoutMarkdown.replace(/^https?:\/\//, '').replace(/\/$/, '').trim() || 'ankshaastra.com';
 // }
-
+ 
 // export async function upsertCustomerFromOrder(order: Record<string, unknown>) {
 //   const supabase = getSupabaseAdmin();
 //   const email = order.customer_email as string | undefined;
 //   const phone = order.customer_phone as string | undefined;
 //   const name = (order.customer_name as string) || 'Customer';
-
+ 
 //   if (order.customer_id) return order.customer_id as string;
-
+ 
 //   let query = supabase.from('customers').select('id');
 //   if (email) query = query.eq('email', email);
 //   else if (phone) query = query.eq('phone', phone);
 //   const { data: existing } = await query.maybeSingle();
-
+ 
 //   if (existing?.id) {
 //     await supabase.from('orders').update({ customer_id: existing.id }).eq('id', order.id);
 //     return existing.id;
 //   }
-
+ 
 //   const { data: created } = await supabase
 //     .from('customers')
 //     .insert({
@@ -720,50 +84,50 @@
 //     })
 //     .select('id')
 //     .single();
-
+ 
 //   if (created?.id) await supabase.from('orders').update({ customer_id: created.id }).eq('id', order.id);
 //   return created?.id;
 // }
-
+ 
 // async function resolveInvoiceUserId(
 //   order: Record<string, unknown>,
 //   customerId?: string | null,
 // ): Promise<string | null> {
 //   if (order.user_id) return order.user_id as string;
-
+ 
 //   const supabase = getSupabaseAdmin();
-
+ 
 //   if (customerId) {
 //     const { data: customer } = await supabase.from('customers').select('user_id').eq('id', customerId).maybeSingle();
 //     if (customer?.user_id) return customer.user_id;
 //   }
-
+ 
 //   const email = order.customer_email ? String(order.customer_email).toLowerCase() : '';
 //   if (email) {
 //     const { data: profile } = await supabase.from('profiles').select('user_id').ilike('email', email).maybeSingle();
 //     if (profile?.user_id) return profile.user_id;
 //   }
-
+ 
 //   return null;
 // }
-
+ 
 // export async function getInvoiceAttachment(invoice: Record<string, unknown>): Promise<SendEmailInput['attachments']> {
-
+ 
 //   const storagePath = invoice.pdf_storage_path as string | undefined;
 //   if (!storagePath) {
 //     console.warn('[invoice] Missing pdf_storage_path on invoice:', invoice?.id);
 //     return undefined;
 //   }
-
+ 
 //   try {
 //     const bytes = await downloadInvoicePdfBuffer(storagePath);
 //     if (!bytes) {
 //       console.error('[invoice] Failed to download invoice pdf from storage:', storagePath);
 //       return undefined;
 //     }
-
+ 
 //     const invoiceNumber = String(invoice.invoice_number || invoice.id || 'invoice').replace(/[^\w.-]+/g, '_');
-
+ 
 //     return [
 //       {
 //         filename: `${invoiceNumber}.pdf`,
@@ -776,7 +140,7 @@
 //     return undefined;
 //   }
 // }
-
+ 
 // async function getExistingInvoiceForOrder(orderId: string) {
 //   const supabase = getSupabaseAdmin();
 //   const { data } = await supabase
@@ -788,7 +152,7 @@
 //     .maybeSingle();
 //   return data;
 // }
-
+ 
 // async function getExistingInvoiceByPaymentId(paymentId: string) {
 //   if (!paymentId) return null;
 //   const supabase = getSupabaseAdmin();
@@ -799,7 +163,7 @@
 //     .maybeSingle();
 //   return data;
 // }
-
+ 
 // async function tryAcquireInvoiceLock(orderId: string): Promise<boolean> {
 //   const supabase = getSupabaseAdmin();
 //   const { data, error } = await supabase.rpc('try_invoice_generation_lock', { p_order_id: orderId });
@@ -809,7 +173,7 @@
 //   }
 //   return Boolean(data);
 // }
-
+ 
 // async function waitForExistingInvoice(orderId: string, attempts = 8) {
 //   for (let i = 0; i < attempts; i++) {
 //     const existing = await getExistingInvoiceForOrder(orderId);
@@ -820,17 +184,17 @@
 //   }
 //   return null;
 // }
-
+ 
 // function hasDeliverablePdf(invoice: { pdf_storage_path?: string | null; pdf_url?: string | null } | null | undefined) {
 //   return Boolean(invoice?.pdf_storage_path || invoice?.pdf_url);
 // }
-
+ 
 // async function removeIncompleteInvoice(invoiceId: string): Promise<void> {
 //   const supabase = getSupabaseAdmin();
 //   await supabase.from('invoice_items').delete().eq('invoice_id', invoiceId);
 //   await supabase.from('invoices').delete().eq('id', invoiceId);
 // }
-
+ 
 // async function clearIncompleteInvoiceIfNeeded(
 //   invoice: { id: string; pdf_storage_path?: string | null; pdf_url?: string | null } | null | undefined,
 // ): Promise<boolean> {
@@ -838,7 +202,7 @@
 //   await removeIncompleteInvoice(invoice.id);
 //   return true;
 // }
-
+ 
 // async function wasOrderInvoiceEmailSent(orderId: string, templateSlug: string): Promise<boolean> {
 //   if (!orderId) return false;
 //   const supabase = getSupabaseAdmin();
@@ -852,7 +216,7 @@
 //     .maybeSingle();
 //   return Boolean(data?.id);
 // }
-
+ 
 // async function wasInvoiceEmailSent(invoiceId: string, templateSlug: string): Promise<boolean> {
 //   const supabase = getSupabaseAdmin();
 //   const { data } = await supabase
@@ -865,14 +229,14 @@
 //     .maybeSingle();
 //   return Boolean(data?.id);
 // }
-
+ 
 // export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
 //   const supabase = getSupabaseAdmin();
 //   const { data: order, error } = await supabase.from('orders').select('*').eq('id', input.orderId).single();
 //   if (error || !order) throw new Error('Order not found');
-
+ 
 //   const paymentId = input.paymentId || (order.razorpay_payment_id as string | undefined);
-
+ 
 //   if (paymentId) {
 //     const byPayment = await getExistingInvoiceByPaymentId(paymentId);
 //     if (hasDeliverablePdf(byPayment)) {
@@ -887,7 +251,7 @@
 //       await clearIncompleteInvoiceIfNeeded(byPayment);
 //     }
 //   }
-
+ 
 //   const existing = await getExistingInvoiceForOrder(order.id);
 //   if (hasDeliverablePdf(existing)) {
 //     return { invoiceId: existing!.id, invoiceNumber: existing!.invoice_number, duplicate: true };
@@ -895,7 +259,7 @@
 //   if (existing?.id) {
 //     await clearIncompleteInvoiceIfNeeded(existing);
 //   }
-
+ 
 //   const lockAcquired = await tryAcquireInvoiceLock(order.id);
 //   if (!lockAcquired) {
 //     const waited = await waitForExistingInvoice(order.id);
@@ -904,31 +268,39 @@
 //     }
 //     return { invoiceId: undefined, invoiceNumber: undefined, duplicate: true, skipped: true };
 //   }
-
+ 
 //   const afterLock = await getExistingInvoiceForOrder(order.id);
 //   if (afterLock?.pdf_storage_path || afterLock?.pdf_url) {
 //     return { invoiceId: afterLock.id, invoiceNumber: afterLock.invoice_number, duplicate: true };
 //   }
-
+ 
+//   const tCustomer = Date.now();
 //   const customerId = await upsertCustomerFromOrder(order);
+//   recordTiming('upsertCustomerFromOrder', Date.now() - tCustomer);
 //   const { data: gstConfig } = await supabase.from('gst_config').select('*').limit(1).single();
-
-//    const invoiceNumber = await nextInvoiceNumber(supabase);
+ 
+//   const tInvNum = Date.now();
+//      const invoiceNumber = await nextInvoiceNumber(supabase, order.source_website as string | undefined);
+//   recordTiming('nextInvoiceNumber', Date.now() - tInvNum);
 //   const invoiceUserId = await resolveInvoiceUserId(order, customerId);
-
+ 
 //   if (invoiceUserId && !order.user_id) {
 //     await supabase.from('orders').update({ user_id: invoiceUserId }).eq('id', order.id);
 //   }
-
+ 
 //   const metadata = (order.metadata as Record<string, unknown> | undefined) || {};
 //   const snapshot = (metadata.formSnapshot as Record<string, unknown> | undefined) || metadata;
+//   const tSync = Date.now();
 //   try {
 //     await syncServicePersonsForOrder(String(order.id), snapshot);
 //   } catch (err) {
 //     console.warn('[invoice-engine] service persons sync skipped:', err);
 //   }
+//   recordTiming('syncServicePersonsForOrder', Date.now() - tSync);
+//   const tSubjects = Date.now();
 //   const serviceSubjects = await resolveOrderServiceSubjects(order);
-
+//   recordTiming('resolveOrderServiceSubjects', Date.now() - tSubjects);
+ 
 //   const { templateData, gst } = buildInvoiceTemplateData({
 //     order,
 //     gstConfig,
@@ -940,7 +312,7 @@
 //       full_name: p.full_name,
 //     })),
 //   });
-
+ 
 //   const billing = resolveCustomerBilling(order);
 //   let customerStateCode = billing.stateCode;
 //   let customerStateName = billing.stateName;
@@ -956,7 +328,7 @@
 //     customerStateCode = UNKNOWN_STATE_CODE;
 //     customerStateName = UNKNOWN_STATE_NAME;
 //   }
-
+ 
 //   const supplierState = String(gstConfig?.state_code || '09').padStart(2, '0').slice(-2);
 //   const gstrCategory = classifyGstrInvoice({
 //     customerGstin: billing.customerGstin,
@@ -964,23 +336,24 @@
 //     customerStateCode,
 //     supplierStateCode: supplierState,
 //   });
-//   const sacCode = resolveSacCode(gstConfig);
-
+//    const sacCode = templateData.sacCode || resolveSacCode(gstConfig);
+ 
 //   if (!invoiceNumber?.trim()) {
 //     throw new Error('Invoice number is required');
 //   }
-//   if (!/^\d{6}$/.test(sacCode)) {
-//     throw new Error('Valid SAC code is required');
+//     if (!/^(\d{4}|\d{6}|\d{8})$/.test(sacCode)) {
+//     throw new Error('Valid HSN/SAC code is required');
 //   }
 //   if (!Number.isFinite(gst.subtotal) || gst.subtotal <= 0) {
 //     throw new Error('Taxable value is required');
 //   }
-
+ 
 //   const placeOfSupply =
 //     billing.placeOfSupply || formatPlaceOfSupply(customerStateCode) || customerStateName;
 //   const invoiceDate = new Date().toISOString().slice(0, 10);
-
+ 
 //   // Reserve invoice row BEFORE PDF generation so concurrent requests hit unique constraint.
+//   const tReserve = Date.now();
 //   const { data: reserved, error: reserveErr } = await supabase
 //     .from('invoices')
 //     .insert({
@@ -1019,7 +392,8 @@
 //     })
 //     .select('id')
 //     .single();
-
+//   recordTiming('reserveInvoiceRow', Date.now() - tReserve);
+ 
 //   if (reserveErr) {
 //     if (reserveErr.code === '23505') {
 //       if (paymentId) {
@@ -1040,11 +414,12 @@
 //     }
 //     throw reserveErr;
 //   }
-
+ 
 //   const invoiceId = reserved.id as string;
 //   const qrPayload = `upi://pay?pa=${gstConfig?.upi_id || 'ankshaastra@upi'}&am=${gst.grandTotal}&tn=${invoiceNumber}`;
-
+ 
 //   let qrCodeDataUrl: string | undefined;
+//   const tQr = Date.now();
 //   try {
 //     const QRCode = await import('qrcode');
 //     qrCodeDataUrl = await QRCode.toDataURL(qrPayload, {
@@ -1055,21 +430,22 @@
 //   } catch {
 //     /* optional */
 //   }
-
+//   recordTiming('qrCodeGeneration', Date.now() - tQr);
+ 
 //   const finalTemplateData: InvoiceTemplateData = {
 //     ...templateData,
 //     qrCodeDataUrl,
 //   };
-
+ 
 //   try {
 //     const tPdf = Date.now();
 //     const { buffer, mimeType } = await generateInvoicePdf(finalTemplateData);
-//     console.log(`[TIMING] generateInvoicePdf took ${Date.now() - tPdf}ms (invoice ${invoiceNumber})`);
+//     recordTiming('generateInvoicePdf', Date.now() - tPdf);
 //     const storagePath = invoiceStoragePath(invoiceNumber);
 //     const tUpload = Date.now();
 //     const pdfUrl = await uploadInvoicePdf(storagePath, buffer, mimeType);
-//     console.log(`[TIMING] uploadInvoicePdf took ${Date.now() - tUpload}ms (invoice ${invoiceNumber})`);
-
+//     recordTiming('uploadInvoicePdf', Date.now() - tUpload);
+ 
 //     const { data: invoice, error: updateErr } = await supabase
 //       .from('invoices')
 //       .update({
@@ -1081,9 +457,9 @@
 //       .eq('id', invoiceId)
 //       .select('*')
 //       .single();
-
+ 
 //     if (updateErr) throw updateErr;
-
+ 
 //     await supabase.from('invoice_items').insert({
 //       invoice_id: invoiceId,
 //       // Same readable name as the PDF's "Item" column (see build-invoice-
@@ -1100,7 +476,7 @@
 //       igst_amount: gst.igst,
 //       line_total: gst.grandTotal,
 //     });
-
+ 
 //     if (input.paymentId) {
 //       const { error: payErr } = await supabase.from('payments').insert({
 //         order_id: order.id,
@@ -1114,7 +490,7 @@
 //       });
 //       if (payErr && payErr.code !== '23505') throw payErr;
 //     }
-
+ 
 //     await advanceWorkflow(order.id, 'invoice_generated', 'invoice.created', { invoiceId });
 //     return { invoiceId, invoiceNumber, invoice, pdfUrl, duplicate: false };
 //   } catch (genErr) {
@@ -1122,10 +498,10 @@
 //     throw genErr;
 //   }
 // }
-
+ 
 // const GOOGLE_SHEET_WEBHOOK =
 //   'https://script.google.com/macros/s/AKfycbyhmp4MP7urN_PcRpaLYq1KCX137s-qtGIMvMaHO5AyKf2bIQeVpF-pYW1DZRggxzXWcA/exec';
-
+ 
 // // Pushes a row to the shared Google Sheet — works for ALL THREE sites
 // // (Ankshaastra, Empower, Miracle Baby) since it's called from
 // // deliverInvoice() below, the one place every site's order eventually
@@ -1142,7 +518,7 @@
 //     const formFieldsText = formFieldRows
 //       .map((row) => (row.kind === 'section' ? `— ${row.title} —` : `${row.label}: ${row.value}`))
 //       .join('\n');
-
+ 
 //     await fetch(GOOGLE_SHEET_WEBHOOK, {
 //       method: 'POST',
 //       headers: { 'Content-Type': 'application/json' },
@@ -1165,22 +541,20 @@
 //     console.error('[invoice-engine] Google Sheet sync failed:', err);
 //   }
 // }
-
+ 
 // export async function deliverInvoice(invoiceId: string, opts?: { force?: boolean }) {
 //   const supabase = getSupabaseAdmin();
+//   const tFetch = Date.now();
 //   const { data: invoice } = await supabase.from('invoices').select('*, orders(*)').eq('id', invoiceId).single();
 //   if (!invoice) throw new Error('Invoice not found');
-
-//   const attachments = await getInvoiceAttachment(invoice);
+//   recordTiming('deliverInvoice_fetchInvoice', Date.now() - tFetch);
+ 
 //   const force = opts?.force ?? false;
 //   const orderId = invoice.order_id as string | null;
 //   const order = (invoice.orders as Record<string, unknown> | null) || {};
 //   const orderDetailsHtml = buildOrderDetailsHtml(order);
 //   const billing = resolveCustomerBilling(order);
 //   const serviceTitle = String(invoice.service_title || order.service_title || 'Service');
-//   const tSheet = Date.now();
-//   await pushOrderToGoogleSheet(order, serviceTitle, Number(invoice.total_amount || order.total_amount || 0));
-//   console.log(`[TIMING] pushOrderToGoogleSheet took ${Date.now() - tSheet}ms (invoice ${invoiceId})`);
 //   const emailSubject = buildInvoiceEmailSubject(serviceTitle, String(invoice.invoice_number));
 //   const gstRate = Number(invoice.cgst_rate || 0) + Number(invoice.sgst_rate || 0) + Number(invoice.igst_rate || 0) || 18;
 //   const gst = {
@@ -1195,11 +569,7 @@
 //   const downloadLink = invoice.pdf_url
 //     ? `<p style="margin-top:16px;">You can also <a href="${invoice.pdf_url}" style="color:#4b77be;font-weight:600;">download your invoice PDF</a>.</p>`
 //     : '';
-
-//   const { data: gstConfigRow } = await supabase.from('gst_config').select('*').limit(1).maybeSingle();
-//   const billingTexts = resolveGstConfigBillingTexts(gstConfigRow as Record<string, unknown> | null);
-//   const thankYouMessage = billingTexts.thank_you_message || undefined;
-
+ 
 //   // FIX (website field): resolve the per-order website once here, from the
 //   // invoice's own source_website (falls back to the order's, then a
 //   // hardcoded default) — same priority as build-invoice-template.js — and
@@ -1208,50 +578,7 @@
 //   const emailFooterWebsite = cleanWebsiteText(
 //     (invoice.source_website as string | undefined) || (order.source_website as string | undefined),
 //   );
-
-//   if (invoice.customer_email) {
-//     const orderAlreadySent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_email') : false;
-//     const invoiceAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_email'));
-//     if (!orderAlreadySent && !invoiceAlreadySent) {
-//       const customerHtml = wrapEmailLayout(
-//         buildInvoicePaymentEmailHtml({
-//           customerName: String(invoice.customer_name || 'Customer'),
-//           serviceTitle,
-//           invoiceNumber: String(invoice.invoice_number),
-//           gst,
-//           gstRate,
-//           placeOfSupply: billing.placeOfSupply,
-//           paymentMethod: String(invoice.payment_method || order.payment_method || 'Razorpay'),
-//           transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
-//           orderDetailsHtml,
-//           downloadLinkHtml: downloadLink,
-//           thankYouMessage,
-//         }),
-//         emailSubject,
-//         'Ankshaastra Occult Experts LLP',
-//         emailFooterWebsite,
-//       );
-
-//       try {
-//         const tEmail = Date.now();
-//         await sendEmail({
-//           to: invoice.customer_email,
-//           subject: emailSubject,
-//           html: customerHtml,
-//           attachments,
-//           templateSlug: 'invoice_email',
-//           customerId: invoice.customer_id,
-//           orderId: invoice.order_id,
-//           invoiceId: invoice.id,
-//         });
-//         console.log(`[TIMING] sendEmail (customer) took ${Date.now() - tEmail}ms (invoice ${invoiceId})`);
-//         if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
-//       } catch (emailErr) {
-//         console.error('[invoice] Customer email failed:', emailErr);
-//       }
-//     }
-//   }
-
+ 
 //   // FIX (2026-08-08): the per-site admin-email routing below used to only
 //   // exist in a large commented-out duplicate copy of this file (never
 //   // executed) — the ACTIVE code still read the old process.env.ADMIN_EMAIL
@@ -1261,21 +588,104 @@
 //   // admin copy was ever sent, for any of the three sites. Moved the
 //   // working routing logic here, into the code that actually runs.
 //   const website = String(invoice.source_website || order.source_website || '').toLowerCase();
-
+ 
 //   let adminEmail = process.env.ANKSHAASTRA_ADMIN_EMAIL || process.env.ADMIN_EMAIL || '';
-
+ 
 //   if (website.includes('miracle')) {
 //     adminEmail = process.env.MIRACLE_ADMIN_EMAIL || adminEmail;
 //   } else if (website.includes('empower')) {
 //     adminEmail = process.env.EMPOWER_ADMIN_EMAIL || adminEmail;
+//      } else if (website.startsWith('shop.')) {
+//     adminEmail = process.env.SHOP_ADMIN_EMAIL || SHOP_DEFAULT_ADMIN_EMAIL;
 //   }
-
-//   if (adminEmail) {
-//     const orderAdminSent = orderId ? await wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : false;
-//     const adminAlreadySent = !force && (await wasInvoiceEmailSent(invoiceId, 'invoice_admin'));
-//     if (!orderAdminSent && !adminAlreadySent) {
-//       const adminHtml = wrapEmailLayout(
-//         `
+ 
+//   // PERF (2026-09-01): the five calls below are all independent of each
+//   // other (none needs another's result), but used to run strictly one
+//   // after another — that alone was ~14s of pure waiting with nothing
+//   // actually blocking it. Running them together cuts that to whichever one
+//   // is slowest (Google Sheet push, ~8s) instead of their sum. Still fully
+//   // synchronous/awaited overall — nothing here is fire-and-forget, so
+//   // reliability is unchanged, only the ordering.
+//   const tParallelPrep = Date.now();
+//   const [attachments, gstConfigResult, customerDupResult, adminDupResult] = await Promise.all([
+//     getInvoiceAttachment(invoice),
+//     supabase.from('gst_config').select('*').limit(1).maybeSingle(),
+//     invoice.customer_email
+//       ? Promise.all([
+//           orderId ? wasOrderInvoiceEmailSent(orderId, 'invoice_email') : Promise.resolve(false),
+//           force ? Promise.resolve(false) : wasInvoiceEmailSent(invoiceId, 'invoice_email'),
+//         ])
+//       : Promise.resolve([false, false] as [boolean, boolean]),
+//     adminEmail
+//       ? Promise.all([
+//           orderId ? wasOrderInvoiceEmailSent(orderId, 'invoice_admin') : Promise.resolve(false),
+//           force ? Promise.resolve(false) : wasInvoiceEmailSent(invoiceId, 'invoice_admin'),
+//         ])
+//       : Promise.resolve([false, false] as [boolean, boolean]),
+//     pushOrderToGoogleSheet(order, serviceTitle, Number(invoice.total_amount || order.total_amount || 0)),
+//   ]);
+//   recordTiming('deliverInvoice_parallelPrep', Date.now() - tParallelPrep);
+ 
+//   const gstConfigRow = gstConfigResult.data;
+//   const [orderAlreadySent, invoiceAlreadySent] = customerDupResult;
+//   const [orderAdminSent, adminAlreadySent] = adminDupResult;
+ 
+//   const billingTexts = resolveGstConfigBillingTexts(gstConfigRow as Record<string, unknown> | null);
+//   const thankYouMessage = billingTexts.thank_you_message || undefined;
+ 
+//   // Customer email, admin email, and the final workflow update are also
+//   // independent of each other — send/run them together too instead of
+//   // waiting for the customer email to fully finish before starting the
+//   // admin email.
+//   const tasks: Promise<void>[] = [];
+ 
+//   if (invoice.customer_email && !orderAlreadySent && !invoiceAlreadySent) {
+//     const customerHtml = wrapEmailLayout(
+//       buildInvoicePaymentEmailHtml({
+//         customerName: String(invoice.customer_name || 'Customer'),
+//         serviceTitle,
+//         invoiceNumber: String(invoice.invoice_number),
+//         gst,
+//         gstRate,
+//         placeOfSupply: billing.placeOfSupply,
+//         paymentMethod: String(invoice.payment_method || order.payment_method || 'Razorpay'),
+//         transactionId: invoice.razorpay_payment_id ? String(invoice.razorpay_payment_id) : undefined,
+//         orderDetailsHtml,
+//         downloadLinkHtml: downloadLink,
+//         thankYouMessage,
+//       }),
+//       emailSubject,
+//       'Ankshaastra Occult Experts LLP',
+//       emailFooterWebsite,
+//     );
+ 
+//     tasks.push(
+//       (async () => {
+//         try {
+//           const tEmail = Date.now();
+//           await sendEmail({
+//             to: invoice.customer_email,
+//             subject: emailSubject,
+//             html: customerHtml,
+//             attachments,
+//             templateSlug: 'invoice_email',
+//                        sourceWebsite: website,
+//             customerId: invoice.customer_id,
+//             orderId: invoice.order_id,
+//             invoiceId: invoice.id,
+//           });
+//           recordTiming('sendEmail', Date.now() - tEmail);
+//           if (invoice.order_id) await advanceWorkflow(invoice.order_id, 'email_sent', 'invoice.email_sent');
+//         } catch (emailErr) {
+//           console.error('[invoice] Customer email failed:', emailErr);
+//         }
+//       })(),
+//     );
+//   }
+ 
+//   if (adminEmail && !orderAdminSent && !adminAlreadySent) {
+//     const adminHtml = wrapEmailLayout(
+//       `
 //       <p style="margin:0 0 16px;font-size:16px;color:#4b77be;font-weight:700;">New Order Received</p>
 //       ${buildInvoicePaymentEmailHtml({
 //         customerName: String(invoice.customer_name || 'Customer'),
@@ -1289,77 +699,94 @@
 //       })}
 //       <p style="margin-top:16px;">Invoice PDF is attached.</p>
 //     `,
-//         `New order: ${serviceTitle}`,
-//         'Ankshaastra Occult Experts LLP',
-//         emailFooterWebsite,
-//       );
-
-//       try {
-//         await sendEmail({
-//           to: adminEmail,
-//           subject: emailSubject,
-//           html: adminHtml,
-//           attachments,
-//           templateSlug: 'invoice_admin',
-//           orderId: invoice.order_id,
-//           invoiceId: invoice.id,
-//         });
-//       } catch (emailErr) {
-//         console.error('[invoice] Admin email failed:', emailErr);
+//       `New order: ${serviceTitle}`,
+//       'Ankshaastra Occult Experts LLP',
+//       emailFooterWebsite,
+//     );
+ 
+//     tasks.push(
+//       (async () => {
+//         try {
+//           const tAdminEmail = Date.now();
+//           await sendEmail({
+//             to: adminEmail,
+//             subject: emailSubject,
+//             html: adminHtml,
+//             attachments,
+//             templateSlug: 'invoice_admin',
+//                        sourceWebsite: website,
+//             orderId: invoice.order_id,
+//             invoiceId: invoice.id,
+//           });
+//           recordTiming('sendEmail_admin', Date.now() - tAdminEmail);
+//         } catch (emailErr) {
+//           console.error('[invoice] Admin email failed:', emailErr);
+//         }
+//       })(),
+//     );
+//   }
+ 
+//   tasks.push(
+//     (async () => {
+//       const tWorkflow = Date.now();
+//       if (invoice.order_id) {
+//         await advanceWorkflow(invoice.order_id, 'completed', 'invoice.delivery_completed');
 //       }
-//     }
-//   }
-
-//   if (invoice.order_id) {
-//     await advanceWorkflow(invoice.order_id, 'completed', 'invoice.delivery_completed');
-//   }
-
+//       recordTiming('advanceWorkflow_completed', Date.now() - tWorkflow);
+//     })(),
+//   );
+ 
+//   await Promise.all(tasks);
+ 
 //   return { ok: true };
 // }
-
+ 
 // /** Single entry point: generate invoice once and send email once per order. */
 // export async function processInvoiceJob(orderId: string, opts?: { paymentId?: string; forceDeliver?: boolean }) {
+//   currentTimings = {}; // reset for this run
 //   const t0 = Date.now();
 //   const result = await generateInvoiceForOrder({
 //     orderId,
 //     paymentId: opts?.paymentId,
 //   });
-//   console.log(`[TIMING] generateInvoiceForOrder took ${Date.now() - t0}ms (order ${orderId})`);
-
-//   if (!result.invoiceId) return result;
-
+//   recordTiming('generateInvoiceForOrder_TOTAL', Date.now() - t0);
+ 
+//   if (!result.invoiceId) return { ...result, timings: currentTimings };
+ 
 //   // Never auto-send email for duplicate/skipped invoices — only the first successful generation.
 //   if (result.duplicate && !opts?.forceDeliver) {
-//     return result;
+//     return { ...result, timings: currentTimings };
 //   }
-
+ 
 //   const t1 = Date.now();
 //   await deliverInvoice(result.invoiceId, { force: opts?.forceDeliver });
-//   console.log(`[TIMING] deliverInvoice took ${Date.now() - t1}ms (invoice ${result.invoiceId})`);
-//   console.log(`[TIMING] TOTAL processInvoiceJob took ${Date.now() - t0}ms (order ${orderId})`);
-//   return result;
+//   recordTiming('deliverInvoice_TOTAL', Date.now() - t1);
+//   recordTiming('PROCESS_INVOICE_JOB_TOTAL', Date.now() - t0);
+//   return { ...result, timings: currentTimings };
 // }
-
+ 
 // export async function orderHasDeliverableInvoice(orderId: string): Promise<boolean> {
 //   const existing = await getExistingInvoiceForOrder(orderId);
 //   return Boolean(existing?.pdf_storage_path || existing?.pdf_url);
 // }
-
+ 
 // export async function paymentHasDeliverableInvoice(paymentId: string): Promise<boolean> {
 //   const existing = await getExistingInvoiceByPaymentId(paymentId);
 //   return Boolean(existing?.pdf_storage_path || existing?.pdf_url);
 // }
-
+ 
 // /** True when an invoice row exists (including in-progress PDF generation). */
 // export async function orderInvoiceGenerationActive(orderId: string): Promise<boolean> {
 //   const existing = await getExistingInvoiceForOrder(orderId);
 //   return Boolean(existing?.id);
 // }
-
+ 
 // export async function paymentInvoiceGenerationActive(paymentId: string): Promise<boolean> {
 //   const existing = await getExistingInvoiceByPaymentId(paymentId);
 //   return Boolean(existing?.id);
 // }
+
+
 
 
 
@@ -1509,7 +936,7 @@ async function getExistingInvoiceForOrder(orderId: string) {
   const supabase = getSupabaseAdmin();
   const { data } = await supabase
     .from('invoices')
-    .select('id, invoice_number, pdf_storage_path, pdf_url, status, order_id, razorpay_payment_id')
+    .select('id, invoice_number, pdf_storage_path, pdf_url, status, order_id, razorpay_payment_id, created_at')
     .eq('order_id', orderId)
     .order('created_at', { ascending: true })
     .limit(1)
@@ -1522,7 +949,7 @@ async function getExistingInvoiceByPaymentId(paymentId: string) {
   const supabase = getSupabaseAdmin();
   const { data } = await supabase
     .from('invoices')
-    .select('id, invoice_number, pdf_storage_path, pdf_url, status, order_id, razorpay_payment_id')
+    .select('id, invoice_number, pdf_storage_path, pdf_url, status, order_id, razorpay_payment_id, created_at')
     .eq('razorpay_payment_id', paymentId)
     .maybeSingle();
   return data;
@@ -1538,6 +965,17 @@ async function tryAcquireInvoiceLock(orderId: string): Promise<boolean> {
   return Boolean(data);
 }
  
+// An invoice row without a PDF that was created in the last few minutes is
+// almost always another request that is generating it RIGHT NOW — not a
+// broken leftover. Deleting it (old behaviour) made two requests fight over
+// the same order and both email the customer.
+const INVOICE_IN_FLIGHT_MS = 3 * 60 * 1000;
+function isInvoiceInFlight(invoice: { created_at?: string | null; pdf_storage_path?: string | null; pdf_url?: string | null } | null | undefined) {
+  if (!invoice || invoice.pdf_storage_path || invoice.pdf_url) return false;
+  const created = invoice.created_at ? new Date(invoice.created_at).getTime() : 0;
+  return Boolean(created) && Date.now() - created < INVOICE_IN_FLIGHT_MS;
+}
+
 async function waitForExistingInvoice(orderId: string, attempts = 8) {
   for (let i = 0; i < attempts; i++) {
     const existing = await getExistingInvoiceForOrder(orderId);
@@ -1611,6 +1049,12 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
         orderId: byPayment!.order_id,
       };
     }
+    if (isInvoiceInFlight(byPayment)) {
+      const waited = await waitForExistingInvoice(order.id, 40);
+      return waited?.id
+        ? { invoiceId: waited.id, invoiceNumber: waited.invoice_number, duplicate: true }
+        : { invoiceId: undefined, invoiceNumber: undefined, duplicate: true, skipped: true };
+    }
     if (byPayment?.id) {
       await clearIncompleteInvoiceIfNeeded(byPayment);
     }
@@ -1619,6 +1063,12 @@ export async function generateInvoiceForOrder(input: GenerateInvoiceInput) {
   const existing = await getExistingInvoiceForOrder(order.id);
   if (hasDeliverablePdf(existing)) {
     return { invoiceId: existing!.id, invoiceNumber: existing!.invoice_number, duplicate: true };
+  }
+  if (isInvoiceInFlight(existing)) {
+    const waited = await waitForExistingInvoice(order.id, 40);
+    return waited?.id
+      ? { invoiceId: waited.id, invoiceNumber: waited.invoice_number, duplicate: true }
+      : { invoiceId: undefined, invoiceNumber: undefined, duplicate: true, skipped: true };
   }
   if (existing?.id) {
     await clearIncompleteInvoiceIfNeeded(existing);
