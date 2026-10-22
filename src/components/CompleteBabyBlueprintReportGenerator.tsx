@@ -2178,13 +2178,13 @@ function drawBlueprintPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Re
 /** Justified paragraphs separated by one blank line. Returns the baseline after the last paragraph. */
 function drawParas(
   page: PDFPage, fonts: Fonts, paragraphs: string[],
-  o: { x: number; w: number; firstBase: number; lh: number; rail?: number },
+  o: { x: number; w: number; firstBase: number; lh: number; rail?: number; align?: "left" | "justify" },
 ): number {
   let base = o.firstBase;
   const dots: number[] = [];
   paragraphs.forEach((p) => {
     dots.push(base - 5.8);
-    const last = para(page, p, { x: o.x, base, maxW: o.w, lh: o.lh, font: fonts.sans, size: SZ.table, color: COLOR.white, track: TRACK.body, align: "justify" });
+    const last = para(page, p, { x: o.x, base, maxW: o.w, lh: o.lh, font: fonts.sans, size: SZ.table, color: COLOR.white, track: TRACK.body, align: o.align ?? "justify" });
     base = last + o.lh * 2;
   });
   if (o.rail !== undefined) railDots(page, dots, o.rail);
@@ -2279,7 +2279,7 @@ function drawTraitPage(page: PDFPage, fonts: Fonts, assets: Assets, data: Resolv
   drawFrame(page, assets);
   drawHeader(page, fonts, assets, BREAKDOWN_SMALL, BREAKDOWN_BIG, HDR_TRAIT);
   drawLabel(page, fonts, title, 204.4, { y: 216.0, w: 90 });
-  drawParas(page, fonts, paragraphs, { x: 116, w: 407, firstBase: 257.8, lh: 25.5 });
+  drawParas(page, fonts, paragraphs, { x: 116, w: 407, firstBase: 257.8, lh: 25.5, rail: 83, align: "left" });
   drawFooter(page, fonts, assets, data.brand, { withUrl: true });
 }
 
