@@ -1,4 +1,5 @@
 
+
 // /**
 //  * LO SHU GRID
 //  * Construction method confirmed via client-shared reference:
@@ -117,6 +118,46 @@
 // export function isOverAmplified(nameNumber: number, grid: LoShuResult): boolean {
 //   return grid.repeating.includes(nameNumber);
 // }
+
+// /**
+//  * RAJYOG POTENTIAL — CLIENT CONFIRMED (2nd round of confirmations, see
+//  * hr-oa-nr-blocks.ts header for HR-11).
+//  *
+//  * There are three "lines" through the center of the Lo Shu grid, each
+//  * anchored on 5:
+//  *   Rajyog-1: 9 — 5 — 1
+//  *   Rajyog-2: 2 — 5 — 8
+//  *   Rajyog-3: 4 — 5 — 6
+//  *
+//  * A Rajyog Potential exists in the BIRTH CHART (not the name) when both
+//  * flanking numbers of one of these lines are naturally present in the
+//  * person's Lo Shu grid, AND 5 itself is missing — i.e. correcting the
+//  * name to vibrate on 5 would complete that line and activate the Rajyog.
+//  *
+//  * This is independent of the "over-amplified/repeating" check above —
+//  * it only cares about present vs. missing, never about repetition count.
+//  */
+// export type RajyogCombo = "9-5-1" | "2-5-8" | "4-5-6";
+
+// export interface RajyogCheck {
+//   hasPotential: boolean;
+//   matchedCombo: RajyogCombo | null;
+// }
+
+// export function getRajyogPotential(grid: LoShuResult): RajyogCheck {
+//   const has = (n: number) => grid.present.includes(n);
+//   const missing5 = grid.missing.includes(5);
+
+//   if (missing5 && has(9) && has(1)) return { hasPotential: true, matchedCombo: "9-5-1" };
+//   if (missing5 && has(2) && has(8)) return { hasPotential: true, matchedCombo: "2-5-8" };
+//   if (missing5 && has(4) && has(6)) return { hasPotential: true, matchedCombo: "4-5-6" };
+//   return { hasPotential: false, matchedCombo: null };
+// }
+
+
+
+
+
 
 /**
  * LO SHU GRID
@@ -262,12 +303,35 @@ export interface RajyogCheck {
   matchedCombo: RajyogCombo | null;
 }
 
-export function getRajyogPotential(grid: LoShuResult): RajyogCheck {
-  const has = (n: number) => grid.present.includes(n);
-  const missing5 = grid.missing.includes(5);
+/**
+ * 3rd-round client rules (Rajyog Potential):
+ *  - A line (9-5-1 / 2-5-8 / 4-5-6) has potential when exactly ONE of its three
+ *    numbers is missing from the birth-chart grid and the name could supply it.
+ *  - The missing number must be one we are allowed to give a name: never
+ *    9, 4, 8 or 2 (so 2-5-8 can only complete via 5; 9-5-1 via 5 or 1;
+ *    4-5-6 via 5 or 6).
+ *  - The completing number must not be an Enemy of Mulank or Bhagyank
+ *    (caller passes that check in via `canSupply`).
+ * `canSupply` defaults to the 9/4/8/2 block only.
+ */
+const NEVER_GIVEN_TO_NAME = [9, 4, 8, 2];
+const RAJYOG_LINES: { combo: RajyogCombo; nums: [number, number, number] }[] = [
+  { combo: "9-5-1", nums: [9, 5, 1] },
+  { combo: "2-5-8", nums: [2, 5, 8] },
+  { combo: "4-5-6", nums: [4, 5, 6] },
+];
 
-  if (missing5 && has(9) && has(1)) return { hasPotential: true, matchedCombo: "9-5-1" };
-  if (missing5 && has(2) && has(8)) return { hasPotential: true, matchedCombo: "2-5-8" };
-  if (missing5 && has(4) && has(6)) return { hasPotential: true, matchedCombo: "4-5-6" };
+export function getRajyogPotential(
+  grid: LoShuResult,
+  canSupply: (n: number) => boolean = () => true,
+): RajyogCheck {
+  for (const { combo, nums } of RAJYOG_LINES) {
+    const missing = nums.filter((n) => !grid.present.includes(n));
+    if (missing.length !== 1) continue;
+    const need = missing[0];
+    if (NEVER_GIVEN_TO_NAME.includes(need)) continue;
+    if (!canSupply(need)) continue;
+    return { hasPotential: true, matchedCombo: combo };
+  }
   return { hasPotential: false, matchedCombo: null };
 }
