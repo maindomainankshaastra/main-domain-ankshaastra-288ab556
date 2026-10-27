@@ -1,4 +1,6 @@
 
+
+
 // import { useCallback, useEffect, useMemo, useState } from "react";
 // import { Link } from "react-router-dom";
 // import {
@@ -50,6 +52,7 @@
 //   first_name: string | null;
 //   middle_name: string | null;
 //   last_name: string | null;
+//   father_name?: string | null;
 //   is_middle_name_father_husband: boolean;
 //   gender: string | null;
 //   email: string;
@@ -97,6 +100,7 @@
 //     middle_name: r.middle_name ?? "",
 //     is_middle_name_father_husband: r.is_middle_name_father_husband,
 //     last_name: r.last_name ?? "",
+//     father_name: r.father_name ?? "",
 //     gender: r.gender ?? "",
 //     email: r.email,
 //     phone: r.phone ?? "",
@@ -116,6 +120,7 @@
 //     first_name: v.first_name.trim(),
 //     middle_name: v.middle_name.trim() || null,
 //     last_name: v.last_name.trim() || null,
+//     father_name: v.father_name.trim() || null,
 //     is_middle_name_father_husband: v.middle_name.trim() ? v.is_middle_name_father_husband : false,
 //     gender: v.gender,
 //     email: v.email.trim(),
@@ -173,6 +178,10 @@
 //       <div>
 //         <Label htmlFor="pbn_last_name">Last Name</Label>
 //         <Input id="pbn_last_name" value={values.last_name} onChange={(e) => set("last_name", e.target.value)} placeholder="Last name" />
+//       </div>
+//       <div className="sm:col-span-2">
+//         <Label htmlFor="pbn_father_name">Father's Name</Label>
+//         <Input id="pbn_father_name" value={values.father_name} onChange={(e) => set("father_name", e.target.value)} placeholder="Father's name (shown on the Personal Information page)" />
 //       </div>
 //       <div>
 //         <Label htmlFor="pbn_gender">Gender</Label>
@@ -278,9 +287,16 @@
 //   }
 // }
 
+// /** "<Selected Name>_Perfect Baby Name_Ankshaastra.pdf" — the name follows the Preference chosen on the form. */
 // function buildDownloadFilename(r: BabyReportRow): string {
-//   const first = (r.first_name || r.customer_name.trim().split(/\s+/)[0] || "Report").replace(/[^a-zA-Z0-9]/g, "");
-//   return `${first}_Perfect Baby Name_${r.report_id}.pdf`;
+//   const clean = (s: string) => s.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim();
+//   const o1 = clean(r.option1_name || "");
+//   const o2 = clean(r.option2_name || "");
+//   let name = o1;
+//   if (r.preference === "option2") name = o2 || o1;
+//   else if (r.preference === "both") name = o1 && o2 ? `${o1} & ${o2}` : o1 || o2;
+//   if (!name) name = clean(r.customer_name) || "Report";
+//   return `${name}_Perfect Baby Name_Ankshaastra.pdf`;
 // }
 
 // export default function PerfectBabyNameReports() {
@@ -464,6 +480,7 @@
 //         firstName: r.first_name ?? "",
 //         middleName: r.middle_name ?? "",
 //         lastName: r.last_name ?? "",
+//         fatherName: r.father_name ?? "",
 //         isMiddleNameFatherHusband: r.is_middle_name_father_husband,
 //         gender: r.gender ?? "",
 //         email: r.email,
@@ -1369,7 +1386,7 @@ import {
 
 import { generatePerfectBabyNameReportPdf, perfectBabyNameReportPdfToBlob } from "@/components/PerfectBabyNameReportGenerator";
 import {
-  BABY_NAME_PREFERENCE_OPTIONS, EMPTY_BABY_FORM, buildBabyCustomerName, normaliseAlphabet, validateBabyForm,
+  BABY_NAME_PREFERENCE_OPTIONS, EMPTY_BABY_FORM, buildBabyCustomerName, normaliseAlphabet, validateBabyForm, isNaName,
   type BabyNamePreference, type BabyReportFormValues, type BabyReportStatus,
 } from "@/lib/baby-reports/perfect-baby-name/form";
 
@@ -1556,8 +1573,8 @@ function BabyReportForm({ values, onChange, includeStatus }: {
         <Input id="pbn_option1" value={values.option1_name} onChange={(e) => set("option1_name", e.target.value)} placeholder="Full name, e.g. Shanvi S Das" />
       </div>
       <div className="sm:col-span-2">
-        <Label htmlFor="pbn_option2">Option 2: First Name + Middle &amp; Last Name</Label>
-        <Input id="pbn_option2" value={values.option2_name} onChange={(e) => set("option2_name", e.target.value)} placeholder="Full name, e.g. Shanvi Dass" />
+        <Label htmlFor="pbn_option2">Option 2: First Name + Middle &amp; Last Name (type NA if none)</Label>
+        <Input id="pbn_option2" value={values.option2_name} onChange={(e) => set("option2_name", e.target.value)} placeholder="Full name, e.g. Shanvi Dass — or NA" />
       </div>
       <div className="sm:col-span-2">
         <Label htmlFor="pbn_nick_name">Nick Name (optional)</Label>
@@ -1624,8 +1641,8 @@ async function getCurrentAdminId(): Promise<string | null> {
 /** "<Selected Name>_Perfect Baby Name_Ankshaastra.pdf" — the name follows the Preference chosen on the form. */
 function buildDownloadFilename(r: BabyReportRow): string {
   const clean = (s: string) => s.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim();
-  const o1 = clean(r.option1_name || "");
-  const o2 = clean(r.option2_name || "");
+  const o1 = isNaName(r.option1_name) ? "" : clean(r.option1_name || "");
+  const o2 = isNaName(r.option2_name) ? "" : clean(r.option2_name || "");
   let name = o1;
   if (r.preference === "option2") name = o2 || o1;
   else if (r.preference === "both") name = o1 && o2 ? `${o1} & ${o2}` : o1 || o2;
@@ -2096,7 +2113,7 @@ export default function PerfectBabyNameReports() {
                     <div className="text-muted-foreground">{r.gender || "—"}</div>
                     <div className="text-muted-foreground">DOB: {formatDate(r.dob)}</div>
                     <div className="text-muted-foreground">Created: {formatDate(r.created_at)}</div>
-                    <div className="col-span-2 truncate text-muted-foreground">Options: {r.option1_name} · {r.option2_name}</div>
+                    <div className="col-span-2 truncate text-muted-foreground">Options: {[r.option1_name, r.option2_name].filter((n) => !isNaName(n)).join(" · ") || "—"}</div>
                     {r.nick_name ? <div className="col-span-2 truncate text-muted-foreground">Nick Name: {r.nick_name}</div> : null}
                     <div className="col-span-2 truncate text-muted-foreground">Generated by: {generatedByLabel(r.generated_by)}</div>
                   </div>
@@ -2193,7 +2210,7 @@ export default function PerfectBabyNameReports() {
                 <div><p className="text-xs text-muted-foreground">Phone</p><p className="font-medium">{viewTarget.phone || "—"}</p></div>
                 <div><p className="text-xs text-muted-foreground">DOB</p><p className="font-medium">{formatDate(viewTarget.dob)}</p></div>
                 <div><p className="text-xs text-muted-foreground">Option 1</p><p className="font-medium">{viewTarget.option1_name}</p></div>
-                <div><p className="text-xs text-muted-foreground">Option 2</p><p className="font-medium">{viewTarget.option2_name}</p></div>
+                <div><p className="text-xs text-muted-foreground">Option 2</p><p className="font-medium">{isNaName(viewTarget.option2_name) ? "—" : viewTarget.option2_name}</p></div>
                 <div><p className="text-xs text-muted-foreground">Nick Name</p><p className="font-medium">{viewTarget.nick_name || "—"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Generated by</p><p className="font-medium">{generatedByLabel(viewTarget.generated_by)}</p></div>
               </div>
