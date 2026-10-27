@@ -2152,6 +2152,21 @@ function buildDownloadFilename(r: BabyReportRow): string {
   return `${base}_Complete Baby Blueprint_Ankshaastra.pdf`;
 }
 
+/** Supabase object keys: keep letters, digits, spaces and a few safe symbols; everything else becomes "_". */
+function storageSafeName(name: string): string {
+  return name.normalize("NFKD").replace(/[^A-Za-z0-9 _.\-()&]/g, "_").replace(/_+/g, "_");
+}
+
+/** Object path inside the bucket, taken from a public URL (null if it isn't one of ours). */
+function storagePathFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  const marker = `/${STORAGE_BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i < 0) return null;
+  const rest = url.slice(i + marker.length).split("?")[0];
+  try { return decodeURIComponent(rest); } catch { return rest; }
+}
+
 export default function CompleteBabyBlueprintReports() {
   const { toast } = useToast();
 
@@ -2347,9 +2362,16 @@ export default function CompleteBabyBlueprintReports() {
       });
 
       const blob = completeBabyBlueprintReportPdfToBlob(bytes);
-      const filePath = `${r.report_id}.pdf`;
+      // Stored under the readable file name so Preview / Print / "Save as" show it too:
+      //   <report id>/<Option 1 name>_Complete Baby Blueprint_Ankshaastra.pdf
+      const filePath = `${r.report_id}/${storageSafeName(buildDownloadFilename(r))}`;
       const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, blob, { contentType: "application/pdf", upsert: true });
       if (uploadError) throw uploadError;
+      // The name can change (e.g. Option 1 edited) or an older PDF used the plain "<report id>.pdf" name — remove the stale file.
+      const oldPath = storagePathFromUrl(r.pdf_url);
+      if (oldPath && oldPath !== filePath) {
+        void supabase.storage.from(STORAGE_BUCKET).remove([oldPath]);
+      }
       const { data: publicUrlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
       const pdfUrl = publicUrlData?.publicUrl ?? null;
       const generatedById = await getCurrentAdminId();
