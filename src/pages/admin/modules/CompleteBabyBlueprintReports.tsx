@@ -2087,7 +2087,7 @@ function BabyReportForm({ values, onChange, includeStatus }: {
       <div className="sm:col-span-2">
         <Label htmlFor="pbn_nick_name">Nick Name (optional)</Label>
         <Input id="pbn_nick_name" value={values.nick_name} onChange={(e) => set("nick_name", e.target.value)} placeholder="e.g. Shanu — leave empty to skip the Nick Name page" />
-        <p className="mt-1 text-xs text-muted-foreground">If filled, the report includes the Nick Name Recommendation page (page 22). If empty, that page is left out.</p>
+        <p className="mt-1 text-xs text-muted-foreground">If filled, the report includes the Nick Name Recommendation page (page 23). If empty, that page is left out.</p>
       </div>
       <div className="sm:col-span-2">
         <Label htmlFor="pbn_preference">Preference</Label>
