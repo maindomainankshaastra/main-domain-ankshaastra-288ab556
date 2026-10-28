@@ -1,4 +1,5 @@
 
+
 // /**
 //  * RULE ENGINE
 //  * 1. computeFacts() — runs all calculations once for a given input.
@@ -152,9 +153,23 @@
 // //          weak-friendly and no Rajyog potential has no defined rule.
 // // ---------------------------------------------------------------------------
 
+// /**
+//  * Overall relation of a name = the WEAKEST of its relation to Mulank and to
+//  * Bhagyank (Enemy < Neutral < Friendly). The docx says the Enemy relationship
+//  * "remains the dominant factor" for both first and full name (F-E / E-F), and
+//  * a Friendly + Neutral mix is reported as Neutral. Previously the first name
+//  * was judged on Mulank only and the full name on Bhagyank only, so e.g. a
+//  * first name Friendly to Mulank but Enemy to Bhagyank was wrongly "Friendly"
+//  * (-> F-F -> HR-11) instead of Enemy (-> HR-05).
+//  */
+// const RELATION_RANK = { enemy: 0, neutral: 1, friendly: 2 } as const;
+// function weakestRelation<T extends keyof typeof RELATION_RANK>(a: T, b: T): T {
+//   return RELATION_RANK[a] <= RELATION_RANK[b] ? a : b;
+// }
+
 // export function matchRule(facts: NameCheckFacts): { ruleId: string; verdict: "HR" | "OA" | "NR"; isFallback: boolean } {
-//   const firstRel = facts.firstNameToMulank;
-//   const fullRel = facts.fullNameToBhagyank;
+//   const firstRel = weakestRelation(facts.firstNameToMulank, facts.firstNameToBhagyank);
+//   const fullRel = weakestRelation(facts.fullNameToMulank, facts.fullNameToBhagyank);
 //   const comboCode = `${code(firstRel)}-${code(fullRel)}`;
 
 //   // --- Tier 1: restricted numbers, single plain rule ------------------------
@@ -612,6 +627,14 @@ const isConditionalCompound = (facts: NameCheckFacts) => facts.compoundTier === 
 // ---------------------------------------------------------------------------
 
 /**
+ * Client decision (4th round): the Rajyog verdict (HR-11) is switched OFF.
+ * It was producing wrong verdicts (e.g. Friendly + Friendly + Conditional
+ * compound must give NR-03, not HR-11). Set to true to bring HR-11 back;
+ * the Rajyog calculation in lo-shu.ts and the HR-11 text are left untouched.
+ */
+const RAJYOG_VERDICT_ENABLED = false;
+
+/**
  * Overall relation of a name = the WEAKEST of its relation to Mulank and to
  * Bhagyank (Enemy < Neutral < Friendly). The docx says the Enemy relationship
  * "remains the dominant factor" for both first and full name (F-E / E-F), and
@@ -651,7 +674,7 @@ export function matchRule(facts: NameCheckFacts): { ruleId: string; verdict: "HR
     if (facts.firstNameIsWeakFriendly && facts.fullNameIsWeakFriendly) {
       return { ruleId: "HR-10", verdict: "HR", isFallback: false };
     }
-    if (facts.hasRajyogPotential) return { ruleId: "HR-11", verdict: "HR", isFallback: false };
+    if (RAJYOG_VERDICT_ENABLED && facts.hasRajyogPotential) return { ruleId: "HR-11", verdict: "HR", isFallback: false };
     if (isExcellentCompound(facts)) return { ruleId: "NR-01", verdict: "NR", isFallback: false };
     if (isGoodCompound(facts)) return { ruleId: "NR-02", verdict: "NR", isFallback: false };
     if (isConditionalCompound(facts)) return { ruleId: "NR-03", verdict: "NR", isFallback: false };
