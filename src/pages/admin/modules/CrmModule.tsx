@@ -1,9 +1,4 @@
 
-
-
-
-
-
 // import { useEffect, useMemo, useState } from "react";
 // import { useSearchParams } from "react-router-dom";
 // import { AdminPage } from "@/components/admin/AdminPage";
@@ -11518,6 +11513,9 @@ export default function CrmModule() {
     const term = searchTerm.trim().toLowerCase();
 
     return customers.filter((c) => {
+
+      // Shopify store customers are managed in Shopify, not in this CRM.
+      if (c.source_website === "shop.ankshaastra.com") return false;
       // Active / Deleted view — soft-deleted records are hidden from the
       // normal listing and only surfaced under the Deleted filter.
       const isDeleted = !!c.deleted_at;
