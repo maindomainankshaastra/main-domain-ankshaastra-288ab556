@@ -608,14 +608,6 @@ export async function generateGoodsInvoicePdf(data: InvoiceTemplateData): Promis
   text(`For ${data.businessName}`.slice(0, 50), XR - 170, bankTop - 30, 8);
   text('Authorized Signatory', XR - 120, bankTop - 64, 8, bold);
 
-  if (data.qrCodeDataUrl && /^data:image\/png;base64,/.test(data.qrCodeDataUrl)) {
-    try {
-      const qr = await pdfDoc.embedPng(Buffer.from(data.qrCodeDataUrl.split(',')[1], 'base64'));
-      page.drawImage(qr, { x: M + 260, y: bankTop - 62, width: 62, height: 62 });
-    } catch {
-      /* QR is optional */
-    }
-  }
   y = Math.min(y, bankTop - 64) - 22;
 
   // ---- thank you + terms -------------------------------------------------------------------------
