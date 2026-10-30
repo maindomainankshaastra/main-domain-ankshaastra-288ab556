@@ -930,7 +930,7 @@ const ROLE_PRESETS: RolePreset[] = [
     key: "marketing",
     label: "Marketing",
     description: "CRM, content, and campaign-facing modules.",
-    modules: ["crm", "templates", "email", "service-pages"],
+    modules: ["crm", "email", "service-pages"],
   },
 ];
 
