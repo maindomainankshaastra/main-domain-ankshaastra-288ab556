@@ -867,9 +867,9 @@ import {
   User,
   GitBranch,
   Webhook,
-  Sparkles,
+ 
   Briefcase,
-  FileCode,
+ 
   Settings,
   Crown,
   FileSpreadsheet,
@@ -932,7 +932,7 @@ const navSections: NavSection[] = [
       { to: "/admin/services", label: "Services Management", icon: Briefcase, module: "services" },
       { to: "/admin/service-pages", label: "Pages & Packages", icon: Package, module: "service-pages" },
       // { to: "/admin/pricing", label: "Pricing Management", icon: FileCode, module: "pricing" },
-      { to: "/admin/templates", label: "Templates", icon: FileCode, module: "templates" },
+      
     ],
   },
   {
@@ -946,7 +946,7 @@ const navSections: NavSection[] = [
   {
     label: "Admin",
     items: [
-      { to: "/admin/ai-reports", label: "AI Reports", icon: Sparkles, module: "ai-reports" },
+      
       { to: "/admin/reports", label: "Reports", icon: ScanSearch, module: "name-check-reports" },
       { to: "/admin/team", label: "Team Management", icon: UserCog, module: "team", adminOnly: true },
       // Audit Logs — accountability/security log. adminOnly: true means the
@@ -1179,12 +1179,7 @@ const SEARCH_SOURCES: SearchSource[] = [
     route: "/admin/crm",
     tableCandidates: ["customers"], // CONFIRMED
   }),
-  makeSource({
-    module: "Reports",
-    icon: Sparkles,
-    route: "/admin/ai-reports",
-    tableCandidates: ["ai_reports"], // CONFIRMED
-  }),
+ 
   makeSource({
     module: "Emails",
     icon: Mail,
