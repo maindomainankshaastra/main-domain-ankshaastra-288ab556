@@ -562,6 +562,7 @@ import { Loader2, Eye, Trash2, MoreVertical, Download } from "lucide-react";
 import { CONNECTED_SITE_OPTIONS } from "@/lib/connected-sites";
 import { cn } from "@/lib/utils";
 import { exportRowsAsCsv } from "@/lib/csv-export";
+import { formatServiceName } from "@/lib/service-name";
 
 // Writes one row to audit_logs for an Orders action. Callers `await` this so
 // the write is attempted before the success toast fires, but a failure here
@@ -779,7 +780,7 @@ export default function OrdersModule() {
           (o.customer_name || "").toLowerCase().includes(q) ||
           (o.customer_email || "").toLowerCase().includes(q) ||
           (o.customer_phone || "").toLowerCase().includes(q) ||
-          (o.service_title || "").toLowerCase().includes(q) ||
+          formatServiceName(o.service_title).toLowerCase().includes(q) ||
           (o.status || "").toLowerCase().includes(q) ||
           o.id.toLowerCase().includes(q)
       );
@@ -818,7 +819,7 @@ export default function OrdersModule() {
       { label: "Customer", value: (o) => o.customer_name || "Guest" },
       { label: "Phone", value: (o) => o.customer_phone || "" },
       { label: "Email", value: (o) => o.customer_email },
-      { label: "Service", value: (o) => o.service_title },
+      { label: "Service", value: (o) => formatServiceName(o.service_title) },
       { label: "Amount", value: (o) => Number(o.total_amount) },
       { label: "Status", value: (o) => getStatusLabel(o.status) },
       { label: "Payment Method", value: (o) => o.payment_method || "" },
@@ -841,7 +842,7 @@ export default function OrdersModule() {
         await logAudit(
           "delete",
           deleteOrderId,
-          orderBeingDeleted?.service_title || deleteOrderId,
+          formatServiceName(orderBeingDeleted?.service_title) || deleteOrderId,
           role,
           orderBeingDeleted?.source_website,
         );
@@ -899,7 +900,7 @@ export default function OrdersModule() {
             )}
           >
             <div className="min-w-0">
-              <p className="font-semibold truncate">{o.service_title}</p>
+              <p className="font-semibold truncate">{formatServiceName(o.service_title)}</p>
               <p className="text-xs text-muted-foreground">
                 {o.customer_name || "Guest"} · {formatDateTime(o.created_at)}
               </p>
@@ -1030,7 +1031,7 @@ export default function OrdersModule() {
               </div>
               <div className="flex justify-between border-b border-border pb-2">
                 <span className="text-muted-foreground">Service</span>
-                <span className="font-medium text-right">{viewOrder.service_title}</span>
+                <span className="font-medium text-right">{formatServiceName(viewOrder.service_title)}</span>
               </div>
               <div className="flex justify-between border-b border-border pb-2">
                 <span className="text-muted-foreground">Amount</span>
