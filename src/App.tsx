@@ -43,9 +43,9 @@ const EmailModule = lazy(() => import("./pages/admin/modules/EmailModule"));
 const CrmModule = lazy(() => import("./pages/admin/modules/CrmModule"));
 const WorkflowsModule = lazy(() => import("./pages/admin/modules/WorkflowsModule"));
 const WebhooksModule = lazy(() => import("./pages/admin/modules/WebhooksModule"));
-const AiReportsModule = lazy(() => import("./pages/admin/modules/AiReportsModule"));
+
 const ServicesModule = lazy(() => import("./pages/admin/modules/ServicesModule"));
-const TemplatesModule = lazy(() => import("./pages/admin/modules/TemplatesModule"));
+
 const SettingsModule = lazy(() => import("./pages/admin/modules/SettingsModule"));
 const GstReportsHub = lazy(() => import("./pages/admin/modules/GstReportsHub"));
 const GstMaintenanceModule = lazy(() => import("./pages/admin/modules/GstMaintenanceModule"));
