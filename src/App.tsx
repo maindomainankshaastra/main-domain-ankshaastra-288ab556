@@ -124,11 +124,11 @@ const App = () => (
               <Route path="crm" element={<CrmModule />} />
               <Route path="workflows" element={<WorkflowsModule />} />
               <Route path="webhooks" element={<WebhooksModule />} />
-              <Route path="ai-reports" element={<AiReportsModule />} />
+             
               <Route path="services" element={<ServicesModule />} />
               <Route path="service-pages" element={<ServicePagesModule />} />
               {/* <Route path="pricing" element={<PricingModule />} /> */}
-              <Route path="templates" element={<TemplatesModule />} />
+             
               <Route path="settings" element={<SettingsModule />} />
               <Route path="gst-reports" element={<GstReportsHub />} />
               <Route path="gst-maintenance" element={<GstMaintenanceModule />} />
