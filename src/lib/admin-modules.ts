@@ -5,12 +5,12 @@ export const ADMIN_MODULES = [
   { key: "crm", label: "CRM" },
   { key: "workflows", label: "Workflows" },
   { key: "webhooks", label: "Webhook Logs" },
-  { key: "ai-reports", label: "AI Reports" },
+ 
   { key: "name-check-reports", label: "Reports" },
   { key: "services", label: "Services Management" },
   { key: "service-pages", label: "Pages & Packages" },
   // { key: "pricing", label: "Pricing Management" },
-  { key: "templates", label: "Templates" },
+ 
   { key: "settings", label: "GST Configuration" },
   { key: "gst-reports", label: "GSTR Reports" },
   { key: "gst-maintenance", label: "GST Maintenance" },
