@@ -1,8 +1,11 @@
+
+
 // /** Registered multi-site domains (matches public.website_source enum). */
 // export const CONNECTED_SITES = {
 //   MAIN: 'ankshaastra.com',
 //   EMPOWER: 'empower.ankshaastra.com',
 //   MIRACLEBABY: 'miraclebaby.ankshaastra.com',
+//     SHOP: 'shop.ankshaastra.com',
 // } as const;
 
 // export type ConnectedSiteDomain = (typeof CONNECTED_SITES)[keyof typeof CONNECTED_SITES];
@@ -36,6 +39,7 @@
 //     'https://empower.ankshaastra.com',
 //     'https://www.empower.ankshaastra.com',
 //     'https://miraclebaby.ankshaastra.com',
+//         'https://shop.ankshaastra.com',
 //     'http://localhost:5173',
 //     'http://localhost:3000',
 //     'http://127.0.0.1:5173',
@@ -50,6 +54,7 @@
 //   'sync-payment',
 //   'services',
 //   'operations/site-manifest',
+//   'save-form-progress',
 // ]);
 
 // export function empowerIntegrationManifest() {
@@ -92,6 +97,8 @@
 //   };
 // }
 
+
+
 /** Registered multi-site domains (matches public.website_source enum). */
 export const CONNECTED_SITES = {
   MAIN: 'ankshaastra.com',
@@ -99,34 +106,34 @@ export const CONNECTED_SITES = {
   MIRACLEBABY: 'miraclebaby.ankshaastra.com',
     SHOP: 'shop.ankshaastra.com',
 } as const;
-
+ 
 export type ConnectedSiteDomain = (typeof CONNECTED_SITES)[keyof typeof CONNECTED_SITES];
-
+ 
 export const HUB_SITE_URL =
   (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://ankshaastra.com').replace(/\/$/, '');
-
+ 
 export const HUB_API_BASE = `${HUB_SITE_URL}/api`;
-
+ 
 const ALLOWED_SOURCES = new Set<string>(Object.values(CONNECTED_SITES));
-
+ 
 export function isAllowedSourceWebsite(site?: string | null): site is ConnectedSiteDomain {
   const value = String(site || '').trim().toLowerCase();
   return ALLOWED_SOURCES.has(value);
 }
-
+ 
 export function normalizeSourceWebsite(site?: string | null): ConnectedSiteDomain {
   const value = String(site || '').trim().toLowerCase();
   if (isAllowedSourceWebsite(value)) return value;
   return CONNECTED_SITES.MAIN;
 }
-
+ 
 /** Browser origins allowed to call hub APIs (CORS). */
 export function partnerOrigins(): string[] {
   const fromEnv = (process.env.PARTNER_SITE_ORIGINS || '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-
+ 
   const defaults = [
     'https://empower.ankshaastra.com',
     'https://www.empower.ankshaastra.com',
@@ -136,10 +143,10 @@ export function partnerOrigins(): string[] {
     'http://localhost:3000',
     'http://127.0.0.1:5173',
   ];
-
+ 
   return [...new Set([...fromEnv, ...defaults])];
 }
-
+ 
 export const PARTNER_API_ROUTES = new Set([
   'create-order',
   'verify-payment',
@@ -147,8 +154,9 @@ export const PARTNER_API_ROUTES = new Set([
   'services',
   'operations/site-manifest',
   'save-form-progress',
+  'name-check-reports/status',
 ]);
-
+ 
 export function empowerIntegrationManifest() {
   return {
     site: CONNECTED_SITES.EMPOWER,
