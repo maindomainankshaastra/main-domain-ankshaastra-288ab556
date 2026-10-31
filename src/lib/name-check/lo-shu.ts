@@ -144,18 +144,38 @@
 //   matchedCombo: RajyogCombo | null;
 // }
 
-// export function getRajyogPotential(grid: LoShuResult): RajyogCheck {
-//   const has = (n: number) => grid.present.includes(n);
-//   const missing5 = grid.missing.includes(5);
+// /**
+//  * 3rd-round client rules (Rajyog Potential):
+//  *  - A line (9-5-1 / 2-5-8 / 4-5-6) has potential when exactly ONE of its three
+//  *    numbers is missing from the birth-chart grid and the name could supply it.
+//  *  - The missing number must be one we are allowed to give a name: never
+//  *    9, 4, 8 or 2 (so 2-5-8 can only complete via 5; 9-5-1 via 5 or 1;
+//  *    4-5-6 via 5 or 6).
+//  *  - The completing number must not be an Enemy of Mulank or Bhagyank
+//  *    (caller passes that check in via `canSupply`).
+//  * `canSupply` defaults to the 9/4/8/2 block only.
+//  */
+// const NEVER_GIVEN_TO_NAME = [9, 4, 8, 2];
+// const RAJYOG_LINES: { combo: RajyogCombo; nums: [number, number, number] }[] = [
+//   { combo: "9-5-1", nums: [9, 5, 1] },
+//   { combo: "2-5-8", nums: [2, 5, 8] },
+//   { combo: "4-5-6", nums: [4, 5, 6] },
+// ];
 
-//   if (missing5 && has(9) && has(1)) return { hasPotential: true, matchedCombo: "9-5-1" };
-//   if (missing5 && has(2) && has(8)) return { hasPotential: true, matchedCombo: "2-5-8" };
-//   if (missing5 && has(4) && has(6)) return { hasPotential: true, matchedCombo: "4-5-6" };
+// export function getRajyogPotential(
+//   grid: LoShuResult,
+//   canSupply: (n: number) => boolean = () => true,
+// ): RajyogCheck {
+//   for (const { combo, nums } of RAJYOG_LINES) {
+//     const missing = nums.filter((n) => !grid.present.includes(n));
+//     if (missing.length !== 1) continue;
+//     const need = missing[0];
+//     if (NEVER_GIVEN_TO_NAME.includes(need)) continue;
+//     if (!canSupply(need)) continue;
+//     return { hasPotential: true, matchedCombo: combo };
+//   }
 //   return { hasPotential: false, matchedCombo: null };
 // }
-
-
-
 
 
 
@@ -185,17 +205,17 @@
  * standard convention. If client confirms a different number (3 or 4),
  * change ONLY the OVER_AMPLIFICATION_THRESHOLD constant, nothing else.
  */
-
+ 
 // Fixed Lo Shu "turtle" layout - which grid position each digit 1-9 occupies.
 export const LO_SHU_POSITIONS: Record<number, [row: number, col: number]> = {
   4: [0, 0], 9: [0, 1], 2: [0, 2],
   3: [1, 0], 5: [1, 1], 7: [1, 2],
   8: [2, 0], 1: [2, 1], 6: [2, 2],
 };
-
+ 
 // TBD with client — currently assumed 2+ occurrences = over-amplified.
 export const OVER_AMPLIFICATION_THRESHOLD = 2;
-
+ 
 export interface LoShuResult {
   /** How many times each digit 1-9 appeared in the grid. */
   counts: Record<number, number>;
@@ -206,7 +226,7 @@ export interface LoShuResult {
   /** Digits that appeared >= OVER_AMPLIFICATION_THRESHOLD times. */
   repeating: number[];
 }
-
+ 
 /** Reduce a number to a single digit (1-9), e.g. 28 -> 10 -> 1. */
 export function reduceToSingleDigit(n: number): number {
   let value = Math.abs(n);
@@ -217,7 +237,7 @@ export function reduceToSingleDigit(n: number): number {
   }
   return value;
 }
-
+ 
 /**
  * Mulank (Driver Number) = day-of-birth digits reduced to a single digit.
  * @param day 1-31
@@ -225,7 +245,7 @@ export function reduceToSingleDigit(n: number): number {
 export function getMulank(day: number): number {
   return reduceToSingleDigit(day);
 }
-
+ 
 /**
  * Bhagyank (Conductor/Destiny Number) = all DOB digits (day+month+year)
  * summed and reduced to a single digit.
@@ -236,7 +256,7 @@ export function getBhagyank(day: number, month: number, year: number): number {
   const sum = allDigits.reduce((a, b) => a + b, 0);
   return reduceToSingleDigit(sum);
 }
-
+ 
 /**
  * Build the Lo Shu grid result from a DOB.
  * @param day 1-31, month 1-12, year e.g. 1994
@@ -244,32 +264,32 @@ export function getBhagyank(day: number, month: number, year: number): number {
 export function buildLoShuGrid(day: number, month: number, year: number): LoShuResult {
   const mulank = getMulank(day);
   const bhagyank = getBhagyank(day, month, year);
-
+ 
   // Original DOB digits (day + month + year), zeros dropped, plus Mulank + Bhagyank.
   const rawDigits = `${day}${month}${year}${mulank}${bhagyank}`
     .split("")
     .map(Number)
     .filter((d) => d !== 0);
-
+ 
   const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
   for (const d of rawDigits) {
     counts[d] = (counts[d] ?? 0) + 1;
   }
-
+ 
   const present: number[] = [];
   const missing: number[] = [];
   const repeating: number[] = [];
-
+ 
   for (let digit = 1; digit <= 9; digit++) {
     const count = counts[digit];
     if (count > 0) present.push(digit);
     else missing.push(digit);
     if (count >= OVER_AMPLIFICATION_THRESHOLD) repeating.push(digit);
   }
-
+ 
   return { counts, present, missing, repeating };
 }
-
+ 
 /**
  * Is a given name-number "over-amplified" in this person's Lo Shu grid?
  * (i.e. does the name-number match a digit that's already dominant in the DOB)
@@ -277,7 +297,7 @@ export function buildLoShuGrid(day: number, month: number, year: number): LoShuR
 export function isOverAmplified(nameNumber: number, grid: LoShuResult): boolean {
   return grid.repeating.includes(nameNumber);
 }
-
+ 
 /**
  * RAJYOG POTENTIAL — CLIENT CONFIRMED (2nd round of confirmations, see
  * hr-oa-nr-blocks.ts header for HR-11).
@@ -297,12 +317,12 @@ export function isOverAmplified(nameNumber: number, grid: LoShuResult): boolean 
  * it only cares about present vs. missing, never about repetition count.
  */
 export type RajyogCombo = "9-5-1" | "2-5-8" | "4-5-6";
-
+ 
 export interface RajyogCheck {
   hasPotential: boolean;
   matchedCombo: RajyogCombo | null;
 }
-
+ 
 /**
  * 3rd-round client rules (Rajyog Potential):
  *  - A line (9-5-1 / 2-5-8 / 4-5-6) has potential when exactly ONE of its three
@@ -320,7 +340,7 @@ const RAJYOG_LINES: { combo: RajyogCombo; nums: [number, number, number] }[] = [
   { combo: "2-5-8", nums: [2, 5, 8] },
   { combo: "4-5-6", nums: [4, 5, 6] },
 ];
-
+ 
 export function getRajyogPotential(
   grid: LoShuResult,
   canSupply: (n: number) => boolean = () => true,
