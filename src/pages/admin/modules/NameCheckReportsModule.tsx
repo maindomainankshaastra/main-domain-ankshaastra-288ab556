@@ -1,6 +1,8 @@
 
 
 
+
+
 // import { useCallback, useEffect, useMemo, useState } from "react";
 // import { Link } from "react-router-dom";
 // import {
@@ -82,7 +84,9 @@
 //   generateNameCheckReportPdf,
 //   nameCheckReportPdfToBlob,
 //   computeNameCheckReportContent,
+//   PRICING_VARIANT_LABELS,
 //   type NameCheckReportContent,
+//   type PricingVariant,
 // } from "@/components/NameCheckReportGenerator";
 
 // /* ------------------------------------------------------------------ */
@@ -107,6 +111,8 @@
 //   pdf_url: string | null;
 //   /** Admin's saved correction of the computed report content, if any (see NameCheckReportGenerator.tsx). NULL = PDF uses the live rule-engine calculation. */
 //   content_overrides: NameCheckReportContent | null;
+//   /** Which static page-12 (pricing) image the PDF uses. NULL = old default ("baby-name"). */
+//   pricing_variant: PricingVariant | null;
 //   /** Who last generated/regenerated the PDF — this is the admin's auth UUID (column type is `uuid`, not `text`), resolved to a display name via `profiles.full_name` (see generatedByLabel/resolveGeneratedByNames). NULL = never generated, or generated before this field existed. */
 //   generated_by: string | null;
 //   created_at: string;
@@ -123,6 +129,7 @@
 //   dob: string;
 //   gender: string;
 //   status: ReportStatus;
+//   pricing_variant: PricingVariant;
 // }
 
 // const EMPTY_FORM: ReportFormValues = {
@@ -135,6 +142,7 @@
 //   dob: "",
 //   gender: "",
 //   status: "draft",
+//   pricing_variant: "baby-name",
 // };
 
 // /** Combines First/Middle/Last into the single display/search name used elsewhere. */
@@ -566,6 +574,7 @@
 //           dob: createForm.dob,
 //           gender: createForm.gender,
 //           status: createForm.status,
+//           pricing_variant: createForm.pricing_variant,
 //           pdf_url: null,
 //         })
 //         .select("id")
@@ -605,6 +614,7 @@
 //       dob: report.dob,
 //       gender: report.gender ?? "",
 //       status: report.status,
+//       pricing_variant: report.pricing_variant ?? "baby-name",
 //     });
 //   };
 
@@ -625,6 +635,7 @@
 //           dob: editForm.dob,
 //           gender: editForm.gender,
 //           status: editForm.status,
+//           pricing_variant: editForm.pricing_variant,
 //           updated_at: new Date().toISOString(),
 //         })
 //         .eq("id", editTarget.id);
@@ -716,6 +727,7 @@
 //         // Respect any admin correction saved via "Edit Report Content" —
 //         // otherwise a plain Regenerate would silently wipe it out.
 //         contentOverride: report.content_overrides ?? undefined,
+//         pricingVariant: report.pricing_variant ?? "baby-name",
 //       });
 
 //       const blob = nameCheckReportPdfToBlob(bytes);
@@ -850,6 +862,7 @@
 //         gender: viewTarget.gender,
 //         generatedDate: new Date().toISOString(),
 //         contentOverride: contentEditForm,
+//         pricingVariant: viewTarget.pricing_variant ?? "baby-name",
 //       });
 
 //       const blob = nameCheckReportPdfToBlob(bytes);
@@ -2027,6 +2040,21 @@
 //             <SelectItem value="Male">Male</SelectItem>
 //             <SelectItem value="Female">Female</SelectItem>
 //             <SelectItem value="Other">Other</SelectItem>
+//           </SelectContent>
+//         </Select>
+//       </div>
+//       <div className="sm:col-span-2">
+//         <Label htmlFor="pricing_variant">Page 12 Offer</Label>
+//         <Select value={values.pricing_variant} onValueChange={(v) => set("pricing_variant", v as PricingVariant)}>
+//           <SelectTrigger id="pricing_variant">
+//             <SelectValue placeholder="Select page 12 offer" />
+//           </SelectTrigger>
+//           <SelectContent>
+//             {(Object.keys(PRICING_VARIANT_LABELS) as PricingVariant[]).map((variant) => (
+//               <SelectItem key={variant} value={variant}>
+//                 Name Correction (₹2,987) + {PRICING_VARIANT_LABELS[variant]}
+//               </SelectItem>
+//             ))}
 //           </SelectContent>
 //         </Select>
 //       </div>
@@ -3880,6 +3908,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getMulank, getBhagyank } from "@/lib/name-check/lo-shu";
+import NameCheckCrmPanel from "./NameCheckCrmPanel";
 import type { DateRange } from "react-day-picker";
 
 import { AdminPage } from "@/components/admin/AdminPage";
@@ -5053,6 +5082,9 @@ export default function NameCheckReports() {
           </div>
         </div>
 
+        {/* CRM follow-up summary + monthly ZIP */}
+        <NameCheckCrmPanel />
+
         {/* Filters */}
         <Card>
           <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
@@ -5928,6 +5960,3 @@ function ReportForm({
     </div>
   );
 }
-
-
-
