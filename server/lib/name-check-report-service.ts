@@ -80,7 +80,7 @@ export function isNameCheckOrder(order: Dict): boolean {
   const meta = (order.metadata as Dict | undefined) || {};
   const snapshot = (meta.formSnapshot as Dict | undefined) || meta;
   if (/^namecheck-\d+$/i.test(str(snapshot.packageType))) return true;
-  return /name\s*check/i.test(str(order.service_title));
+  return /name\s*-?\s*check/i.test(str(order.service_title));
 }
 
 /** Pulls the person(s) to analyse out of the order's form snapshot. */
