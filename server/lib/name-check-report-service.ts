@@ -152,7 +152,17 @@ export function isCorrectionAdvised(content: NameCheckReportContent): boolean {
 
 /* --------------------------- per-person report --------------------------- */
 
-type RowInfo = { id: string; report_id: string; pdfBytes?: Uint8Array; pdfUrl?: string; name: string; email: string };
+type RowInfo = {
+  id: string;
+  report_id: string;
+  pdfBytes?: Uint8Array;
+  pdfUrl?: string;
+  name: string;
+  firstName: string;
+  mulank: number;
+  bhagyank: number;
+  email: string;
+};
 
 async function claimRow(
   orderId: string,
@@ -279,6 +289,9 @@ async function buildAndStorePdf(row: Dict, subject: NameCheckSubject, pricingVar
     pdfBytes,
     pdfUrl: pdfUrl ?? undefined,
     name: customerName,
+    firstName: subject.firstName,
+    mulank: content.mulank,
+    bhagyank: content.bhagyank,
     email: str(row.email),
   };
 }
@@ -339,24 +352,24 @@ export async function processNameCheckOrder(orderId: string): Promise<NameCheckA
     // ---- one email, all PDFs attached ----
     const bcc = (process.env.NAME_CHECK_BCC || 'himansshu@ankshaastra.in').trim();
     const replyTo = process.env.NAME_CHECK_REPLY_TO?.trim() || undefined;
-    const first = infos[0];
-    const multi = infos.length > 1;
-    const subjectLine = multi
-      ? `Your Name Check Reports – ${infos.length} reports`
-      : `Your Name Check Report – ${first.name}`;
+    // Subject / file name: "PersonName_Name Check_M4B6" (several persons joined with " & ").
+    const tag = (i: RowInfo) => `M${i.mulank}B${i.bhagyank}`;
+    const subjectLine = infos.map((i) => `${i.firstName}_Name Check_${tag(i)}`).join(' & ');
 
-    const nameList = infos.map((i) => `<li style="margin:0 0 6px;">${escapeHtml(i.name)} <span style="color:#777;">(Report ID: ${escapeHtml(i.report_id)})</span></li>`).join('');
+    // Same wording the admin panel's "Send email" dialog has always used.
+    const message =
+      'Namaste, 🙏\n\nPlease find attached Name Check Report prepared based on your Date of Birth and name analysis.\n\n' +
+      'It highlights the key observations regarding your name vibration and clearly states whether name correction is required or not.\n\n' +
+      'Kindly review it at your convenience.\n\n' +
+      'If you would like the report to be explained over a phone call, you may request the same.\n\n' +
+      'Warm Regards,\nAnkshaastra – Empower Your Name';
     const bodyHtml = wrapEmailLayout(
-      `<p style="margin:0 0 16px;">Namaskar ${escapeHtml(subjects[0].firstName)} Ji,</p>
-<p style="margin:0 0 16px;">Thank you for choosing Ankshaastra. Your personalised Name Check ${multi ? 'Reports are' : 'Report is'} ready and attached to this email as ${multi ? 'PDF files' : 'a PDF'}.</p>
-<ul style="margin:0 0 16px;padding-left:20px;">${nameList}</ul>
-<p style="margin:0 0 16px;">If you cannot see this email in your inbox, please also check your Spam / Promotions folder.</p>
-<p style="margin:0;">Warm regards,<br/>Team Ankshaastra<br/><a href="https://www.ankshaastra.com" style="color:#ae4642;">www.ankshaastra.com</a></p>`,
+      `<p style="margin:0 0 16px;">${message.replace(/\r?\n/g, '<br/>')}</p>`,
       subjectLine,
     );
 
     const attachments = infos.map((i) => ({
-      filename: `Name_Check_Report_${safeFileName(i.name)}.pdf`,
+      filename: `${safeFileName(i.firstName)}_Name_Check_${tag(i)}.pdf`,
       content: Buffer.from(i.pdfBytes as Uint8Array),
       contentType: 'application/pdf',
     }));
