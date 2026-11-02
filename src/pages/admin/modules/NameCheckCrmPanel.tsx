@@ -143,6 +143,8 @@ export default function NameCheckCrmPanel() {
   const [zipping, setZipping] = useState(false);
   const [zipProgress, setZipProgress] = useState("");
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [orderIdInput, setOrderIdInput] = useState("");
+  const [retryingOrder, setRetryingOrder] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -192,17 +194,40 @@ export default function NameCheckCrmPanel() {
     }
   };
 
+  const callRetry = async (body: { reportId?: string; orderId?: string }) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("Please sign in again");
+    return fetch("/api/name-check-reports/retry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+  };
+
+  /** For orders whose automatic run failed before a report row existed (no row to click Retry on). */
+  const retryByOrder = async () => {
+    const id = orderIdInput.trim();
+    if (!id) return;
+    setRetryingOrder(true);
+    try {
+      const res = await callRetry({ orderId: id });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.error || "Could not process this order");
+      toast({ title: "Done", description: result.status === "sent" ? "Report generated and emailed." : `Status: ${result.status}` });
+      setOrderIdInput("");
+      void load();
+    } catch (e) {
+      toast({ title: "Order failed", description: e instanceof Error ? e.message : "Unexpected error", variant: "destructive" });
+    } finally {
+      setRetryingOrder(false);
+    }
+  };
+
   const retry = async (r: CrmRow) => {
     setRetryingId(r.id);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Please sign in again");
-      const res = await fetch("/api/name-check-reports/retry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ reportId: r.id }),
-      });
+      const res = await callRetry({ reportId: r.id });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(result.error || "Retry failed");
       toast({ title: "Report sent", description: `${r.customer_name}'s report was generated and emailed.` });
@@ -326,6 +351,22 @@ export default function NameCheckCrmPanel() {
               <Button onClick={() => void downloadMonthZip()} disabled={zipping || loading}>
                 {zipping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                 {zipping ? `Zipping ${zipProgress}` : "Download ZIP"}
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-2 rounded-md border border-dashed p-3 md:flex-row md:items-center">
+              <div className="text-sm text-muted-foreground md:w-[260px]">
+                Order has no report row? Paste its Order ID to generate and email the report now.
+              </div>
+              <Input
+                value={orderIdInput}
+                onChange={(e) => setOrderIdInput(e.target.value)}
+                placeholder="Order ID (e.g. c2018cf0-8ca0-4947-8031-2a0ca7e4b305)"
+                className="flex-1"
+              />
+              <Button variant="outline" onClick={() => void retryByOrder()} disabled={retryingOrder || !orderIdInput.trim()}>
+                {retryingOrder ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
+                Send report
               </Button>
             </div>
 
