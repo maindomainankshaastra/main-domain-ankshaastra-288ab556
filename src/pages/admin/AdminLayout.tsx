@@ -884,6 +884,7 @@ import {
   ArrowLeft,
   Search,
   History,
+    Sparkles,
 } from "lucide-react";
 
 // Sidebar is grouped into sections instead of one flat 16-item list, so related
@@ -948,6 +949,7 @@ const navSections: NavSection[] = [
     items: [
       
       { to: "/admin/reports", label: "Reports", icon: ScanSearch, module: "name-check-reports" },
+            { to: "/admin/swar-calculator", label: "Swar & Names", icon: Sparkles, module: "name-check-reports" },
       { to: "/admin/team", label: "Team Management", icon: UserCog, module: "team", adminOnly: true },
       // Audit Logs — accountability/security log. adminOnly: true means the
       // existing visibleSections filter below (role === "admin") already
