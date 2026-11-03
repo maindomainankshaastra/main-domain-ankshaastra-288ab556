@@ -100,6 +100,23 @@ export default function SwarCalculatorModule() {
     });
   };
 
+  // One click: copy the image to the clipboard, then open the customer's WhatsApp chat with the
+  // message already typed in. Operator then presses Ctrl+V (image preview opens) and Send.
+  const sendOnWhatsApp = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      const blob: Blob = await new Promise((resolve, reject) =>
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no image"))), "image/png"),
+      );
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      toast({ title: "Image copied", description: "WhatsApp is opening. Click the message box, press Ctrl+V, then Send." });
+    } catch {
+      toast({ title: "Could not copy the image", description: "Use Download image and attach it manually.", variant: "destructive" });
+    }
+    window.open(whatsappLink(phone, caption), "_blank");
+  };
+
   // ---- step 2: names ----
   const [gender, setGender] = useState("boy");
   const [number, setNumber] = useState("");
@@ -185,9 +202,9 @@ export default function SwarCalculatorModule() {
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => copy(caption, "Message")}><Copy className="w-4 h-4 mr-2" />Copy message</Button>
                 <Button variant="outline" onClick={() => copy(detail, "Full details message")}><Copy className="w-4 h-4 mr-2" />Copy text-only version</Button>
-                <Button onClick={() => window.open(whatsappLink(phone, caption), "_blank")}><MessageCircle className="w-4 h-4 mr-2" />Open in WhatsApp</Button>
+                <Button onClick={sendOnWhatsApp}><MessageCircle className="w-4 h-4 mr-2" />Send on WhatsApp (image + message)</Button>
               </div>
-              <p className="text-xs text-muted-foreground">WhatsApp links cannot attach pictures: download or copy the image on the right, then paste it into the chat.</p>
+              <p className="text-xs text-muted-foreground">The image is copied automatically. After WhatsApp opens, click the message box, press Ctrl+V (image preview opens), then Send. WhatsApp links cannot attach pictures by themselves.</p>
             </div>
 
             <div className="space-y-3">
