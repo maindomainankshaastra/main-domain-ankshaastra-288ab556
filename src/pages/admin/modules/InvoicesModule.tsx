@@ -1713,8 +1713,6 @@
 // }
 
 
-
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
@@ -3462,3 +3460,4 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
     </AdminPage>
   );
 }
+
