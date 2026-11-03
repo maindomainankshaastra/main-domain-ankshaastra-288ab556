@@ -114,7 +114,8 @@ export default function SwarCalculatorModule() {
     } catch {
       toast({ title: "Could not copy the image", description: "Use Download image and attach it manually.", variant: "destructive" });
     }
-    window.open(whatsappLink(phone, caption), "_blank");
+    // window.open(whatsappLink(phone, caption), "_blank");
+    window.open(whatsappLink(phone, caption), "ankshaastra_whatsapp");
   };
 
   // ---- step 2: names ----
