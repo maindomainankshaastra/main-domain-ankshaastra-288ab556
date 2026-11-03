@@ -61,6 +61,7 @@ const NameCorrectionReports = lazy(() => import("./pages/admin/modules/NameCorre
 const PerfectBabyNameReports = lazy(() => import("./pages/admin/modules/PerfectBabyNameReports"));
      const CompleteBabyBlueprintReports = lazy(() => import("./pages/admin/modules/CompleteBabyBlueprintReports"));
 const AuditLogsModule = lazy(() => import("./pages/admin/modules/AuditLogsModule"));
+const SwarCalculatorModule = lazy(() => import("./pages/admin/modules/SwarCalculatorModule"));
 
 const queryClient = new QueryClient();
 
@@ -149,6 +150,7 @@ const App = () => (
                   Admin/Team Member typing this URL directly still can't see
                   any log data, even though they can reach this route. */}
               <Route path="audit-logs" element={<AuditLogsModule />} />
+                               <Route path="swar-calculator" element={<SwarCalculatorModule />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
