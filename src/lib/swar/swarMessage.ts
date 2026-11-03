@@ -75,5 +75,12 @@ export function buildDetailMessage(i: DetailInput): string {
 export function whatsappLink(phone: string, text: string): string {
   const digits = phone.replace(/\D/g, "");
   const full = digits.length === 10 ? `91${digits}` : digits;
-  return `https://wa.me/${full}?text=${encodeURIComponent(text)}`;
+  // Skin-tone modifiers (the light shade on the folded-hands emoji) can break inside WhatsApp links,
+  // so they are dropped from the link text only. Copy-message keeps the original emoji.
+  const safe = text.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "");
+  const q = `text=${encodeURIComponent(safe)}`;
+  const isMobile = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) return `https://wa.me/${full}?${q}`;
+  // Desktop: open WhatsApp Web directly (wa.me shows an extra "Open app / Continue to WhatsApp Web" page).
+  return `https://web.whatsapp.com/send?${full ? `phone=${full}&` : ""}${q}`;
 }
