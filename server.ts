@@ -170,6 +170,7 @@ import adminGstConfig from "./server/handlers/admin-gst-config.js";
 import adminGstrReports from "./server/handlers/admin-gstr-reports.js";
 import adminGstMaintenance from "./server/handlers/admin-gst-maintenance.js";
 import adminAuditLogs from "./server/handlers/admin-audit-logs.js";
+import generateNames from "./server/handlers/generate-names.js";
 
 
 const app = express();
@@ -223,6 +224,7 @@ app.post("/api/admin/gst-maintenance", (req, res) => adminGstMaintenance(req as 
 // and returns 403 for anyone else, so this route is safe to expose here
 // the same way as the other admin routes.
 app.get("/api/admin/audit-logs", (req, res) => adminAuditLogs(req as any, res as any));
+app.post("/api/admin/generate-names", (req, res) => generateNames(req as any, res as any));
  
 
 const PORT = 8081;
