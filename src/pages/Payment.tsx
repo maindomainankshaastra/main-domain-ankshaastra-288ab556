@@ -11933,34 +11933,36 @@ const hours12 = Array.from({ length: 12 }, (_, i) => String(i + 1));
 const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 
 // ───── reusable field blocks ─────
+// Native selects: instant, reliable on iOS/Android touch inside the mobile booking sheet.
+const NativeSelectField = ({ control, name, placeholder, options }: { control: any; name: string; placeholder: string; options: Array<{ label: string; val: string }> }) => (
+  <FormField control={control} name={name} render={({ field }) => (
+    <FormItem>
+      <FormControl>
+        <select
+          ref={field.ref}
+          name={field.name}
+          value={field.value ?? ""}
+          onChange={(e) => field.onChange(e.target.value)}
+          onBlur={field.onBlur}
+          aria-label={placeholder}
+          className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring md:text-sm ${field.value ? "text-foreground" : "text-muted-foreground"}`}
+        >
+          <option value="" disabled>{placeholder}</option>
+          {options.map((o) => <option key={o.val} value={o.val}>{o.label}</option>)}
+        </select>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )} />
+);
+
 const DOBPicker = ({ control, name = "dob" }: { control: any; name?: string }) => (
   <FormItem>
     <FormLabel>Date of Birth *</FormLabel>
     <div className="grid grid-cols-3 gap-2">
-      {(["day", "month", "year"] as const).map((part) => (
-        <FormField
-          key={part}
-          control={control}
-          name={`${name}.${part}`}
-          render={({ field }) => (
-            <FormItem>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger><SelectValue placeholder={part.charAt(0).toUpperCase() + part.slice(1)} /></SelectTrigger>
-                </FormControl>
-                <SelectContent className="max-h-60">
-                  {(part === "day" ? days : part === "month" ? months.map((m, i) => ({ label: m, val: String(i + 1) })) : years).map((opt: any) =>
-                    typeof opt === "string"
-                      ? <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                      : <SelectItem key={opt.val} value={opt.val}>{opt.label}</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      ))}
+      <NativeSelectField control={control} name={`${name}.day`} placeholder="Day" options={days.map((d) => ({ label: d, val: d }))} />
+      <NativeSelectField control={control} name={`${name}.month`} placeholder="Month" options={months.map((m, i) => ({ label: m, val: String(i + 1) }))} />
+      <NativeSelectField control={control} name={`${name}.year`} placeholder="Year" options={years.map((y) => ({ label: y, val: y }))} />
     </div>
   </FormItem>
 );
@@ -11969,40 +11971,9 @@ const TOBPicker = ({ control, name = "tob" }: { control: any; name?: string }) =
   <FormItem>
     <FormLabel>Time of Birth *</FormLabel>
     <div className="grid grid-cols-3 gap-2">
-      <FormField control={control} name={`${name}.hour`} render={({ field }) => (
-        <FormItem>
-          <Select value={field.value} onValueChange={field.onChange}>
-            <FormControl><SelectTrigger><SelectValue placeholder="Hour" /></SelectTrigger></FormControl>
-            <SelectContent className="max-h-60">
-              {hours12.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )} />
-      <FormField control={control} name={`${name}.minute`} render={({ field }) => (
-        <FormItem>
-          <Select value={field.value} onValueChange={field.onChange}>
-            <FormControl><SelectTrigger><SelectValue placeholder="Minute" /></SelectTrigger></FormControl>
-            <SelectContent className="max-h-60">
-              {minutes.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )} />
-      <FormField control={control} name={`${name}.meridiem`} render={({ field }) => (
-        <FormItem>
-          <Select value={field.value} onValueChange={field.onChange}>
-            <FormControl><SelectTrigger><SelectValue placeholder="AM/PM" /></SelectTrigger></FormControl>
-            <SelectContent>
-              <SelectItem value="AM">AM</SelectItem>
-              <SelectItem value="PM">PM</SelectItem>
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )} />
+      <NativeSelectField control={control} name={`${name}.hour`} placeholder="Hour" options={hours12.map((v) => ({ label: v, val: v }))} />
+      <NativeSelectField control={control} name={`${name}.minute`} placeholder="Minute" options={minutes.map((v) => ({ label: v, val: v }))} />
+      <NativeSelectField control={control} name={`${name}.meridiem`} placeholder="AM/PM" options={[{ label: "AM", val: "AM" }, { label: "PM", val: "PM" }]} />
     </div>
   </FormItem>
 );
