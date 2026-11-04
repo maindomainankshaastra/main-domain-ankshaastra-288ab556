@@ -284,12 +284,12 @@
   .report-mobile-sheet {
     top: auto !important; bottom: 0; left: 0 !important; transform: none !important; max-width: none;
     animation: none !important;
-    display: flex; flex-direction: column; gap: 0; height: 94dvh; max-height: 94dvh;
+    display: flex !important; flex-direction: column; gap: 0 !important; height: 92dvh; max-height: 92dvh;
     padding: 14px 20px max(20px, env(safe-area-inset-bottom));
     border-radius: 24px 24px 0 0; background: hsl(var(--card));
   }
   .report-mobile-sheet > button { top: 32px; right: 20px; }
-  .report-sheet-scroll input, .report-sheet-scroll button[role="combobox"], .report-sheet-scroll textarea {
+  .report-sheet-scroll input, .report-sheet-scroll select, .report-sheet-scroll button[role="combobox"], .report-sheet-scroll textarea {
     min-height: 52px; border-radius: 8px; background: hsl(var(--card)); font-size: 16px;
   }
   .report-sheet-scroll [role="radiogroup"] { flex-wrap: wrap; gap: 12px; }
