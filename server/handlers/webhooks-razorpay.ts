@@ -1,3 +1,4 @@
+
 // import { logWebhook, verifyRazorpaySignature } from "../lib/webhook-utils.js";
 // import { getSupabaseAdmin } from "../lib/supabase-admin.js";
 // import {
@@ -7,6 +8,7 @@
 //   paymentInvoiceGenerationActive,
 // } from "../lib/invoice-engine.js";
 // import { scheduleInvoiceGeneration } from "../lib/schedule-invoice.js";
+// import { fulfillPayment } from "../lib/fulfill-payment.js";
 
 // async function readRawBody(req: { on: (e: string, cb: (c: Buffer) => void) => void }): Promise<string> {
 //   const chunks: Buffer[] = [];
@@ -50,7 +52,8 @@
 //   if (duplicate) return res.status(200).json({ ok: true, duplicate: true });
 
 //   try {
-//     if (event === "payment.captured" && entity?.order_id) {
+//     // CHANGED: "order.paid" bhi handle hota hai
+//     if ((event === "payment.captured" || event === "order.paid") && entity?.order_id) {
 //       const supabase = getSupabaseAdmin();
 //       let orderRecord: { id: string; status: string } | null = null;
 
@@ -70,6 +73,18 @@
 //           .eq("razorpay_order_id", entity.order_id)
 //           .maybeSingle();
 //         orderRecord = byRzOrder;
+//       }
+
+//       // Safety net: no DB row yet -> create it from the payment.
+//       if (!orderRecord && entity.id) {
+//         const result = await fulfillPayment({
+//           razorpay_order_id: entity.order_id,
+//           razorpay_payment_id: entity.id,
+//           service: (entity.notes && entity.notes.service) || "Service",
+//           amount: Number(entity.amount || 0) / 100,
+//           formData: {},
+//         });
+//         orderRecord = { id: result.order_id, status: "paid" };
 //       }
 
 //       if (orderRecord) {
@@ -111,6 +126,7 @@
 // }
 
 
+ 
 import { logWebhook, verifyRazorpaySignature } from "../lib/webhook-utils.js";
 import { getSupabaseAdmin } from "../lib/supabase-admin.js";
 import {
@@ -121,7 +137,7 @@ import {
 } from "../lib/invoice-engine.js";
 import { scheduleInvoiceGeneration } from "../lib/schedule-invoice.js";
 import { fulfillPayment } from "../lib/fulfill-payment.js";
-
+ 
 async function readRawBody(req: { on: (e: string, cb: (c: Buffer) => void) => void }): Promise<string> {
   const chunks: Buffer[] = [];
   return new Promise((resolve, reject) => {
@@ -130,14 +146,14 @@ async function readRawBody(req: { on: (e: string, cb: (c: Buffer) => void) => vo
     req.on("error", reject);
   });
 }
-
+ 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).end();
-
+ 
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
   const rawBody = typeof req.body === "string" ? req.body : await readRawBody(req);
   const signature = req.headers["x-razorpay-signature"] as string;
-
+ 
   let signatureValid = false;
   if (secret && signature) {
     try {
@@ -147,12 +163,12 @@ export default async function handler(req: any, res: any) {
       return res.status(401).json({ error: "Signature verification failed" });
     }
   }
-
+ 
   const payload = JSON.parse(rawBody);
   const event = payload.event as string;
   const entity = payload.payload?.payment?.entity || payload.payload?.order?.entity;
   const idempotencyKey = entity?.id ? `razorpay-${event}-${entity.id}` : undefined;
-
+ 
   const { duplicate, id: logId } = await logWebhook({
     source: "razorpay",
     eventType: event,
@@ -160,15 +176,15 @@ export default async function handler(req: any, res: any) {
     idempotencyKey,
     signatureValid,
   });
-
+ 
   if (duplicate) return res.status(200).json({ ok: true, duplicate: true });
-
+ 
   try {
     // CHANGED: "order.paid" bhi handle hota hai
     if ((event === "payment.captured" || event === "order.paid") && entity?.order_id) {
       const supabase = getSupabaseAdmin();
       let orderRecord: { id: string; status: string } | null = null;
-
+ 
       if (entity.id) {
         const { data: byPayment } = await supabase
           .from("orders")
@@ -177,7 +193,7 @@ export default async function handler(req: any, res: any) {
           .maybeSingle();
         if (byPayment) orderRecord = byPayment;
       }
-
+ 
       if (!orderRecord) {
         const { data: byRzOrder } = await supabase
           .from("orders")
@@ -186,8 +202,33 @@ export default async function handler(req: any, res: any) {
           .maybeSingle();
         orderRecord = byRzOrder;
       }
-
+ 
       // Safety net: no DB row yet -> create it from the payment.
+      // FIX: this Razorpay account is shared with Empower / Miracle Baby, so
+      // their payments also reach this webhook. Those sites create their own
+      // full order (with form data) a few seconds later. Creating a blank
+      // fallback order right away used to win that race and the invoice +
+      // email were then built from the empty order. Wait for the partner
+      // site's order first (up to ~20s); only create the fallback if none
+      // shows up.
+      if (!orderRecord && entity.id) {
+        for (let attempt = 0; attempt < 10 && !orderRecord; attempt++) {
+          await new Promise((r) => setTimeout(r, 2000));
+          const { data: byPay } = await supabase
+            .from("orders")
+            .select("id, status")
+            .eq("razorpay_payment_id", entity.id)
+            .maybeSingle();
+          if (byPay) { orderRecord = byPay; break; }
+          const { data: byRz } = await supabase
+            .from("orders")
+            .select("id, status")
+            .eq("razorpay_order_id", entity.order_id)
+            .maybeSingle();
+          if (byRz) orderRecord = byRz;
+        }
+      }
+ 
       if (!orderRecord && entity.id) {
         const result = await fulfillPayment({
           razorpay_order_id: entity.order_id,
@@ -198,7 +239,7 @@ export default async function handler(req: any, res: any) {
         });
         orderRecord = { id: result.order_id, status: "paid" };
       }
-
+ 
       if (orderRecord) {
         const order = orderRecord;
         if (order.status !== "paid") {
@@ -212,7 +253,7 @@ export default async function handler(req: any, res: any) {
             })
             .eq("id", order.id);
         }
-
+ 
         const hasInvoice =
           (entity.id && (await paymentHasDeliverableInvoice(entity.id))) ||
           (await orderHasDeliverableInvoice(order.id));
@@ -223,11 +264,11 @@ export default async function handler(req: any, res: any) {
           await getSupabaseAdmin().from("webhooks_log").update({ status: "processed", processed_at: new Date().toISOString() }).eq("id", logId);
           return res.status(200).json({ ok: true, invoice_exists: true });
         }
-
+ 
         await scheduleInvoiceGeneration(order.id, entity.id);
       }
     }
-
+ 
     await getSupabaseAdmin().from("webhooks_log").update({ status: "processed", processed_at: new Date().toISOString() }).eq("id", logId);
     return res.status(200).json({ ok: true });
   } catch (e: unknown) {
