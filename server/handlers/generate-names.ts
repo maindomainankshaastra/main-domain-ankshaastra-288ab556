@@ -1,3 +1,6 @@
+
+
+
 // import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 // import {
 //   filterCandidates, chaldeanTotal, reduceToSingleDigit,
@@ -15,7 +18,7 @@
 // // $ per million tokens. Override via env (ANTHROPIC_PRICE_*) if you change the model.
 // const PRICE_IN = Number(process.env.ANTHROPIC_PRICE_IN_PER_MTOK || 2);
 // const PRICE_OUT = Number(process.env.ANTHROPIC_PRICE_OUT_PER_MTOK || 10);
-// const MAX_ROUNDS = 3;
+// const MAX_ROUNDS = 2;
 // // Vercel function limit is 60s; stop well before it so we always return JSON.
 // const BUDGET_MS = 45_000;
 // const WANT = 12;
@@ -68,6 +71,7 @@
 //     body: JSON.stringify({
 //       model: MODEL,
 //       max_tokens: 3000,
+//       thinking: { type: 'disabled' },
 //       system: SYSTEM,
 //       messages: [{ role: 'user', content: userPrompt }],
 //     }),
@@ -82,7 +86,8 @@
 //   }
 //   const data: any = await resp.json();
 //   const text = (data.content || []).map((b: any) => (b.type === 'text' ? b.text : '')).join('');
-//   return { text, usage: data.usage || { input_tokens: 0, output_tokens: 0 } };
+//   const debug = `stop=${data.stop_reason}; blocks=${(data.content || []).map((b: any) => b.type).join(',') || 'none'}; text="${text.slice(0, 160).replace(/\s+/g, ' ')}"`;
+//   return { text, debug, usage: data.usage || { input_tokens: 0, output_tokens: 0 } };
 // }
 
 // /**
@@ -112,6 +117,7 @@
 //   let inTok = 0, outTok = 0, rounds = 0, rejectedCount = 0;
 //   const startedAt = Date.now();
 //   let aiError = '';
+//   let lastDebug = '';
 
 //   try {
 //     while (kept.length < WANT && rounds < MAX_ROUNDS) {
@@ -131,7 +137,8 @@
 //         basePrompt + 'Prefer unique, rare, modern names.',
 //       ];
 //       const results = await Promise.all(prompts.map((pr) => askClaude(pr, remaining)));
-//       for (const { text, usage } of results) {
+//       for (const { text, usage, debug } of results) {
+//         lastDebug = debug;
 //         inTok += usage.input_tokens || 0;
 //         outTok += usage.output_tokens || 0;
 //         const parsed = parseJson(text);
@@ -145,6 +152,11 @@
 //     aiError = e?.message || 'AI request failed';
 //     // keep any names already found; only fail if we have nothing
 //     if (!kept.length) return res.status(502).json({ error: aiError });
+//   }
+//   if (!kept.length && rejectedCount === 0) {
+//     // AI replied but nothing was readable -> show exactly what came back
+//     console.error('generate-names: unreadable AI reply:', lastDebug);
+//     return res.status(502).json({ error: `AI reply could not be read. ${lastDebug}` });
 //   }
 //   if (!kept.length) {
 //     return res.status(200).json({
@@ -167,7 +179,6 @@
 // }
 
 
-
 import { getUserFromAuthHeader, isAdminUser } from '../lib/auth-api.js';
 import {
   filterCandidates, chaldeanTotal, reduceToSingleDigit,
@@ -177,7 +188,7 @@ import {
 type Req = {
   method?: string;
   headers?: { authorization?: string; Authorization?: string };
-  body?: { gender?: string; number?: number | string; starts?: string[] | string; count?: number };
+  body?: { gender?: string; number?: number | string; starts?: string[] | string; count?: number; preference?: string };
 };
 type Res = { status: (n: number) => { json: (o: unknown) => void; end: () => void } };
 
@@ -278,6 +289,14 @@ export default async function handler(req: Req, res: Res) {
   }
   if (!starts.length) return res.status(400).json({ error: 'at least one starting alphabet is required' });
 
+  // Optional operator note, e.g. "Lord Shiva names" / "modern, short". Letters, digits and basic punctuation only.
+  const preference = String(body.preference || '').replace(/[^\p{L}\p{N} ,.&'/-]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+
+  // How many verified names the caller wants (report package: 12 / 24 / 32). More names need more AI rounds.
+  const want = Math.min(36, Math.max(6, Math.round(Number(body.count) || WANT)));
+  const maxRounds = want > 15 ? 4 : MAX_ROUNDS;
+  const perCall = want > 15 ? 30 : 20;
+
   const rules: Rules = { target, prefixes: starts };
   const kept: Candidate[] = [];
   const seen = new Set<string>();
@@ -287,16 +306,17 @@ export default async function handler(req: Req, res: Res) {
   let lastDebug = '';
 
   try {
-    while (kept.length < WANT && rounds < MAX_ROUNDS) {
+    while (kept.length < want && rounds < maxRounds) {
       const remaining = BUDGET_MS - (Date.now() - startedAt);
       if (remaining < 8_000) break;
       rounds++;
       const avoid = [...seen].slice(0, 40).join(', ');
       const basePrompt =
-        `Give 20 ${gender} names whose numerology spelling starts with one of: ${starts.join(', ')}.\n` +
+        `Give ${perCall} ${gender} names whose numerology spelling starts with one of: ${starts.join(', ')}.\n` +
         `Target Chaldean total (reduced to a single digit): ${target}.\n` +
         `Chaldean values: 1 A I J Q Y | 2 B K R | 3 C G L S | 4 D M T | 5 E H N X | 6 U V W | 7 O Z | 8 F P (no 9).\n` +
         `Aim for the spelling's letters to add up to ${target} after reducing; we will re-check every name by code.\n` +
+        (preference ? `Name preference from the family (follow it when choosing names): ${preference}.\n` : '') +
         (avoid ? `Do not repeat these: ${avoid}.\n` : '');
       // two calls in parallel with different flavours -> same wall-clock time, 2x the candidates
       const prompts = [
@@ -334,7 +354,7 @@ export default async function handler(req: Req, res: Res) {
   }
 
   kept.sort((a, b) => (b.score || 0) - (a.score || 0));
-  const names = kept.slice(0, 15).map((c) => ({
+  const names = kept.slice(0, Math.max(15, want)).map((c) => ({
     name: c.spelling, base: c.base, meaning: c.meaning,
     total: chaldeanTotal(c.spelling), number: reduceToSingleDigit(chaldeanTotal(c.spelling)),
   }));
@@ -344,3 +364,4 @@ export default async function handler(req: Req, res: Res) {
     stats: { rounds, rejected: rejectedCount, inputTokens: inTok, outputTokens: outTok, costUsd: Number(costUsd.toFixed(5)), model: MODEL },
   });
 }
+
