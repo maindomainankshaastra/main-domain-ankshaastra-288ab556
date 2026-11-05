@@ -44,32 +44,29 @@ export interface DetailInput {
   alternatives: string; // e.g. "H, E, X"
 }
 
-/** Full text version (no image) - same layout the numerologist writes by hand today. */
+/**
+ * Step 1 message - exactly the text the numerologist sends by hand (this is also the caption that goes
+ * with the Swar image). `alternatives` is kept in the input for the image only; it is not part of the text.
+ */
 export function buildDetailMessage(i: DetailInput): string {
-  const lines = [
+  return [
     "*Namaste,* 🙏🏻",
     "",
-    "Kindly have a quick look at the birth details below. If the Date of Birth, Time, and Birth Place are correct, then the following are the",
-    "",
-    "_Recommended Swar/ Name Initials:_",
+    "Kindly have a quick look at the birth details below. If the Date of Birth, Time, and Birth Place are correct, then the following are the _Recommended Swar/ Name Initials:_",
     "",
     `🗓 *DOB:* ${formatDob(i.dob)}`,
     `📍 *Place:* ${i.place}`,
     `⏰ *Time:* ${formatTime12(i.time)}`,
     `🌙 *Nakshatra:* ${i.nakshatra}`,
-    `➗ *Pada:* ${i.pada}`,
+    `🔢 *Pada:* ${i.pada}`,
     "",
-    `🪷 *Name Initials / Swar (Recommended):* ${i.swar}`,
+    `🪷 *Name Initials / Swar:* ${i.swar}`,
     "",
-  ];
-  if (i.alternatives.trim()) lines.push(`🔢 *Alternatives for Swar (Numerology):* ${i.alternatives}`, "");
-  lines.push(
     "Please let us know if you’d like numerologically aligned names with these alphabets only and if you have any specific name preference. Once confirmed, will share the name options.",
     "",
     "*Warm Regards,*",
     "*Ankshaastra – Empower Your Name*",
-  );
-  return lines.join("\n");
+  ].join("\n");
 }
 
 export function whatsappLink(phone: string, text: string): string {
@@ -83,4 +80,34 @@ export function whatsappLink(phone: string, text: string): string {
   if (isMobile) return `https://wa.me/${full}?${q}`;
   // Desktop: open WhatsApp Web directly (wa.me shows an extra "Open app / Continue to WhatsApp Web" page).
   return `https://web.whatsapp.com/send?${full ? `phone=${full}&` : ""}${q}`;
+}
+
+/**
+ * WhatsApp DESKTOP APP deep link. The app keeps its own login, so the operator never has to scan the QR code
+ * again (WhatsApp Web asks for a fresh scan whenever its browser session is cleared or opened in a new profile).
+ */
+export function whatsappAppLink(phone: string, text: string): string {
+  const digits = phone.replace(/\D/g, "");
+  const full = digits.length === 10 ? `91${digits}` : digits;
+  const safe = text.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "");
+  return `whatsapp://send?${full ? `phone=${full}&` : ""}text=${encodeURIComponent(safe)}`;
+}
+
+export type WhatsAppMode = "web" | "app";
+const WA_MODE_KEY = "ankshaastra_wa_mode";
+
+export function getWhatsAppMode(): WhatsAppMode {
+  try { return localStorage.getItem(WA_MODE_KEY) === "app" ? "app" : "web"; } catch { return "web"; }
+}
+export function setWhatsAppMode(mode: WhatsAppMode): void {
+  try { localStorage.setItem(WA_MODE_KEY, mode); } catch { /* private mode: keep default */ }
+}
+
+/**
+ * One place that opens WhatsApp for every step. Web mode always reuses the SAME browser tab (named window)
+ * instead of opening a new tab each time, so WhatsApp Web is not reloaded / re-linked on every send.
+ */
+export function openWhatsApp(phone: string, text: string, mode: WhatsAppMode = getWhatsAppMode()): void {
+  if (mode === "app") { window.location.href = whatsappAppLink(phone, text); return; }
+  window.open(whatsappLink(phone, text), "ankshaastra_whatsapp");
 }
