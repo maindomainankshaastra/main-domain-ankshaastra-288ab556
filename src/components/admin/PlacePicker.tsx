@@ -15,6 +15,7 @@ interface Suggestion {
   title: string;
   subtitle: string;
   timezone?: string;
+  population?: number;
 }
 
 interface GeoResult {
@@ -25,7 +26,11 @@ interface GeoResult {
   country?: string;
   country_code?: string;
   timezone?: string;
+  population?: number;
 }
+
+/** "Alīgarh" -> "Aligarh" (removes the bar/dots over letters so the customer sees plain English spelling). */
+const plain = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
 
 export interface PlacePickerProps {
   value: string;
@@ -56,21 +61,26 @@ export function PlacePicker({ value, onChange, onPick, indiaOnly = true, placeho
     const t = setTimeout(async () => {
       setLoading(true); setFailed(false);
       try {
-        const url = `${ENDPOINT}?name=${encodeURIComponent(q)}&count=10&language=en&format=json${indiaOnly ? "&countryCode=IN" : ""}`;
+        const url = `${ENDPOINT}?name=${encodeURIComponent(q)}&count=30&language=en&format=json${indiaOnly ? "&countryCode=IN" : ""}`;
         const r = await fetch(url, { signal: ctrl.signal });
         if (!r.ok) throw new Error(String(r.status));
         const j: { results?: GeoResult[] } = await r.json();
         const seen = new Set<string>();
         const list: Suggestion[] = [];
-        for (const g of j.results ?? []) {
-          const state = g.admin1 || g.country || "";
-          const value = [g.name, state].filter(Boolean).join(", ");
-          const district = g.admin2 && g.admin2 !== g.name ? `${g.admin2} district` : "";
-          const subtitle = [district, state, indiaOnly ? "" : g.country].filter(Boolean).join(" · ");
+        // Big, well-known places first (like Drik Panchang), tiny villages with the same name last.
+        const sorted = [...(j.results ?? [])].sort((a, b) => (b.population ?? 0) - (a.population ?? 0));
+        for (const g of sorted) {
+          const name = plain(g.name);
+          const state = plain(g.admin1 || g.country || "");
+          const dist = plain(g.admin2 || "").replace(/\s*district$/i, "");
+          const value = [name, state].filter(Boolean).join(", ");
+          const district = dist && dist.toLowerCase() !== name.toLowerCase() ? `${dist} district` : "";
+          const subtitle = [district, state, indiaOnly ? "" : plain(g.country || "")].filter(Boolean).join(" · ");
           const key = `${value}|${district}`;
           if (seen.has(key)) continue;
           seen.add(key);
-          list.push({ key, value, title: g.name, subtitle, timezone: g.timezone });
+          list.push({ key, value, title: name, subtitle, timezone: g.timezone, population: g.population });
+          if (list.length >= 6) break;
         }
         setItems(list); setActive(-1); setOpen(true);
       } catch (e: any) {
