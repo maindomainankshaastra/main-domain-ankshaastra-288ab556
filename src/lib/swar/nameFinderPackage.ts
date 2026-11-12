@@ -1,3 +1,6 @@
+
+
+
 // /**
 //  * Which package did the customer buy, and how many name slots does the report get?
 //  *
@@ -81,6 +84,7 @@
 //   middleIsFather?: boolean;
 //   lastName?: string;
 //   phone?: string;
+//   customerName?: string;
 // }
 
 // const toIso = (v: unknown): string | undefined => {
@@ -113,6 +117,7 @@
 //     middleIsFather: s.fatherFirstNameAsMiddleName !== undefined ? yes(s.fatherFirstNameAsMiddleName) : undefined,
 //     lastName: s.childLastName ? String(s.childLastName) : undefined,
 //     phone: s.mobileNumber ?? s.mobile ?? s.phone ?? order.customer_phone,
+//     customerName: String(order.customer_name ?? s.fullName ?? s.customerName ?? s.name ?? "").trim() || undefined,
 //   };
 // }
 
@@ -207,6 +212,9 @@ export interface OrderPrefill {
   lastName?: string;
   phone?: string;
   customerName?: string;
+  email?: string;
+  /** Name style + notes the customer typed in the order, ready for the name generator's preference box. */
+  preference?: string;
 }
 
 const toIso = (v: unknown): string | undefined => {
@@ -225,11 +233,30 @@ const toTime24 = (v: unknown): string | undefined => {
 };
 const yes = (v: unknown) => /^(yes|y|true|1)$/i.test(String(v ?? "").trim());
 
+/** "[NAME STYLE: Mix of All] [NOTES: ...]" -> "Style: Mix of All. Notes: ..." (add-on tags dropped, capped at 400 chars). */
+export function preferenceFromNameOptions(raw: unknown): string | undefined {
+  const t = String(raw ?? "").replace(/\[ADD-ON:[^\]]*\]/gi, "");
+  const style = /\[NAME STYLE:\s*([^\]]*)\]/i.exec(t)?.[1]?.trim();
+  const notes = /\[NOTES:\s*([\s\S]*)\]\s*$/i.exec(t.trim())?.[1]?.replace(/\s+/g, " ").trim();
+  const out = [style ? `Style: ${style}.` : "", notes ? `Notes: ${notes}` : ""].filter(Boolean).join(" ");
+  return out ? out.slice(0, 400) : undefined;
+}
+
+/** Place as the customer would say it: city + state (no PIN code), without repeating the same word twice. */
+function placeText(s: Record<string, any>): string {
+  const parts: string[] = [];
+  for (const v of [s.placeOfBirth ?? s.city, s.state]) {
+    const t = String(v ?? "").trim();
+    if (t && !parts.some((x) => x.toLowerCase() === t.toLowerCase())) parts.push(t);
+  }
+  return parts.join(", ");
+}
+
 export function prefillFromOrder(order: Record<string, any>): OrderPrefill {
   const meta = (order.metadata ?? {}) as Record<string, any>;
   const s = (meta.formSnapshot ?? meta) as Record<string, any>;
   const g = String(s.gender ?? "").toLowerCase();
-  const place = [s.placeOfBirth ?? s.city, s.pinCode ?? s.pincode].filter(Boolean).join(", ");
+  const place = placeText(s);
   return {
     dob: toIso(s.childDob ?? s.dob),
     time: toTime24(s.timeOfBirth),
@@ -240,6 +267,8 @@ export function prefillFromOrder(order: Record<string, any>): OrderPrefill {
     lastName: s.childLastName ? String(s.childLastName) : undefined,
     phone: s.mobileNumber ?? s.mobile ?? s.phone ?? order.customer_phone,
     customerName: String(order.customer_name ?? s.fullName ?? s.customerName ?? s.name ?? "").trim() || undefined,
+    email: s.email ? String(s.email) : undefined,
+    preference: preferenceFromNameOptions(s.nameOptions),
   };
 }
 
