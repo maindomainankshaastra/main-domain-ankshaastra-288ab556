@@ -21,7 +21,7 @@
 // import { getLetterBlock, type LetterBlock } from "@/lib/baby-reports/shared/first-letter-index";
 // import { buildStandardLoShuGrid, toGridCells } from "@/lib/baby-reports/shared/loshu-grid";
 // import { evaluateAllRajyogs, type RajyogResult, type RajyogStatus } from "@/lib/baby-reports/shared/rajyog";
-// import { RECOMMENDATION_BLOCKS, pickRecommendationCase, type RecommendationCase } from "@/lib/baby-reports/shared/recommendation";
+// import { RECOMMENDATION_BLOCKS, SINGLE_OPTION_BLOCK, pickRecommendationCase, resolveRecommendationCase, impactLabelsForCase, type RecommendationCase } from "@/lib/baby-reports/shared/recommendation";
 // import { getFirstNameExplanation, getFullNameExplanation, getCompoundExplanation } from "@/lib/baby-reports/shared/number-explanations";
 // import { MULANK_DESCRIPTIONS, BHAGYANK_DESCRIPTIONS, getCombinationBlock } from "@/lib/baby-reports/perfect-baby-name/combination-content";
 // import type { BabyNamePreference } from "@/lib/baby-reports/complete-baby-blueprint/form";
@@ -1014,13 +1014,6 @@
 //   return s === "" || /^(n\/?a|n\.a\.?|none|nil|[-–—])$/i.test(s) ? "" : s;
 // }
 
-// /** Page 22 text when only ONE name option was submitted (no comparison possible). */
-// const SINGLE_OPTION_BLOCK = [
-//   "Only one name option was submitted for analysis, so Option 1 has been evaluated on its own.",
-//   "Its first name number, full name number, and compound number have been analysed against your birth energies, and the resulting impact level is shown above.",
-//   "If you would like alternative names for comparison, you may request additional name suggestions.",
-// ];
-
 // function drawRecommendationLevelPage(
 //   page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput,
 //   labels: [string, string], recCase: RecommendationCase, single = false,
@@ -1412,22 +1405,23 @@
 //   }
 //   const rank1 = opt1 ? favourabilityRank(opt1) : 99;
 //   const rank2 = opt2 ? favourabilityRank(opt2) : 99;
-//   const recCase: RecommendationCase =
+//   const computedCase: RecommendationCase =
 //     opt1 && opt2
 //       ? pickRecommendationCase(
 //           { firstNameNumber: opt1.firstNumber, fullNameNumber: opt1.fullNumber, compoundNumber: opt1.compound, favorabilityRank: rank1 },
 //           { firstNameNumber: opt2.firstNumber, fullNameNumber: opt2.fullNumber, compoundNumber: opt2.compound, favorabilityRank: rank2 },
 //         )
 //       : "equal";
+//   // Preference dropdown decides the case (Option 1 / Option 2 / Both); NA = computed. One name only -> Case 4.
+//   const resolvedCase = resolveRecommendationCase({ hasOption1: !!opt1, hasOption2: !!opt2, preference: data.preference, computedCase });
+//   const recCase: RecommendationCase = resolvedCase === "single" ? "option1Better" : resolvedCase;
 //   const bestRank = Math.min(rank1, rank2);
-//   const label1 = impactLabel(rank1, singleOption ? true : rank1 === bestRank);
-//   const label2 = impactLabel(rank2, rank2 === bestRank);
-//   const recommended =
-//     recCase === "option1Better" ? opt1
-//     : recCase === "option2Better" ? opt2
-//     : singleOption ? opt1
-//     : data.preference === "option1" ? (opt1 ?? opt2)
-//     : (opt2 ?? opt1);
+//   const [label1, label2] = impactLabelsForCase(recCase, data.preference, [
+//     impactLabel(rank1, singleOption ? true : rank1 === bestRank),
+//     impactLabel(rank2, rank2 === bestRank),
+//   ]);
+//   // Same value / "Both" -> Option 1 for pages that need a single name (Loshu, Rajyog, letter).
+//   const recommended = recCase === "option2Better" ? opt2 : (opt1 ?? opt2);
 
 //   const nick1 = data.nickName1 ? analyseName(data.nickName1, mulank, bhagyank, dob) : null;
 //   const nick2 = data.nickName2 ? analyseName(data.nickName2, mulank, bhagyank, dob) : null;
@@ -1576,6 +1570,7 @@
 //   document.body.removeChild(link);
 //   URL.revokeObjectURL(url);
 // }
+
 
 
 
@@ -2125,10 +2120,18 @@ function splitNameVariants(raw: string): string[] {
 
 function analyseName(rawName: string, mulank: number, bhagyank: number, dob: { day: number; month: number; year: number }): NameFacts {
   const variants = splitNameVariants(rawName);
-  // All variants share ONE calculation. Use the variant that carries the most words (i.e. the one with the
-  // surname, e.g. "Sanvvii Mishra" in "Navishaa / Naviisha / Sanvvii Mishra"), so the full-name and compound
-  // numbers include the surname exactly like a single "First Last" entry would. Ties -> the first one listed.
-  const clean = variants.reduce((best, v) => (v.split(" ").length > best.split(" ").length ? v : best), variants[0] ?? rawName.trim().replace(/\s+/g, " "));
+  // All variants share ONE calculation, done on the FIRST spelling (same rule as the Name Correction report):
+  //   "Reyyansh / Reyanshh Khaitan"  -> spellings share the surname  -> "Reyyansh Khaitan"
+  //   "Aarav Kumar / Aaruv Kumar"    -> complete alternative names   -> "Aarav Kumar"
+  let clean: string;
+  if (variants.length <= 1) {
+    clean = variants[0] ?? rawName.trim().replace(/\s+/g, " ");
+  } else if (variants[0].split(" ").length >= 2) {
+    clean = variants[0];
+  } else {
+    const tail = variants[variants.length - 1].split(" ").slice(1).join(" ");
+    clean = `${variants[0]} ${tail}`.trim();
+  }
   const shownName = variants.length ? variants.join(" / ") : clean;   // what the report prints
   const firstName = clean.split(" ")[0] ?? "";
   const grid = buildLoShuGrid(dob.day, dob.month, dob.year);
@@ -2941,6 +2944,24 @@ function drawCareerTitlesPage(page: PDFPage, fonts: Fonts, assets: Assets, data:
 /*  Main entry point                                                    */
 /* ------------------------------------------------------------------ */
 
+/**
+ * "Is the middle name the father's / husband's name?" = Yes  ->  that name must NOT be counted in the numbers.
+ * Calculation only: the option is still shown exactly as typed. The first word (first name) is never touched.
+ */
+function stripFatherName(name: string, data: { isMiddleNameFatherHusband?: boolean; middleName?: string }): string {
+  if (!data.isMiddleNameFatherHusband) return name;
+  const norm = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const father = (data.middleName ?? "").split(/\s+/).map(norm).filter(Boolean);
+  if (father.length === 0) return name;
+  const words = name.trim().split(/\s+/);
+  for (let i = 1; i + father.length <= words.length; i++) {
+    if (father.every((fw, k) => norm(words[i + k]) === fw)) {
+      return [...words.slice(0, i), ...words.slice(i + father.length)].join(" ");
+    }
+  }
+  return name;
+}
+
 export async function generateCompleteBabyBlueprintReportPdf(input: CompleteBabyBlueprintReportInput): Promise<Uint8Array> {
   const split = splitName(input.customerName);
   const data: ResolvedInput = {
@@ -2979,8 +3000,14 @@ export async function generateCompleteBabyBlueprintReportPdf(input: CompleteBaby
   const kua = computeKuaNumber(dob.year, data.gender);
 
   // --- candidate names (a baby has no "current" name) ------------------------
-  const opt1 = data.option1Name ? analyseName(data.option1Name, mulank, bhagyank, dob) : null;
-  const opt2 = data.option2Name ? analyseName(data.option2Name, mulank, bhagyank, dob) : null;
+  // Numbers come from the name without the father's/husband's name; what is SHOWN stays exactly as typed.
+  const analyseOption = (typed: string): NameFacts | null => {
+    if (!typed) return null;
+    const facts = analyseName(stripFatherName(typed, data), mulank, bhagyank, dob);
+    return { ...facts, displayName: splitNameVariants(typed).join(" / ") || typed };
+  };
+  const opt1 = analyseOption(data.option1Name);
+  const opt2 = analyseOption(data.option2Name);
   if (!opt1) {
     console.warn(`Complete Baby Blueprint PDF: report ${data.reportId} has no name option — pages 20-22 will show placeholders.`);
   }
