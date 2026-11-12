@@ -1,4 +1,6 @@
 
+
+
 // import { useEffect, useMemo, useRef, useState } from "react";
 // import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, Sparkles, TriangleAlert } from "lucide-react";
 // import { AdminPage } from "@/components/admin/AdminPage";
@@ -14,6 +16,7 @@
 // import { buildDetailMessage, buildImageCaption, formatDob, formatTime12, getWhatsAppMode, openWhatsApp, setWhatsAppMode, type WhatsAppMode } from "@/lib/swar/swarMessage";
 // import { PlacePicker } from "@/components/admin/PlacePicker";
 // import { SwarCasesPanel } from "@/components/admin/SwarCasesPanel";
+// import { SwarFinalReport } from "@/components/admin/SwarFinalReport";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { phoneDigits, saveCase, STATUS_META, STATUS_ORDER, type CaseSnapshot, type CaseStatus, type SwarCaseRow } from "@/lib/swar/swarCases";
 // import { buildNameFinderProfile, type Gender } from "@/lib/swar/nameFinder";
@@ -693,10 +696,21 @@
 //             <div className="rounded-md border p-3 text-sm whitespace-pre-wrap bg-muted/40">{analysisMessage}</div>
 //             <div className="flex flex-wrap gap-2">
 //               <Button variant="outline" onClick={() => copy(analysisMessage, "Analysis message")}><Copy className="w-4 h-4 mr-2" />Copy analysis message</Button>
-//               <Button onClick={() => { sendWhatsApp(analysisMessage); void autoStatus("report_shared"); }}><MessageCircle className="w-4 h-4 mr-2" />Send on WhatsApp</Button>
+//               <Button onClick={() => sendWhatsApp(analysisMessage)}><MessageCircle className="w-4 h-4 mr-2" />Send on WhatsApp</Button>
 //             </div>
 //           </div>
 //         )}
+//       </AdminPage>
+
+//       <AdminPage title="Step 6 · Final report" description="When the customer confirms the final name(s), create the Perfect / Complete report from here. Sending its link marks the case Final Report Shared.">
+//         <SwarFinalReport
+//           caseId={caseId} orderId={orderId} tier={pkg.tier}
+//           dob={dob} phone={phone} gender={gender}
+//           surname={surname} middle={middle} middleNotFather={middleNotFather}
+//           chosenNames={parseNames(chosenRaw)}
+//           sendWhatsApp={sendWhatsApp}
+//           onSent={() => { void autoStatus("report_shared"); }}
+//         />
 //       </AdminPage>
 //       </TabsContent>
 //     </Tabs>
@@ -1407,6 +1421,7 @@ export default function SwarCalculatorModule() {
 
       <AdminPage title="Step 6 · Final report" description="When the customer confirms the final name(s), create the Perfect / Complete report from here. Sending its link marks the case Final Report Shared.">
         <SwarFinalReport
+          key={`${caseId ?? "none"}|${orderId ?? ""}`}
           caseId={caseId} orderId={orderId} tier={pkg.tier}
           dob={dob} phone={phone} gender={gender}
           surname={surname} middle={middle} middleNotFather={middleNotFather}
