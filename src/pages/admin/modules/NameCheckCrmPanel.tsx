@@ -885,9 +885,9 @@ export default function NameCheckCrmPanel() {
                     <tr key={r.id} className="border-t align-top">
                       <td className="px-2 py-2">
                         <div className="font-medium">{r.customer_name}</div>
-                        <div className="max-w-[170px] break-all text-xs text-muted-foreground">{r.email}</div>
-                        <div className="text-xs text-muted-foreground">{r.phone || "—"}</div>
-                        <div className="text-[11px] text-muted-foreground">{r.report_id}</div>
+                        <div className="whitespace-nowrap text-xs text-muted-foreground">{r.email}</div>
+                        <div className="whitespace-nowrap text-xs text-muted-foreground">{r.phone || "—"}</div>
+                        <div className="whitespace-nowrap text-[11px] text-muted-foreground">{r.report_id}</div>
                       </td>
                       <td className="px-2 py-2">{dash(s.mulank)}</td>
                       <td className="px-2 py-2">{dash(s.bhagyank)}</td>
