@@ -23,7 +23,7 @@
 // import { getLetterBlock, type LetterBlock } from "@/lib/baby-reports/shared/first-letter-index";
 // import { buildStandardLoShuGrid, toGridCells } from "@/lib/baby-reports/shared/loshu-grid";
 // import { evaluateAllRajyogs, type RajyogResult, type RajyogStatus } from "@/lib/baby-reports/shared/rajyog";
-// import { RECOMMENDATION_BLOCKS, pickRecommendationCase, type RecommendationCase } from "@/lib/baby-reports/shared/recommendation";
+// import { RECOMMENDATION_BLOCKS, SINGLE_OPTION_BLOCK, pickRecommendationCase, resolveRecommendationCase, impactLabelsForCase, type RecommendationCase } from "@/lib/baby-reports/shared/recommendation";
 // import { getFirstNameExplanation, getFullNameExplanation, getCompoundExplanation } from "@/lib/baby-reports/shared/number-explanations";
 // import { MULANK_DESCRIPTIONS, BHAGYANK_DESCRIPTIONS, getCombinationBlock } from "@/lib/baby-reports/perfect-baby-name/combination-content";
 // import type { BabyNamePreference } from "@/lib/baby-reports/perfect-baby-name/form";
@@ -1015,13 +1015,6 @@
 //   return s === "" || /^(n\/?a|n\.a\.?|none|nil|[-–—])$/i.test(s) ? "" : s;
 // }
 
-// /** Page 21 text when only ONE name option was submitted (no comparison possible). */
-// const SINGLE_OPTION_BLOCK = [
-//   "Only one name option was submitted for analysis, so Option 1 has been evaluated on its own.",
-//   "Its first name number, full name number, and compound number have been analysed against your birth energies, and the resulting impact level is shown above.",
-//   "If you would like alternative names for comparison, you may request additional name suggestions.",
-// ];
-
 // function drawRecommendationLevelPage(
 //   page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput,
 //   labels: [string, string], recCase: RecommendationCase, single = false,
@@ -1251,22 +1244,23 @@
 //   }
 //   const rank1 = opt1 ? favourabilityRank(opt1) : 99;
 //   const rank2 = opt2 ? favourabilityRank(opt2) : 99;
-//   const recCase: RecommendationCase =
+//   const computedCase: RecommendationCase =
 //     opt1 && opt2
 //       ? pickRecommendationCase(
 //           { firstNameNumber: opt1.firstNumber, fullNameNumber: opt1.fullNumber, compoundNumber: opt1.compound, favorabilityRank: rank1 },
 //           { firstNameNumber: opt2.firstNumber, fullNameNumber: opt2.fullNumber, compoundNumber: opt2.compound, favorabilityRank: rank2 },
 //         )
 //       : "equal";
+//   // Preference dropdown decides the case (Option 1 / Option 2 / Both); NA = computed. One name only -> Case 4.
+//   const resolvedCase = resolveRecommendationCase({ hasOption1: !!opt1, hasOption2: !!opt2, preference: data.preference, computedCase });
+//   const recCase: RecommendationCase = resolvedCase === "single" ? "option1Better" : resolvedCase;
 //   const bestRank = Math.min(rank1, rank2);
-//   const label1 = impactLabel(rank1, singleOption ? true : rank1 === bestRank);
-//   const label2 = impactLabel(rank2, rank2 === bestRank);
-//   const recommended =
-//     recCase === "option1Better" ? opt1
-//     : recCase === "option2Better" ? opt2
-//     : singleOption ? opt1
-//     : data.preference === "option1" ? (opt1 ?? opt2)
-//     : (opt2 ?? opt1);
+//   const [label1, label2] = impactLabelsForCase(recCase, data.preference, [
+//     impactLabel(rank1, singleOption ? true : rank1 === bestRank),
+//     impactLabel(rank2, rank2 === bestRank),
+//   ]);
+//   // Same value / "Both" -> Option 1 for pages that need a single name (Loshu, Rajyog, letter).
+//   const recommended = recCase === "option2Better" ? opt2 : (opt1 ?? opt2);
 
 //   const nick1 = data.nickName1 ? analyseName(data.nickName1, mulank, bhagyank, dob) : null;
 //   const nick2 = data.nickName2 ? analyseName(data.nickName2, mulank, bhagyank, dob) : null;
@@ -1394,6 +1388,8 @@
 //   document.body.removeChild(link);
 //   URL.revokeObjectURL(url);
 // }
+
+
 
 
 /**
@@ -1570,7 +1566,7 @@ const ASSET_PATHS = {
  * 50-page report) and simply dropped in as full-bleed images.
  */
 const STATIC_PAGE_NUMBERS = [
-  1, 2, 3, 6, 7, 8, 9, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+  1, 2, 3, 6, 7, 8, 9, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
   41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
 ];
 const STATIC_BASE = "/perfect-baby-name-assets";
@@ -2753,6 +2749,7 @@ export async function generatePerfectBabyNameReportPdf(input: PerfectBabyNameRep
   for (let n = 1; n <= TOTAL_PAGES; n++) {
     if (n === 20 && singleOption) continue; // no Option 2 page when only one name option was given
     if (n === 22 && !includeNickPage) continue; // Nick Name page only when a nick name was entered
+    if (n === 28) continue; // "Expected Timeline & Result" page is no longer part of the report
     const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     const build = dynamicPages[n];
     if (build) {
