@@ -1,3 +1,7 @@
+
+
+
+
 // /**
 //  * Name Check — CRM follow-up summary + monthly ZIP download.
 //  *
@@ -65,12 +69,34 @@
 // };
 
 // const FOLLOW_UP = [
-//   { value: "pending", label: "To call" },
-//   { value: "called", label: "Called" },
-//   { value: "interested", label: "Interested" },
-//   { value: "not_interested", label: "Not interested" },
-//   { value: "converted", label: "Converted" },
+//   { value: "pending", label: "To call", tone: "border-amber-300 bg-amber-50 text-amber-900", dot: "bg-amber-500" },
+//   { value: "called", label: "Called", tone: "border-sky-300 bg-sky-50 text-sky-900", dot: "bg-sky-500" },
+//   { value: "interested", label: "Interested", tone: "border-violet-300 bg-violet-50 text-violet-900", dot: "bg-violet-500" },
+//   { value: "not_interested", label: "Not interested", tone: "border-slate-300 bg-slate-100 text-slate-700", dot: "bg-slate-400" },
+//   { value: "converted", label: "Converted", tone: "border-green-300 bg-green-50 text-green-900", dot: "bg-green-600" },
 // ];
+
+// const followTone = (v: string | null) => FOLLOW_UP.find((f) => f.value === (v ?? "pending"))?.tone ?? "";
+
+// /** Shows a colour dot next to the label (used inside the follow-up dropdowns). */
+// function FollowUpLabel({ f }: { f: (typeof FOLLOW_UP)[number] }) {
+//   return (
+//     <span className="inline-flex items-center gap-2">
+//       <span className={`h-2 w-2 rounded-full ${f.dot}`} />
+//       {f.label}
+//     </span>
+//   );
+// }
+
+// /** Reduces a total to a single digit (11 -> 2, 38 -> 2, 39 -> 3). */
+// function reduceToDigit(n: number): number {
+//   let v = Math.abs(Math.trunc(n));
+//   while (v > 9) v = String(v).split("").reduce((a, c) => a + Number(c), 0);
+//   return v;
+// }
+
+// /** "11/2" = total 11 reduced to 2. */
+// const totalWithReduced = (n: number | null) => (n === null || n === undefined ? "—" : `${n}/${reduceToDigit(n)}`);
 
 // function summaryOf(r: CrmRow): Summary {
 //   if (r.mulank !== null && r.bhagyank !== null && r.correction_advised !== null) {
@@ -273,10 +299,10 @@
 //       };
 //       await Promise.all([worker(), worker(), worker(), worker()]);
 
-//       const header = ["Report ID", "Customer", "Email", "Phone", "Mulank", "Bhagyank", "First Name Total", "Full Name Total", "Compound No.", "Compound Tier", "Name Correction Advised", "Emailed At", "Follow-up"];
+//       const header = ["Report ID", "Customer", "Email", "Phone", "Mulank", "Bhagyank", "First Name Total", "First Name Number", "Full Name Total", "Full Name Number", "Compound No.", "Compound Tier", "Name Correction Advised", "Emailed At", "Follow-up"];
 //       const lines = [header.join(",")].concat(
 //         view.map(({ r, s }) =>
-//           [r.report_id, r.customer_name, r.email, r.phone, s.mulank, s.bhagyank, s.firstTotal, s.fullTotal, s.compound, cap(s.tier), s.advised === null ? "" : s.advised ? "Yes" : "No", r.emailed_at ?? "", r.follow_up_status ?? "pending"]
+//           [r.report_id, r.customer_name, r.email, r.phone, s.mulank, s.bhagyank, s.firstTotal, s.firstTotal === null ? "" : reduceToDigit(s.firstTotal), s.fullTotal, s.fullTotal === null ? "" : reduceToDigit(s.fullTotal), s.compound, cap(s.tier), s.advised === null ? "" : s.advised ? "Yes" : "No", r.emailed_at ?? "", r.follow_up_status ?? "pending"]
 //             .map(csvCell)
 //             .join(","),
 //         ),
@@ -338,7 +364,7 @@
 //                 <SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Follow-up" /></SelectTrigger>
 //                 <SelectContent>
 //                   <SelectItem value="all">Follow-up: All</SelectItem>
-//                   {FOLLOW_UP.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
+//                   {FOLLOW_UP.map((f) => (<SelectItem key={f.value} value={f.value}><FollowUpLabel f={f} /></SelectItem>))}
 //                 </SelectContent>
 //               </Select>
 //               <div className="relative flex-1">
@@ -402,8 +428,8 @@
 //                       </td>
 //                       <td className="px-3 py-2">{dash(s.mulank)}</td>
 //                       <td className="px-3 py-2">{dash(s.bhagyank)}</td>
-//                       <td className="px-3 py-2">{dash(s.firstTotal)}</td>
-//                       <td className="px-3 py-2">{dash(s.fullTotal)}</td>
+//                       <td className="px-3 py-2">{totalWithReduced(s.firstTotal)}</td>
+//                       <td className="px-3 py-2">{totalWithReduced(s.fullTotal)}</td>
 //                       <td className="px-3 py-2">{dash(s.compound)} <span className="text-muted-foreground">({cap(s.tier)})</span></td>
 //                       <td className="px-3 py-2">
 //                         {s.advised === null ? "—" : s.advised
@@ -436,13 +462,13 @@
 //                       </td>
 //                       <td className="px-3 py-2">
 //                         <Select value={r.follow_up_status ?? "pending"} onValueChange={(v) => void updateFollowUp(r.id, { follow_up_status: v })}>
-//                           <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
+//                           <SelectTrigger className={`h-8 w-[150px] font-medium ${followTone(r.follow_up_status)}`}><SelectValue /></SelectTrigger>
 //                           <SelectContent>
-//                             {FOLLOW_UP.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
+//                             {FOLLOW_UP.map((f) => (<SelectItem key={f.value} value={f.value}><FollowUpLabel f={f} /></SelectItem>))}
 //                           </SelectContent>
 //                         </Select>
 //                         <Input
-//                           className="mt-1 h-8 w-[140px] text-xs"
+//                           className="mt-1 h-8 w-[150px] text-xs"
 //                           placeholder="Note"
 //                           defaultValue={r.follow_up_note ?? ""}
 //                           onBlur={(e) => {
@@ -461,6 +487,7 @@
 //     </Card>
 //   );
 // }
+
 
 
 
@@ -500,6 +527,7 @@ type CrmRow = {
   is_middle_name_father_husband: boolean | null;
   email: string;
   phone: string | null;
+  source_website: string | null;
   dob: string;
   gender: string | null;
   pdf_url: string | null;
@@ -668,7 +696,7 @@ export default function NameCheckCrmPanel() {
         if (advisedFilter === "yes" && s.advised !== true) return false;
         if (advisedFilter === "no" && s.advised !== false) return false;
         if (followFilter !== "all" && (r.follow_up_status ?? "pending") !== followFilter) return false;
-        if (term && !`${r.customer_name} ${r.email} ${r.phone ?? ""} ${r.report_id}`.toLowerCase().includes(term)) return false;
+        if (term && !`${r.customer_name} ${r.email} ${r.phone ?? ""} ${r.report_id} ${r.source_website ?? ""}`.toLowerCase().includes(term)) return false;
         return true;
       });
   }, [rows, advisedFilter, followFilter, search]);
@@ -761,10 +789,10 @@ export default function NameCheckCrmPanel() {
       };
       await Promise.all([worker(), worker(), worker(), worker()]);
 
-      const header = ["Report ID", "Customer", "Email", "Phone", "Mulank", "Bhagyank", "First Name Total", "First Name Number", "Full Name Total", "Full Name Number", "Compound No.", "Compound Tier", "Name Correction Advised", "Emailed At", "Follow-up"];
+      const header = ["Report ID", "Customer", "Email", "Phone", "Website", "Mulank", "Bhagyank", "First Name Total", "First Name Number", "Full Name Total", "Full Name Number", "Compound No.", "Compound Tier", "Name Correction Advised", "Emailed At", "Follow-up"];
       const lines = [header.join(",")].concat(
         view.map(({ r, s }) =>
-          [r.report_id, r.customer_name, r.email, r.phone, s.mulank, s.bhagyank, s.firstTotal, s.firstTotal === null ? "" : reduceToDigit(s.firstTotal), s.fullTotal, s.fullTotal === null ? "" : reduceToDigit(s.fullTotal), s.compound, cap(s.tier), s.advised === null ? "" : s.advised ? "Yes" : "No", r.emailed_at ?? "", r.follow_up_status ?? "pending"]
+          [r.report_id, r.customer_name, r.email, r.phone, r.source_website ?? "", s.mulank, s.bhagyank, s.firstTotal, s.firstTotal === null ? "" : reduceToDigit(s.firstTotal), s.fullTotal, s.fullTotal === null ? "" : reduceToDigit(s.fullTotal), s.compound, cap(s.tier), s.advised === null ? "" : s.advised ? "Yes" : "No", r.emailed_at ?? "", r.follow_up_status ?? "pending"]
             .map(csvCell)
             .join(","),
         ),
@@ -867,6 +895,7 @@ export default function NameCheckCrmPanel() {
                 <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
                   <tr>
                     <th className="px-3 py-2">Customer</th>
+                    <th className="px-3 py-2">Website</th>
                     <th className="px-3 py-2">Mulank</th>
                     <th className="px-3 py-2">Bhagyank</th>
                     <th className="px-3 py-2">First Name Total</th>
@@ -878,8 +907,8 @@ export default function NameCheckCrmPanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {loading && (<tr><td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">Loading…</td></tr>)}
-                  {!loading && view.length === 0 && (<tr><td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">No reports for this selection.</td></tr>)}
+                  {loading && (<tr><td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">Loading…</td></tr>)}
+                  {!loading && view.length === 0 && (<tr><td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">No reports for this selection.</td></tr>)}
                   {!loading && view.map(({ r, s }) => (
                     <tr key={r.id} className="border-t align-top">
                       <td className="px-3 py-2">
@@ -887,6 +916,11 @@ export default function NameCheckCrmPanel() {
                         <div className="text-xs text-muted-foreground">{r.email}</div>
                         <div className="text-xs text-muted-foreground">{r.phone || "—"}</div>
                         <div className="text-[11px] text-muted-foreground">{r.report_id}</div>
+                      </td>
+                      <td className="px-3 py-2">
+                        {r.source_website
+                          ? <Badge variant="outline" className="whitespace-nowrap font-normal">{r.source_website}</Badge>
+                          : <span className="text-xs text-muted-foreground">—</span>}
                       </td>
                       <td className="px-3 py-2">{dash(s.mulank)}</td>
                       <td className="px-3 py-2">{dash(s.bhagyank)}</td>
