@@ -868,7 +868,6 @@ export default function NameCheckCrmPanel() {
                 <thead className="bg-muted/50 text-left text-[11px] uppercase text-muted-foreground">
                   <tr>
                     <th className="px-2 py-2">Customer</th>
-                    <th className="px-2 py-2">Website</th>
                     <th className="px-2 py-2">Mulank</th>
                     <th className="px-2 py-2">Bhagyank</th>
                     <th className="px-2 py-2">First Name Total</th>
@@ -880,8 +879,8 @@ export default function NameCheckCrmPanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {loading && (<tr><td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">Loading…</td></tr>)}
-                  {!loading && view.length === 0 && (<tr><td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">No reports for this selection.</td></tr>)}
+                  {loading && (<tr><td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">Loading…</td></tr>)}
+                  {!loading && view.length === 0 && (<tr><td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">No reports for this selection.</td></tr>)}
                   {!loading && view.map(({ r, s }) => (
                     <tr key={r.id} className="border-t align-top">
                       <td className="px-2 py-2">
@@ -889,11 +888,6 @@ export default function NameCheckCrmPanel() {
                         <div className="max-w-[170px] break-all text-xs text-muted-foreground">{r.email}</div>
                         <div className="text-xs text-muted-foreground">{r.phone || "—"}</div>
                         <div className="text-[11px] text-muted-foreground">{r.report_id}</div>
-                      </td>
-                      <td className="px-2 py-2">
-                        {r.source_website
-                          ? <Badge variant="outline" className="max-w-[100px] whitespace-normal break-all px-1.5 py-0 text-[11px] font-normal leading-tight">{r.source_website}</Badge>
-                          : <span className="text-xs text-muted-foreground">—</span>}
                       </td>
                       <td className="px-2 py-2">{dash(s.mulank)}</td>
                       <td className="px-2 py-2">{dash(s.bhagyank)}</td>
@@ -927,6 +921,9 @@ export default function NameCheckCrmPanel() {
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">Manual report</span>
+                        )}
+                        {r.source_website && (
+                          <div className="mt-1 break-all text-[11px] font-medium text-foreground">{r.source_website}</div>
                         )}
                       </td>
                       <td className="px-2 py-2">
