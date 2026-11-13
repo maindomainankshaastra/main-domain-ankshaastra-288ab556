@@ -899,14 +899,14 @@ export default function NameCheckCrmPanel() {
                           ? <Badge className="border-red-300 bg-red-100 text-red-800 hover:bg-red-100">Yes</Badge>
                           : <Badge className="border-green-300 bg-green-100 text-green-800 hover:bg-green-100">No</Badge>}
                       </td>
-                      <td className="px-2 py-2">
+                      <td className="whitespace-nowrap px-2 py-2">
                         {r.emailed_at ? (
                           <div>
                             <Badge className="border-green-300 bg-green-100 text-green-800 hover:bg-green-100">Sent</Badge>
                             <div className="mt-1 text-xs text-muted-foreground">
                               {new Date(r.emailed_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
                             </div>
-                            <div className="max-w-[140px] break-all text-xs text-muted-foreground">{r.emailed_to}</div>
+                            <div className="text-xs text-muted-foreground">{r.emailed_to}</div>
                           </div>
                         ) : r.order_id ? (
                           <div>
@@ -923,7 +923,7 @@ export default function NameCheckCrmPanel() {
                           <span className="text-xs text-muted-foreground">Manual report</span>
                         )}
                         {r.source_website && (
-                          <div className="mt-1 break-all text-[11px] font-medium text-foreground">{r.source_website}</div>
+                          <div className="text-[11px] font-medium text-foreground">{r.source_website}</div>
                         )}
                       </td>
                       <td className="px-2 py-2">
