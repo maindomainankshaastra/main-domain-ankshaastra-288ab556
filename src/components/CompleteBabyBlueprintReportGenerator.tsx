@@ -1,5 +1,6 @@
 
 
+
 // /**
 //  * COMPLETE BABY BLUEPRINT REPORT — PDF generator (65 pages, A4).
 //  *
@@ -544,10 +545,18 @@
 
 // function analyseName(rawName: string, mulank: number, bhagyank: number, dob: { day: number; month: number; year: number }): NameFacts {
 //   const variants = splitNameVariants(rawName);
-//   // All variants share ONE calculation. Use the variant that carries the most words (i.e. the one with the
-//   // surname, e.g. "Sanvvii Mishra" in "Navishaa / Naviisha / Sanvvii Mishra"), so the full-name and compound
-//   // numbers include the surname exactly like a single "First Last" entry would. Ties -> the first one listed.
-//   const clean = variants.reduce((best, v) => (v.split(" ").length > best.split(" ").length ? v : best), variants[0] ?? rawName.trim().replace(/\s+/g, " "));
+//   // All variants share ONE calculation, done on the FIRST spelling (same rule as the Name Correction report):
+//   //   "Reyyansh / Reyanshh Khaitan"  -> spellings share the surname  -> "Reyyansh Khaitan"
+//   //   "Aarav Kumar / Aaruv Kumar"    -> complete alternative names   -> "Aarav Kumar"
+//   let clean: string;
+//   if (variants.length <= 1) {
+//     clean = variants[0] ?? rawName.trim().replace(/\s+/g, " ");
+//   } else if (variants[0].split(" ").length >= 2) {
+//     clean = variants[0];
+//   } else {
+//     const tail = variants[variants.length - 1].split(" ").slice(1).join(" ");
+//     clean = `${variants[0]} ${tail}`.trim();
+//   }
 //   const shownName = variants.length ? variants.join(" / ") : clean;   // what the report prints
 //   const firstName = clean.split(" ")[0] ?? "";
 //   const grid = buildLoShuGrid(dob.day, dob.month, dob.year);
@@ -1360,6 +1369,24 @@
 // /*  Main entry point                                                    */
 // /* ------------------------------------------------------------------ */
 
+// /**
+//  * "Is the middle name the father's / husband's name?" = Yes  ->  that name must NOT be counted in the numbers.
+//  * Calculation only: the option is still shown exactly as typed. The first word (first name) is never touched.
+//  */
+// function stripFatherName(name: string, data: { isMiddleNameFatherHusband?: boolean; middleName?: string }): string {
+//   if (!data.isMiddleNameFatherHusband) return name;
+//   const norm = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+//   const father = (data.middleName ?? "").split(/\s+/).map(norm).filter(Boolean);
+//   if (father.length === 0) return name;
+//   const words = name.trim().split(/\s+/);
+//   for (let i = 1; i + father.length <= words.length; i++) {
+//     if (father.every((fw, k) => norm(words[i + k]) === fw)) {
+//       return [...words.slice(0, i), ...words.slice(i + father.length)].join(" ");
+//     }
+//   }
+//   return name;
+// }
+
 // export async function generateCompleteBabyBlueprintReportPdf(input: CompleteBabyBlueprintReportInput): Promise<Uint8Array> {
 //   const split = splitName(input.customerName);
 //   const data: ResolvedInput = {
@@ -1398,8 +1425,14 @@
 //   const kua = computeKuaNumber(dob.year, data.gender);
 
 //   // --- candidate names (a baby has no "current" name) ------------------------
-//   const opt1 = data.option1Name ? analyseName(data.option1Name, mulank, bhagyank, dob) : null;
-//   const opt2 = data.option2Name ? analyseName(data.option2Name, mulank, bhagyank, dob) : null;
+//   // Numbers come from the name without the father's/husband's name; what is SHOWN stays exactly as typed.
+//   const analyseOption = (typed: string): NameFacts | null => {
+//     if (!typed) return null;
+//     const facts = analyseName(stripFatherName(typed, data), mulank, bhagyank, dob);
+//     return { ...facts, displayName: splitNameVariants(typed).join(" / ") || typed };
+//   };
+//   const opt1 = analyseOption(data.option1Name);
+//   const opt2 = analyseOption(data.option2Name);
 //   if (!opt1) {
 //     console.warn(`Complete Baby Blueprint PDF: report ${data.reportId} has no name option — pages 20-22 will show placeholders.`);
 //   }
@@ -1570,10 +1603,6 @@
 //   document.body.removeChild(link);
 //   URL.revokeObjectURL(url);
 // }
-
-
-
-
 
 
 /**
@@ -1751,7 +1780,7 @@ const ASSET_PATHS = {
  * 50-page report) and simply dropped in as full-bleed images.
  */
 const STATIC_PAGE_NUMBERS = [
-  1, 2, 3, 4, 7, 8, 9, 10, 28, 29, 32, 33, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65,
+  1, 2, 3, 4, 7, 8, 9, 10, 28, 32, 33, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65,
 ];
 const STATIC_BASE = "/complete-baby-blueprint-assets";
 const staticPagePath = (n: number) => `${STATIC_BASE}/static-p${String(n).padStart(2, "0")}.jpg`;
@@ -3148,6 +3177,7 @@ export async function generateCompleteBabyBlueprintReportPdf(input: CompleteBaby
   for (let n = 1; n <= TOTAL_PAGES; n++) {
     if (n === 21 && singleOption) continue; // no Option 2 page when only one name option was given
     if (n === 23 && !includeNickPage) continue; // Nick Name page only when a nick name was entered
+    if (n === 29) continue; // "Expected Timeline & Result" page is no longer part of the report
     const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     const build = dynamicPages[n];
     if (build) {
@@ -3178,6 +3208,3 @@ export function downloadCompleteBabyBlueprintReportPdf(bytes: Uint8Array, filena
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
-
-
-
