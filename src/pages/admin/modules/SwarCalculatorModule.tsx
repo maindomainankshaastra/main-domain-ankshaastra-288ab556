@@ -2,7 +2,7 @@
 
 
 // import { useEffect, useMemo, useRef, useState } from "react";
-// import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, Sparkles, TriangleAlert } from "lucide-react";
+// import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, RefreshCw, Sparkles, TriangleAlert } from "lucide-react";
 // import { AdminPage } from "@/components/admin/AdminPage";
 // import { Button } from "@/components/ui/button";
 // import { Input } from "@/components/ui/input";
@@ -34,6 +34,8 @@
 // interface NamesResponse {
 //   names: GeneratedName[];
 //   stats: { rounds: number; rejected: number; inputTokens: number; outputTokens: number; costUsd: number; model: string };
+//   /** Server remark, e.g. "Only 9 names fit this number and these alphabets". */
+//   note?: string;
 // }
 
 // export default function SwarCalculatorModule() {
@@ -94,7 +96,11 @@
 //   const caption = buildImageCaption();
 //   const [waMode, setWaMode] = useState<WhatsAppMode>(() => getWhatsAppMode());
 //   const changeWaMode = (m: WhatsAppMode) => { setWaMode(m); setWhatsAppMode(m); };
-//   const sendWhatsApp = (text: string) => openWhatsApp(phone, text, waMode);
+//   const sendWhatsApp = (text: string) => {
+//     const r = openWhatsApp(phone, text, waMode);
+//     if (r === "copied") toast({ title: "Message copied", description: "It is too long for a WhatsApp link. WhatsApp is opening: click the message box, press Ctrl+V, then Send." });
+//     else if (r === "blocked") toast({ title: "WhatsApp did not open", description: "Your browser blocked the new tab. Allow pop-ups for this site. The message is copied, so you can also paste it into WhatsApp yourself.", variant: "destructive" });
+//   };
 
 //   const copy = async (text: string, label: string) => {
 //     await navigator.clipboard.writeText(text);
@@ -199,6 +205,8 @@
 //   const [loading, setLoading] = useState(false);
 //   const [names, setNames] = useState<NamesResponse | null>(null);
 //   const [picked, setPicked] = useState<Set<string>>(new Set());
+//   const [feedbackText, setFeedbackText] = useState("");      // "more modern, shorter..." for the AI
+//   const [replacing, setReplacing] = useState<string | null>(null);  // name currently being swapped for a new one
 //   const core = useMemo(() => coreNumbersFromDob(dob), [dob]);
 //   // Logic-engine profile: Mulank, Bhagyank, Kua, surname block and the combination table.
 //   const profile = useMemo(
@@ -322,26 +330,71 @@
 //     } finally { setOrderBusy(false); }
 //   };
 
-//   const generate = async () => {
-//     const list = starts.split(/[ ,]+/).map((s) => s.trim()).filter(Boolean);
+//   const startList = () => starts.split(/[ ,]+/).map((x) => x.trim()).filter(Boolean);
+
+//   const callGenerate = async (list: string[], count: number, avoid: string[], feedback: string): Promise<NamesResponse> => {
+//     const { data: sess } = await supabase.auth.getSession();
+//     const resp = await fetch(`${API_BASE}/api/admin/generate-names`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
+//       body: JSON.stringify({ gender, number: Number(number), starts: list, preference: preference.trim(), count, avoid, feedback }),
+//     });
+//     const raw = await resp.text();
+//     let json: any = null;
+//     try { json = JSON.parse(raw); } catch { /* server returned non-JSON (e.g. timeout page) */ }
+//     if (!json) throw new Error(resp.status === 504 || /timeout/i.test(raw) ? "Server timed out. Please try again (add more starting alphabets)." : `Server error ${resp.status}: ${raw.slice(0, 120)}`);
+//     if (!resp.ok) throw new Error(json.error || "Request failed");
+//     return json as NamesResponse;
+//   };
+
+//   const mergeStats = (a: NamesResponse["stats"], b: NamesResponse["stats"]): NamesResponse["stats"] => ({
+//     rounds: a.rounds + b.rounds, rejected: a.rejected + b.rejected,
+//     inputTokens: a.inputTokens + b.inputTokens, outputTokens: a.outputTokens + b.outputTokens,
+//     costUsd: Number((a.costUsd + b.costUsd).toFixed(5)), model: b.model,
+//   });
+
+//   /**
+//    * fresh:   a brand new list (at least 12 names).
+//    * more:    keep everything shown and add 12 more.
+//    * refresh: keep only the ticked names and replace all the others (use the box to tell Claude what to change).
+//    */
+//   const generate = async (mode: "fresh" | "more" | "refresh" = "fresh") => {
+//     const list = startList();
 //     if (!number || !list.length) { toast({ title: "Choose a number and starting alphabets", variant: "destructive" }); return; }
-//     setLoading(true); setNames(null); setPicked(new Set());
+//     const feedback = feedbackText.trim();
+//     setLoading(true);
 //     try {
-//       const { data: sess } = await supabase.auth.getSession();
-//       const resp = await fetch(`${API_BASE}/api/admin/generate-names`, {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
-//         body: JSON.stringify({ gender, number: Number(number), starts: list, preference: preference.trim(), count: slots }),
-//       });
-//       const raw = await resp.text();
-//       let json: any = null;
-//       try { json = JSON.parse(raw); } catch { /* server returned non-JSON (e.g. timeout page) */ }
-//       if (!json) throw new Error(resp.status === 504 || /timeout/i.test(raw) ? "Server timed out. Please try again (add more starting alphabets)." : `Server error ${resp.status}: ${raw.slice(0, 120)}`);
-//       if (!resp.ok) throw new Error(json.error || "Request failed");
-//       setNames(json);
+//       if (mode === "fresh" || !names) {
+//         setNames(null); setPicked(new Set());
+//         setNames(await callGenerate(list, Math.max(12, slots), [], feedback));
+//       } else {
+//         const keep = mode === "refresh" ? names.names.filter((n) => picked.has(n.name)) : names.names;
+//         const avoid = names.names.flatMap((n) => [n.name, n.base]); // never bring back anything already shown
+//         const json = await callGenerate(list, 12, avoid, feedback);
+//         const keptNames = new Set(keep.map((k) => k.name));
+//         setNames({ names: [...keep, ...json.names.filter((n) => !keptNames.has(n.name))], stats: mergeStats(names.stats, json.stats), note: json.note });
+//         if (mode === "refresh") setPicked(new Set(keep.map((k) => k.name)));
+//       }
 //     } catch (e: any) {
 //       toast({ title: "Name generation failed", description: e?.message, variant: "destructive" });
 //     } finally { setLoading(false); }
+//   };
+
+//   /** Swap ONE name for a new one that fits the same number and alphabets. */
+//   const replaceOne = async (old: GeneratedName) => {
+//     if (!names) return;
+//     const list = startList();
+//     setReplacing(old.name);
+//     try {
+//       const avoid = names.names.flatMap((n) => [n.name, n.base]);
+//       const json = await callGenerate(list, 1, avoid, feedbackText.trim());
+//       const nn = json.names[0];
+//       if (!nn) { toast({ title: "No other name fits", description: "Try adding more starting alphabets.", variant: "destructive" }); return; }
+//       setNames({ ...names, names: names.names.map((n) => (n.name === old.name ? nn : n)), stats: mergeStats(names.stats, json.stats) });
+//       setPicked((p) => { const x = new Set(p); x.delete(old.name); return x; });
+//     } catch (e: any) {
+//       toast({ title: "Could not replace the name", description: e?.message, variant: "destructive" });
+//     } finally { setReplacing(null); }
 //   };
 
 //   /** Full-name number (first name + surname block), or null when no surname was entered. */
@@ -562,7 +615,7 @@
 //           </div>
 //           <div><Label>Name preference (optional)</Label><Input value={preference} onChange={(e) => setPreference(e.target.value)} placeholder="e.g. Lord Shiva names, modern, short" /></div>
 //           <div className="flex items-end">
-//             <Button onClick={generate} disabled={loading} className="w-full">
+//             <Button onClick={() => generate("fresh")} disabled={loading} className="w-full">
 //               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}Generate names
 //             </Button>
 //           </div>
@@ -633,12 +686,31 @@
 //                 <label key={n.name} className="flex items-start gap-3 rounded-md border p-3 cursor-pointer">
 //                   <input type="checkbox" className="mt-1" checked={picked.has(n.name)}
 //                     onChange={() => setPicked((p) => { const x = new Set(p); x.has(n.name) ? x.delete(n.name) : x.add(n.name); return x; })} />
-//                   <div>
+//                   <div className="flex-1">
 //                     <div className="font-medium">{i + 1}. {n.name} <span className="text-xs text-muted-foreground">({n.total} → {n.number}){fullNumber(n.name) !== null ? ` · with surname → ${fullNumber(n.name)}` : ""}</span></div>
 //                     <div className="text-sm text-muted-foreground">{n.meaning}</div>
 //                   </div>
+//                   <button type="button" title="Replace this name with another" disabled={loading || replacing !== null}
+//                     className="rounded p-1 text-muted-foreground hover:bg-muted disabled:opacity-40"
+//                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); void replaceOne(n); }}>
+//                     {replacing === n.name ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+//                   </button>
 //                 </label>
 //               ))}
+//             </div>
+//             {names.note && <p className="text-sm text-amber-700">{names.note}</p>}
+//             <div className="space-y-2 rounded-md border bg-muted/40 p-3">
+//               <Label>Not happy with these names? Tell Claude what to change</Label>
+//               <Input value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}
+//                 placeholder="e.g. more modern, shorter names, easier to pronounce, no Shiva names" />
+//               <div className="flex flex-wrap gap-2">
+//                 <Button variant="outline" disabled={loading} onClick={() => generate("refresh")}>
+//                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+//                   Replace unticked names{picked.size ? ` (keeps ${picked.size} ticked)` : ""}
+//                 </Button>
+//                 <Button variant="outline" disabled={loading} onClick={() => generate("more")}>Add 12 more names</Button>
+//               </div>
+//               <p className="text-xs text-muted-foreground">Tick the names you like, then "Replace unticked names" swaps all the others. The ↻ icon on a name swaps just that one.</p>
 //             </div>
 //             <p className="text-xs text-muted-foreground">
 //               {names.stats.rounds} AI round(s), {names.stats.rejected} names dropped by the checks · {names.stats.inputTokens + names.stats.outputTokens} tokens · about ${names.stats.costUsd} (₹{(names.stats.costUsd * 90).toFixed(2)}) · {names.stats.model}
@@ -704,6 +776,7 @@
 
 //       <AdminPage title="Step 6 · Final report" description="When the customer confirms the final name(s), create the Perfect / Complete report from here. Sending its link marks the case Final Report Shared.">
 //         <SwarFinalReport
+//           key={`${caseId ?? "none"}|${orderId ?? ""}`}
 //           caseId={caseId} orderId={orderId} tier={pkg.tier}
 //           dob={dob} phone={phone} gender={gender}
 //           surname={surname} middle={middle} middleNotFather={middleNotFather}
@@ -730,10 +803,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateSwar, type SwarResult } from "@/lib/swar/swarCalculator";
-import { buildDetailMessage, buildImageCaption, formatDob, formatTime12, getWhatsAppMode, openWhatsApp, setWhatsAppMode, type WhatsAppMode } from "@/lib/swar/swarMessage";
+import { buildDetailMessage, buildImageCaption, buildNamesMessage, formatDob, formatTime12, getWhatsAppMode, openWhatsApp, setWhatsAppMode, type WhatsAppMode } from "@/lib/swar/swarMessage";
 import { PlacePicker } from "@/components/admin/PlacePicker";
 import { SwarCasesPanel } from "@/components/admin/SwarCasesPanel";
 import { SwarFinalReport } from "@/components/admin/SwarFinalReport";
+import { LoShuGrid } from "@/components/admin/LoShuGrid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { phoneDigits, saveCase, STATUS_META, STATUS_ORDER, type CaseSnapshot, type CaseStatus, type SwarCaseRow } from "@/lib/swar/swarCases";
 import { buildNameFinderProfile, type Gender } from "@/lib/swar/nameFinder";
@@ -815,7 +889,9 @@ export default function SwarCalculatorModule() {
   const changeWaMode = (m: WhatsAppMode) => { setWaMode(m); setWhatsAppMode(m); };
   const sendWhatsApp = (text: string) => {
     const r = openWhatsApp(phone, text, waMode);
-    if (r === "copied") toast({ title: "Message copied", description: "It is too long for a WhatsApp link. WhatsApp is opening: click the message box, press Ctrl+V, then Send." });
+    if (r === "copied") toast({ title: "Message copied", description: waMode === "app"
+      ? "It is too long for a WhatsApp link. The WhatsApp app is opening: click the message box, press Ctrl+V, then Send. If nothing opens, switch to “Browser (WhatsApp Web)” in Step 1."
+      : "It is too long for a WhatsApp link. WhatsApp Web is opening in a new tab: click the message box, press Ctrl+V, then Send." });
     else if (r === "blocked") toast({ title: "WhatsApp did not open", description: "Your browser blocked the new tab. Allow pop-ups for this site. The message is copied, so you can also paste it into WhatsApp yourself.", variant: "destructive" });
   };
 
@@ -960,7 +1036,7 @@ export default function SwarCalculatorModule() {
   const buildSnapshot = (over: Partial<CaseSnapshot> = {}): CaseSnapshot => ({
     dob, time, place, tz, phone, customerName, swarText, altText,
     gender, surname, middle, middleNotFather, preference, pkg, starts, number,
-    names: names?.names ?? [], picked: [...picked], chosenRaw,
+    names: names?.names ?? [], namesStats: names?.stats, picked: [...picked], chosenRaw,
     ...over,
   });
   const currentKey = () => `${phoneDigits(phone)}|${dob}`;
@@ -1004,7 +1080,7 @@ export default function SwarCalculatorModule() {
     } catch { setResult(null); }
     setGender(d.gender ?? "boy"); setSurname(d.surname ?? ""); setMiddle(d.middle ?? ""); setMiddleNotFather(!!d.middleNotFather);
     setPreference(d.preference ?? ""); if (d.pkg) setPkg(d.pkg); setStarts(d.starts ?? ""); setNumber(d.number ?? "");
-    setNames(d.names?.length ? { names: d.names, stats: { rounds: 0, rejected: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, model: "" } } : null);
+    setNames(d.names?.length ? { names: d.names, stats: d.namesStats ?? { rounds: 0, rejected: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, model: "" } } : null);
     setPicked(new Set(d.picked ?? [])); setChosenRaw(d.chosenRaw ?? ""); setAnalysis(null);
     setOrderId(row.order_id); setCaseId(row.id); setCaseKey(`${phoneDigits(d.phone ?? row.phone ?? "")}|${d.dob ?? row.dob ?? ""}`);
     setCaseStatusState(row.status); setTab("calculator");
@@ -1049,12 +1125,12 @@ export default function SwarCalculatorModule() {
 
   const startList = () => starts.split(/[ ,]+/).map((x) => x.trim()).filter(Boolean);
 
-  const callGenerate = async (list: string[], count: number, avoid: string[], feedback: string): Promise<NamesResponse> => {
+  const callGenerate = async (list: string[], count: number, avoid: string[], feedback: string, exact = false): Promise<NamesResponse> => {
     const { data: sess } = await supabase.auth.getSession();
     const resp = await fetch(`${API_BASE}/api/admin/generate-names`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
-      body: JSON.stringify({ gender, number: Number(number), starts: list, preference: preference.trim(), count, avoid, feedback }),
+      body: JSON.stringify({ gender, number: Number(number), starts: list, preference: preference.trim(), count, avoid, feedback, exact }),
     });
     const raw = await resp.text();
     let json: any = null;
@@ -1071,26 +1147,33 @@ export default function SwarCalculatorModule() {
   });
 
   /**
-   * fresh:   a brand new list (at least 12 names).
-   * more:    keep everything shown and add 12 more.
-   * refresh: keep only the ticked names and replace all the others (use the box to tell Claude what to change).
+   * fresh:   a brand new list (exactly as many names as the package has slots: 12 / 24 / 32).
+   * replace: swap the TICKED names for new ones, one for one, and keep all the others.
+   * The AI usage shown is the running total for this case, so every call adds to it.
    */
-  const generate = async (mode: "fresh" | "more" | "refresh" = "fresh") => {
+  const generate = async (mode: "fresh" | "replace" = "fresh") => {
     const list = startList();
     if (!number || !list.length) { toast({ title: "Choose a number and starting alphabets", variant: "destructive" }); return; }
     const feedback = feedbackText.trim();
+    if (mode === "replace" && (!names || picked.size === 0)) { toast({ title: "Tick the names you want to replace first", variant: "destructive" }); return; }
     setLoading(true);
     try {
       if (mode === "fresh" || !names) {
+        const before = names?.stats;
         setNames(null); setPicked(new Set());
-        setNames(await callGenerate(list, Math.max(12, slots), [], feedback));
+        const json = await callGenerate(list, Math.max(12, slots), [], feedback);
+        setNames({ ...json, stats: before ? mergeStats(before, json.stats) : json.stats });
       } else {
-        const keep = mode === "refresh" ? names.names.filter((n) => picked.has(n.name)) : names.names;
+        const ticked = names.names.filter((n) => picked.has(n.name));
         const avoid = names.names.flatMap((n) => [n.name, n.base]); // never bring back anything already shown
-        const json = await callGenerate(list, 12, avoid, feedback);
-        const keptNames = new Set(keep.map((k) => k.name));
-        setNames({ names: [...keep, ...json.names.filter((n) => !keptNames.has(n.name))], stats: mergeStats(names.stats, json.stats), note: json.note });
-        if (mode === "refresh") setPicked(new Set(keep.map((k) => k.name)));
+        const json = await callGenerate(list, ticked.length, avoid, feedback, true);
+        const shown = new Set(names.names.map((n) => n.name));
+        const fresh = json.names.filter((n) => !shown.has(n.name));
+        let next = 0;
+        const swapped = names.names.map((n) => (picked.has(n.name) && next < fresh.length ? fresh[next++] : n));
+        const left = ticked.slice(next).map((n) => n.name);   // ticked names that found no replacement
+        setNames({ names: swapped, stats: mergeStats(names.stats, json.stats), note: next < ticked.length ? `Only ${next} of ${ticked.length} replacements were found for this number and these alphabets.` : undefined });
+        setPicked(new Set(left));
       }
     } catch (e: any) {
       toast({ title: "Name generation failed", description: e?.message, variant: "destructive" });
@@ -1104,7 +1187,7 @@ export default function SwarCalculatorModule() {
     setReplacing(old.name);
     try {
       const avoid = names.names.flatMap((n) => [n.name, n.base]);
-      const json = await callGenerate(list, 1, avoid, feedbackText.trim());
+      const json = await callGenerate(list, 1, avoid, feedbackText.trim(), true);
       const nn = json.names[0];
       if (!nn) { toast({ title: "No other name fits", description: "Try adding more starting alphabets.", variant: "destructive" }); return; }
       setNames({ ...names, names: names.names.map((n) => (n.name === old.name ? nn : n)), stats: mergeStats(names.stats, json.stats) });
@@ -1125,7 +1208,7 @@ export default function SwarCalculatorModule() {
     if (!names || !profile || !dob) { toast({ title: "Generate names first", variant: "destructive" }); return; }
     setReportBusy(true);
     try {
-      const chosen = names.names.filter((n) => picked.size === 0 || picked.has(n.name)).slice(0, slots);
+      const chosen = names.names.slice(0, slots); // the report always carries all of its name slots
       const analysisRows: AnalysisRow[] = (analysis ?? []).map((a) => ({
         name: a.name,
         firstNo: a.error ? "-" : a.number,
@@ -1296,8 +1379,8 @@ export default function SwarCalculatorModule() {
           <div><Label>Surname (last name)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Gokal" /></div>
           <div><Label>Middle name (optional)</Label><Input value={middle} onChange={(e) => setMiddle(e.target.value)} placeholder="Deshraj" /></div>
           <label className="flex items-end gap-2 pb-2 text-sm">
-            <input type="checkbox" className="mb-1" checked={middleNotFather} onChange={(e) => setMiddleNotFather(e.target.checked)} disabled={!middle.trim()} />
-            <span>Middle name is <b>not</b> father/husband’s name (add it to the surname)</span>
+            <input type="checkbox" className="mb-1" checked={!middleNotFather} onChange={(e) => setMiddleNotFather(!e.target.checked)} disabled={!middle.trim()} />
+            <span>Is middle name father’s name?<span className="block text-xs text-muted-foreground">Unticked: the middle name is added to the surname.</span></span>
           </label>
         </div>
 
@@ -1347,6 +1430,8 @@ export default function SwarCalculatorModule() {
               <Badge variant="outline">Lucky numbers: {profile.luckyPool.join(", ") || "-"}</Badge>
               {profile.surname && <Badge variant="secondary">Surname {profile.surname.text} = {profile.surname.display}</Badge>}
             </div>
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="space-y-3">
             {profile.table ? (
               <>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1390,6 +1475,9 @@ export default function SwarCalculatorModule() {
                 ))}
               </p>
             )}
+              </div>
+              <LoShuGrid dob={dob} />
+            </div>
           </div>
         ) : (
           <p className="mt-3 text-xs text-muted-foreground">Enter the date of birth in step 1 to see Mulank, Bhagyank, Kua and the suggested numbers.</p>
@@ -1421,24 +1509,23 @@ export default function SwarCalculatorModule() {
               <Input value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}
                 placeholder="e.g. more modern, shorter names, easier to pronounce, no Shiva names" />
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" disabled={loading} onClick={() => generate("refresh")}>
+                <Button variant="outline" disabled={loading || picked.size === 0} onClick={() => generate("replace")}>
                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                  Replace unticked names{picked.size ? ` (keeps ${picked.size} ticked)` : ""}
+                  Replace ticked names{picked.size ? ` (${picked.size})` : ""}
                 </Button>
-                <Button variant="outline" disabled={loading} onClick={() => generate("more")}>Add 12 more names</Button>
               </div>
-              <p className="text-xs text-muted-foreground">Tick the names you like, then "Replace unticked names" swaps all the others. The ↻ icon on a name swaps just that one.</p>
+              <p className="text-xs text-muted-foreground">Tick the names you do not like and press "Replace ticked names": only those are swapped, the rest stay. The ↻ icon on a name replaces just that one.</p>
             </div>
             <p className="text-xs text-muted-foreground">
-              {names.stats.rounds} AI round(s), {names.stats.rejected} names dropped by the checks · {names.stats.inputTokens + names.stats.outputTokens} tokens · about ${names.stats.costUsd} (₹{(names.stats.costUsd * 90).toFixed(2)}) · {names.stats.model}
+              Total AI usage for this case: {names.stats.rounds} AI round(s), {names.stats.rejected} names dropped by the checks · {names.stats.inputTokens + names.stats.outputTokens} tokens · about ${names.stats.costUsd.toFixed(4)} (₹{(names.stats.costUsd * 90).toFixed(2)}){names.stats.model ? ` · ${names.stats.model}` : ""}
             </p>
             {names.names.length > 0 && (
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => copy(namesMessage(), "Names message")}><Copy className="w-4 h-4 mr-2" />Copy names message{picked.size ? ` (${picked.size} selected)` : ""}</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={() => copy(namesMessage(), "Names message")}><Copy className="w-4 h-4 mr-2" />Copy names message</Button>
                 <Button onClick={() => { sendWhatsApp(namesMessage()); void autoStatus("names_shared"); }}><MessageCircle className="w-4 h-4 mr-2" />Open in WhatsApp</Button>
-                {picked.size > 0 && <Button variant="outline" onClick={addPickedToChosen}>Add {picked.size} selected to step 4</Button>}
+                {picked.size > 0 && <Button variant="outline" onClick={addPickedToChosen}>Add {picked.size} ticked to step 4</Button>}
                 <Button variant="outline" onClick={downloadReport} disabled={reportBusy}>
-                  {reportBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}Download report PDF{picked.size ? ` (${picked.size} selected)` : ""}
+                  {reportBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}Download report PDF
                 </Button>
               </div>
             )}
