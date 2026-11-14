@@ -98,3 +98,38 @@ export function filterCandidates(
 export function capitalise(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
+
+/**
+ * Spellings of a real name that the spelling rule allows: the name itself, then the name with ONE vowel doubled
+ * (Pranav -> Praanav, Vihan -> Vihaan; never the first letter). Doubled consonants (Prissha, Neell) look odd, so
+ * they are only produced when `consonants` is true, as a last resort to reach the minimum number of names.
+ */
+export function spellingVariants(base: string, opts: { consonants?: boolean } = {}): string[] {
+  const b = base.trim().toUpperCase();
+  if (!/^[A-Z]+$/.test(b)) return [];
+  const vowels: string[] = [];
+  const consonants: string[] = [];
+  for (let i = 1; i < b.length; i++) {
+    const v = b.slice(0, i + 1) + b.slice(i);
+    if (checkSpelling(b, v) !== null) continue;
+    if ("AEIOU".includes(b[i])) vowels.push(v);
+    else if (opts.consonants) consonants.push(v);
+  }
+  return [...new Set([b, ...vowels, ...consonants])];
+}
+
+/**
+ * Real name in, valid numerology spellings out: keeps (at most `perBase`) variants that start with one of the
+ * allowed alphabets and add up to the target. The AI only has to pick good names; the arithmetic is done here.
+ */
+export function variantsForTarget(c: Candidate, rules: Rules, perBase = 2, opts: { consonants?: boolean } = {}): Candidate[] {
+  const out: Candidate[] = [];
+  for (const v of spellingVariants(c.base, opts)) {
+    const cand: Candidate = { ...c, spelling: v };
+    if (validateCandidate(cand, rules) === null) {
+      out.push({ ...cand, spelling: capitalise(v), base: capitalise(c.base.trim()) });
+      if (out.length >= perBase) break;
+    }
+  }
+  return out;
+}
