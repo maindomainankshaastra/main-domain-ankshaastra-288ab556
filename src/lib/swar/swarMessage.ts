@@ -107,7 +107,36 @@ export function setWhatsAppMode(mode: WhatsAppMode): void {
  * One place that opens WhatsApp for every step. Web mode always reuses the SAME browser tab (named window)
  * instead of opening a new tab each time, so WhatsApp Web is not reloaded / re-linked on every send.
  */
-export function openWhatsApp(phone: string, text: string, mode: WhatsAppMode = getWhatsAppMode()): void {
-  if (mode === "app") { window.location.href = whatsappAppLink(phone, text); return; }
-  window.open(whatsappLink(phone, text), "ankshaastra_whatsapp");
+/** Longest WhatsApp link that opens reliably. Longer messages are copied to the clipboard instead. */
+const MAX_LINK_LENGTH = 1900;
+
+export type WhatsAppResult = "opened" | "copied" | "blocked";
+
+async function copyQuietly(text: string): Promise<void> {
+  try { await navigator.clipboard.writeText(text); } catch { /* clipboard not allowed: nothing more to do */ }
+}
+
+/**
+ * One place that opens WhatsApp for every step. Web mode always reuses the SAME browser tab (named window)
+ * instead of opening a new tab each time, so WhatsApp Web is not reloaded / re-linked on every send.
+ *
+ * Returns what happened, so the caller can tell the operator:
+ *  - "opened":  the chat opened with the message typed in.
+ *  - "copied":  the message is too long for a link (long names lists), so it was copied to the clipboard and the
+ *               chat was opened empty. The operator presses Ctrl+V and Send.
+ *  - "blocked": the browser blocked the new tab. The message was copied; allow pop-ups for this site.
+ */
+export function openWhatsApp(phone: string, text: string, mode: WhatsAppMode = getWhatsAppMode()): WhatsAppResult {
+  const open = (t: string): boolean => {
+    if (mode === "app") { window.location.href = whatsappAppLink(phone, t); return true; }
+    return !!window.open(whatsappLink(phone, t), "ankshaastra_whatsapp");
+  };
+  const link = mode === "app" ? whatsappAppLink(phone, text) : whatsappLink(phone, text);
+  if (link.length > MAX_LINK_LENGTH) {
+    void copyQuietly(text);
+    return open("") ? "copied" : "blocked";
+  }
+  if (open(text)) return "opened";
+  void copyQuietly(text);
+  return "blocked";
 }
