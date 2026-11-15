@@ -49,7 +49,7 @@ const HeroSection = () => {
 
             <p className="text-base md:text-lg text-cream-light/80 max-w-xl mx-auto lg:mx-0 leading-relaxed mb-9">
               Personalized guidance from Himansshu Agarwal Ji — India's trusted Numerology
-              & Lal Kitab expert. 5000+ name corrections, 99% client satisfaction.
+              & Lal Kitab expert. 48k global consultations, 5000+ name corrections, and 99% client satisfaction.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">

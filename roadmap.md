@@ -1,7 +1,7 @@
 # Project Roadmap
 
 ## Current
-- None.
+- Synchronize Perfect Baby Name, C-Section Dates, Lucky Vehicle and Lucky Mobile Number prices; show 48k consultations.
 
 ## Completed
 - Updated Thank You with email delivery, no-reply@ankshaastra.in sender and one-hour mailbox/spam guidance excluding 11 PM–7 AM IST; removed outreach promises, redundant sections and animated layout. Receipt fits 320×568, 375×667 and 393×852; simulated signed mobile return displayed in 0.79 seconds despite eight-second invoice verification. Corrected stale invoice-ready status after awaited generation to avoid redundant completion calls. Sixteen tests passed, build OK, no browser errors; no real transaction or production deployment performed.
