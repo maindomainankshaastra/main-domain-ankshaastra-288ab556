@@ -63,7 +63,7 @@ export const standaloneServices: StandaloneService[] = [
       "Delivered with practical implementation tips",
     ],
     seoTitle: "Lucky Vehicle Number | Ankshaastra Numerology",
-    seoDescription: "Get a personalized lucky vehicle number through numerology by Himansshu Agarwal Ji. ₹1,097 — expert analysis and recommendations.",
+    seoDescription: "Get a personalized lucky vehicle number through numerology by Himansshu Agarwal Ji. ₹1,499 — expert analysis and recommendations.",
   },
   {
     slug: "lucky-vehicle-color",
@@ -125,7 +125,7 @@ export const standaloneServices: StandaloneService[] = [
       "Actionable change guidance",
     ],
     seoTitle: "Lucky Mobile Number | Ankshaastra Numerology",
-    seoDescription: "Lucky mobile number numerology analysis. ₹1,097 — personalized recommendations.",
+    seoDescription: "Lucky mobile number numerology analysis. ₹1,499 — personalized recommendations.",
   },
   {
     slug: "lucky-flat-number",

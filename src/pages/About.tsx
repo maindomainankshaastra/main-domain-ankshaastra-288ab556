@@ -6,7 +6,7 @@ import { Sparkles, Award, Users, BookOpen, Heart, ArrowRight, Star, CheckCircle2
 import expertImg from "@/assets/expert-himansshu.jpg";
 
 const stats = [
-  { icon: Users, value: "5000+", label: "Lives Transformed" },
+  { icon: Users, value: "48k", label: "Global Consultations" },
   { icon: Award, value: "10+", label: "Years of Mastery" },
   { icon: BookOpen, value: "5000+", label: "Name Corrections" },
   { icon: Star, value: "4.9", label: "Client Rating" },
@@ -109,7 +109,7 @@ const About = () => {
                   With over <strong className="text-foreground">10 years of dedicated research</strong> and practical experience, Himansshu Agarwal Ji is one of India's most trusted Name Correction Experts and Lal Kitab Remedy Specialists.
                 </p>
                 <p>
-                  Having delivered <strong className="text-foreground">5000+ name corrections</strong> across India and abroad, his work blends classical Vedic numerology, Lal Kitab traditions, and modern psychological insight — producing remedies that are both spiritually grounded and practically actionable.
+                  Having delivered <strong className="text-foreground">48k global consultations and 5000+ name corrections</strong> across India and abroad, his work blends classical Vedic numerology, Lal Kitab traditions, and modern psychological insight — producing remedies that are both spiritually grounded and practically actionable.
                 </p>
                 <p>
                   Featured on YouTube podcasts and trusted by entrepreneurs, families, and professionals, his mission is simple: help every soul align their name and numbers with their true purpose.
