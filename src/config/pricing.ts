@@ -5,8 +5,8 @@
  */
 
 export const pricing = {
-  audioCall: { min45: 3977, min60: 4967, min75: 5957 },
-  videoCall: { min45: 5957, min60: 7397, min75: 8927 },
+  audioCall: { min45: 11000, min60: 12500, min75: 14000 },
+  videoCall: { min45: 14000, min60: 16000, min75: 21000 },
   /** Legacy consultation channel — not in public service catalog */
   whatsapp: { q3: 497, q6: 777, q10: 1111 },
   addons: {
