@@ -382,9 +382,7 @@
 //     } finally { setReportBusy(false); }
 //   };
 
-//   const namesMessage = () => (names ? buildNamesMessage(names.names.slice(0, slots)) : "");
-
-  const meta = STATUS_META[caseStatus];
+//   const meta = STATUS_META[caseStatus];
 //   return (
 //     <Tabs value={tab} onValueChange={setTab} className="space-y-4">
 //       <TabsList>
@@ -1157,12 +1155,7 @@ export default function SwarCalculatorModule() {
     } finally { setReportBusy(false); }
   };
 
-  const namesMessage = () => {
-    if (!names) return "";
-    const chosen = names.names.filter((n) => picked.size === 0 || picked.has(n.name));
-    const body = chosen.map((n) => `*${n.name}* – ${n.meaning}`).join("\n\n");
-    return `Namaskar,\n\nPlease find numerologically curated names specifically designed for your child:\n\n${body}\n\nKindly share your top 4–5 preferred names in order of priority. I will then provide a detailed analysis of the selected names.\n\nRegards,\nAnkshaastra-Empower Your Name`;
-  };
+  const namesMessage = () => (names ? buildNamesMessage(names.names.slice(0, slots)) : "");
 
   const meta = STATUS_META[caseStatus];
   return (
