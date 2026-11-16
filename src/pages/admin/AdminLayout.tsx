@@ -1,5 +1,4 @@
 
-
 // import { useEffect, useMemo, useRef, useState } from "react";
 // import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 // import SEOHead from "@/components/SEOHead";
@@ -35,9 +34,9 @@
 //   User,
 //   GitBranch,
 //   Webhook,
-//   Sparkles,
+ 
 //   Briefcase,
-//   FileCode,
+ 
 //   Settings,
 //   Crown,
 //   FileSpreadsheet,
@@ -52,6 +51,7 @@
 //   ArrowLeft,
 //   Search,
 //   History,
+//     Sparkles,
 // } from "lucide-react";
 
 // // Sidebar is grouped into sections instead of one flat 16-item list, so related
@@ -83,7 +83,6 @@
 //     items: [
 //       { to: "/admin/orders", label: "Orders & Bookings", icon: Package, module: "orders" },
 //       { to: "/admin/invoices", label: "Invoice Manager", icon: FileText, module: "invoices" },
-//             { to: "/admin/shop-invoices", label: "Shop Invoices", icon: FileText, module: "invoices" },
 //       { to: "/admin/crm", label: "CRM", icon: Users, module: "crm" },
 //     ],
 //   },
@@ -101,7 +100,7 @@
 //       { to: "/admin/services", label: "Services Management", icon: Briefcase, module: "services" },
 //       { to: "/admin/service-pages", label: "Pages & Packages", icon: Package, module: "service-pages" },
 //       // { to: "/admin/pricing", label: "Pricing Management", icon: FileCode, module: "pricing" },
-//       { to: "/admin/templates", label: "Templates", icon: FileCode, module: "templates" },
+      
 //     ],
 //   },
 //   {
@@ -109,15 +108,15 @@
 //     items: [
 //       { to: "/admin/settings", label: "GST Configuration", icon: Settings, module: "settings" },
 //       { to: "/admin/gst-reports", label: "GSTR Reports", icon: FileSpreadsheet, module: "gst-reports" },
-//             { to: "/admin/shop-gst-reports", label: "Shop GSTR Reports", icon: FileSpreadsheet, module: "gst-reports" },
 //       { to: "/admin/gst-maintenance", label: "GST Maintenance", icon: Wrench, module: "gst-maintenance" },
 //     ],
 //   },
 //   {
 //     label: "Admin",
 //     items: [
-//       { to: "/admin/ai-reports", label: "AI Reports", icon: Sparkles, module: "ai-reports" },
+      
 //       { to: "/admin/reports", label: "Reports", icon: ScanSearch, module: "name-check-reports" },
+//             { to: "/admin/swar-calculator", label: "Swar & Names", icon: Sparkles, module: "name-check-reports" },
 //       { to: "/admin/team", label: "Team Management", icon: UserCog, module: "team", adminOnly: true },
 //       // Audit Logs — accountability/security log. adminOnly: true means the
 //       // existing visibleSections filter below (role === "admin") already
@@ -349,12 +348,7 @@
 //     route: "/admin/crm",
 //     tableCandidates: ["customers"], // CONFIRMED
 //   }),
-//   makeSource({
-//     module: "Reports",
-//     icon: Sparkles,
-//     route: "/admin/ai-reports",
-//     tableCandidates: ["ai_reports"], // CONFIRMED
-//   }),
+ 
 //   makeSource({
 //     module: "Emails",
 //     icon: Mail,
@@ -832,6 +826,9 @@
 
 
 
+
+
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
@@ -885,6 +882,7 @@ import {
   Search,
   History,
     Sparkles,
+  CalendarCheck,
 } from "lucide-react";
 
 // Sidebar is grouped into sections instead of one flat 16-item list, so related
@@ -950,6 +948,7 @@ const navSections: NavSection[] = [
       
       { to: "/admin/reports", label: "Reports", icon: ScanSearch, module: "name-check-reports" },
             { to: "/admin/swar-calculator", label: "Swar & Names", icon: Sparkles, module: "name-check-reports" },
+      { to: "/admin/c-section-calculator", label: "C-Section Dates", icon: CalendarCheck, module: "name-check-reports" },
       { to: "/admin/team", label: "Team Management", icon: UserCog, module: "team", adminOnly: true },
       // Audit Logs — accountability/security log. adminOnly: true means the
       // existing visibleSections filter below (role === "admin") already
