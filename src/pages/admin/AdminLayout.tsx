@@ -828,7 +828,6 @@
 
 
 
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
@@ -1655,3 +1654,4 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+
