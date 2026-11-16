@@ -16,6 +16,8 @@ interface Suggestion {
   subtitle: string;
   timezone?: string;
   population?: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface GeoResult {
@@ -27,6 +29,8 @@ interface GeoResult {
   country_code?: string;
   timezone?: string;
   population?: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 /** "Alīgarh" -> "Aligarh" (removes the bar/dots over letters so the customer sees plain English spelling). */
@@ -36,7 +40,7 @@ export interface PlacePickerProps {
   value: string;
   onChange: (value: string) => void;
   /** Called when the operator picks a suggestion (use it to set the time zone). */
-  onPick?: (s: { value: string; timezone?: string; countryCode?: string }) => void;
+  onPick?: (s: { value: string; timezone?: string; countryCode?: string; latitude?: number; longitude?: number }) => void;
   /** Restrict to India (default). Turn off for customers born abroad. */
   indiaOnly?: boolean;
   placeholder?: string;
@@ -79,7 +83,7 @@ export function PlacePicker({ value, onChange, onPick, indiaOnly = true, placeho
           const key = `${value}|${district}`;
           if (seen.has(key)) continue;
           seen.add(key);
-          list.push({ key, value, title: name, subtitle, timezone: g.timezone, population: g.population });
+          list.push({ key, value, title: name, subtitle, timezone: g.timezone, population: g.population, latitude: g.latitude, longitude: g.longitude });
           if (list.length >= 6) break;
         }
         setItems(list); setActive(-1); setOpen(true);
@@ -99,7 +103,7 @@ export function PlacePicker({ value, onChange, onPick, indiaOnly = true, placeho
   const pick = (s: Suggestion) => {
     typed.current = false;
     onChange(s.value);
-    onPick?.({ value: s.value, timezone: s.timezone });
+    onPick?.({ value: s.value, timezone: s.timezone, latitude: s.latitude, longitude: s.longitude });
     setOpen(false); setItems([]);
   };
 
