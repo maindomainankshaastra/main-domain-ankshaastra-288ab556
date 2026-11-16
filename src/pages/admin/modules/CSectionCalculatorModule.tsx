@@ -1,0 +1,207 @@
+import { useMemo, useState } from "react";
+import { CalendarCheck, Copy, Loader2, TriangleAlert } from "lucide-react";
+import { AdminPage } from "@/components/admin/AdminPage";
+import { PlacePicker } from "@/components/admin/PlacePicker";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { analyzeCSection, GRADE_LABEL, type CSectionResult, type DayResult } from "@/lib/c-section/index.ts";
+import { avoidLines, summaryText } from "@/lib/c-section/format.ts";
+import { fmtDate, fmtRange, fmtTime } from "@/lib/c-section/time.ts";
+
+const gradeClass: Record<number, string> = {
+  4: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  3: "bg-green-50 text-green-800 border-green-300",
+  2: "bg-amber-50 text-amber-800 border-amber-300",
+  1: "bg-red-50 text-red-800 border-red-300",
+};
+
+interface Place { name: string; lat: number; lon: number; tz: string }
+
+function DayCard({ d, tz, rank }: { d: DayResult; tz: string; rank: number }) {
+  const avoid = avoidLines(d, tz);
+  return (
+    <div className="rounded-lg border bg-card p-4 space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline" className="text-sm">Priority {rank}</Badge>
+        <h3 className="font-display text-lg">{fmtDate(d.date)} <span className="text-muted-foreground">({d.weekday})</span></h3>
+        <Badge variant="outline" className={gradeClass[d.grade]}>{GRADE_LABEL[d.grade]}</Badge>
+        {d.relaxed && <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300">Has cautions</Badge>}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Mulank {d.numerology.mulank} | Bhagyank {d.numerology.bhagyank} | Luck {d.numerology.luckPct}% ({d.numerology.classification})
+        {d.sunrise && d.sunset && <> | Sunrise {fmtTime(d.sunrise, tz)}, Sunset {fmtTime(d.sunset, tz)}</>}
+      </p>
+      {d.atSunrise && (
+        <p className="text-sm">
+          At sunrise: {d.atSunrise.paksha} {d.atSunrise.tithi} | {d.atSunrise.nakshatra} | Moon in {d.atSunrise.rashi} | {d.atSunrise.yoga} yoga | {d.atSunrise.karana} karana
+        </p>
+      )}
+      {d.changes.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Changes: {d.changes.map((c) => `${fmtTime(c.at, tz)} ${c.what}`).join("; ")}
+        </p>
+      )}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <p className="mb-1 text-sm font-medium text-emerald-700">Shubh time (clean of every avoid time)</p>
+          {d.windows.length === 0 ? (
+            <p className="text-sm text-red-700">{d.noWindowReason}</p>
+          ) : (
+            <ul className="space-y-1 text-sm">
+              {d.windows.map((w, i) => {
+                const best = d.recommended.includes(w);
+                return (
+                  <li key={i} className={best ? "font-medium" : ""}>
+                    {fmtRange(w.start, w.end, tz)}
+                    <span className="text-muted-foreground"> | {GRADE_LABEL[w.grade]} | {w.lagna} lagna | {w.nakshatra}</span>
+                    {w.tags.map((t) => <Badge key={t} variant="secondary" className="ml-1">{t}</Badge>)}
+                    {best && <Badge className="ml-1">Best</Badge>}
+                    {w.cautions.length > 0 && <span className="block text-xs text-amber-700">Caution: {w.cautions.join(", ")}</span>}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+        <div>
+          <p className="mb-1 text-sm font-medium text-red-700">Time to avoid (during OT hours)</p>
+          {avoid.length === 0 ? <p className="text-sm text-muted-foreground">Nothing in OT hours.</p> : (
+            <ul className="space-y-1 text-sm">{avoid.map((l, i) => <li key={i}>{l}</li>)}</ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CSectionCalculatorModule() {
+  const { toast } = useToast();
+  const [mother, setMother] = useState("");
+  const [father, setFather] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [placeText, setPlaceText] = useState("");
+  const [place, setPlace] = useState<Place | null>(null);
+  const [otStart, setOtStart] = useState("08:00");
+  const [otEnd, setOtEnd] = useState("18:00");
+  const [gandMool, setGandMool] = useState<"nakshatra" | "gandanta-only">("nakshatra");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<CSectionResult | null>(null);
+
+  const tz = result?.input.location.tz ?? "Asia/Kolkata";
+  const text = useMemo(() => (result ? summaryText(result, { mother, father }) : ""), [result, mother, father]);
+
+  const calculate = () => {
+    setError("");
+    if (!start || !end) return setError("Enter the doctor's delivery window (start and end date).");
+    if (!place) return setError("Pick the hospital's city from the suggestions so latitude, longitude and time zone are known.");
+    setBusy(true);
+    // let the spinner paint before the (CPU-heavy) calculation
+    setTimeout(() => {
+      try {
+        setResult(analyzeCSection({
+          windowStart: start, windowEnd: end,
+          location: { lat: place.lat, lon: place.lon, tz: place.tz, name: place.name },
+          otStart, otEnd, gandMoolMode: gandMool,
+        }));
+      } catch (e) {
+        setResult(null);
+        setError(e instanceof Error ? e.message : "Could not calculate");
+      } finally { setBusy(false); }
+    }, 30);
+  };
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(text); toast({ title: "Copied", description: "Summary copied for WhatsApp / email." }); }
+    catch { toast({ title: "Could not copy", variant: "destructive" }); }
+  };
+
+  return (
+    <div className="space-y-6">
+      <AdminPage title="C-Section Dates Calculator" description="Enter the delivery window and hospital location. Panchang is calculated automatically for every date.">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div><Label>Mother's name</Label><Input value={mother} onChange={(e) => setMother(e.target.value)} /></div>
+          <div><Label>Father's name</Label><Input value={father} onChange={(e) => setFather(e.target.value)} /></div>
+          <div>
+            <Label>Hospital location</Label>
+            <PlacePicker
+              value={placeText}
+              onChange={(v) => { setPlaceText(v); setPlace(null); }}
+              onPick={(s) => {
+                if (s.latitude != null && s.longitude != null) setPlace({ name: s.value, lat: s.latitude, lon: s.longitude, tz: s.timezone || "Asia/Kolkata" });
+              }}
+              placeholder="Type the hospital's city"
+            />
+            {place && <p className="mt-1 text-xs text-muted-foreground">{place.lat.toFixed(3)}, {place.lon.toFixed(3)} | {place.tz}</p>}
+          </div>
+          <div><Label>Delivery window: from</Label><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></div>
+          <div><Label>Delivery window: to</Label><Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label>OT opens</Label><Input type="time" value={otStart} onChange={(e) => setOtStart(e.target.value)} /></div>
+            <div><Label>OT closes</Label><Input type="time" value={otEnd} onChange={(e) => setOtEnd(e.target.value)} /></div>
+          </div>
+          <div>
+            <Label>Gand Mool rule</Label>
+            <Select value={gandMool} onValueChange={(v) => setGandMool(v as "nakshatra" | "gandanta-only")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nakshatra">Avoid all 6 Gand Mool nakshatras</SelectItem>
+                <SelectItem value="gandanta-only">Avoid only the Gandanta junction</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <Button onClick={calculate} disabled={busy}>
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarCheck className="mr-2 h-4 w-4" />}
+            Calculate top 3 dates
+          </Button>
+          {error && <p className="flex items-center gap-1 text-sm text-red-700"><TriangleAlert className="h-4 w-4" />{error}</p>}
+        </div>
+      </AdminPage>
+
+      {result && (
+        <AdminPage
+          title="Top dates"
+          description={`${fmtDate(result.input.windowStart)} to ${fmtDate(result.input.windowEnd)} | OT ${result.input.otStart}-${result.input.otEnd} | ${result.input.location.name ?? ""}`}
+          actions={<Button variant="outline" onClick={copy}><Copy className="mr-2 h-4 w-4" />Copy summary</Button>}
+        >
+          <div className="space-y-4">
+            {result.warnings.map((w, i) => (
+              <p key={i} className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />{w}</p>
+            ))}
+            {result.top.map((d, i) => <DayCard key={d.date} d={d} tz={tz} rank={i + 1} />)}
+
+            <div>
+              <p className="mb-2 text-sm font-medium">All dates in the window</p>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-left">
+                    <tr><th className="p-2">Rank</th><th className="p-2">Date</th><th className="p-2">Mulank / Bhagyank / Luck</th><th className="p-2">Panchang grade (Excel)</th><th className="p-2">Clean shubh time</th></tr>
+                  </thead>
+                  <tbody>
+                    {result.ranked.map((d) => (
+                      <tr key={d.date} className="border-t">
+                        <td className="p-2">{d.rank}</td>
+                        <td className="p-2">{fmtDate(d.date)} ({d.weekday.slice(0, 3)})</td>
+                        <td className="p-2">{d.numerology.mulank} / {d.numerology.bhagyank} / {d.numerology.luckPct}%</td>
+                        <td className="p-2"><Badge variant="outline" className={gradeClass[d.excelGrade]}>{GRADE_LABEL[d.excelGrade]}</Badge></td>
+                        <td className="p-2">{d.windows.length ? `${Math.round(d.cleanMinutes)} min${d.relaxed ? " (cautions)" : ""}` : <span className="text-red-700">{d.noWindowReason}</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Numerology and Muhurat guidance only. Always confirm the final date and time with the treating obstetrician.</p>
+          </div>
+        </AdminPage>
+      )}
+    </div>
+  );
+}
