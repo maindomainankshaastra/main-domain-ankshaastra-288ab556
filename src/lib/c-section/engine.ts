@@ -86,7 +86,7 @@ export interface ShubhWindow {
   karana: string;
   /** Informational: overlaps Abhijit / Vijaya muhurat */
   tags: string[];
-  /** Extra-factor cautions (Bhadra, Ashubh Yoga, Panchak, Gandanta Lagna) that touch this window. Only filled on relaxed days. */
+  /** Cautions touching this window: Panchak always; Bhadra / Ashubh Yoga / Gandanta Lagna only on relaxed days. */
   cautions: string[];
 }
 
@@ -118,10 +118,12 @@ export interface DayResult {
   /** Why the date had no clean window, if so */
   noWindowReason?: string;
   /**
-   * true = no window was clean on the extra factors (Bhadra, Ashubh Yoga, Panchak, Gandanta Lagna), so the windows
+   * true = no window was clean on the extra factors (Bhadra, Ashubh Yoga, Gandanta Lagna), so the windows
    * here only pass the client's core rules (Excel grading, Gand Mool/Gandanta, Rahu/Yamaganda/Gulika). See each window's `cautions`.
    */
   relaxed: boolean;
+  /** Informational notes that do NOT exclude anything (e.g. Panchak). Also appear as a caution on each affected window. */
+  notes: string[];
   rank?: number;
 }
 
@@ -212,6 +214,7 @@ export function analyzeDay(ymd: string, cfgIn: CSectionResult["input"], eph: Eph
     blockers.push(parts.rahu, parts.yamaganda, parts.gulika);
   }
   const windows: ShubhWindow[] = [];
+  const panchakNotes = new Set<string>();
   let excelGrade: Grade = 1;
   for (const seg of segs) {
     const g = gradeState(seg.state, weekday, num, cfgIn.gandMoolMode);
@@ -219,12 +222,15 @@ export function analyzeDay(ymd: string, cfgIn: CSectionResult["input"], eph: Eph
     if (clip.end <= clip.start) continue;
     if (g.grade > excelGrade) excelGrade = g.grade;
     const extra = segmentAvoids(seg.state, extraCfg);
-    for (const e of extra) avoidRaw.push({ ...e, ...clip });
+    // Panchak is a caution only: it is not an avoid time and never blocks or re-ranks a date
+    for (const e of extra) if (e.kind !== "panchak") avoidRaw.push({ ...e, ...clip });
+    for (const e of extra) if (e.kind === "panchak") panchakNotes.add(e.label);
     // grading exclusions that are tied to the time (tithi etc.) are shown as avoid time too
     const timeBound = g.exclusions.filter((x) => !/^(Mulank|Numerology)/.test(x) && !/^Gand/.test(x));
     for (const label of timeBound) avoidRaw.push({ kind: "grading", label, ...clip });
     const coreBlock = extra.filter((e) => e.kind === "gandanta" || e.kind === "gandmool");
-    const soft = extra.filter((e) => e.kind !== "gandanta" && e.kind !== "gandmool");
+    const panchak = extra.filter((e) => e.kind === "panchak");
+    const soft = extra.filter((e) => e.kind !== "gandanta" && e.kind !== "gandmool" && e.kind !== "panchak");
     if (g.grade < 3 || coreBlock.length || (!relaxed && soft.length)) continue;
     for (const iv of subtract(clip, blockers)) {
       const minutes = (iv.end.getTime() - iv.start.getTime()) / MIN;
@@ -236,7 +242,7 @@ export function analyzeDay(ymd: string, cfgIn: CSectionResult["input"], eph: Eph
         start: iv.start, end: iv.end, minutes, grade: g.grade, score: g.score,
         lagna: seg.state.lagna, nakshatra: seg.state.nakshatra, tithi: seg.state.tithi,
         moonSign: seg.state.rashi, yoga: seg.state.yoga, karana: seg.state.karana, tags,
-        cautions: soft.map((e) => e.label),
+        cautions: [...soft.map((e) => e.label), ...panchak.map((e) => e.label)],
       });
     }
   }
@@ -260,6 +266,7 @@ export function analyzeDay(ymd: string, cfgIn: CSectionResult["input"], eph: Eph
     windows, recommended: byQuality.slice(0, 3), excelGrade,
     grade: (byQuality[0]?.grade ?? 1) as Grade, score: byQuality[0]?.score ?? 0,
     cleanMinutes: windows.reduce((s, w) => s + w.minutes, 0), dateReasons, noWindowReason, relaxed,
+    notes: [...panchakNotes].map((l) => `${l}: caution only, date not excluded`),
   };
 }
 
@@ -296,7 +303,7 @@ export function analyze(input: CSectionInput, eph: Ephemeris): CSectionResult {
   ranked.forEach((d, i) => { d.rank = i + 1; });
   const top = ranked.slice(0, cfg.topN);
   const withWindow = top.filter((d) => d.windows.length).length;
-  for (const d of top) if (d.relaxed) warnings.push(`${d.date}: no time is clean on Bhadra / Ashubh Yoga / Panchak / Gandanta Lagna, so its windows carry a caution.`);
+  for (const d of top) if (d.relaxed) warnings.push(`${d.date}: no time is clean on Bhadra / Ashubh Yoga / Gandanta Lagna, so its windows carry a caution.`);
   if (withWindow < cfg.topN) warnings.push(`Only ${withWindow} date(s) in this window have a clean shubh time. Ask the doctor for a wider window if possible.`);
   return { input: cfg, days, ranked, top, warnings };
 }
