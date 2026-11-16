@@ -118,10 +118,21 @@ describe("analyze()", () => {
           const overlap = Math.min(w.end.getTime(), a.end.getTime()) - Math.max(w.start.getTime(), a.start.getTime());
           expect(overlap <= 0).toBe(true);
         }
-        if (!d.relaxed) expect(w.cautions).toHaveLength(0);
+        if (!d.relaxed) expect(w.cautions.every((c) => c.startsWith("Panchak"))).toBe(true); // only Panchak may be a caution on strict days
       }
     }
     expect(windows).toBeGreaterThan(5); // the test must actually exercise windows
+  });
+
+  it("Panchak is a caution only: it never changes windows or ranking", () => {
+    const win = { windowStart: "2026-12-01", windowEnd: "2026-12-30", location: IST };
+    const on = analyze({ ...win, panchak: true }, fake);
+    const off = analyze({ ...win, panchak: false }, fake);
+    expect(on.ranked.map((d) => d.date)).toEqual(off.ranked.map((d) => d.date));
+    expect(on.days.map((d) => d.windows.length)).toEqual(off.days.map((d) => d.windows.length));
+    expect(on.days.some((d) => d.notes.length > 0)).toBe(true);
+    expect(on.days.every((d) => d.avoid.every((a) => a.kind !== "panchak"))).toBe(true);
+    expect(off.days.every((d) => d.notes.length === 0)).toBe(true);
   });
 
   it("strict days rank before relaxed days", () => {
