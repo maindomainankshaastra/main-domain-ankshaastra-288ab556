@@ -2,7 +2,7 @@
 
 
 // import { useEffect, useMemo, useRef, useState } from "react";
-// import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, RefreshCw, Sparkles, TriangleAlert } from "lucide-react";
+// import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, Sparkles, TriangleAlert } from "lucide-react";
 // import { AdminPage } from "@/components/admin/AdminPage";
 // import { Button } from "@/components/ui/button";
 // import { Input } from "@/components/ui/input";
@@ -34,8 +34,6 @@
 // interface NamesResponse {
 //   names: GeneratedName[];
 //   stats: { rounds: number; rejected: number; inputTokens: number; outputTokens: number; costUsd: number; model: string };
-//   /** Server remark, e.g. "Only 9 names fit this number and these alphabets". */
-//   note?: string;
 // }
 
 // export default function SwarCalculatorModule() {
@@ -96,11 +94,7 @@
 //   const caption = buildImageCaption();
 //   const [waMode, setWaMode] = useState<WhatsAppMode>(() => getWhatsAppMode());
 //   const changeWaMode = (m: WhatsAppMode) => { setWaMode(m); setWhatsAppMode(m); };
-//   const sendWhatsApp = (text: string) => {
-//     const r = openWhatsApp(phone, text, waMode);
-//     if (r === "copied") toast({ title: "Message copied", description: "It is too long for a WhatsApp link. WhatsApp is opening: click the message box, press Ctrl+V, then Send." });
-//     else if (r === "blocked") toast({ title: "WhatsApp did not open", description: "Your browser blocked the new tab. Allow pop-ups for this site. The message is copied, so you can also paste it into WhatsApp yourself.", variant: "destructive" });
-//   };
+//   const sendWhatsApp = (text: string) => openWhatsApp(phone, text, waMode);
 
 //   const copy = async (text: string, label: string) => {
 //     await navigator.clipboard.writeText(text);
@@ -205,8 +199,6 @@
 //   const [loading, setLoading] = useState(false);
 //   const [names, setNames] = useState<NamesResponse | null>(null);
 //   const [picked, setPicked] = useState<Set<string>>(new Set());
-//   const [feedbackText, setFeedbackText] = useState("");      // "more modern, shorter..." for the AI
-//   const [replacing, setReplacing] = useState<string | null>(null);  // name currently being swapped for a new one
 //   const core = useMemo(() => coreNumbersFromDob(dob), [dob]);
 //   // Logic-engine profile: Mulank, Bhagyank, Kua, surname block and the combination table.
 //   const profile = useMemo(
@@ -330,71 +322,26 @@
 //     } finally { setOrderBusy(false); }
 //   };
 
-//   const startList = () => starts.split(/[ ,]+/).map((x) => x.trim()).filter(Boolean);
-
-//   const callGenerate = async (list: string[], count: number, avoid: string[], feedback: string): Promise<NamesResponse> => {
-//     const { data: sess } = await supabase.auth.getSession();
-//     const resp = await fetch(`${API_BASE}/api/admin/generate-names`, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
-//       body: JSON.stringify({ gender, number: Number(number), starts: list, preference: preference.trim(), count, avoid, feedback }),
-//     });
-//     const raw = await resp.text();
-//     let json: any = null;
-//     try { json = JSON.parse(raw); } catch { /* server returned non-JSON (e.g. timeout page) */ }
-//     if (!json) throw new Error(resp.status === 504 || /timeout/i.test(raw) ? "Server timed out. Please try again (add more starting alphabets)." : `Server error ${resp.status}: ${raw.slice(0, 120)}`);
-//     if (!resp.ok) throw new Error(json.error || "Request failed");
-//     return json as NamesResponse;
-//   };
-
-//   const mergeStats = (a: NamesResponse["stats"], b: NamesResponse["stats"]): NamesResponse["stats"] => ({
-//     rounds: a.rounds + b.rounds, rejected: a.rejected + b.rejected,
-//     inputTokens: a.inputTokens + b.inputTokens, outputTokens: a.outputTokens + b.outputTokens,
-//     costUsd: Number((a.costUsd + b.costUsd).toFixed(5)), model: b.model,
-//   });
-
-//   /**
-//    * fresh:   a brand new list (at least 12 names).
-//    * more:    keep everything shown and add 12 more.
-//    * refresh: keep only the ticked names and replace all the others (use the box to tell Claude what to change).
-//    */
-//   const generate = async (mode: "fresh" | "more" | "refresh" = "fresh") => {
-//     const list = startList();
+//   const generate = async () => {
+//     const list = starts.split(/[ ,]+/).map((s) => s.trim()).filter(Boolean);
 //     if (!number || !list.length) { toast({ title: "Choose a number and starting alphabets", variant: "destructive" }); return; }
-//     const feedback = feedbackText.trim();
-//     setLoading(true);
+//     setLoading(true); setNames(null); setPicked(new Set());
 //     try {
-//       if (mode === "fresh" || !names) {
-//         setNames(null); setPicked(new Set());
-//         setNames(await callGenerate(list, Math.max(12, slots), [], feedback));
-//       } else {
-//         const keep = mode === "refresh" ? names.names.filter((n) => picked.has(n.name)) : names.names;
-//         const avoid = names.names.flatMap((n) => [n.name, n.base]); // never bring back anything already shown
-//         const json = await callGenerate(list, 12, avoid, feedback);
-//         const keptNames = new Set(keep.map((k) => k.name));
-//         setNames({ names: [...keep, ...json.names.filter((n) => !keptNames.has(n.name))], stats: mergeStats(names.stats, json.stats), note: json.note });
-//         if (mode === "refresh") setPicked(new Set(keep.map((k) => k.name)));
-//       }
+//       const { data: sess } = await supabase.auth.getSession();
+//       const resp = await fetch(`${API_BASE}/api/admin/generate-names`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
+//         body: JSON.stringify({ gender, number: Number(number), starts: list, preference: preference.trim(), count: slots }),
+//       });
+//       const raw = await resp.text();
+//       let json: any = null;
+//       try { json = JSON.parse(raw); } catch { /* server returned non-JSON (e.g. timeout page) */ }
+//       if (!json) throw new Error(resp.status === 504 || /timeout/i.test(raw) ? "Server timed out. Please try again (add more starting alphabets)." : `Server error ${resp.status}: ${raw.slice(0, 120)}`);
+//       if (!resp.ok) throw new Error(json.error || "Request failed");
+//       setNames(json);
 //     } catch (e: any) {
 //       toast({ title: "Name generation failed", description: e?.message, variant: "destructive" });
 //     } finally { setLoading(false); }
-//   };
-
-//   /** Swap ONE name for a new one that fits the same number and alphabets. */
-//   const replaceOne = async (old: GeneratedName) => {
-//     if (!names) return;
-//     const list = startList();
-//     setReplacing(old.name);
-//     try {
-//       const avoid = names.names.flatMap((n) => [n.name, n.base]);
-//       const json = await callGenerate(list, 1, avoid, feedbackText.trim());
-//       const nn = json.names[0];
-//       if (!nn) { toast({ title: "No other name fits", description: "Try adding more starting alphabets.", variant: "destructive" }); return; }
-//       setNames({ ...names, names: names.names.map((n) => (n.name === old.name ? nn : n)), stats: mergeStats(names.stats, json.stats) });
-//       setPicked((p) => { const x = new Set(p); x.delete(old.name); return x; });
-//     } catch (e: any) {
-//       toast({ title: "Could not replace the name", description: e?.message, variant: "destructive" });
-//     } finally { setReplacing(null); }
 //   };
 
 //   /** Full-name number (first name + surname block), or null when no surname was entered. */
@@ -435,14 +382,9 @@
 //     } finally { setReportBusy(false); }
 //   };
 
-//   const namesMessage = () => {
-//     if (!names) return "";
-//     const chosen = names.names.filter((n) => picked.size === 0 || picked.has(n.name));
-//     const body = chosen.map((n) => `*${n.name}* – ${n.meaning}`).join("\n\n");
-//     return `Namaskar,\n\nPlease find numerologically curated names specifically designed for your child:\n\n${body}\n\nKindly share your top 4–5 preferred names in order of priority. I will then provide a detailed analysis of the selected names.\n\nRegards,\nAnkshaastra-Empower Your Name`;
-//   };
+//   const namesMessage = () => (names ? buildNamesMessage(names.names.slice(0, slots)) : "");
 
-//   const meta = STATUS_META[caseStatus];
+  const meta = STATUS_META[caseStatus];
 //   return (
 //     <Tabs value={tab} onValueChange={setTab} className="space-y-4">
 //       <TabsList>
@@ -615,7 +557,7 @@
 //           </div>
 //           <div><Label>Name preference (optional)</Label><Input value={preference} onChange={(e) => setPreference(e.target.value)} placeholder="e.g. Lord Shiva names, modern, short" /></div>
 //           <div className="flex items-end">
-//             <Button onClick={() => generate("fresh")} disabled={loading} className="w-full">
+//             <Button onClick={generate} disabled={loading} className="w-full">
 //               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}Generate names
 //             </Button>
 //           </div>
@@ -686,31 +628,12 @@
 //                 <label key={n.name} className="flex items-start gap-3 rounded-md border p-3 cursor-pointer">
 //                   <input type="checkbox" className="mt-1" checked={picked.has(n.name)}
 //                     onChange={() => setPicked((p) => { const x = new Set(p); x.has(n.name) ? x.delete(n.name) : x.add(n.name); return x; })} />
-//                   <div className="flex-1">
+//                   <div>
 //                     <div className="font-medium">{i + 1}. {n.name} <span className="text-xs text-muted-foreground">({n.total} → {n.number}){fullNumber(n.name) !== null ? ` · with surname → ${fullNumber(n.name)}` : ""}</span></div>
 //                     <div className="text-sm text-muted-foreground">{n.meaning}</div>
 //                   </div>
-//                   <button type="button" title="Replace this name with another" disabled={loading || replacing !== null}
-//                     className="rounded p-1 text-muted-foreground hover:bg-muted disabled:opacity-40"
-//                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); void replaceOne(n); }}>
-//                     {replacing === n.name ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-//                   </button>
 //                 </label>
 //               ))}
-//             </div>
-//             {names.note && <p className="text-sm text-amber-700">{names.note}</p>}
-//             <div className="space-y-2 rounded-md border bg-muted/40 p-3">
-//               <Label>Not happy with these names? Tell Claude what to change</Label>
-//               <Input value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}
-//                 placeholder="e.g. more modern, shorter names, easier to pronounce, no Shiva names" />
-//               <div className="flex flex-wrap gap-2">
-//                 <Button variant="outline" disabled={loading} onClick={() => generate("refresh")}>
-//                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-//                   Replace unticked names{picked.size ? ` (keeps ${picked.size} ticked)` : ""}
-//                 </Button>
-//                 <Button variant="outline" disabled={loading} onClick={() => generate("more")}>Add 12 more names</Button>
-//               </div>
-//               <p className="text-xs text-muted-foreground">Tick the names you like, then "Replace unticked names" swaps all the others. The ↻ icon on a name swaps just that one.</p>
 //             </div>
 //             <p className="text-xs text-muted-foreground">
 //               {names.stats.rounds} AI round(s), {names.stats.rejected} names dropped by the checks · {names.stats.inputTokens + names.stats.outputTokens} tokens · about ${names.stats.costUsd} (₹{(names.stats.costUsd * 90).toFixed(2)}) · {names.stats.model}
@@ -776,7 +699,6 @@
 
 //       <AdminPage title="Step 6 · Final report" description="When the customer confirms the final name(s), create the Perfect / Complete report from here. Sending its link marks the case Final Report Shared.">
 //         <SwarFinalReport
-//           key={`${caseId ?? "none"}|${orderId ?? ""}`}
 //           caseId={caseId} orderId={orderId} tier={pkg.tier}
 //           dob={dob} phone={phone} gender={gender}
 //           surname={surname} middle={middle} middleNotFather={middleNotFather}
