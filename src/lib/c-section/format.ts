@@ -26,6 +26,7 @@ export function summaryText(r: CSectionResult, names?: { mother?: string; father
       out.push("Shubh time:");
       for (const w of d.recommended) out.push(`- ${fmtRange(w.start, w.end, tz)} (${GRADE_LABEL[w.grade]}, ${w.lagna} lagna${w.tags.length ? ", " + w.tags.join(" + ") : ""})${w.cautions.length ? " - caution: " + w.cautions.join(", ") : ""}`);
     }
+    for (const n of d.notes) out.push(`Note: ${n}`);
     const av = avoidLines(d, tz);
     if (av.length) { out.push("Time to avoid:"); for (const l of av) out.push(`- ${l}`); }
   });
