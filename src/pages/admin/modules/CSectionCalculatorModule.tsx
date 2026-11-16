@@ -30,6 +30,7 @@ function DayCard({ d, tz, rank }: { d: DayResult; tz: string; rank: number }) {
         <h3 className="font-display text-lg">{fmtDate(d.date)} <span className="text-muted-foreground">({d.weekday})</span></h3>
         <Badge variant="outline" className={gradeClass[d.grade]}>{GRADE_LABEL[d.grade]}</Badge>
         {d.relaxed && <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300">Has cautions</Badge>}
+        {d.notes.length > 0 && <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300">Panchak (caution only)</Badge>}
       </div>
       <p className="text-sm text-muted-foreground">
         Mulank {d.numerology.mulank} | Bhagyank {d.numerology.bhagyank} | Luck {d.numerology.luckPct}% ({d.numerology.classification})
@@ -47,7 +48,9 @@ function DayCard({ d, tz, rank }: { d: DayResult; tz: string; rank: number }) {
       )}
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <p className="mb-1 text-sm font-medium text-emerald-700">Shubh time (clean of every avoid time)</p>
+          <p className="mb-1 text-sm font-medium text-emerald-700">
+            {d.relaxed ? "Shubh time (has cautions, see each line)" : "Shubh time (clear of every avoid time)"}
+          </p>
           {d.windows.length === 0 ? (
             <p className="text-sm text-red-700">{d.noWindowReason}</p>
           ) : (
