@@ -1,4 +1,5 @@
 
+
 // import { useEffect, useMemo, useRef, useState } from "react";
 // import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 // import SEOHead from "@/components/SEOHead";
@@ -52,6 +53,7 @@
 //   Search,
 //   History,
 //     Sparkles,
+//   CalendarCheck,
 // } from "lucide-react";
 
 // // Sidebar is grouped into sections instead of one flat 16-item list, so related
@@ -117,6 +119,7 @@
       
 //       { to: "/admin/reports", label: "Reports", icon: ScanSearch, module: "name-check-reports" },
 //             { to: "/admin/swar-calculator", label: "Swar & Names", icon: Sparkles, module: "name-check-reports" },
+//       { to: "/admin/c-section-calculator", label: "C-Section Dates", icon: CalendarCheck, module: "name-check-reports" },
 //       { to: "/admin/team", label: "Team Management", icon: UserCog, module: "team", adminOnly: true },
 //       // Audit Logs — accountability/security log. adminOnly: true means the
 //       // existing visibleSections filter below (role === "admin") already
@@ -824,15 +827,12 @@
 
 // export default AdminLayout;
 
-
-
-
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { REPORT_SUB_MODULES, canViewReportType } from "@/lib/admin-modules";
 import { supabase } from "@/integrations/supabase/client";
 import { legacyDatabase } from "@/lib/legacy-database-client";
 import { Button } from "@/components/ui/button";
@@ -1407,6 +1407,12 @@ const AdminLayout = () => {
     currentNavItem.module === "dashboard" ||
     (!currentNavItem.adminOnly && canViewModule(currentNavItem.module));
 
+  // Per-report-type check: /admin/reports/<type> needs that report's own
+  // permission (or the legacy parent-only "Reports" grant).
+  const currentReportType = REPORT_SUB_MODULES.find((r) => location.pathname.startsWith(r.path));
+  const hasAccessToCurrentReport =
+    role === "admin" || !currentReportType || canViewReportType(canViewModule, currentReportType.key);
+
   return (
     <>
       <SEOHead title="Operations Console" description="Ankshaastra centralized operations admin." />
@@ -1599,7 +1605,7 @@ const AdminLayout = () => {
             </nav>
           </aside>
           <main className="flex-1 min-w-0">
-            {hasAccessToCurrentPage ? (
+            {hasAccessToCurrentPage && hasAccessToCurrentReport ? (
               <Outlet />
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -1654,4 +1660,5 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+
 
