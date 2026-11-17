@@ -850,21 +850,28 @@ async function fetchCountableOrders(startISO?: string, endISO?: string): Promise
   const PAGE = 1000; // Supabase returns max 1000 rows per request
   const all: CountableOrder[] = [];
   for (let from = 0; ; from += PAGE) {
+    // NOTE: status is filtered in JS below (same as the Orders & Bookings page),
+    // NOT with .in("status", ...) — orders.status is a Postgres enum and
+    // filtering it with values the enum doesn't have makes the whole query fail.
     let q = db
       .from("orders")
       .select("id, service_title, total_amount, created_at, status, source_website, metadata")
-      .in("status", PAID_ORDER_STATUSES)
       .order("created_at", { ascending: true })
       .range(from, from + PAGE - 1);
     if (startISO) q = q.gte("created_at", startISO);
     if (endISO) q = q.lt("created_at", endISO);
     const { data, error } = await q;
-    if (error || !data) break;
+    if (error) {
+      console.error("[AdminDashboard] orders query failed:", error.message);
+      break;
+    }
+    if (!data) break;
     all.push(...(data as CountableOrder[]));
     if (data.length < PAGE) break;
   }
   return all.filter(
     (o) =>
+      PAID_ORDER_STATUSES.includes(o.status) &&
       !(o.metadata && (o.metadata as Record<string, unknown>).manualEntry === true) &&
       !String(o.source_website || "").startsWith("shop.")
   );
