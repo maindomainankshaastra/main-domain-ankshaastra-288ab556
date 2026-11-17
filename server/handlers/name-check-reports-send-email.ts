@@ -52,7 +52,7 @@ export default async function handler(req: Req, res: Res) {
 
   const authHeader = req.headers?.authorization || req.headers?.Authorization;
   const user = await getUserFromAuthHeader(authHeader);
-  if (!user || !(await hasModuleAccess(user.id, 'name-check-reports'))) {
+    if (!user || !(await hasReportAccess(user.id, 'reports-name-check'))) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
