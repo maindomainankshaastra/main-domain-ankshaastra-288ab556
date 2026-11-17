@@ -2,9 +2,10 @@
 
 
 
+
 // import { useEffect, useState } from "react";
 // import { useAuth } from "@/hooks/useAuth";
-// import { supabase } from "@/integrations/supabase/client";
+// import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 // import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 // import { Button } from "@/components/ui/button";
 // import { Input } from "@/components/ui/input";
@@ -39,7 +40,12 @@
 // // attempted before the success toast fires, but a failure here must never
 // // block or throw into the calling action (add/edit/remove already
 // // succeeded by the time this runs).
-// async function logAudit(actionType: string, targetUserId: string, targetName: string) {
+// async function logAudit(
+//   actionType: string,
+//   targetUserId: string,
+//   targetName: string,
+//   actorRole?: string | null,
+// ) {
 //   try {
 //     const { data } = await supabase.auth.getUser();
 //     const actor = data.user;
@@ -47,6 +53,7 @@
 //       user_id: actor?.id ?? null,
 //       user_name: actor?.user_metadata?.full_name || actor?.email || null,
 //       user_email: actor?.email ?? null,
+//       user_role: actorRole ?? null,
 //       action_type: actionType,
 //       module: "team-management",
 //       record_id: targetUserId,
@@ -130,7 +137,7 @@
 //     key: "marketing",
 //     label: "Marketing",
 //     description: "CRM, content, and campaign-facing modules.",
-//     modules: ["crm", "templates", "email", "service-pages"],
+//     modules: ["crm", "email", "service-pages"],
 //   },
 // ];
 
@@ -171,7 +178,7 @@
 // };
 
 // const TeamManagementModule = () => {
-//   const { user: currentUser } = useAuth();
+//   const { user: currentUser, role: currentRole } = useAuth();
 
 //   const [searchEmail, setSearchEmail] = useState("");
 //   const [searching, setSearching] = useState(false);
@@ -213,7 +220,7 @@
 //       return;
 //     }
 
-//     const userIds = staffRoles.map((r) => r.user_id);
+//     const userIds = staffRoles.flatMap((r) => typeof r.user_id === "string" ? [r.user_id] : []);
 
 //     const { data: profiles } = await supabase
 //       .from("profiles")
@@ -228,11 +235,11 @@
 
 //     const list: StaffMember[] = userIds.map((id) => {
 //       const profile = profiles?.find((p) => p.user_id === id);
-//       const modules = perms?.filter((p) => p.user_id === id).map((p) => p.module) || [];
+//       const modules = perms?.filter((p) => p.user_id === id).flatMap((p) => typeof p.module === "string" ? [p.module] : []) || [];
 //       return {
 //         user_id: id,
-//         full_name: profile?.full_name || null,
-//         email: profile?.email || null,
+//         full_name: typeof profile?.full_name === "string" ? profile.full_name : null,
+//         email: typeof profile?.email === "string" ? profile.email : null,
 //         modules,
 //       };
 //     });
@@ -266,17 +273,18 @@
 //       ? await supabase.from("profiles").select("user_id, full_name, email").in("user_id", removerIds)
 //       : { data: [] as { user_id: string; full_name: string | null; email: string | null }[] };
 
-//     const list: RemovedStaffMember[] = removals.map((r) => {
+//     const list: RemovedStaffMember[] = removals.flatMap((r) => {
+//       if (typeof r.user_id !== "string" || typeof r.removed_at !== "string") return [];
 //       const remover = removerProfiles?.find((p) => p.user_id === r.removed_by);
-//       return {
+//       return [{
 //         user_id: r.user_id,
-//         full_name: r.full_name,
-//         email: r.email,
-//         modules_snapshot: r.modules_snapshot || [],
+//         full_name: typeof r.full_name === "string" ? r.full_name : null,
+//         email: typeof r.email === "string" ? r.email : null,
+//         modules_snapshot: Array.isArray(r.modules_snapshot) ? r.modules_snapshot.filter((value): value is string => typeof value === "string") : [],
 //         removed_at: r.removed_at,
-//         removed_by: r.removed_by,
-//         removed_by_name: remover?.full_name || remover?.email || null,
-//       };
+//         removed_by: typeof r.removed_by === "string" ? r.removed_by : null,
+//         removed_by_name: typeof remover?.full_name === "string" ? remover.full_name : typeof remover?.email === "string" ? remover.email : null,
+//       }];
 //     });
 
 //     setRemovedStaffList(list);
@@ -301,7 +309,7 @@
 //       .ilike("email", searchEmail.trim())
 //       .maybeSingle();
 
-//     if (error || !data) {
+//     if (error || !data || typeof data.user_id !== "string") {
 //       setSearching(false);
 //       toast.error("No user found with this email. They must sign up first at /auth.");
 //       return;
@@ -323,7 +331,7 @@
 //       return;
 //     }
 
-//     setFoundUser(data);
+//     setFoundUser({ user_id: data.user_id, full_name: typeof data.full_name === "string" ? data.full_name : null, email: typeof data.email === "string" ? data.email : null });
 //     setSelectedModules([]);
 //     setPresetKey(null);
 //   };
@@ -447,6 +455,7 @@
 //       mode === "add" ? "team_member_added" : "permissions_changed",
 //       userId,
 //       label,
+//       currentRole,
 //     );
 
 //     if (mode === "add") {
@@ -491,6 +500,7 @@
 //       "team_member_removed",
 //       removeTarget.user_id,
 //       removeTarget.full_name || removeTarget.email || "Unknown",
+//       currentRole,
 //     );
 
 //     setRemoving(false);
@@ -794,7 +804,6 @@
 
 // export default TeamManagementModule;
 
-// export default TeamManagementModule;
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -826,7 +835,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Loader2, Search, UserCog, Trash2, Pencil, ShieldCheck, History, Users } from "lucide-react";
-import { ADMIN_MODULES } from "@/lib/admin-modules";
+import {
+  ADMIN_MODULES,
+  REPORTS_PARENT_KEY,
+  REPORT_SUB_MODULES,
+  effectiveReportSubs,
+  withReportSubs,
+} from "@/lib/admin-modules";
 
 // Writes one row to audit_logs. Fire-and-forget from the caller's point of
 // view is NOT used here on purpose — callers `await` this so the write is
@@ -1321,27 +1336,75 @@ const TeamManagementModule = () => {
     </div>
   );
 
-  const renderModuleGrid = (modules: string[], onToggle: (key: string) => void) => (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-      {ADMIN_MODULES.map((mod) => (
-        <label key={mod.key} className="flex items-center gap-2 text-sm cursor-pointer">
-          <Checkbox checked={modules.includes(mod.key)} onCheckedChange={() => onToggle(mod.key)} />
-          {mod.label}
-        </label>
-      ))}
-    </div>
-  );
-
-  const renderModuleBadges = (modules: string[]) =>
-    modules.length === 0 ? (
-      <Badge variant="secondary">No modules recorded</Badge>
-    ) : (
-      modules.map((m) => (
-        <Badge key={m} variant="outline" className="text-xs">
-          {ADMIN_MODULES.find((am) => am.key === m)?.label || m}
-        </Badge>
-      ))
+  // `onReportSubsChange` receives the full list of report-type keys that
+  // should be granted (empty = no Reports access). The "Reports" checkbox
+  // toggles all four report types; each sub-checkbox toggles just one.
+  const renderModuleGrid = (
+    modules: string[],
+    onToggle: (key: string) => void,
+    onReportSubsChange: (subs: string[]) => void,
+  ) => {
+    const reportSubs = effectiveReportSubs(modules);
+    const allReports = reportSubs.length === REPORT_SUB_MODULES.length;
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {ADMIN_MODULES.map((mod) =>
+          mod.key === REPORTS_PARENT_KEY ? (
+            <div key={mod.key} className="col-span-2 md:col-span-3 rounded-md border border-border p-3 space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                <Checkbox
+                  checked={allReports ? true : reportSubs.length > 0 ? "indeterminate" : false}
+                  onCheckedChange={() =>
+                    onReportSubsChange(allReports ? [] : REPORT_SUB_MODULES.map((r) => r.key))
+                  }
+                />
+                {mod.label}
+                <span className="text-xs font-normal text-muted-foreground">(choose which reports)</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                {REPORT_SUB_MODULES.map((r) => (
+                  <label key={r.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={reportSubs.includes(r.key)}
+                      onCheckedChange={() =>
+                        onReportSubsChange(
+                          reportSubs.includes(r.key)
+                            ? reportSubs.filter((k) => k !== r.key)
+                            : [...reportSubs, r.key],
+                        )
+                      }
+                    />
+                    {r.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <label key={mod.key} className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox checked={modules.includes(mod.key)} onCheckedChange={() => onToggle(mod.key)} />
+              {mod.label}
+            </label>
+          ),
+        )}
+      </div>
     );
+  };
+
+  const renderModuleBadges = (modules: string[]) => {
+    if (modules.length === 0) return <Badge variant="secondary">No modules recorded</Badge>;
+    const hasSubs = REPORT_SUB_MODULES.some((r) => modules.includes(r.key));
+    // Hide the generic "Reports" badge once specific report types are listed.
+    const shown = modules.filter((m) => !(hasSubs && m === REPORTS_PARENT_KEY));
+    return shown.map((m) => {
+      const sub = REPORT_SUB_MODULES.find((r) => r.key === m);
+      const label = sub ? `Reports · ${sub.label}` : ADMIN_MODULES.find((am) => am.key === m)?.label || m;
+      return (
+        <Badge key={m} variant="outline" className="text-xs">
+          {label}
+        </Badge>
+      );
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -1386,7 +1449,10 @@ const TeamManagementModule = () => {
 
               <div>
                 <Label className="mb-2 block">Select allowed sections</Label>
-                {renderModuleGrid(selectedModules, toggleModule)}
+                {renderModuleGrid(selectedModules, toggleModule, (subs) => {
+                  setSelectedModules((prev) => withReportSubs(prev, subs));
+                  setPresetKey(null);
+                })}
               </div>
 
               <Button onClick={requestAssignStaff} disabled={saving}>
@@ -1519,7 +1585,10 @@ const TeamManagementModule = () => {
               </div>
               <div>
                 <Label className="mb-2 block">Select allowed sections</Label>
-                {renderModuleGrid(editModules, toggleEditModule)}
+                {renderModuleGrid(editModules, toggleEditModule, (subs) => {
+                  setEditModules((prev) => withReportSubs(prev, subs));
+                  setEditPresetKey(null);
+                })}
               </div>
               <DialogFooter>
                 <Button onClick={requestEditPermissions} disabled={saving}>
