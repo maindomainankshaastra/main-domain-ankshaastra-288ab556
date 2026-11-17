@@ -736,7 +736,8 @@ import { detectPackage, nameSlots, orderMatchesPhone, prefillFromOrder, PACKAGE_
 import { chaldeanRawSum } from "@/lib/name-check/numerology";
 import { reduceToSingleDigit } from "@/lib/name-check/lo-shu";
 import { loadImage, renderSwarImage } from "@/lib/swar/swarImage";
-import { analyseName, buildAnalysisMessage, coreNumbersFromDob, GRADE_LABEL, parseNames, type NameAnalysis } from "@/lib/swar/nameSteps";
+import { coreNumbersFromDob, parseNames } from "@/lib/swar/nameSteps";
+import { summariseName, SUITABILITY, type NameSummary } from "@/lib/swar/nameCorrection";
 
 const API_BASE =
   typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:8081" : "";
@@ -937,7 +938,8 @@ export default function SwarCalculatorModule() {
 
   // ---- step 4: names the customer chose -> analysis ----
   const [chosenRaw, setChosenRaw] = useState("");
-  const [analysis, setAnalysis] = useState<NameAnalysis[] | null>(null);
+  const [analysis, setAnalysis] = useState<NameSummary[] | null>(null);
+  const [correctionEdits, setCorrectionEdits] = useState<Record<string, string>>({}); // spelling typed by hand in Step 5
 
   const addPickedToChosen = () => {
     setChosenRaw(parseNames([chosenRaw, ...picked].join(",")).join(", "));
@@ -946,10 +948,13 @@ export default function SwarCalculatorModule() {
     const list = parseNames(chosenRaw);
     if (!dob) { toast({ title: "Enter date of birth in step 1", variant: "destructive" }); return; }
     if (!list.length) { toast({ title: "Enter the names the customer chose", variant: "destructive" }); return; }
-    setAnalysis(list.map((n) => analyseName(dob, n, surnameText)));
+    setAnalysis(list.map((n) => summariseName(dob, n, surnameText)));
+    setCorrectionEdits({});
     void autoStatus("confirmation_received");
   };
-  const analysisMessage = analysis ? buildAnalysisMessage(dob, analysis, core?.mulank, core?.bhagyank) : "";
+  /** Corrected spelling shown for a name: what the operator typed, else the automatic suggestion. Empty for names that are already "Yes". */
+  const correctedOf = (r: NameSummary): string => (r.ok ? "" : (correctionEdits[r.name] ?? r.corrected?.name ?? "").trim());
+  const numberOfName = (name: string) => { const t = chaldeanRawSum(name); return t ? { total: t, number: reduceToSingleDigit(t) } : null; };
 
   // ---- cases & status ----
   const packageLabel = `${pkg.tier === "blueprint" ? `Complete Blueprint ₹${PACKAGE_PRICE.blueprint}` : `Perfect Baby Name ₹${PACKAGE_PRICE.perfect}`}${pkg.extraNames ? " + extra names" : ""}`;
@@ -1001,7 +1006,7 @@ export default function SwarCalculatorModule() {
     setGender(d.gender ?? "boy"); setSurname(d.surname ?? ""); setMiddle(d.middle ?? ""); setMiddleNotFather(!!d.middleNotFather);
     setPreference(d.preference ?? ""); if (d.pkg) setPkg(d.pkg); setStarts(d.starts ?? ""); setNumber(d.number ?? "");
     setNames(d.names?.length ? { names: d.names, stats: d.namesStats ?? { rounds: 0, rejected: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, model: "" } } : null);
-    setPicked(new Set(d.picked ?? [])); setChosenRaw(d.chosenRaw ?? ""); setAnalysis(null);
+    setPicked(new Set(d.picked ?? [])); setChosenRaw(d.chosenRaw ?? ""); setAnalysis(null); setCorrectionEdits({});
     setOrderId(row.order_id); setCaseId(row.id); setCaseKey(`${phoneDigits(d.phone ?? row.phone ?? "")}|${d.dob ?? row.dob ?? ""}`);
     setCaseStatusState(row.status); setTab("calculator");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1129,11 +1134,15 @@ export default function SwarCalculatorModule() {
     setReportBusy(true);
     try {
       const chosen = names.names.slice(0, slots); // the report always carries all of its name slots
-      const analysisRows: AnalysisRow[] = (analysis ?? []).map((a) => ({
+      // The names, and every detail used to judge them, come from Step 4 and this case. If "Check names" was not
+      // pressed yet, the names typed in Step 4 are analysed now, so the page is never left empty by mistake.
+      const source = analysis ?? (dob ? parseNames(chosenRaw).map((n) => summariseName(dob, n, surnameText)) : []);
+      const analysisRows: AnalysisRow[] = source.map((a) => ({
         name: a.name,
         firstNo: a.error ? "-" : a.number,
         fullNo: fullNumber(a.name) ?? "-",
-        suitability: a.error ? "-" : a.grade === "good" ? "Yes" : a.grade === "ok" ? "Moderate" : "No",
+        suitability: a.error ? "-" : SUITABILITY[a.grade],
+        corrected: correctedOf(a) || undefined,
       }));
       const bytes = await generateNameFinderReport({
         dob, time, place, gender: gender as Gender,
@@ -1295,7 +1304,7 @@ export default function SwarCalculatorModule() {
           <div><Label>Middle name (optional)</Label><Input value={middle} onChange={(e) => setMiddle(e.target.value)} placeholder="Deshraj" /></div>
           <label className="flex items-end gap-2 pb-2 text-sm">
             <input type="checkbox" className="mb-1" checked={!middleNotFather} onChange={(e) => setMiddleNotFather(!e.target.checked)} disabled={!middle.trim()} />
-            <span>Is middle name father’s name?<span className="block text-xs text-muted-foreground">Unticked: the middle name is added to the surname.</span></span>
+            <span>Is middle name father’s name? <b>{middle.trim() ? (middleNotFather ? "No" : "Yes") : ""}</b></span>
           </label>
         </div>
 
@@ -1456,39 +1465,51 @@ export default function SwarCalculatorModule() {
         </div>
       </AdminPage>
 
-      <AdminPage title="Step 5 · Detailed analysis" description="Verified by the same rule engine as the Name Check report. Copy or send it to the customer.">
+      <AdminPage title="Step 5 · Analysis of the customer’s names" description="Taken from the names in Step 4 and the details of this case. It fills the “Analysis of name options” page of the report and is not sent to the customer.">
         {!analysis ? (
           <p className="text-sm text-muted-foreground">Enter the customer’s names in step 4 and press “Check names”.</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div className="overflow-x-auto rounded-md border">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-left">
-                  <tr><th className="p-2">Name</th><th className="p-2">Total → No.</th><th className="p-2">vs Mulank</th><th className="p-2">vs Bhagyank</th><th className="p-2">Compound</th><th className="p-2">Verdict</th></tr>
+                  <tr>
+                    <th className="p-2">Name</th><th className="p-2">Total → No.</th><th className="p-2">Suitability</th>
+                    <th className="p-2">Corrected spelling</th><th className="p-2">Corrected total → No.</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {analysis.map((r) => (
-                    <tr key={r.name} className="border-t">
-                      <td className="p-2 font-medium">{r.name}</td>
-                      <td className="p-2">{r.total} → {r.number}</td>
-                      {r.error ? <td className="p-2 text-destructive" colSpan={4}>{r.error}</td> : (
-                        <>
-                          <td className="p-2 capitalize">{r.firstToMulank}</td>
-                          <td className="p-2 capitalize">{r.firstToBhagyank}</td>
-                          <td className="p-2 capitalize">{r.compoundTier}</td>
-                          <td className="p-2">{GRADE_LABEL[r.grade]}</td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
+                  {analysis.map((r) => {
+                    const corrected = correctedOf(r);
+                    const cn = corrected ? numberOfName(corrected) : null;
+                    return (
+                      <tr key={r.name} className="border-t">
+                        <td className="p-2 font-medium">{r.name}</td>
+                        {r.error ? <td className="p-2 text-destructive" colSpan={4}>{r.error}</td> : (
+                          <>
+                            <td className="p-2">{r.total} → {r.number}</td>
+                            <td className={`p-2 font-medium ${r.grade === "good" ? "text-green-700" : r.grade === "ok" ? "text-amber-700" : "text-red-700"}`}>{SUITABILITY[r.grade]}</td>
+                            <td className="p-2">
+                              {r.ok ? "–" : (
+                                <Input
+                                  className="h-8 w-44" value={correctionEdits[r.name] ?? r.corrected?.name ?? ""} placeholder="no correction found"
+                                  onChange={(e) => setCorrectionEdits((m) => ({ ...m, [r.name]: e.target.value }))}
+                                />
+                              )}
+                            </td>
+                            <td className="p-2">{cn ? `${cn.total} → ${cn.number}` : "–"}</td>
+                          </>
+                        )}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-            <div className="rounded-md border p-3 text-sm whitespace-pre-wrap bg-muted/40">{analysisMessage}</div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => copy(analysisMessage, "Analysis message")}><Copy className="w-4 h-4 mr-2" />Copy analysis message</Button>
-              <Button onClick={() => sendWhatsApp(analysisMessage)}><MessageCircle className="w-4 h-4 mr-2" />Send on WhatsApp</Button>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              A corrected spelling is offered for every name that is not “Yes”. It only repeats letters the name already has (one or two letters
+              doubled). You can type your own spelling in the box; the report uses what is shown here.
+            </p>
           </div>
         )}
       </AdminPage>
