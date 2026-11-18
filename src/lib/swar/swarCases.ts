@@ -47,7 +47,8 @@ export interface CaseSnapshot {
   gender: string; surname: string; middle: string; middleNotFather: boolean; preference: string;
   pkg: { tier: "perfect" | "blueprint"; extraNames: boolean };
   starts: string; number: string;
-  names: any[]; picked: string[]; chosenRaw: string;
+    /** Optional nick name the customer wants (Step 4); fills the report's Nick Name field. */
+  nickName?: string;
   /** Total AI usage for the names of this case (every generate / replace adds to it). */
   namesStats?: { rounds: number; rejected: number; inputTokens: number; outputTokens: number; costUsd: number; model: string };
 }
