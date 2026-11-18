@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { EMPTY_BABY_FORM, validateBabyForm, type BabyReportFormValues } from "@/lib/baby-reports/perfect-baby-name/form";
 import { BabyReportForm } from "@/components/admin/BabyReportForm";
-import type { PackageTier } from "@/lib/swar/nameFinderPackage";
+import { prefillFromOrder, type OrderPrefill, type PackageTier } from "@/lib/swar/nameFinderPackage";
 import { AUTO_GENERATE_AFTER_REDIRECT, buildReportValues, newReportId, reportColumns, reportMessage, reportOpenUrl, reportTarget } from "@/lib/swar/finalReport";
 
 interface Props {
@@ -48,14 +48,21 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
   const [form, setForm] = useState<BabyReportFormValues>(EMPTY_BABY_FORM);
   const [orderEmail, setOrderEmail] = useState("");
   const [orderFather, setOrderFather] = useState("");
+  // Everything the order form already holds (DOB, gender, middle / last name, phone). Used whenever the matching Step 1-3 field is empty.
+  const [orderData, setOrderData] = useState<OrderPrefill | null>(null);
   const chosenKey = chosenNames.join("|");
   const touched = useRef<Set<keyof BabyReportFormValues>>(new Set());
 
   const base = useMemo(() => buildReportValues({
-    name1: chosenNames[0] ?? "", name2: chosenNames[1] ?? "", middle, middleIsFather: !middleNotFather, surname, gender,
-    email: orderEmail, phone, dob, fatherName: orderFather, nickName, preference: "na",
+    name1: chosenNames[0] ?? "", name2: chosenNames[1] ?? "",
+    middle: middle || orderData?.middleName || "",
+    middleIsFather: middle ? !middleNotFather : (orderData?.middleIsFather ?? !middleNotFather),
+    surname: surname || orderData?.lastName || "",
+    gender: gender || orderData?.gender || "",
+    email: orderEmail, phone: phone || String(orderData?.phone ?? ""), dob: dob || orderData?.dob || "",
+    fatherName: orderFather, nickName, preference: "na",
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [chosenKey, middle, middleNotFather, surname, gender, orderEmail, phone, dob, orderFather, nickName]);
+  }), [chosenKey, middle, middleNotFather, surname, gender, orderEmail, phone, dob, orderFather, nickName, orderData]);
 
   const applyBase = useCallback((all: boolean) => {
     if (all) touched.current.clear();
@@ -98,6 +105,7 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
         const m = (data?.metadata ?? {}) as Record<string, any>;
         const s = (m.formSnapshot ?? m) as Record<string, any>;
         if (!live) return;
+        if (data) setOrderData(prefillFromOrder(data as Record<string, any>));
         if (s.email) setOrderEmail(String(s.email));
         const father = s.fatherFullName ?? s.fatherName;
         if (father) setOrderFather(String(father));
