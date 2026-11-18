@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildReportValues, reportColumns, reportGender, reportTarget, fullOption, reportMessage } from "@/lib/swar/finalReport";
+import { buildReportValues, reportColumns, reportGender, reportTarget, fullOption, reportMessage, reportOpenUrl } from "@/lib/swar/finalReport";
 import { validateBabyForm } from "@/lib/baby-reports/perfect-baby-name/form";
 
 const base = { name1: "Dheer", name2: "Darsh", middle: "Ankit", middleIsFather: true, surname: "Mokadam", gender: "boy",
@@ -31,5 +31,12 @@ describe("final report", () => {
     expect(reportGender("girl")).toBe("Female");
     expect(fullOption("Vyom", "", "")).toBe("Vyom");
     expect(reportMessage("blueprint", "Vyom", "https://x/y.pdf")).toContain("Complete Baby Name Blueprint");
+  });
+});
+
+describe("report hand-off from Swar", () => {
+  it("opens the right report page directly, with or without auto-generate", () => {
+    expect(reportOpenUrl("perfect", "PBN-AB12-CD34")).toBe("/admin/reports/perfect-baby-name?report=PBN-AB12-CD34");
+    expect(reportOpenUrl("blueprint", "CBB-AB12-CD34", true)).toBe("/admin/reports/complete-baby-blueprint?report=CBB-AB12-CD34&autogenerate=1");
   });
 });
