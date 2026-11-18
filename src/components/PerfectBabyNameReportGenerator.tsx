@@ -1,6 +1,5 @@
 
 
-
 // /**
 //  * PERFECT BABY NAME REPORT — PDF generator (53 pages, A4).
 //  *
@@ -175,7 +174,7 @@
 //  * 50-page report) and simply dropped in as full-bleed images.
 //  */
 // const STATIC_PAGE_NUMBERS = [
-//   1, 2, 3, 6, 7, 8, 9, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+//   1, 2, 3, 6, 7, 8, 9, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
 //   41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
 // ];
 // const STATIC_BASE = "/perfect-baby-name-assets";
@@ -1358,6 +1357,7 @@
 //   for (let n = 1; n <= TOTAL_PAGES; n++) {
 //     if (n === 20 && singleOption) continue; // no Option 2 page when only one name option was given
 //     if (n === 22 && !includeNickPage) continue; // Nick Name page only when a nick name was entered
+//     if (n === 28) continue; // "Expected Timeline & Result" page is no longer part of the report
 //     const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 //     const build = dynamicPages[n];
 //     if (build) {
@@ -1388,8 +1388,6 @@
 //   document.body.removeChild(link);
 //   URL.revokeObjectURL(url);
 // }
-
-
 
 
 /**
@@ -1934,12 +1932,30 @@ function splitNameVariants(raw: string): string[] {
   return raw.split(/[\/|;,]/).map((s) => s.trim().replace(/\s+/g, " ")).filter(Boolean);
 }
 
-function analyseName(rawName: string, mulank: number, bhagyank: number, dob: { day: number; month: number; year: number }): NameFacts {
+/**
+ * Words that belong to the father's / husband's name and must NOT be counted in the numerology.
+ * Rule: if the admin marked the middle name as father's/husband's name, every word of the middle name is excluded;
+ * and even if the flag was forgotten, a middle name that is (the start of) the Father's Name field is treated the same.
+ * The first word of a name is never excluded.
+ */
+function fatherNameWordsToExclude(d: { middleName: string; fatherName: string; isMiddleNameFatherHusband: boolean }): string[] {
+  const norm = (x: string) => x.trim().toLowerCase().replace(/\s+/g, " ");
+  const middle = norm(d.middleName);
+  if (!middle) return [];
+  const father = norm(d.fatherName);
+  const middleIsFather = d.isMiddleNameFatherHusband || (!!father && (father === middle || father.startsWith(middle + " ")));
+  return middleIsFather ? middle.split(" ") : [];
+}
+
+function analyseName(rawName: string, mulank: number, bhagyank: number, dob: { day: number; month: number; year: number }, excludeWords: string[] = []): NameFacts {
   const variants = splitNameVariants(rawName);
   // All variants share ONE calculation. Use the variant that carries the most words (i.e. the one with the
   // surname, e.g. "Sanvvii Mishra" in "Navishaa / Naviisha / Sanvvii Mishra"), so the full-name and compound
   // numbers include the surname exactly like a single "First Last" entry would. Ties -> the first one listed.
-  const clean = variants.reduce((best, v) => (v.split(" ").length > best.split(" ").length ? v : best), variants[0] ?? rawName.trim().replace(/\s+/g, " "));
+  const longest = variants.reduce((best, v) => (v.split(" ").length > best.split(" ").length ? v : best), variants[0] ?? rawName.trim().replace(/\s+/g, " "));
+  // Father's / husband's name (e.g. the "Ankit" in "Miivvansh Ankit Mokadam") is shown in the report but not calculated.
+  const skip = new Set(excludeWords.map((w) => w.toLowerCase()));
+  const clean = longest.split(" ").filter((w, i) => i === 0 || !skip.has(w.toLowerCase())).join(" ");
   const shownName = variants.length ? variants.join(" / ") : clean;   // what the report prints
   const firstName = clean.split(" ")[0] ?? "";
   const grid = buildLoShuGrid(dob.day, dob.month, dob.year);
@@ -2628,8 +2644,9 @@ export async function generatePerfectBabyNameReportPdf(input: PerfectBabyNameRep
   const kua = computeKuaNumber(dob.year, data.gender);
 
   // --- candidate names (a baby has no "current" name) ------------------------
-  const opt1 = data.option1Name ? analyseName(data.option1Name, mulank, bhagyank, dob) : null;
-  const opt2 = data.option2Name ? analyseName(data.option2Name, mulank, bhagyank, dob) : null;
+  const skipWords = fatherNameWordsToExclude(data); // father's name stays visible, but is not part of the numbers
+  const opt1 = data.option1Name ? analyseName(data.option1Name, mulank, bhagyank, dob, skipWords) : null;
+  const opt2 = data.option2Name ? analyseName(data.option2Name, mulank, bhagyank, dob, skipWords) : null;
   if (!opt1) {
     console.warn(`Perfect Baby Name PDF: report ${data.reportId} has no name option — pages 19-21 will show placeholders.`);
   }
@@ -2653,8 +2670,8 @@ export async function generatePerfectBabyNameReportPdf(input: PerfectBabyNameRep
   // Same value / "Both" -> Option 1 for pages that need a single name (Loshu, Rajyog, letter).
   const recommended = recCase === "option2Better" ? opt2 : (opt1 ?? opt2);
 
-  const nick1 = data.nickName1 ? analyseName(data.nickName1, mulank, bhagyank, dob) : null;
-  const nick2 = data.nickName2 ? analyseName(data.nickName2, mulank, bhagyank, dob) : null;
+  const nick1 = data.nickName1 ? analyseName(data.nickName1, mulank, bhagyank, dob, skipWords) : null;
+  const nick2 = data.nickName2 ? analyseName(data.nickName2, mulank, bhagyank, dob, skipWords) : null;
 
   // --- loshu + rajyog against the recommended name ----------------------------
   const grid = buildStandardLoShuGrid(dob.day, dob.month, dob.year);
