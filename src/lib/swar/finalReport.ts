@@ -132,7 +132,7 @@ export function reportMessage(tier: PackageTier, name: string, pdfUrl: string): 
  * After "Create report" the Swar tool jumps straight to that report in the report page and starts the PDF there.
  * Set to false to only open the report (the operator then presses Generate).
  */
-export const AUTO_GENERATE_AFTER_REDIRECT = true;
+export const AUTO_GENERATE_AFTER_REDIRECT = false;
 
 /** Report admin page URL that opens one report directly (the page reads ?report=<report id> and ?autogenerate=1). */
 export function reportOpenUrl(tier: PackageTier, reportId: string, autogenerate = false): string {
