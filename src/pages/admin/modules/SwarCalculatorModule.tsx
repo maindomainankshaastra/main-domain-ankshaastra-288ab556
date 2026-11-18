@@ -1,6 +1,3 @@
-
-
-
 // import { useEffect, useMemo, useRef, useState } from "react";
 // import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, Sparkles, TriangleAlert } from "lucide-react";
 // import { AdminPage } from "@/components/admin/AdminPage";
@@ -938,6 +935,7 @@ export default function SwarCalculatorModule() {
 
   // ---- step 4: names the customer chose -> analysis ----
   const [chosenRaw, setChosenRaw] = useState("");
+  const [nickName, setNickName] = useState("");   // optional nick name the customer wants (goes to the final report)
   const [analysis, setAnalysis] = useState<NameSummary[] | null>(null);
   const [correctionEdits, setCorrectionEdits] = useState<Record<string, string>>({}); // spelling typed by hand in Step 5
 
@@ -961,7 +959,7 @@ export default function SwarCalculatorModule() {
   const buildSnapshot = (over: Partial<CaseSnapshot> = {}): CaseSnapshot => ({
     dob, time, place, tz, phone, customerName, swarText, altText,
     gender, surname, middle, middleNotFather, preference, pkg, starts, number,
-    names: names?.names ?? [], namesStats: names?.stats, picked: [...picked], chosenRaw,
+    names: names?.names ?? [], namesStats: names?.stats, picked: [...picked], chosenRaw, nickName,
     ...over,
   });
   const currentKey = () => `${phoneDigits(phone)}|${dob}`;
@@ -1006,7 +1004,7 @@ export default function SwarCalculatorModule() {
     setGender(d.gender ?? "boy"); setSurname(d.surname ?? ""); setMiddle(d.middle ?? ""); setMiddleNotFather(!!d.middleNotFather);
     setPreference(d.preference ?? ""); if (d.pkg) setPkg(d.pkg); setStarts(d.starts ?? ""); setNumber(d.number ?? "");
     setNames(d.names?.length ? { names: d.names, stats: d.namesStats ?? { rounds: 0, rejected: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, model: "" } } : null);
-    setPicked(new Set(d.picked ?? [])); setChosenRaw(d.chosenRaw ?? ""); setAnalysis(null); setCorrectionEdits({});
+    setPicked(new Set(d.picked ?? [])); setChosenRaw(d.chosenRaw ?? ""); setNickName(d.nickName ?? ""); setAnalysis(null); setCorrectionEdits({});
     setOrderId(row.order_id); setCaseId(row.id); setCaseKey(`${phoneDigits(d.phone ?? row.phone ?? "")}|${d.dob ?? row.dob ?? ""}`);
     setCaseStatusState(row.status); setTab("calculator");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1458,9 +1456,10 @@ export default function SwarCalculatorModule() {
       </AdminPage>
 
       <AdminPage title="Step 4 · Customer’s chosen names" description="Customer replied with their top names (even ones that were not in your list). Enter them and check every name against the DOB.">
-        <div className="grid gap-4 md:grid-cols-[1fr_220px_auto]">
+        <div className="grid gap-4 md:grid-cols-[1fr_200px_200px_auto]">
           <div><Label>Names (comma or new line)</Label><Textarea rows={3} value={chosenRaw} onChange={(e) => setChosenRaw(e.target.value)} placeholder="Dheer, Darsh, Advik, Vyom" /></div>
           <div><Label>Surname (optional)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Sharma" /></div>
+          <div><Label>Nick name (optional)</Label><Input value={nickName} onChange={(e) => setNickName(e.target.value)} placeholder="Shanu" /></div>
           <div className="flex items-end"><Button onClick={runAnalysis}><Sparkles className="w-4 h-4 mr-2" />Check names</Button></div>
         </div>
       </AdminPage>
@@ -1521,6 +1520,7 @@ export default function SwarCalculatorModule() {
           dob={dob} phone={phone} gender={gender}
           surname={surname} middle={middle} middleNotFather={middleNotFather}
           chosenNames={parseNames(chosenRaw)}
+          nickName={nickName}
           sendWhatsApp={sendWhatsApp}
           onSent={() => { void autoStatus("report_shared"); }}
         />
