@@ -1,15 +1,12 @@
-
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ExternalLink, FileText, Loader2, MessageCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { BABY_NAME_PREFERENCE_OPTIONS, validateBabyForm, type BabyNamePreference } from "@/lib/baby-reports/perfect-baby-name/form";
+import { EMPTY_BABY_FORM, validateBabyForm, type BabyReportFormValues } from "@/lib/baby-reports/perfect-baby-name/form";
+import { BabyReportForm } from "@/components/admin/BabyReportForm";
 import type { PackageTier } from "@/lib/swar/nameFinderPackage";
 import { AUTO_GENERATE_AFTER_REDIRECT, buildReportValues, newReportId, reportColumns, reportMessage, reportOpenUrl, reportTarget } from "@/lib/swar/finalReport";
 
@@ -22,6 +19,8 @@ interface Props {
   surname: string; middle: string; middleNotFather: boolean;
   /** Names the customer finalised in Step 4. */
   chosenNames: string[];
+  /** Optional nick name typed in Step 4. */
+  nickName: string;
   /** Opens the customer's WhatsApp chat with the text typed in. */
   sendWhatsApp: (text: string) => void;
   /** Called when the report link was sent -> case becomes "Final Report Shared". */
@@ -36,7 +35,7 @@ const STATUS_BADGE: Record<string, string> = {
   archived: "bg-slate-200 text-slate-700 border-slate-300",
 };
 
-export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, surname, middle, middleNotFather, chosenNames, sendWhatsApp, onSent }: Props) {
+export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, surname, middle, middleNotFather, chosenNames, nickName, sendWhatsApp, onSent }: Props) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const target = useMemo(() => reportTarget(tier), [tier]);
@@ -44,20 +43,37 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [name1, setName1] = useState("");
-  const [name2, setName2] = useState("");
-  const [email, setEmail] = useState("");
-  const [fatherName, setFatherName] = useState("");
-  const [nickName, setNickName] = useState("");
-  const [preference, setPreference] = useState<BabyNamePreference>("na");
-
-  // Names typed in Step 4 become the defaults (first = Option 1, second = Option 2); the operator can change them.
+  // The form has every field of the Perfect / Complete report form. It is filled from Step 4 and the order, and the
+  // operator can change any field. A field the operator edited is never overwritten again by an automatic refill.
+  const [form, setForm] = useState<BabyReportFormValues>(EMPTY_BABY_FORM);
+  const [orderEmail, setOrderEmail] = useState("");
+  const [orderFather, setOrderFather] = useState("");
   const chosenKey = chosenNames.join("|");
-  useEffect(() => {
-    setName1((p) => p || chosenNames[0] || "");
-    setName2((p) => p || chosenNames[1] || "");
+  const touched = useRef<Set<keyof BabyReportFormValues>>(new Set());
+
+  const base = useMemo(() => buildReportValues({
+    name1: chosenNames[0] ?? "", name2: chosenNames[1] ?? "", middle, middleIsFather: !middleNotFather, surname, gender,
+    email: orderEmail, phone, dob, fatherName: orderFather, nickName, preference: "na",
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chosenKey]);
+  }), [chosenKey, middle, middleNotFather, surname, gender, orderEmail, phone, dob, orderFather, nickName]);
+
+  const applyBase = useCallback((all: boolean) => {
+    if (all) touched.current.clear();
+    setForm((cur) => {
+      const next = { ...cur };
+      (Object.keys(base) as (keyof BabyReportFormValues)[]).forEach((k) => {
+        if (k === "status" || k === "preference") return;
+        if (all || !touched.current.has(k)) (next as any)[k] = base[k];
+      });
+      return next;
+    });
+  }, [base]);
+  useEffect(() => { applyBase(false); }, [applyBase]);
+
+  const onFormChange = (v: BabyReportFormValues) => {
+    (Object.keys(v) as (keyof BabyReportFormValues)[]).forEach((k) => { if (v[k] !== form[k]) touched.current.add(k); });
+    setForm(v);
+  };
 
   const loadReport = useCallback(async () => {
     if (!caseId) { setReport(null); return; }
@@ -82,26 +98,22 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
         const m = (data?.metadata ?? {}) as Record<string, any>;
         const s = (m.formSnapshot ?? m) as Record<string, any>;
         if (!live) return;
-        if (s.email) setEmail((p) => p || String(s.email));
+        if (s.email) setOrderEmail(String(s.email));
         const father = s.fatherFullName ?? s.fatherName;
-        if (father) setFatherName((p) => p || String(father));
+        if (father) setOrderFather(String(father));
       } catch { /* optional prefill only */ }
     })();
     return () => { live = false; };
   }, [orderId]);
 
-  const values = useMemo(() => buildReportValues({
-    name1, name2, middle, middleIsFather: !middleNotFather, surname, gender, email, phone, dob, fatherName, nickName, preference,
-  }), [name1, name2, middle, middleNotFather, surname, gender, email, phone, dob, fatherName, nickName, preference]);
-
   const create = async () => {
     if (!caseId) { toast({ title: "Save the case first", description: "Run the Step 4 check, it saves the case.", variant: "destructive" }); return; }
-    const problem = validateBabyForm(values);
+    const problem = validateBabyForm(form);
     if (problem) { toast({ title: "Report not created", description: problem, variant: "destructive" }); return; }
     setSaving(true);
     try {
       const { data, error } = await (supabase as any).from(target.table)
-        .insert({ report_id: newReportId(tier), ...reportColumns(values), pdf_url: null, order_id: orderId, swar_case_id: caseId })
+        .insert({ report_id: newReportId(tier), ...reportColumns({ ...form, status: "draft" }), pdf_url: null, order_id: orderId, swar_case_id: caseId })
         .select("*").single();
       if (error) throw error;
       setReport(data);
@@ -135,29 +147,10 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
 
       {!report ? (
         <>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div>
-              <Label>Final name (Option 1)</Label>
-              <Input list="swar-final-names" value={name1} onChange={(e) => setName1(e.target.value)} placeholder="The name the customer confirmed" />
-            </div>
-            <div>
-              <Label>Second name (Option 2, leave empty if only one)</Label>
-              <Input list="swar-final-names" value={name2} onChange={(e) => setName2(e.target.value)} />
-            </div>
-            <datalist id="swar-final-names">{chosenNames.map((n) => <option key={n} value={n} />)}</datalist>
-            <div><Label>Email (report goes here)</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="from the order, or type it" /></div>
-            <div><Label>Father's name</Label><Input value={fatherName} onChange={(e) => setFatherName(e.target.value)} /></div>
-            <div><Label>Nick name (optional, adds the Nick Name page)</Label><Input value={nickName} onChange={(e) => setNickName(e.target.value)} /></div>
-            <div>
-              <Label>Preference</Label>
-              <Select value={preference} onValueChange={(v) => setPreference(v as BabyNamePreference)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{BABY_NAME_PREFERENCE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          </div>
+          <BabyReportForm values={form} onChange={onFormChange} />
+          <Button type="button" variant="outline" size="sm" onClick={() => applyBase(true)}>Re-fill from Step 4 and the order</Button>
           <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-            Will be saved as: <b>{values.option1_name || "-"}</b>{values.option2_name !== "NA" ? <> and <b>{values.option2_name}</b></> : null} · {values.gender || "-"} · DOB {values.dob || "-"} · first alphabet {values.first_alphabet || "-"}
+            Will be saved as: <b>{form.option1_name || "-"}</b>{form.option2_name && form.option2_name !== "NA" ? <> and <b>{form.option2_name}</b></> : null} · {form.gender || "-"} · DOB {form.dob || "-"} · first alphabet {form.first_alphabet || "-"}
           </div>
           <Button onClick={create} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}Create and open {target.label}
