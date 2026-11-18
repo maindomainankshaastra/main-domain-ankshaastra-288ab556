@@ -6826,7 +6826,7 @@ async function getCurrentAdminId(): Promise<string | null> {
 function buildDownloadFilename(r: BabyReportRow): string {
   // An option may hold several names separated by "/" — the file name uses only the first one.
   const picked = [r.option1_name, r.option2_name].find((n) => !isNaName(n)) || r.customer_name || "Report";
-  const base = (picked.split(/[\/|;,]/)[0] ?? "").replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || "Report";
+    const base = ((picked.split(/[\/|;,]/)[0] ?? "").trim().split(/\s+/)[0] ?? "").replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || "Report";
   return `${base}_Complete Baby Blueprint_Ankshaastra.pdf`;
 }
 
