@@ -127,3 +127,14 @@ export function reportMessage(tier: PackageTier, name: string, pdfUrl: string): 
     "Ankshaastra-Empower Your Name",
   ].join("\n");
 }
+
+/**
+ * After "Create report" the Swar tool jumps straight to that report in the report page and starts the PDF there.
+ * Set to false to only open the report (the operator then presses Generate).
+ */
+export const AUTO_GENERATE_AFTER_REDIRECT = true;
+
+/** Report admin page URL that opens one report directly (the page reads ?report=<report id> and ?autogenerate=1). */
+export function reportOpenUrl(tier: PackageTier, reportId: string, autogenerate = false): string {
+  return `${reportTarget(tier).adminPath}?report=${encodeURIComponent(reportId)}${autogenerate ? "&autogenerate=1" : ""}`;
+}
