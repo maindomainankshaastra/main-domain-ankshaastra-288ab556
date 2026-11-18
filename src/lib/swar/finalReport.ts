@@ -34,28 +34,57 @@ export interface FinalReportInput {
 }
 
 const cap = (s: string) => s.trim();
-/** "Navishaa" + middle + surname -> "Navishaa Kumar Mishra" (the report's Option field is First + Middle + Last as one string). */
+
+/** "KOUSHIK PAL" -> "Koushik Pal". Only touches text that is entirely in capitals (the order form / Swar sheet often is). */
+export function tidyCase(value: string): string {
+  const v = (value ?? "").replace(/\s+/g, " ").trim();
+  if (!v || v !== v.toUpperCase() || v === v.toLowerCase()) return v;
+  return v.toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
+}
+
+/** True when `name` already ends with the surname, e.g. "Padmakshii/Ppavani Pal" + "PAL". */
+const endsWithSurname = (name: string, surname: string): boolean => {
+  const sur = cap(surname).toLowerCase().split(/\s+/).filter(Boolean);
+  if (!sur.length) return false;
+  const words = cap(name).toLowerCase().split(/\s+/).filter(Boolean);
+  return words.length > sur.length && sur.every((w, i) => words[words.length - sur.length + i] === w);
+};
+
+/** The report carries ONE first name: "Padmakshii/Ppavani Pal" -> "Padmakshii", "Padmakshii Pal" -> "Padmakshii". */
+export function singleFirstName(name: string, surname = ""): string {
+  let words = cap((name ?? "").split(/[\/|;,]/)[0]).split(/\s+/).filter(Boolean);
+  const sur = cap(surname).toLowerCase().split(/\s+/).filter(Boolean);
+  while (words.length > 1 && sur.includes(words[words.length - 1].toLowerCase())) words = words.slice(0, -1);
+  return tidyCase(words.join(" "));
+}
+
+/**
+ * "Navishaa" + middle + surname -> "Navishaa Kumar Mishra" (the report's Option field is First + Middle + Last as one string).
+ * If the confirmed name already ends with the surname ("Padmakshii/Ppavani Pal"), the surname is NOT added a second time.
+ */
 export function fullOption(first: string, middle: string, surname: string): string {
   const f = cap(first);
-  return f ? [f, cap(middle), cap(surname)].filter(Boolean).join(" ") : "";
+  if (!f) return "";
+  if (endsWithSurname(f, surname)) return f;
+  return [f, tidyCase(middle), tidyCase(surname)].filter(Boolean).join(" ");
 }
 
 export const reportGender = (g: string): string => (/^(girl|female|f)$/i.test(g) ? "Female" : /^(boy|male|m)$/i.test(g) ? "Male" : g);
 
 export function buildReportValues(i: FinalReportInput): BabyReportFormValues {
-  const first = cap(i.name1);
+  const first = singleFirstName(i.name1, i.surname);
   return {
     first_name: first,
-    middle_name: cap(i.middle),
+    middle_name: tidyCase(i.middle),
     is_middle_name_father_husband: cap(i.middle) ? i.middleIsFather : false,
-    last_name: cap(i.surname),
-    father_name: cap(i.fatherName),
+    last_name: tidyCase(i.surname),
+    father_name: tidyCase(i.fatherName),
     gender: reportGender(i.gender),
     email: cap(i.email),
     phone: cap(i.phone),
     dob: i.dob,
     first_alphabet: normaliseAlphabet(first),
-    option1_name: fullOption(first, i.middle, i.surname),
+    option1_name: fullOption(i.name1, i.middle, i.surname),
     option2_name: i.name2.trim() ? fullOption(i.name2, i.middle, i.surname) : "NA",
     nick_name: cap(i.nickName),
     preference: i.preference,
