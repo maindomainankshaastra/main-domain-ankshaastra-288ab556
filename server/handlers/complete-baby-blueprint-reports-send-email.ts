@@ -259,7 +259,7 @@ function pdfFileName(report: { report_id: string; option1_name?: string | null; 
   const isNa = (s?: string | null) => !s || /^(n\/?a|n\.a\.?|none|nil|[-–—])$/i.test(s.trim());
   // An option may hold several names separated by "/" — the file name uses only the first one.
   const picked = [report.option1_name, report.option2_name].find((n) => !isNa(n)) || report.customer_name || report.report_id;
-  const base = (picked.split(/[\/|;,]/)[0] ?? '')
+    const base = ((picked.split(/[\/|;,]/)[0] ?? '').trim().split(/\s+/)[0] ?? '')
     .replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim() || report.report_id;
   return `${base}_Complete Baby Blueprint_Ankshaastra.pdf`;
 }
