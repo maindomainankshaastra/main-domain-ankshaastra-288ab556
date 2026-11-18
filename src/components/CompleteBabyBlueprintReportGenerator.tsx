@@ -2216,7 +2216,7 @@ const BOX_W = 476.3;
 /** Page 4 — personalised welcome note. */
 function drawWelcomePage(page: PDFPage, fonts: Fonts, assets: Assets, data: ResolvedInput) {
   drawFrame(page, assets);
-  drawIcon(page, assets.logo, CENTER_X, 79.6, 335.5);
+   drawIcon(page, assets.logo, CENTER_X, 92, 230);
   drawDivider(page, assets, 261.3);
   txtC(page, "“Namaskar", { base: 205.2, font: fonts.heading, size: SZ.big, color: COLOR.white });
   // "NAME" and "ji,”" are drawn as two runs. Cinzel Decorative's capitals carry swashes that stick out past
