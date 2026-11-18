@@ -7078,6 +7078,33 @@ export default function CompleteBabyBlueprintReports() {
     else runGeneratePdf(r);
   };
 
+
+  // Swar hand-off: /admin/reports/<this page>?report=<report id>&autogenerate=1 opens that report straight away
+  // (search box filled with its ID) and, if it has no PDF yet, starts generating it. No extra clicks needed.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const handoffDone = useRef(false);
+  useEffect(() => {
+    const id = searchParams.get("report");
+    if (!id || handoffDone.current) return;
+    handoffDone.current = true;
+    const auto = searchParams.get("autogenerate") === "1";
+    setSearchTerm(id);
+    setDebouncedSearch(id);
+    setSearchParams({}, { replace: true });
+    if (!auto) return;
+    void (async () => {
+      const { data, error } = await supabase.from(TABLE_NAME).select("*").eq("report_id", id).maybeSingle();
+      if (error || !data) {
+        toast({ title: "Report not found", description: `Could not find ${id}. Search for it in the list.`, variant: "destructive" });
+        return;
+      }
+      const row = data as BabyReportRow;
+      if (row.pdf_url) { openPreview(row); return; }
+      void runGeneratePdf(row);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const handleDownloadPdf = async (r: BabyReportRow) => {
     if (!r.pdf_url) {
       toast({ title: "No PDF available", description: "Generate the PDF for this report first.", variant: "destructive" });
