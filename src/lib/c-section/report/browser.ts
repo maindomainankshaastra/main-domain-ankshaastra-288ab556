@@ -1,4 +1,5 @@
 /** Browser wiring: fetches the fonts and images from /public and embeds the real fonts with fontkit. */
+import { STATIC_PAGE_COUNT } from "./static-pages.ts";
 import fontkit from "@pdf-lib/fontkit";
 import { generateCSectionReport, type ReportInput } from "./generator.ts";
 
@@ -14,7 +15,7 @@ async function fetchBytes(url: string): Promise<Uint8Array> {
 
 export function generateCSectionReportInBrowser(input: ReportInput): Promise<Uint8Array> {
   return generateCSectionReport(input, {
-    loadBytes: (file) => fetchBytes(file.startsWith("static/") ? `${STATIC_BASE}/${file.slice(7)}` : `${ASSET_BASE}/${file}`),
+    loadBytes: (file) => fetchBytes(file.startsWith("static/") ? `${STATIC_BASE}/${file.slice(7)}?v=${STATIC_PAGE_COUNT}` : `${ASSET_BASE}/${file}`),
     async makeFonts(doc) {
       doc.registerFontkit(fontkit);
       const [heading, body, bold, serif] = await Promise.all([
