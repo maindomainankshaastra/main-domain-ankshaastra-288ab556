@@ -16,6 +16,8 @@ export const ST = {
   reminders: 17, mantra: 18, finalWord: 19, promise: 20, services: 21, connect: 22, finalBlessing: 23, backCover: 24,
   /** Canva original pages 1, 5 and 11: the cover, the personal-details frame (values are overlaid) and the medical window page. */
   cover: 25, personal: 26, medical: 27, welcome: 28,
+  /** Canva FAQ (3 pages; Q9 answer corrected), Closing Blessings, wishes and welcome-baby pages, with names and he/him wording made neutral. */
+  faq1: 29, faq2: 30, faq3: 31, closing: 32, wishBaby: 33, wishParents: 34, welcomeBaby: 35,
 } as const;
 export type StaticKey = keyof typeof ST;
 /** Number of pages the combined PDF must have (one more than the highest index in ST). Also used to bust the browser cache. */
