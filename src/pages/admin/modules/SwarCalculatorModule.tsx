@@ -1014,6 +1014,24 @@ export default function SwarCalculatorModule() {
     toast({ title: "New case", description: "The next send creates a separate case. Clear the form fields for the next customer." });
   };
 
+  // After "Create and open report" (or "Open this report") the page moves to the report page. When the operator
+  // comes back, the same case is opened again, so every step is filled as it was and the page lands on Step 6.
+  useEffect(() => {
+    let id: string | null = null;
+    try { id = sessionStorage.getItem("swar_restore_case"); sessionStorage.removeItem("swar_restore_case"); } catch { /* ignore */ }
+    if (!id) return;
+    (async () => {
+      const { data } = await (supabase as any).from("swar_cases").select("*").eq("id", id).maybeSingle();
+      if (!data) return;
+      openCase(data as SwarCaseRow);
+      const d = (data.data ?? {}) as Partial<CaseSnapshot>;
+      const list = parseNames(d.chosenRaw ?? "");
+      if (d.dob && list.length) setAnalysis(list.map((n) => summariseName(d.dob as string, n, d.surname ?? "")));
+      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 500);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /** Fill the form + package from the customer's order (matched by the WhatsApp number). */
   const applyOrder = (o: any) => {
     const d = detectPackage(o);
