@@ -78,25 +78,42 @@ export function windowLines(d: DayResult, tz: string, all = false): string[] {
   });
 }
 
+const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10 > 3 ? 0 : n % 10]}`;
+/** "07:05 AM" -> "7:05 AM" (the Canva page writes times without a leading zero). */
+const noZero = (t: string) => t.replace(/\b0(\d:\d\d)/g, "$1");
+
+/** "Navami upto 7:05 AM" / "Dashami", one per line, as on the Canva page. */
+function changeLines(d: DayResult, kind: "Tithi" | "Nakshatra" | "Moon sign", base: string, tz: string): string {
+  const re = new RegExp(`^${kind}: (.+) -> (.+)$`);
+  let cur = base;
+  const parts: string[] = [];
+  for (const c of d.changes) {
+    const m = re.exec(c.what);
+    if (!m || (d.sunrise && c.at <= d.sunrise)) continue;
+    parts.push(`${cur} upto ${noZero(fmtTime(c.at, tz))}`);
+    cur = m[2];
+  }
+  parts.push(cur);
+  return parts.join("\n");
+}
+
+/** The ten rows of the Canva "Top 3 Delivery Dates Analysis" table. */
 function dayRows(d: DayResult, tz: string): [string, string][] {
   const s = d.atSunrise;
-  const gm = d.avoid.filter((a) => a.kind === "gandmool" || a.kind === "gandanta").map((a) => `${a.label}: ${fmtRange(a.start, a.end, tz)}`);
-  const rows: [string, string][] = [
-    ["Date", longDate(d.date)],
+  const rahu = d.avoid.find((a) => a.kind === "rahu");
+  const day = Number(d.date.slice(8));
+  return [
+    ["Date", `${ordinal(day)} ${MONTHS[Number(d.date.slice(5, 7)) - 1]}, ${d.date.slice(0, 4)}`],
     ["Weekday", d.weekday],
     ["Paksha", s ? `${s.paksha} Paksha` : "-"],
-    ["Tithi", s ? changeLine(d, "Tithi", s.tithi, tz) : "-"],
-    ["Nakshatra", s ? changeLine(d, "Nakshatra", s.nakshatra, tz) : "-"],
-    ["Moon Sign", s ? changeLine(d, "Moon sign", s.rashi, tz) : "-"],
-    ["Time to Avoid\n(Rahu Kalam & more)", avoidGrouped(d, tz).join("\n") || "Nothing during OT hours"],
+    ["Tithi", s ? changeLines(d, "Tithi", s.tithi, tz) : "-"],
+    ["Nakshatra", s ? changeLines(d, "Nakshatra", s.nakshatra, tz) : "-"],
+    ["Moon Sign", s ? changeLines(d, "Moon sign", s.rashi, tz).replace(/\n/g, ", then ") : "-"],
+    ["Rahu Kalam\n(Time to Avoid)", rahu ? noZero(fmtRange(rahu.start, rahu.end, tz)).replace(" to ", " - ") : "Outside OT hours"],
     ["Mulank", String(d.numerology.mulank)],
     ["Bhagyank", String(d.numerology.bhagyank)],
     ["Mulank-Bhagyank\nCompatibility", `${d.numerology.luckPct}%`],
-    ["Gand Mool Check", gm.length ? gm.join("\n") : "Clear during OT hours"],
-    ["Shubh Muhurat", d.windows.length ? windowLines(d, tz).join("\n") : `None: ${d.noWindowReason ?? ""}`],
   ];
-  if (d.notes.length) rows.push(["Note", d.notes.join("\n")]);
-  return rows;
 }
 
 /* ------------------------------------------------------------------ */
@@ -326,6 +343,7 @@ export function drawTopDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[
     const flow = new Flow(doc, f, a, "TOP 3 DELIVERY DATES ANALYSIS", `PRIORITY ${i + 1}`, marks, i === 0 ? "Top 3 Delivery Dates Analysis" : undefined);
     const rows = dayRows(d, tz).map(([k, v], n) => [String(n + 1), k, v]);
     flow.table([{ w: 56, center: true }, { w: 150, bold: true }, { w: 257 }], ["S NO.", "Topic", "Particulars"], rows, 10, true);
+    if (d.notes.length) flow.render([{ t: "p", text: `Note: ${d.notes.join(" ")}`, muted: true }]);
   });
 }
 
@@ -441,7 +459,7 @@ export function drawAvoidDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mar
 export function drawMuhurat(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
   const r = input.result, tz = r.input.location.tz;
   const flow = new Flow(doc, f, a, "AT-A-GLANCE", "SHUBH MUHURAT", marks, "Shubh Muhurat at a Glance");
-  const short = (d: DayResult, i: number) => (d.recommended[i] ? fmtRange(d.recommended[i].start, d.recommended[i].end, tz) : "-");
+  const short = (d: DayResult, i: number) => (d.recommended[i] ? noZero(fmtRange(d.recommended[i].start, d.recommended[i].end, tz)).replace(" to ", " - ") : "-");
   const rows = r.top.map((d, i) => [String(i + 1), `${MONTHS[Number(d.date.slice(5, 7)) - 1].slice(0, 3)} ${Number(d.date.slice(8))}, ${d.date.slice(0, 4)}`, short(d, 0), short(d, 1), short(d, 2)]);
   flow.top += 14;
   flow.table([{ w: 56, center: true }, { w: 96, center: true, bold: true }, { w: 104, center: true }, { w: 104, center: true }, { w: 103, center: true }], ["Priority", "Date", "Shubh Muhurat 1", "Shubh Muhurat 2", "Shubh Muhurat 3"], rows, 9.4, true);
