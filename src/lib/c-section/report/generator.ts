@@ -8,7 +8,7 @@ import { textSections, type TextCtx } from "./content.ts";
 import { newPage, type Assets, type Fonts } from "./draw.ts";
 import { Flow, type Mark, type Section } from "./flow.ts";
 import {
-  cleanName, drawAvoidDates, drawCalendar, drawIndex, drawLoshuPages,
+  cleanName, drawAvoidDates, drawCalendar, drawChosen, drawIndex, drawLoshuPages, drawWelcome,
   drawMuhurat, drawOffers, drawPersonalDetails, drawTimelines, drawTopDates, firstName, type ReportInput,
 } from "./pages.ts";
 import { DEFAULT_CONTACT } from "./theme.ts";
@@ -65,11 +65,11 @@ export async function generateCSectionReport(input: ReportInput, deps: ReportDep
   fixed("quote");
   drawPersonalDetails(doc, f, SP, marks, input);
   fixed("disclaimer", "Important Medical Disclaimer");
-  section(S.welcome);
+  drawWelcome(doc, f, SP, marks);
   fixed("why1", "Why Birth Timing & Birth Date Matters");
   fixed("why2"); fixed("why3");
   fixed("medical", "Your Medical Window Analysis");
-  section(S.chosen);
+  drawChosen(doc, f, assets, marks, S.chosen);
   drawCalendar(doc, f, assets, marks, input);
   drawTopDates(doc, f, assets, marks, input);
   drawTimelines(doc, f, assets, marks, input);
