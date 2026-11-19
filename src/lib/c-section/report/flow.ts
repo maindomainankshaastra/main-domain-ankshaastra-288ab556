@@ -1,5 +1,5 @@
 import type { PDFDocument, PDFPage } from "pdf-lib";
-import { C, CONTENT_W, BOTTOM, MARGIN_L } from "./theme.ts";
+import { C, CONTENT_W, BOTTOM, MARGIN_L, PAGE_H } from "./theme.ts";
 import { drawPara, drawText, hLine, newPage, pageTitle, paraHeight, rect, roundRect, wrapLines, type Assets, type Fonts } from "./draw.ts";
 
 export type Block =
@@ -56,20 +56,20 @@ export class Flow {
    * Table with wrapped cells and automatic page breaks (header repeated). `cols[i].w` are widths in points;
    * rows are arrays of strings ("\n" starts a new line inside a cell). Returns nothing; advances `top`.
    */
-  table(cols: { w: number; center?: boolean; bold?: boolean }[], header: string[] | null, rows: string[][], size = 9.6) {
+  table(cols: { w: number; center?: boolean; bold?: boolean }[], header: string[] | null, rows: string[][], size = 9.6, grid = false) {
     const { f } = this;
     const lh = size * 1.34, padX = 7, padY = 5.5;
     const total = cols.reduce((s, c) => s + c.w, 0);
     const x0 = MARGIN_L + (CONTENT_W - total) / 2;
-    const cellLines = (row: string[]) => row.map((t, i) => wrapLines(cols[i].bold ? f.bold : f.body, size, t, cols[i].w - padX * 2));
+    const cellLines = (row: string[]) => row.map((t, i) => wrapLines(cols[i].bold || grid ? f.bold : f.body, size, t, cols[i].w - padX * 2));
     const drawHeader = () => {
       if (!header) return;
       const h = lh + padY * 2;
-      roundRect(this.page, x0, this.top, total, h, 8, { fill: C.navy });
+      if (grid) rect(this.page, x0, this.top, total, h, C.navy); else roundRect(this.page, x0, this.top, total, h, 8, { fill: C.navy });
       let x = x0;
       header.forEach((t, i) => {
         const w = cols[i].w;
-        drawText(this.page, t, x + (cols[i].center ? w / 2 - f.bold.widthOfTextAtSize(t, size) / 2 : padX), this.top + padY, { font: f.bold, size, color: C.white });
+        drawText(this.page, t, x + (cols[i].center || grid ? w / 2 - f.bold.widthOfTextAtSize(t, size) / 2 : padX), this.top + padY, { font: f.bold, size, color: C.white });
         x += w;
       });
       this.top += h;
@@ -83,15 +83,21 @@ export class Flow {
       const h = Math.max(...lines.map((l) => l.length)) * lh + padY * 2;
       this.ensure(h);
       if (this.pageNo !== pageSeen) { pageSeen = this.pageNo; drawHeader(); }
-      rect(this.page, x0, this.top, total, h, ri % 2 === 0 ? C.panelLight : C.white);
-      hLine(this.page, x0, x0 + total, this.top + h, C.line, 0.5);
+      rect(this.page, x0, this.top, total, h, grid || ri % 2 !== 0 ? C.white : C.panelLight);
+      if (grid) {
+        const ink = C.ink;
+        hLine(this.page, x0, x0 + total, this.top + h, ink, 1.1);
+        this.page.drawLine({ start: { x: x0, y: PAGE_H - this.top }, end: { x: x0, y: PAGE_H - this.top - h }, thickness: 1.1, color: ink });
+        let vx = x0;
+        cols.forEach((c) => { vx += c.w; this.page.drawLine({ start: { x: vx, y: PAGE_H - this.top }, end: { x: vx, y: PAGE_H - this.top - h }, thickness: 1.1, color: ink }); });
+      } else hLine(this.page, x0, x0 + total, this.top + h, C.line, 0.5);
       let x = x0;
       lines.forEach((ls, i) => {
         const w = cols[i].w;
         ls.forEach((line, li) => {
-          const font = cols[i].bold ? f.bold : f.body;
+          const font = cols[i].bold || grid ? f.bold : f.body;
           const tx = cols[i].center ? x + w / 2 - font.widthOfTextAtSize(line, size) / 2 : x + padX;
-          drawText(this.page, line, tx, this.top + padY + li * lh, { font, size, color: cols[i].bold ? C.navy : C.ink });
+          drawText(this.page, line, tx, this.top + padY + li * lh, { font, size, color: cols[i].bold && !grid ? C.navy : C.ink });
         });
         x += w;
       });
