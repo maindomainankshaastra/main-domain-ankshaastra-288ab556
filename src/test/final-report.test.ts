@@ -30,7 +30,7 @@ describe("final report", () => {
   it("small helpers", () => {
     expect(reportGender("girl")).toBe("Female");
     expect(fullOption("Vyom", "", "")).toBe("Vyom");
-    expect(reportMessage("blueprint", "Vyom", "https://x/y.pdf")).toContain("Complete Baby Name Blueprint");
+    expect(reportMessage("blueprint", "Vyom", "https://x.com/r/CBB-1")).toContain("Please download your report from here: https://x.com/r/CBB-1");
   });
 });
 
