@@ -8,7 +8,7 @@ import { textSections, type TextCtx } from "./content.ts";
 import { newPage, type Assets, type Fonts } from "./draw.ts";
 import { Flow, type Mark, type Section } from "./flow.ts";
 import {
-  cleanName, drawAvoidDates, drawCalendar, drawCover, drawIndex, drawLoshuPages, drawMedicalWindow,
+  cleanName, drawAvoidDates, drawCalendar, drawIndex, drawLoshuPages,
   drawMuhurat, drawOffers, drawPersonalDetails, drawTimelines, drawTopDates, firstName, type ReportInput,
 } from "./pages.ts";
 import { DEFAULT_CONTACT } from "./theme.ts";
@@ -60,15 +60,15 @@ export async function generateCSectionReport(input: ReportInput, deps: ReportDep
     if (title) marks.push({ title, page: doc.getPageCount() });
   };
 
-  drawCover(doc, f, assets, input);
+  fixed("cover");
   const indexPages = [newPage(doc, f, assets), newPage(doc, f, assets)];
   fixed("quote");
-  drawPersonalDetails(doc, f, assets, marks, input);
+  drawPersonalDetails(doc, f, SP, marks, input);
   fixed("disclaimer", "Important Medical Disclaimer");
   section(S.welcome);
   fixed("why1", "Why Birth Timing & Birth Date Matters");
   fixed("why2"); fixed("why3");
-  drawMedicalWindow(doc, f, assets, marks, input);
+  fixed("medical", "Your Medical Window Analysis");
   section(S.chosen);
   drawCalendar(doc, f, assets, marks, input);
   drawTopDates(doc, f, assets, marks, input);
@@ -101,6 +101,6 @@ export async function generateCSectionReport(input: ReportInput, deps: ReportDep
   fixed("backCover");
 
   drawIndex(indexPages, f, marks);
-  dedupeImages(doc);
+  await dedupeImages(doc);
   return doc.save();
 }
