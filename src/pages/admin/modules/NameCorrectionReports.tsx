@@ -2227,6 +2227,7 @@ import {
   ArrowLeft,
   Mail,
    MessageCircle,
+    Copy,
 } from "lucide-react";
 import { format } from "date-fns";
 import { getMulank, getBhagyank } from "@/lib/name-check/lo-shu";
@@ -2235,7 +2236,7 @@ import type { DateRange } from "react-day-picker";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { useToast } from "@/hooks/use-toast";
-import { sendReportOnWhatsApp } from "@/lib/report-whatsapp";
+import { sendReportOnWhatsApp, copyReportImage } from "@/lib/report-whatsapp";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
