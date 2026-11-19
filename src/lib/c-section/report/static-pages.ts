@@ -14,6 +14,8 @@ export const ST = {
   quote: 0, disclaimer: 1, why1: 2, why2: 3, why3: 4, support: 5, offers: 6, postBirth: 7, testimonial: 8,
   terms1: 9, terms2: 10, terms3: 11, terms4: 12, agreement: 13, expectations: 14, yourResp: 15, myResp: 16,
   reminders: 17, mantra: 18, finalWord: 19, promise: 20, services: 21, connect: 22, finalBlessing: 23, backCover: 24,
+  /** Canva original pages 1, 5 and 11: the cover, the personal-details frame (values are overlaid) and the medical window page. */
+  cover: 25, personal: 26, medical: 27,
 } as const;
 export type StaticKey = keyof typeof ST;
 
@@ -60,7 +62,8 @@ export function addStaticPage(doc: PDFDocument, S: StaticPages, key: StaticKey):
  * Embedding copies the shared background image once per page. This points every identical image stream at one copy
  * (keeps each report around 3-4 MB instead of 15 MB+).
  */
-export function dedupeImages(doc: PDFDocument) {
+export async function dedupeImages(doc: PDFDocument) {
+  await doc.flush(); // embedded pages are written into the context lazily
   const { context } = doc;
   const canon = new Map<string, import("pdf-lib").PDFRef>();
   const remap = new Map<import("pdf-lib").PDFRef, import("pdf-lib").PDFRef>();
@@ -81,8 +84,11 @@ export function dedupeImages(doc: PDFDocument) {
     }
   };
   const walk = (o: unknown) => {
-    if (o instanceof PDFDict) for (const [k, v] of o.entries()) fix(v, o, k);
-    else if (o instanceof PDFArray) for (let i = 0; i < o.size(); i++) fix(o.get(i), o, i);
+    if (o instanceof PDFDict) {
+      for (const [k, v] of o.entries()) { fix(v, o, k); if (v instanceof PDFDict || v instanceof PDFArray) walk(v); }
+    } else if (o instanceof PDFArray) {
+      for (let i = 0; i < o.size(); i++) { const v = o.get(i); fix(v, o, i); if (v instanceof PDFDict || v instanceof PDFArray) walk(v); }
+    }
   };
   for (const [, obj] of context.enumerateIndirectObjects()) {
     walk(obj);
