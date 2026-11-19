@@ -3,6 +3,7 @@ import fontkit from "@pdf-lib/fontkit";
 import { generateCSectionReport, type ReportInput } from "./generator.ts";
 
 const ASSET_BASE = "/c-section-assets";
+const STATIC_BASE = "/c-section-static";
 const FONT_BASE = "/name-check-assets/fonts";
 
 async function fetchBytes(url: string): Promise<Uint8Array> {
@@ -13,7 +14,7 @@ async function fetchBytes(url: string): Promise<Uint8Array> {
 
 export function generateCSectionReportInBrowser(input: ReportInput): Promise<Uint8Array> {
   return generateCSectionReport(input, {
-    loadBytes: (file) => fetchBytes(`${ASSET_BASE}/${file}`),
+    loadBytes: (file) => fetchBytes(file.startsWith("static/") ? `${STATIC_BASE}/${file.slice(7)}` : `${ASSET_BASE}/${file}`),
     async makeFonts(doc) {
       doc.registerFontkit(fontkit);
       const [heading, body, bold, serif] = await Promise.all([
