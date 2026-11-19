@@ -190,7 +190,6 @@
 //   );
 // }
 
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Copy, ExternalLink, FileText, Image as ImageIcon, Loader2, MessageCircle, RefreshCw } from "lucide-react";
@@ -320,6 +319,8 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
       if (error) throw error;
       setReport(data);
       toast({ title: "Report created", description: `${data.report_id}: opening ${target.label}${AUTO_GENERATE_AFTER_REDIRECT ? " and generating the PDF" : ""}...` });
+      // The Swar page opens this case again when the operator comes back (see SwarCalculatorModule).
+      try { sessionStorage.setItem("swar_restore_case", String(caseId)); } catch { /* private mode: nothing to keep */ }
       navigate(reportOpenUrl(tier, data.report_id, AUTO_GENERATE_AFTER_REDIRECT));
     } catch (e: any) {
       toast({ title: "Could not create the report", description: e?.message, variant: "destructive" });
@@ -416,7 +417,7 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
           <Button variant="outline" onClick={async () => { await navigator.clipboard.writeText(report.report_id); toast({ title: "Report ID copied", description: "Paste it in the search box on that page." }); }}>
             Copy report ID
           </Button>
-          <Button variant="outline" asChild><Link to={reportOpenUrl(tier, report.report_id, AUTO_GENERATE_AFTER_REDIRECT && !report.pdf_url)}><ExternalLink className="w-4 h-4 mr-2" />Open this report</Link></Button>
+          <Button variant="outline" asChild><Link onClick={() => { try { sessionStorage.setItem("swar_restore_case", String(caseId)); } catch { /* ignore */ } }} to={reportOpenUrl(tier, report.report_id, AUTO_GENERATE_AFTER_REDIRECT && !report.pdf_url)}><ExternalLink className="w-4 h-4 mr-2" />Open this report</Link></Button>
           </div>
         </div>
       )}
