@@ -175,6 +175,7 @@ import abandonedCarts from "../server/handlers/abandoned-carts.js";
 import saveFormProgress from "../server/handlers/save-form-progress.js";
 import paymentCallback from "../server/handlers/payment-callback.js";
 import generateNames from "../server/handlers/generate-names.js";
+import reportLink from "../server/handlers/report-link.js";
 
 /** Single serverless function for all /api/* routes (Vercel Hobby: max 12 functions). */
 export const config = { api: { bodyParser: false } };
@@ -234,6 +235,7 @@ const routes: Record<string, ApiHandler> = {
   "save-form-progress": saveFormProgress,
    "payment-callback": paymentCallback,
    "admin/generate-names": generateNames,
+    r: reportLink,
 };
 
 function resolveRoute(req: IncomingReq): string {
