@@ -211,7 +211,7 @@
 
 
 import { useMemo, useState } from "react";
-import { CalendarCheck, Copy, Loader2, TriangleAlert } from "lucide-react";
+import { CalendarCheck, Copy, FileDown, Loader2, TriangleAlert } from "lucide-react";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { PlacePicker } from "@/components/admin/PlacePicker";
 import { Badge } from "@/components/ui/badge";
@@ -224,6 +224,7 @@ import { analyzeCSection, GRADE_LABEL, type CSectionResult, type DayResult } fro
 import { avoidLines, summaryText } from "@/lib/c-section/format.ts";
 import { fmtDate, fmtRange, fmtTime } from "@/lib/c-section/time.ts";
 import { CalendarView, CSectionExtras } from "@/components/admin/c-section/CSectionVisuals";
+import { generateCSectionReportInBrowser } from "@/lib/c-section/report/browser";
 
 const gradeClass: Record<number, string> = {
   4: "bg-emerald-100 text-emerald-800 border-emerald-300",
@@ -298,6 +299,10 @@ export default function CSectionCalculatorModule() {
   const { toast } = useToast();
   const [mother, setMother] = useState("");
   const [father, setFather] = useState("");
+  const [motherDob, setMotherDob] = useState("");
+  const [fatherDob, setFatherDob] = useState("");
+  const [hospital, setHospital] = useState("");
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [placeText, setPlaceText] = useState("");
@@ -337,14 +342,38 @@ export default function CSectionCalculatorModule() {
     catch { toast({ title: "Could not copy", variant: "destructive" }); }
   };
 
+  const downloadPdf = async () => {
+    if (!result) return;
+    if (!mother.trim() || !father.trim()) { toast({ title: "Enter both parents' names first", variant: "destructive" }); return; }
+    if (!motherDob || !fatherDob) { toast({ title: "Enter both parents' dates of birth first", variant: "destructive" }); return; }
+    setPdfBusy(true);
+    try {
+      const bytes = await generateCSectionReportInBrowser({
+        motherName: mother.trim(), fatherName: father.trim(), motherDob, fatherDob,
+        hospitalName: hospital.trim(), city: place?.name ?? "", result,
+      });
+      const url = URL.createObjectURL(new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${mother.trim()} & ${father.trim()}_C-Section_Dates_Ankshaastra.pdf`.replace(/[\\/:*?"<>|]/g, "");
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (e) {
+      toast({ title: "Could not create the PDF", description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
+    } finally { setPdfBusy(false); }
+  };
+
   return (
     <div className="space-y-6">
       <AdminPage title="C-Section Dates Calculator" description="Enter the delivery window and hospital location. Panchang is calculated automatically for every date.">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div><Label>Mother's name</Label><Input value={mother} onChange={(e) => setMother(e.target.value)} /></div>
           <div><Label>Father's name</Label><Input value={father} onChange={(e) => setFather(e.target.value)} /></div>
+          <div><Label>Mother's date of birth</Label><Input type="date" value={motherDob} onChange={(e) => setMotherDob(e.target.value)} /></div>
+          <div><Label>Father's date of birth</Label><Input type="date" value={fatherDob} onChange={(e) => setFatherDob(e.target.value)} /></div>
+          <div><Label>Hospital name</Label><Input value={hospital} onChange={(e) => setHospital(e.target.value)} placeholder="e.g. Samarpan Hospital" /></div>
           <div>
-            <Label>Hospital location</Label>
+            <Label>Hospital city</Label>
             <PlacePicker
               value={placeText}
               onChange={(v) => { setPlaceText(v); setPlace(null); }}
@@ -385,7 +414,7 @@ export default function CSectionCalculatorModule() {
         <AdminPage
           title="Top dates"
           description={`${fmtDate(result.input.windowStart)} to ${fmtDate(result.input.windowEnd)} | OT ${result.input.otStart}-${result.input.otEnd} | ${result.input.location.name ?? ""}`}
-          actions={<Button variant="outline" onClick={copy}><Copy className="mr-2 h-4 w-4" />Copy summary</Button>}
+          actions={<div className="flex gap-2"><Button variant="outline" onClick={copy}><Copy className="mr-2 h-4 w-4" />Copy summary</Button><Button onClick={downloadPdf} disabled={pdfBusy}>{pdfBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}Download PDF report</Button></div>}
         >
           <div className="space-y-4">
             {result.warnings.map((w, i) => (
