@@ -5,7 +5,7 @@ import { dayStatus, avoidReasons, mergedAvoid } from "../insights.ts";
 import { babyLoshu } from "../loshu.ts";
 import { dateNumerology } from "../numerology.ts";
 import { fmtRange, fmtTime, weekdayOf, zonedToUtc } from "../time.ts";
-import { Flow, type Mark } from "./flow.ts";
+import { Flow, type Section, type Mark } from "./flow.ts";
 import {
   drawText, drawTextC, drawTextR, hLine, linkAnnotation, newPage, ornament, pageTitle, rect, roundRect, wrapLines, drawPara, fitSize,
   type Assets, type Fonts,
@@ -193,6 +193,53 @@ export function drawPersonalDetails(doc: PDFDocument, f: Fonts, SP: StaticPages,
   vals(fa, input.fatherName.trim(), input.fatherDob).forEach((t, i) => put(father[i], t));
   put([519.6, 728.9, 1029.7], `${slashDate(r.windowStart)} - ${slashDate(r.windowEnd)}`);
   put([532.8, 711.2, 1086.7], input.hospitalName.trim() || "-");
+}
+
+/**
+ * "How Your Dates Were Chosen" in the Canva card style: a white pill heading sitting on the top edge of each card,
+ * cards alternating light grey-blue and navy (like the Canva Welcome page).
+ */
+export function drawChosen(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], sec: Section) {
+  const flow = new Flow(doc, f, a, sec.l1, sec.l2, marks, sec.index);
+  const textOf = (b: Section["blocks"][number]) => ("text" in b ? b.text : "");
+  const steps: { head: string; body: string }[] = [];
+  for (let i = 0; i + 1 < sec.blocks.length; i += 2) steps.push({ head: textOf(sec.blocks[i]), body: textOf(sec.blocks[i + 1]) });
+  const avail = 726 - flow.top - 8, gap = 34, padTop = 28, padBot = 16, W = CONTENT_W - 44;
+  let size = 11.2, lines: string[][] = [], total = Infinity;
+  while (size > 8.5) {
+    lines = steps.map((st) => wrapLines(f.body, size, st.body, W));
+    total = lines.reduce((n, l) => n + padTop + l.length * size * 1.5 + padBot, 0) + gap * (steps.length - 1) + 14;
+    if (total <= avail) break;
+    size -= 0.2;
+  }
+  let top = flow.top + 20;
+  steps.forEach((st, i) => {
+    const dark = i % 2 === 1, h = padTop + lines[i].length * size * 1.5 + padBot;
+    roundRect(flow.page, MARGIN_L + 2, top + 3, CONTENT_W, h, 12, { fill: rgb(0.86, 0.88, 0.91) });
+    roundRect(flow.page, MARGIN_L, top, CONTENT_W, h, 12, { fill: dark ? C.navy : rgb(0.77, 0.81, 0.86) });
+    const pw = Math.min(CONTENT_W - 40, f.bold.widthOfTextAtSize(st.head, 11) + 44);
+    roundRect(flow.page, MARGIN_L + 2 + CONTENT_W / 2 - pw / 2, top - 13 + 3, pw, 28, 14, { fill: rgb(0.86, 0.88, 0.91) });
+    roundRect(flow.page, MARGIN_L + CONTENT_W / 2 - pw / 2, top - 13, pw, 28, 14, { fill: C.white, stroke: C.line, sw: 0.6 });
+    drawTextC(flow.page, st.head, top - 13 + 8, { font: f.bold, size: 11, color: C.navy });
+    lines[i].forEach((l, li) => drawTextC(flow.page, l, top + padTop + li * size * 1.5, { font: f.body, size, color: dark ? rgb(0.89, 0.9, 0.92) : C.navy }));
+    top += h + gap;
+  });
+}
+
+const WELCOME_PURPOSE =
+  "This report helps you choose the most favorable date and time for your baby's birth within your doctor-approved window. We read every date through Panchang and numerology, so you get clear options to discuss with your doctor.";
+
+/** Canva "Welcome Message" page; its second card (a copy of the first one's text in the original) gets the right text. */
+export function drawWelcome(doc: PDFDocument, f: Fonts, SP: StaticPages, marks: Mark[]) {
+  const page = addStaticPage(doc, SP, "welcome");
+  marks.push({ title: "Welcome Message", page: doc.getPageCount() });
+  const NAVY7 = rgb(53 / 255, 65 / 255, 80 / 255);
+  page.drawRectangle({ x: 125 * K, y: PAGE_H - 846 * K, width: (806 - 125) * K, height: (846 - 736) * K, color: NAVY7 });
+  const W = (806 - 125 - 40) * K;
+  let size = 12.4, lines = wrapLines(f.body, size, WELCOME_PURPOSE, W);
+  while (lines.length > 3 && size > 10.5) { size -= 0.2; lines = wrapLines(f.body, size, WELCOME_PURPOSE, W); }
+  const lh = size * 1.6, y0 = (736 + 846) / 2 * K - (lines.length * lh) / 2 + lh * 0.72;
+  lines.forEach((l, i) => page.drawText(l, { x: 465 * K - f.body.widthOfTextAtSize(l, size) / 2, y: PAGE_H - (y0 + i * lh), size, font: f.body, color: rgb(0.89, 0.9, 0.92) }));
 }
 
 /** "Your Medical Window Analysis" page (dynamic text + selection strategy). */
