@@ -8,10 +8,11 @@ import { textSections, type TextCtx } from "./content.ts";
 import { newPage, type Assets, type Fonts } from "./draw.ts";
 import { Flow, type Mark, type Section } from "./flow.ts";
 import {
-  cleanName, drawAvoidDates, drawBackCover, drawCalendar, drawConnect, drawCover, drawIndex, drawLoshuPages, drawMedicalWindow,
-  drawMuhurat, drawOffers, drawPersonalDetails, drawQuote, drawTimelines, drawTopDates, firstName, type ReportInput,
+  cleanName, drawAvoidDates, drawCalendar, drawCover, drawIndex, drawLoshuPages, drawMedicalWindow,
+  drawMuhurat, drawOffers, drawPersonalDetails, drawTimelines, drawTopDates, firstName, type ReportInput,
 } from "./pages.ts";
 import { DEFAULT_CONTACT } from "./theme.ts";
+import { addStaticPage, dedupeImages, loadStaticPages, STATIC_FILE, type StaticKey } from "./static-pages.ts";
 
 export type { ReportInput } from "./pages.ts";
 
@@ -52,15 +53,21 @@ export async function generateCSectionReport(input: ReportInput, deps: ReportDep
   const marks: Mark[] = [];
   const section = (s: Section) => { new Flow(doc, f, assets, s.l1, s.l2, marks, s.index).render(s.blocks); };
 
+  const SP = await loadStaticPages(doc, await deps.loadBytes(STATIC_FILE));
+  /** Adds a Canva page; `title` puts it in the index. */
+  const fixed = (key: StaticKey, title?: string) => {
+    addStaticPage(doc, SP, key);
+    if (title) marks.push({ title, page: doc.getPageCount() });
+  };
+
   drawCover(doc, f, assets, input);
-  const indexPage = newPage(doc, f, assets);
-  drawQuote(doc, f, assets, marks);
+  const indexPages = [newPage(doc, f, assets), newPage(doc, f, assets)];
+  fixed("quote");
   drawPersonalDetails(doc, f, assets, marks, input);
-  section(S.disclaimer);
+  fixed("disclaimer", "Important Medical Disclaimer");
   section(S.welcome);
-  section(S.cosmic);
-  section(S.science);
-  section(S.balance);
+  fixed("why1", "Why Birth Timing & Birth Date Matters");
+  fixed("why2"); fixed("why3");
   drawMedicalWindow(doc, f, assets, marks, input);
   section(S.chosen);
   drawCalendar(doc, f, assets, marks, input);
@@ -69,26 +76,31 @@ export async function generateCSectionReport(input: ReportInput, deps: ReportDep
   drawLoshuPages(doc, f, assets, marks, input);
   drawAvoidDates(doc, f, assets, marks, input);
   drawMuhurat(doc, f, assets, marks, input);
-  section(S.support);
-  drawOffers(doc, f, assets, marks, input);
-  section(S.postBirth);
-  section(S.testimonial);
-  section(S.terms);
-  section(S.agreement);
+  fixed("support", "Follow-Up & Ongoing Support");
+  if (input.offers) drawOffers(doc, f, assets, marks, input); else fixed("offers", "Your Name Decides Your Speed in Life");
+  fixed("postBirth", "Post Birth Update Form");
+  fixed("testimonial", "Testimonial Request");
+  fixed("terms1", "Terms & Understanding");
+  fixed("terms2"); fixed("terms3"); fixed("terms4");
+  fixed("agreement", "Agreement & Mutual Understanding");
+  fixed("expectations", "Realistic Expectations");
+  fixed("yourResp", "Your Responsibilities");
+  fixed("myResp", "My Responsibilities");
   section(S.faq);
-  section(S.reminders);
-  section(S.mantra);
-  section(S.finalWord);
+  fixed("reminders", "Important Reminders");
+  fixed("mantra", "Success Mantra");
+  fixed("finalWord", "A Final Word to Parents");
   section(S.closing);
   section(S.wishBaby);
   section(S.wishParents);
-  section(S.promise);
-  section(S.services);
-  drawConnect(doc, f, assets, marks, input);
+  fixed("promise", "Our Promise to You");
+  fixed("services", "Services Offered");
+  fixed("connect", "Connect With Us");
   section(S.welcomeBaby);
-  section(S.finalBlessing);
-  drawBackCover(doc, f, assets);
+  fixed("finalBlessing", "Final Blessing");
+  fixed("backCover");
 
-  drawIndex(indexPage, f, marks);
+  drawIndex(indexPages, f, marks);
+  dedupeImages(doc);
   return doc.save();
 }
