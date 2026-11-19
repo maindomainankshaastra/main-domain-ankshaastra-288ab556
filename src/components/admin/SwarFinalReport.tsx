@@ -389,6 +389,7 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
             <div className="text-xs text-muted-foreground">{report.email} · {report.phone}</div>
           </div>
           {report.pdf_url ? (
+            <>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" asChild><a href={report.pdf_url} target="_blank" rel="noreferrer"><ExternalLink className="w-4 h-4 mr-2" />View PDF</a></Button>
               <Button onClick={send}><MessageCircle className="w-4 h-4 mr-2" />Send image + link on WhatsApp</Button>
@@ -396,6 +397,7 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
               <Button variant="outline" onClick={async () => { await navigator.clipboard.writeText(message()); toast({ title: "Message copied" }); }}><Copy className="w-4 h-4 mr-2" />Copy message</Button>
             </div>
             <p className="text-xs text-muted-foreground">Short link sent to the customer: <b>{shortLink}</b></p>
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">The report is a draft. Press Open this report to generate the PDF, then come back here and press refresh. The WhatsApp button appears once the PDF is ready. (To send it by email, use the Send email button on that page.)</p>
           )}
