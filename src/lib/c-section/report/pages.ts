@@ -10,7 +10,9 @@ import {
   drawText, drawTextC, drawTextR, hLine, linkAnnotation, newPage, ornament, pageTitle, rect, roundRect, wrapLines, drawPara, fitSize,
   type Assets, type Fonts,
 } from "./draw.ts";
-import { C, CONTENT_W, MARGIN_L, MARGIN_R, PAGE_W, SOCIAL_LINKS } from "./theme.ts";
+import { C, CONTENT_W, MARGIN_L, MARGIN_R, PAGE_H, PAGE_W, SOCIAL_LINKS } from "./theme.ts";
+import { addStaticPage, type StaticPages } from "./static-pages.ts";
+import { rgb } from "pdf-lib";
 
 export interface ReportInput {
   motherName: string;
@@ -86,13 +88,11 @@ function dayRows(d: DayResult, tz: string): [string, string][] {
     ["Tithi", s ? changeLine(d, "Tithi", s.tithi, tz) : "-"],
     ["Nakshatra", s ? changeLine(d, "Nakshatra", s.nakshatra, tz) : "-"],
     ["Moon Sign", s ? changeLine(d, "Moon sign", s.rashi, tz) : "-"],
-    ["Yoga & Karana", s ? `${s.yoga} yoga, ${s.karana} karana` : "-"],
-    ["Sunrise / Sunset", d.sunrise && d.sunset ? `${fmtTime(d.sunrise, tz)} / ${fmtTime(d.sunset, tz)}` : "-"],
-    ["Gand Mool Check", gm.length ? gm.join("\n") : "Clear during OT hours"],
+    ["Time to Avoid\n(Rahu Kalam & more)", avoidGrouped(d, tz).join("\n") || "Nothing during OT hours"],
     ["Mulank", String(d.numerology.mulank)],
     ["Bhagyank", String(d.numerology.bhagyank)],
-    ["Date Numerology Luck\n(Mulank x Bhagyank)", `${d.numerology.luckPct}% (${d.numerology.classification})`],
-    ["Time to Avoid", avoidGrouped(d, tz).join("\n") || "Nothing during OT hours"],
+    ["Mulank-Bhagyank\nCompatibility", `${d.numerology.luckPct}%`],
+    ["Gand Mool Check", gm.length ? gm.join("\n") : "Clear during OT hours"],
     ["Shubh Muhurat", d.windows.length ? windowLines(d, tz).join("\n") : `None: ${d.noWindowReason ?? ""}`],
   ];
   if (d.notes.length) rows.push(["Note", d.notes.join("\n")]);
@@ -119,22 +119,23 @@ export function drawCover(doc: PDFDocument, f: Fonts, a: Assets, input: ReportIn
   return page;
 }
 
-/** Index over as many pages as given (rows split evenly): numbered navy tab, outlined row, page number pill. */
+/** Index like the Canva one: a single outlined table, navy number column, thin row lines. Page number at the right. */
 export function drawIndex(pages: PDFPage[], f: Fonts, marks: Mark[]) {
   const per = Math.ceil(marks.length / pages.length);
   pages.forEach((page, pi) => {
     pageTitle(page, f, "INDEX");
     const rows = marks.slice(pi * per, (pi + 1) * per);
-    const pitch = Math.min(42, 560 / Math.max(rows.length, 1)), rh = Math.min(32, pitch - 6);
+    const rh = Math.min(40, 566 / Math.max(rows.length, 1)), top0 = 140, numW = 46, H = rh * rows.length;
+    roundRect(page, MARGIN_L, top0, CONTENT_W, H, 7, { fill: C.white, stroke: C.navy, sw: 1.3 });
+    roundRect(page, MARGIN_L, top0, numW, H, 7, { fill: C.navy });
+    rect(page, MARGIN_L + 20, top0, numW - 20, H, C.navy);
     rows.forEach((m, i) => {
-      const top = 142 + i * pitch, n = pi * per + i + 1;
-      roundRect(page, MARGIN_L, top, CONTENT_W, rh, 8, { fill: C.white, stroke: C.navy, sw: 1 });
-      roundRect(page, MARGIN_L, top, 38, rh, 8, { fill: C.navy });
-      drawTextC(page, String(n).padStart(2, "0"), top + rh / 2 - 5.5, { font: f.bold, size: 10.5, color: C.white, cx: MARGIN_L + 19 });
-      drawText(page, m.title, MARGIN_L + 54, top + rh / 2 - 6, { font: f.bold, size: fitSize(f.bold, 11.5, m.title, CONTENT_W - 130), color: C.navy });
-      const pg = String(m.page), pw = f.bold.widthOfTextAtSize(pg, 10.5) + 18;
-      roundRect(page, MARGIN_R - pw - 8, top + 5, pw, rh - 10, (rh - 10) / 2, { fill: C.panel });
-      drawTextC(page, pg, top + rh / 2 - 5.5, { font: f.bold, size: 10.5, color: C.navy, cx: MARGIN_R - 8 - pw / 2 });
+      const top = top0 + i * rh, n = pi * per + i + 1;
+      if (i > 0) hLine(page, MARGIN_L + numW, MARGIN_R, top, C.navy, 0.8);
+      if (i > 0) hLine(page, MARGIN_L + 6, MARGIN_L + numW, top, C.accent, 0.5);
+      drawTextC(page, String(n).padStart(2, "0"), top + rh / 2 - 5, { font: f.bold, size: 10.5, color: C.white, cx: MARGIN_L + numW / 2 });
+      drawText(page, m.title, MARGIN_L + numW + 16, top + rh / 2 - 5, { font: f.bold, size: fitSize(f.bold, 11, m.title, CONTENT_W - numW - 80), color: C.ink });
+      drawTextR(page, String(m.page), MARGIN_R - 16, top + rh / 2 - 5, { font: f.bold, size: 11, color: C.navy });
     });
   });
 }
@@ -164,21 +165,34 @@ function infoTable(page: PDFPage, f: Fonts, top: number, title: string, rows: [s
 }
 const rgbaLine = C.muted;
 
-export function drawPersonalDetails(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
-  const page = newPage(doc, f, a);
+/** Canva panel colour (RGB 47, 65, 87), used to blank out the sample values before writing the client's. */
+const CANVA_NAVY = rgb(47 / 255, 65 / 255, 87 / 255);
+const K = PAGE_W / 930;
+
+/**
+ * The Canva "Personal Details" page is embedded as it is; only the value cells are blanked and rewritten,
+ * so the frame, icons and labels stay exactly as designed. Coordinates are in Canva points (930 x 1315.5).
+ */
+export function drawPersonalDetails(doc: PDFDocument, f: Fonts, SP: StaticPages, marks: Mark[], input: ReportInput) {
+  const page = addStaticPage(doc, SP, "personal");
   marks.push({ title: "Personal Details", page: doc.getPageCount() });
-  pageTitle(page, f, "PERSONAL DETAILS");
   const m = dateNumerology(input.motherDob), fa = dateNumerology(input.fatherDob);
   const r = input.result.input;
-  let y = 134;
-  y = infoTable(page, f, y, "Mother's Information", [["Full Name", input.motherName], ["Date of Birth", slashDate(input.motherDob)], ["Mulank", String(m.mulank)], ["Bhagyank", String(m.bhagyank)]]);
-  y = infoTable(page, f, y, "Father's Information", [["Full Name", input.fatherName], ["Date of Birth", slashDate(input.fatherDob)], ["Mulank", String(fa.mulank)], ["Bhagyank", String(fa.bhagyank)]]);
-  infoTable(page, f, y, "Pregnancy Details", [
-    ["Expected Delivery Window", `${slashDate(r.windowStart)} - ${slashDate(r.windowEnd)}`],
-    ["Hospital", input.hospitalName || "-"],
-    ["City", input.city || "-"],
-    ["OT Hours", `${r.otStart} to ${r.otEnd}`],
-  ]);
+  const CX = 623.5;
+  /** Sample text box on the Canva page: [left, right, top] in Canva points (measured from the original). Only that box is blanked. */
+  type Box = [number, number, number];
+  const put = ([x1, x2, top]: Box, text: string) => {
+    page.drawRectangle({ x: (x1 - 4) * K, y: PAGE_H - (top + 29) * K, width: (x2 - x1 + 8) * K, height: 33 * K, color: CANVA_NAVY });
+    const size = fitSize(f.body, 12.6, text, (781 - 466) * K - 16);
+    page.drawText(text, { x: CX * K - f.body.widthOfTextAtSize(text, size) / 2, y: PAGE_H - (top + 13.6) * K, size, font: f.body, color: C.white });
+  };
+  const mother: Box[] = [[540.8, 707.7, 308.3], [572.9, 675.7, 364.0], [619.1, 629.6, 422.3], [617.3, 628.5, 482.7]];
+  const father: Box[] = [[554.7, 693.9, 667.0], [571.1, 673.6, 722.7], [617.3, 628.5, 781.6], [619.1, 630.1, 841.8]];
+  const vals = (n: { mulank: number; bhagyank: number }, name: string, dob: string) => [name, slashDate(dob), String(n.mulank), String(n.bhagyank)];
+  vals(m, input.motherName.trim(), input.motherDob).forEach((t, i) => put(mother[i], t));
+  vals(fa, input.fatherName.trim(), input.fatherDob).forEach((t, i) => put(father[i], t));
+  put([519.6, 728.9, 1029.7], `${slashDate(r.windowStart)} - ${slashDate(r.windowEnd)}`);
+  put([532.8, 711.2, 1086.7], input.hospitalName.trim() || "-");
 }
 
 /** "Your Medical Window Analysis" page (dynamic text + selection strategy). */
@@ -264,7 +278,7 @@ export function drawTopDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[
   r.top.forEach((d, i) => {
     const flow = new Flow(doc, f, a, "TOP 3 DELIVERY DATES ANALYSIS", `PRIORITY ${i + 1}`, marks, i === 0 ? "Top 3 Delivery Dates Analysis" : undefined);
     const rows = dayRows(d, tz).map(([k, v], n) => [String(n + 1), k, v]);
-    flow.table([{ w: 42, center: true }, { w: 138, bold: true }, { w: 283 }], ["S No.", "Topic", "Particulars"], rows);
+    flow.table([{ w: 56, center: true }, { w: 150, bold: true }, { w: 257 }], ["S NO.", "Topic", "Particulars"], rows, 10, true);
   });
 }
 
@@ -324,8 +338,8 @@ export function drawLoshuPages(doc: PDFDocument, f: Fonts, a: Assets, marks: Mar
     [r.ranked[i], r.ranked[i + 1]].forEach((d, k) => {
       if (!d) return;
       const x = MARGIN_L + k * (cardW + 14), top = flow.top, l = babyLoshu(d.date), st = dayStatus(d);
-      roundRect(flow.page, x, top, cardW, cardH, 12, { fill: C.panelLight, stroke: C.line, sw: 0.8 });
-      drawText(flow.page, `${longDate(d.date)} (${d.weekday.slice(0, 3)})`, x + 12, top + 9, { font: f.bold, size: 10.5, color: C.navy });
+      roundRect(flow.page, x, top, cardW, cardH, 12, { fill: C.navy });
+      drawText(flow.page, `${longDate(d.date)} (${d.weekday.slice(0, 3)})`, x + 12, top + 9, { font: f.bold, size: 10.5, color: C.white });
       const tag = d.windows.length ? `Rank ${d.rank}` : "Avoid";
       const tw = f.bold.widthOfTextAtSize(tag, 8.5);
       roundRect(flow.page, x + cardW - tw - 24, top + 7, tw + 14, 16, 8, { fill: STATUS_BG[st], stroke: STATUS_FG[st], sw: 0.7 });
@@ -336,13 +350,13 @@ export function drawLoshuPages(doc: PDFDocument, f: Fonts, a: Assets, marks: Mar
         const fill = c.count === 0 ? C.white : c.count >= 2 ? C.amberBg : C.greenBg;
         roundRect(flow.page, cx, cy, cell, cell, 5, { fill, stroke: c.count === 0 ? C.line : c.count >= 2 ? C.amber : C.green, sw: 0.7 });
         const label = c.count === 0 ? String(c.digit) : String(c.digit).repeat(c.count);
-        drawTextC(flow.page, label, cy + 8.5, { font: c.count === 0 ? f.body : f.bold, size: fitSize(f.bold, 13, label, cell - 4), color: c.count === 0 ? C.line : C.ink, cx: cx + cell / 2 });
+        drawTextC(flow.page, label, cy + 8.5, { font: c.count === 0 ? f.body : f.bold, size: fitSize(f.bold, 13, label, cell - 4), color: c.count === 0 ? C.muted : C.ink, cx: cx + cell / 2 });
       }));
       const tx = gx + 3 * (cell + 3) + 12, tww = x + cardW - tx - 10;
       let ty = top + 34;
-      ty = drawPara(flow.page, `Mulank ${l.mulank}, Bhagyank ${l.bhagyank}${l.mulankInGrid ? "" : " (Mulank not added on this day)"}`, tx, ty, tww, { font: f.body, size: 8.8, color: C.ink, lh: 12 }) + 4;
-      ty = drawPara(flow.page, `Missing: ${l.missing.length ? l.missing.join(", ") : "none"}`, tx, ty, tww, { font: f.body, size: 8.8, color: C.ink, lh: 12 }) + 4;
-      drawPara(flow.page, `Repeated: ${l.repeated.length ? l.repeated.map((q) => `${q.digit} (x${q.count})`).join(", ") : "none"}`, tx, ty, tww, { font: f.body, size: 8.8, color: C.ink, lh: 12 });
+      ty = drawPara(flow.page, `Mulank ${l.mulank}, Bhagyank ${l.bhagyank}${l.mulankInGrid ? "" : " (Mulank not added on this day)"}`, tx, ty, tww, { font: f.body, size: 8.8, color: C.white, lh: 12 }) + 4;
+      ty = drawPara(flow.page, `Missing: ${l.missing.length ? l.missing.join(", ") : "none"}`, tx, ty, tww, { font: f.body, size: 8.8, color: C.white, lh: 12 }) + 4;
+      drawPara(flow.page, `Repeated: ${l.repeated.length ? l.repeated.map((q) => `${q.digit} (x${q.count})`).join(", ") : "none"}`, tx, ty, tww, { font: f.body, size: 8.8, color: C.white, lh: 12 });
     });
     flow.top += cardH + 6;
   }
@@ -380,14 +394,21 @@ export function drawAvoidDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mar
 export function drawMuhurat(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
   const r = input.result, tz = r.input.location.tz;
   const flow = new Flow(doc, f, a, "AT-A-GLANCE", "SHUBH MUHURAT", marks, "Shubh Muhurat at a Glance");
-  const rows = r.top.map((d, i) => [
-    String(i + 1),
-    `${longDate(d.date)}\n${d.weekday}`,
-    d.windows.length ? windowLines(d, tz).join("\n") : "No clean shubh time",
-    avoidGrouped(d, tz).join("\n") || "Nothing during OT hours",
-  ]);
-  flow.table([{ w: 46, center: true }, { w: 88, bold: true }, { w: 172 }, { w: 157 }], ["Priority", "Date", "Shubh Muhurat", "Time to Avoid"], rows, 9);
-  flow.render([{ t: "callout", title: "Shubh Muhurat Timings", text: "Kindly consult your family Pandit or local priest for additional auspicious Muhurat options, as Muhurat timings are based on sunrise and sunset, which vary from one location to another. While due care has been taken in sharing the above timings considering your place of delivery, it is always advisable to have them reconfirmed locally." }]);
+  const short = (d: DayResult, i: number) => (d.recommended[i] ? fmtRange(d.recommended[i].start, d.recommended[i].end, tz) : "-");
+  const rows = r.top.map((d, i) => [String(i + 1), `${MONTHS[Number(d.date.slice(5, 7)) - 1].slice(0, 3)} ${Number(d.date.slice(8))}, ${d.date.slice(0, 4)}`, short(d, 0), short(d, 1), short(d, 2)]);
+  flow.top += 14;
+  flow.table([{ w: 56, center: true }, { w: 96, center: true, bold: true }, { w: 104, center: true }, { w: 104, center: true }, { w: 103, center: true }], ["Priority", "Date", "Shubh Muhurat 1", "Shubh Muhurat 2", "Shubh Muhurat 3"], rows, 9.4, true);
+  flow.top += 18;
+  const text = "Kindly consult your family Pandit or local priest for additional auspicious Muhurat options, as Muhurat timings are based on sunrise and sunset, which vary from one location to another. While due care has been taken in sharing the above timings considering your place of delivery, it is always advisable to have them reconfirmed locally.";
+  const lines = wrapLines(f.body, 10.5, text, CONTENT_W - 44);
+  const h = 44 + lines.length * 16 + 18;
+  flow.ensure(h + 10);
+  const top = flow.top + 18;
+  roundRect(flow.page, MARGIN_L, top, CONTENT_W, h - 18, 10, { fill: C.navy });
+  roundRect(flow.page, PAGE_W / 2 - 110, top - 18, 220, 36, 18, { fill: C.white, stroke: C.line, sw: 0.8 });
+  drawTextC(flow.page, "SHUBH MUHURAT TIMINGS", top - 5, { font: f.bold, size: 10.5, color: C.navy });
+  lines.forEach((l, i) => drawTextC(flow.page, l, top + 34 + i * 16, { font: f.body, size: 10.5, color: C.white }));
+  flow.top = top + h;
 }
 
 export function drawOffers(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
