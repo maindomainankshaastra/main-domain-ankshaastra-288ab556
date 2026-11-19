@@ -3597,6 +3597,15 @@ export default function NameCorrectionReports() {
                     <MessageCircle className="h-4 w-4" />
                   </Button>
 
+                                    <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Copy image"
+                    onClick={() => copyReportImage("name-correction", toast)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" title="More" className="ml-auto">
