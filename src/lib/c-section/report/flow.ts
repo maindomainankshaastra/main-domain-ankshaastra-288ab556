@@ -80,7 +80,7 @@ export class Flow {
     drawHeader();
     rows.forEach((row, ri) => {
       const lines = cellLines(row);
-      const h = Math.max(...lines.map((l) => l.length)) * lh + padY * 2;
+      const h = Math.max(Math.max(...lines.map((l) => l.length)) * lh + padY * 2, grid ? 36 : 0);
       this.ensure(h);
       if (this.pageNo !== pageSeen) { pageSeen = this.pageNo; drawHeader(); }
       rect(this.page, x0, this.top, total, h, grid || ri % 2 !== 0 ? C.white : C.panelLight);
@@ -97,7 +97,7 @@ export class Flow {
         ls.forEach((line, li) => {
           const font = cols[i].bold || grid ? f.bold : f.body;
           const tx = cols[i].center ? x + w / 2 - font.widthOfTextAtSize(line, size) / 2 : x + padX;
-          drawText(this.page, line, tx, this.top + padY + li * lh, { font, size, color: cols[i].bold && !grid ? C.navy : C.ink });
+          drawText(this.page, line, tx, this.top + (grid ? (h - ls.length * lh) / 2 : padY) + li * lh, { font, size, color: cols[i].bold && !grid ? C.navy : C.ink });
         });
         x += w;
       });
