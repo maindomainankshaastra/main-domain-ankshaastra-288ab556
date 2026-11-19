@@ -26,6 +26,7 @@ function next(from: Date, loc: Location, hhmm: string): Date {
 }
 
 const ASSETS = process.env.C_SECTION_ASSETS ?? "public/c-section-assets";
+const STATIC = process.env.C_SECTION_STATIC ?? "public/c-section-static";
 /** Standard PDF fonts only know Latin-1, so unsupported characters (the rupee sign) become "?" in this test. */
 const san = (t: string) => t.replace(/[^\x00-\xFF\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u2026]/g, "?");
 
@@ -34,7 +35,7 @@ async function build(windowStart: string, windowEnd: string) {
   const bytes = await generateCSectionReport(
     { motherName: "Ms. Supriya Gupta", fatherName: "Mr. Ankit Gupta", motherDob: "1993-01-04", fatherDob: "1992-08-18", hospitalName: "Samarpan Hospital", city: "Delhi", result },
     {
-      loadBytes: async (f) => new Uint8Array(readFileSync(`${ASSETS}/${f}`)),
+      loadBytes: async (f) => new Uint8Array(readFileSync(f.startsWith("static/") ? `${STATIC}/${f.slice(7)}` : `${ASSETS}/${f}`)),
       async makeFonts(doc) {
         const mk = async (n: StandardFonts) => {
           const x = await doc.embedFont(n);
@@ -55,6 +56,7 @@ describe("C-Section report PDF", () => {
     const { bytes, doc } = await build("2026-11-14", "2026-11-20");
     expect(bytes.length).toBeGreaterThan(100000);
     expect(doc.getPageCount()).toBeGreaterThan(35);
+    expect(bytes.length).toBeLessThan(8_000_000); // static pages share one background image
     expect(doc.getTitle()).toBe("C-Section Dates Blueprint - Supriya Gupta & Ankit Gupta");
   });
 
