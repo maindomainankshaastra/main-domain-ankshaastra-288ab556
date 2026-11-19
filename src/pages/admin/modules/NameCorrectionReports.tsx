@@ -2226,6 +2226,7 @@ import {
   X,
   ArrowLeft,
   Mail,
+   MessageCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { getMulank, getBhagyank } from "@/lib/name-check/lo-shu";
@@ -2234,6 +2235,7 @@ import type { DateRange } from "react-day-picker";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { useToast } from "@/hooks/use-toast";
+import { sendReportOnWhatsApp } from "@/lib/report-whatsapp";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -3583,6 +3585,16 @@ export default function NameCorrectionReports() {
                     disabled={!report.pdf_url}
                   >
                     <Mail className="h-4 w-4" />
+                  </Button>
+
+                                    <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Send on WhatsApp"
+                    onClick={() => sendReportOnWhatsApp("name-correction", report, toast)}
+                    disabled={!report.pdf_url}
+                  >
+                    <MessageCircle className="h-4 w-4" />
                   </Button>
 
                   <DropdownMenu>
