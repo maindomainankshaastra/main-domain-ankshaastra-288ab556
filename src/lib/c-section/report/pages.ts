@@ -7,7 +7,7 @@ import { dateNumerology } from "../numerology.ts";
 import { fmtRange, fmtTime, weekdayOf, zonedToUtc } from "../time.ts";
 import { Flow, type Mark } from "./flow.ts";
 import {
-  drawText, drawTextC, drawTextR, hLine, linkAnnotation, newPage, ornament, pageTitle, roundRect, wrapLines, drawPara, fitSize,
+  drawText, drawTextC, drawTextR, hLine, linkAnnotation, newPage, ornament, pageTitle, rect, roundRect, wrapLines, drawPara, fitSize,
   type Assets, type Fonts,
 } from "./draw.ts";
 import { C, CONTENT_W, MARGIN_L, MARGIN_R, PAGE_W, SOCIAL_LINKS } from "./theme.ts";
@@ -119,20 +119,23 @@ export function drawCover(doc: PDFDocument, f: Fonts, a: Assets, input: ReportIn
   return page;
 }
 
-export function drawIndex(page: PDFPage, f: Fonts, marks: Mark[]) {
-  pageTitle(page, f, "INDEX");
-  drawTextC(page, "Comprehensive Table Of Contents", 122, { font: f.body, size: 11, color: C.accent });
-  const n = marks.length;
-  const pitch = Math.min(24, 575 / n);
-  marks.forEach((m, i) => {
-    const top = 152 + i * pitch;
-    roundRect(page, MARGIN_L, top, 26, 16, 8, { fill: C.navy });
-    drawTextC(page, String(i + 1).padStart(2, "0"), top + 3.5, { font: f.bold, size: 8.5, color: C.white, cx: MARGIN_L + 13 });
-    drawText(page, m.title, MARGIN_L + 36, top + 2.5, { font: f.body, size: 10.5, color: C.ink });
-    const tw = f.body.widthOfTextAtSize(m.title, 10.5);
-    const pw = f.bold.widthOfTextAtSize(String(m.page), 10.5);
-    page.drawLine({ start: { x: MARGIN_L + 36 + tw + 8, y: 841.89 - top - 11 }, end: { x: MARGIN_R - pw - 8, y: 841.89 - top - 11 }, thickness: 0.6, color: C.line, dashArray: [1.5, 2.5] });
-    drawTextR(page, String(m.page), MARGIN_R, top + 2.5, { font: f.bold, size: 10.5, color: C.navy });
+/** Index over as many pages as given (rows split evenly): numbered navy tab, outlined row, page number pill. */
+export function drawIndex(pages: PDFPage[], f: Fonts, marks: Mark[]) {
+  const per = Math.ceil(marks.length / pages.length);
+  pages.forEach((page, pi) => {
+    pageTitle(page, f, "INDEX");
+    const rows = marks.slice(pi * per, (pi + 1) * per);
+    const pitch = Math.min(42, 560 / Math.max(rows.length, 1)), rh = Math.min(32, pitch - 6);
+    rows.forEach((m, i) => {
+      const top = 142 + i * pitch, n = pi * per + i + 1;
+      roundRect(page, MARGIN_L, top, CONTENT_W, rh, 8, { fill: C.white, stroke: C.navy, sw: 1 });
+      roundRect(page, MARGIN_L, top, 38, rh, 8, { fill: C.navy });
+      drawTextC(page, String(n).padStart(2, "0"), top + rh / 2 - 5.5, { font: f.bold, size: 10.5, color: C.white, cx: MARGIN_L + 19 });
+      drawText(page, m.title, MARGIN_L + 54, top + rh / 2 - 6, { font: f.bold, size: fitSize(f.bold, 11.5, m.title, CONTENT_W - 130), color: C.navy });
+      const pg = String(m.page), pw = f.bold.widthOfTextAtSize(pg, 10.5) + 18;
+      roundRect(page, MARGIN_R - pw - 8, top + 5, pw, rh - 10, (rh - 10) / 2, { fill: C.panel });
+      drawTextC(page, pg, top + rh / 2 - 5.5, { font: f.bold, size: 10.5, color: C.navy, cx: MARGIN_R - 8 - pw / 2 });
+    });
   });
 }
 
@@ -208,7 +211,7 @@ export function drawCalendar(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[
   const lead = weekdayOf(days[0].date);
   const cells: (DayResult | null)[] = [...Array(lead).fill(null), ...days];
   while (cells.length % 7) cells.push(null);
-  const cw = 62, ch = 56, x0 = MARGIN_L + (CONTENT_W - cw * 7) / 2;
+  const cw = Math.floor(CONTENT_W / 7), ch = 66, x0 = MARGIN_L + (CONTENT_W - cw * 7) / 2;
   const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const rows = cells.length / 7;
   flow.ensure(24 + rows * ch + 40);
@@ -220,9 +223,9 @@ export function drawCalendar(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[
     const st = dayStatus(d);
     roundRect(flow.page, x, top, cw - 4, ch - 4, 8, { fill: STATUS_BG[st], stroke: STATUS_FG[st], sw: 0.8 });
     const dayNo = Number(d.date.slice(8));
-    drawTextC(flow.page, String(dayNo), top + 6, { font: f.bold, size: 16, color: STATUS_FG[st], cx: x + (cw - 4) / 2 });
+    drawTextC(flow.page, String(dayNo), top + 10, { font: f.bold, size: 20, color: STATUS_FG[st], cx: x + (cw - 4) / 2 });
     const sub = d.rank != null && d.rank <= r.input.topN && d.windows.length ? `Priority ${d.rank}` : st === "red" ? "Avoid" : `${d.numerology.luckPct}%`;
-    drawTextC(flow.page, sub, top + 31, { font: f.bold, size: 8, color: C.ink, cx: x + (cw - 4) / 2 });
+    drawTextC(flow.page, sub, top + 40, { font: f.bold, size: 8.5, color: C.ink, cx: x + (cw - 4) / 2 });
     if (dayNo === 1 || d === days[0]) drawText(flow.page, MONTHS[Number(d.date.slice(5, 7)) - 1].slice(0, 3), x + 4, top + 4, { font: f.body, size: 7, color: C.muted });
   });
   flow.top += rows * ch + 10;
@@ -234,6 +237,26 @@ export function drawCalendar(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[
   }
   flow.top += 28;
   flow.render([{ t: "p", text: "Under each date: the numerology luck %, or its priority if it is one of your top dates.", center: true, muted: true }]);
+  // Priority summary (navy / light rows, like the report's other panels)
+  const tz = r.input.location.tz;
+  const tops = r.top.filter((d) => d.windows.length);
+  if (tops.length) {
+    flow.top += 4;
+    flow.ensure(30 + tops.length * 48);
+    drawText(flow.page, "YOUR TOP DATES", MARGIN_L, flow.top, { font: f.bold, size: 11.5, color: C.accent });
+    hLine(flow.page, MARGIN_L, MARGIN_L + CONTENT_W, flow.top + 17, C.line, 0.7);
+    flow.top += 28;
+    tops.forEach((d, i) => {
+      const dark = i % 2 === 0, fg = dark ? C.white : C.navy, h = 40;
+      roundRect(flow.page, MARGIN_L, flow.top, CONTENT_W, h, 10, dark ? { fill: C.navy } : { fill: C.panel });
+      drawText(flow.page, `Priority ${d.rank}`, MARGIN_L + 14, flow.top + 8, { font: f.bold, size: 11, color: fg });
+      drawText(flow.page, `${longDate(d.date)}, ${d.weekday}`, MARGIN_L + 14, flow.top + 23, { font: f.body, size: 9.5, color: fg });
+      const best = d.recommended[0];
+      if (best) drawTextR(flow.page, fmtRange(best.start, best.end, tz), MARGIN_R - 14, flow.top + 8, { font: f.bold, size: 11, color: fg });
+      drawTextR(flow.page, `Mulank ${d.numerology.mulank} · Bhagyank ${d.numerology.bhagyank} · ${d.numerology.luckPct}%`, MARGIN_R - 14, flow.top + 23, { font: f.body, size: 9.5, color: fg });
+      flow.top += h + 8;
+    });
+  }
 }
 
 export function drawTopDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
@@ -294,8 +317,8 @@ export function drawTimelines(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark
 export function drawLoshuPages(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
   const r = input.result;
   const flow = new Flow(doc, f, a, "YOUR BABY'S", "LO SHU GRID", marks, "Your Baby's Lo Shu Grid for Every Date");
-  flow.render([{ t: "p", text: "The grid is built from the digits of the birth date plus the Bhagyank, and the Mulank too (except on days 1 to 9, 10, 20 and 30). Missing numbers are areas that need conscious effort. Repeated numbers are traits that are expressed strongly.", muted: true }]);
-  const cardW = (CONTENT_W - 14) / 2, cardH = 138;
+  flow.render([{ t: "p", text: "Built from the digits of the birth date, the Bhagyank, and the Mulank (not added on days 1 to 9, 10, 20, 30). Missing numbers need conscious effort; repeated numbers are expressed strongly.", muted: true }]);
+  const cardW = (CONTENT_W - 14) / 2, cardH = 114;
   for (let i = 0; i < r.ranked.length; i += 2) {
     flow.ensure(cardH + 8);
     [r.ranked[i], r.ranked[i + 1]].forEach((d, k) => {
@@ -321,7 +344,7 @@ export function drawLoshuPages(doc: PDFDocument, f: Fonts, a: Assets, marks: Mar
       ty = drawPara(flow.page, `Missing: ${l.missing.length ? l.missing.join(", ") : "none"}`, tx, ty, tww, { font: f.body, size: 8.8, color: C.ink, lh: 12 }) + 4;
       drawPara(flow.page, `Repeated: ${l.repeated.length ? l.repeated.map((q) => `${q.digit} (x${q.count})`).join(", ") : "none"}`, tx, ty, tww, { font: f.body, size: 8.8, color: C.ink, lh: 12 });
     });
-    flow.top += cardH + 10;
+    flow.top += cardH + 6;
   }
 }
 
@@ -329,15 +352,29 @@ export function drawAvoidDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mar
   const r = input.result, tz = r.input.location.tz;
   const flow = new Flow(doc, f, a, "DATES TO", "AVOID", marks, "Dates to Avoid and Why");
   const bad = r.days.filter((d) => d.windows.length === 0);
-  const blocks: import("./flow.ts").Block[] = [
-    { t: "p", text: "These dates in your window are not recommended. The reason is shown for each, so you can discuss it with your doctor." },
-  ];
-  if (!bad.length) blocks.push({ t: "callout", text: "Good news: every date in your window has at least one clean shubh time." });
+  flow.render([{ t: "p", text: "These dates in your window are not recommended. The reason is shown for each, so you can discuss it with your doctor.", center: true }]);
+  if (!bad.length) { flow.render([{ t: "callout", text: "Good news: every date in your window has at least one clean shubh time." }]); return; }
   for (const d of bad) {
-    blocks.push({ t: "h", text: `${longDate(d.date)} (${d.weekday})` });
-    blocks.push({ t: "ul", items: avoidReasons(d, tz) });
+    const reasons = avoidReasons(d, tz);
+    const lines = reasons.map((t) => wrapLines(f.body, 10.5, t, CONTENT_W - 52));
+    const body = lines.reduce((n, l) => n + l.length * 15 + 5, 0) + 16, head = 34;
+    flow.ensure(head + body + 14);
+    const top = flow.top;
+    roundRect(flow.page, MARGIN_L, top, CONTENT_W, head + body, 12, { fill: C.redBg, stroke: C.red, sw: 0.9 });
+    roundRect(flow.page, MARGIN_L, top, CONTENT_W, head, 12, { fill: C.navy });
+    rect(flow.page, MARGIN_L, top + head - 12, CONTENT_W, 12, C.navy);
+    drawText(flow.page, `${longDate(d.date)} (${d.weekday})`, MARGIN_L + 16, top + 10, { font: f.bold, size: 12.5, color: C.white });
+    const tag = "AVOID", tw = f.bold.widthOfTextAtSize(tag, 9) + 18;
+    roundRect(flow.page, MARGIN_R - tw - 12, top + 8, tw, 18, 9, { fill: C.redBg, stroke: C.red, sw: 0.8 });
+    drawTextC(flow.page, tag, top + 12, { font: f.bold, size: 9, color: C.red, cx: MARGIN_R - 12 - tw / 2 });
+    let y = top + head + 12;
+    lines.forEach((ls) => {
+      drawText(flow.page, "\u2022", MARGIN_L + 18, y, { font: f.bold, size: 10.5, color: C.red });
+      ls.forEach((line) => { drawText(flow.page, line, MARGIN_L + 34, y, { font: f.body, size: 10.5, color: C.ink }); y += 15; });
+      y += 5;
+    });
+    flow.top = top + head + body + 14;
   }
-  flow.render(blocks);
 }
 
 export function drawMuhurat(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
