@@ -15,9 +15,11 @@ export const ST = {
   terms1: 9, terms2: 10, terms3: 11, terms4: 12, agreement: 13, expectations: 14, yourResp: 15, myResp: 16,
   reminders: 17, mantra: 18, finalWord: 19, promise: 20, services: 21, connect: 22, finalBlessing: 23, backCover: 24,
   /** Canva original pages 1, 5 and 11: the cover, the personal-details frame (values are overlaid) and the medical window page. */
-  cover: 25, personal: 26, medical: 27,
+  cover: 25, personal: 26, medical: 27, welcome: 28,
 } as const;
 export type StaticKey = keyof typeof ST;
+/** Number of pages the combined PDF must have (one more than the highest index in ST). Also used to bust the browser cache. */
+export const STATIC_PAGE_COUNT = Math.max(...Object.values(ST)) + 1;
 
 interface Link { x: number; top: number; w: number; h: number; url: string }
 export interface StaticPages { embedded: PDFEmbeddedPage[]; links: Link[][] }
@@ -45,6 +47,8 @@ function readLinks(p: PDFPage, k: number): Link[] {
 export async function loadStaticPages(doc: PDFDocument, bytes: Uint8Array): Promise<StaticPages> {
   const src = await PDFDocument.load(bytes);
   const pages = src.getPages();
+  if (pages.length < STATIC_PAGE_COUNT)
+    throw new Error(`The file public/c-section-static/ALL-static-pages-combined.pdf is out of date: it has ${pages.length} pages but ${STATIC_PAGE_COUNT} are needed. Upload the latest copy and hard-refresh (Ctrl+F5).`);
   const k = PAGE_W / pages[0].getWidth();
   return { embedded: await doc.embedPages(pages), links: pages.map((p) => readLinks(p, k)) };
 }
