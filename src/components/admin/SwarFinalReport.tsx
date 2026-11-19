@@ -346,6 +346,16 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
     onSent();
   };
 
+  const copyCard = async () => {
+    try {
+      const blob = await reportCardBlob(tier, cardName());
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      toast({ title: "Image copied", description: "Paste it in WhatsApp (Ctrl+V)." });
+    } catch {
+      toast({ title: "Copy not supported here", description: "Use Download image instead.", variant: "destructive" });
+    }
+  };
+
   const downloadCard = async () => {
     try {
       const blob = await reportCardBlob(tier, cardName());
@@ -393,6 +403,7 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" asChild><a href={report.pdf_url} target="_blank" rel="noreferrer"><ExternalLink className="w-4 h-4 mr-2" />View PDF</a></Button>
               <Button onClick={send}><MessageCircle className="w-4 h-4 mr-2" />Send image + link on WhatsApp</Button>
+              <Button variant="outline" onClick={copyCard}><ImageIcon className="w-4 h-4 mr-2" />Copy image</Button>
               <Button variant="outline" onClick={downloadCard}><ImageIcon className="w-4 h-4 mr-2" />Download image</Button>
               <Button variant="outline" onClick={async () => { await navigator.clipboard.writeText(message()); toast({ title: "Message copied" }); }}><Copy className="w-4 h-4 mr-2" />Copy message</Button>
             </div>
