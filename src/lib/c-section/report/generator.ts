@@ -86,17 +86,17 @@ export async function generateCSectionReport(input: ReportInput, deps: ReportDep
   fixed("expectations", "Realistic Expectations");
   fixed("yourResp", "Your Responsibilities");
   fixed("myResp", "My Responsibilities");
-  section(S.faq);
+  fixed("faq1", "Frequently Asked Questions"); fixed("faq2"); fixed("faq3");
   fixed("reminders", "Important Reminders");
   fixed("mantra", "Success Mantra");
   fixed("finalWord", "A Final Word to Parents");
-  section(S.closing);
-  section(S.wishBaby);
-  section(S.wishParents);
+  fixed("closing", "Closing Blessings");
+  fixed("wishBaby", "What We Wish for Your Baby");
+  fixed("wishParents", "What We Wish for You");
   fixed("promise", "Our Promise to You");
   fixed("services", "Services Offered");
   fixed("connect", "Connect With Us");
-  section(S.welcomeBaby);
+  fixed("welcomeBaby", "As You Welcome Your Baby");
   fixed("finalBlessing", "Final Blessing");
   fixed("backCover");
 
