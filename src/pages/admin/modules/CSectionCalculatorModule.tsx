@@ -225,6 +225,7 @@ import { avoidLines, summaryText } from "@/lib/c-section/format.ts";
 import { fmtDate, fmtRange, fmtTime } from "@/lib/c-section/time.ts";
 import { CalendarView, CSectionExtras } from "@/components/admin/c-section/CSectionVisuals";
 import { generateCSectionReportInBrowser } from "@/lib/c-section/report/browser";
+import { firstName } from "@/lib/c-section/report/pages";
 
 const gradeClass: Record<number, string> = {
   4: "bg-emerald-100 text-emerald-800 border-emerald-300",
@@ -355,7 +356,7 @@ export default function CSectionCalculatorModule() {
       const url = URL.createObjectURL(new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${mother.trim()} & ${father.trim()}_C-Section_Dates_Ankshaastra.pdf`.replace(/[\\/:*?"<>|]/g, "");
+      a.download = `${firstName(mother)}_C-Section_Dates_Ankshaastra.pdf`.replace(/[\\/:*?"<>|]/g, "");
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch (e) {
