@@ -1960,7 +1960,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
-  Plus, Loader2, Trash2, Pencil, FileCog, Download, Printer, Mail, Eye, MoreVertical, RefreshCw, Search,
+  Plus, Loader2, Trash2, Pencil, FileCog, Download, Printer, Mail, MessageCircle, Eye, MoreVertical, RefreshCw, Search,
   Calendar as CalendarIcon, BadgeCheck, FileX2, ChevronLeft, ChevronRight, X,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -1969,6 +1969,7 @@ import type { DateRange } from "react-day-picker";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
 import { useToast } from "@/hooks/use-toast";
+import { sendReportOnWhatsApp } from "@/lib/report-whatsapp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -2791,6 +2792,7 @@ export default function PerfectBabyNameReports() {
                   <Button variant="ghost" size="icon" title="Download PDF" onClick={() => handleDownloadPdf(r)} disabled={!r.pdf_url}><Download className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" title="Print" onClick={() => handlePrint(r)} disabled={!r.pdf_url}><Printer className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" title="Send Email" onClick={() => openEmailDialog(r)} disabled={!r.pdf_url}><Mail className="h-4 w-4" /></Button>
+                   <Button variant="ghost" size="icon" title="Send on WhatsApp" onClick={() => sendReportOnWhatsApp("perfect", r, toast)} disabled={!r.pdf_url}><MessageCircle className="h-4 w-4" /></Button>
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
