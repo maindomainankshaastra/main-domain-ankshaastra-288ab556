@@ -7,7 +7,7 @@ type Res = {
   redirect?: (status: number, url: string) => void;
 };
 
-const TABLES = ["perfect_baby_name_reports", "complete_baby_blueprint_reports"] as const;
+const TABLES = ["perfect_baby_name_reports", "complete_baby_blueprint_reports", "name_correction_reports"] as const;
 
 /**
  * GET /r/<report id>  (rewritten to /api/r?id=<report id> in vercel.json)
