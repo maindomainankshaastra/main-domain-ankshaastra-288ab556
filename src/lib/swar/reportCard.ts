@@ -1,7 +1,3 @@
-/**
- * "Your report is Ready" card that goes with the Step 6 WhatsApp message.
- * The images are used exactly as designed (public/final-report-assets/), nothing is drawn on them.
- */
 import type { PackageTier } from "@/lib/swar/nameFinderPackage";
 
 const SRC: Record<PackageTier, string> = {
