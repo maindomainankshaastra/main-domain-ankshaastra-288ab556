@@ -7367,7 +7367,7 @@ export default function CompleteBabyBlueprintReports() {
                   <Button variant="ghost" size="icon" title="Print" onClick={() => handlePrint(r)} disabled={!r.pdf_url}><Printer className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" title="Send Email" onClick={() => openEmailDialog(r)} disabled={!r.pdf_url}><Mail className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" title="Send on WhatsApp" onClick={() => sendReportOnWhatsApp("blueprint", r, toast)} disabled={!r.pdf_url}><MessageCircle className="h-4 w-4" /></Button>
-
+                  <Button variant="ghost" size="icon" title="Copy image" onClick={() => copyReportImage("blueprint", toast)}><Copy className="h-4 w-4" /></Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" title="More" className="ml-auto"><MoreVertical className="h-4 w-4" /></Button>
