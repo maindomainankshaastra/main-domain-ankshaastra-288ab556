@@ -365,13 +365,16 @@ export default function CSectionCalculatorModule() {
     setWaBusy(true);
     try {
       const bytes = await buildPdf();
-      const fname = `${firstName(mother)}_C-Section_Dates_Ankshaastra`.replace(/[^A-Za-z0-9_-]/g, "");
-      const path = `${fname}-${Date.now()}.pdf`;
+      const slug = firstName(mother).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) || "report";
+      const path = `${slug}-${Math.random().toString(36).slice(2, 8)}.pdf`;
       const blob = new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
       const up = await supabase.storage.from("c-section-reports").upload(path, blob, { contentType: "application/pdf", upsert: true });
       if (up.error) throw new Error(`Upload failed: ${up.error.message}. Create the public bucket "c-section-reports" in Supabase (see the SQL file).`);
-      const pdfUrl = supabase.storage.from("c-section-reports").getPublicUrl(path).data.publicUrl;
-      const res = openWhatsApp(full, whatsappMessage(result, { mother, pdfUrl }));
+      const longUrl = supabase.storage.from("c-section-reports").getPublicUrl(path).data.publicUrl;
+      // short link on our own domain (vercel.json rewrites /r/<file> to the storage file); long link on localhost
+      const host = window.location.origin;
+      const pdfUrl = /localhost|127\.0\.0\.1/.test(host) ? longUrl : `${host}/r/${path}`;
+      const res = openWhatsApp(full, whatsappMessage(result, { mother, father, pdfUrl }));
       toast({
         title: res === "opened" ? "WhatsApp opened" : res === "copied" ? "Message copied" : "Pop-up blocked",
         description: res === "opened" ? "Check the message and press Send." : "Message copied. Open the chat, press Ctrl+V and Send.",
@@ -383,7 +386,7 @@ export default function CSectionCalculatorModule() {
 
   const copyWhatsAppText = async () => {
     if (!result) return;
-    try { await navigator.clipboard.writeText(whatsappMessage(result, { mother })); toast({ title: "Message copied" }); }
+    try { await navigator.clipboard.writeText(whatsappMessage(result, { mother, father })); toast({ title: "Message copied" }); }
     catch { toast({ title: "Could not copy", variant: "destructive" }); }
   };
 
