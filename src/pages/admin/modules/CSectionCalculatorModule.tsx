@@ -210,7 +210,7 @@
 // }
 
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck, Copy, FileDown, Loader2, MessageCircle, TriangleAlert } from "lucide-react";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { PlacePicker } from "@/components/admin/PlacePicker";
@@ -298,26 +298,46 @@ function DayCard({ d, tz, rank }: { d: DayResult; tz: string; rank: number }) {
   );
 }
 
+const DRAFT_KEY = "c-section-calculator-draft";
+function loadDraft(): Record<string, any> {
+  try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}") || {}; } catch { return {}; }
+}
+
 export default function CSectionCalculatorModule() {
   const { toast } = useToast();
-  const [mother, setMother] = useState("");
-  const [father, setFather] = useState("");
-  const [motherDob, setMotherDob] = useState("");
-  const [fatherDob, setFatherDob] = useState("");
-  const [hospital, setHospital] = useState("");
+  const draft = useMemo(loadDraft, []);
+  const [mother, setMother] = useState(draft.mother ?? "");
+  const [father, setFather] = useState(draft.father ?? "");
+  const [motherDob, setMotherDob] = useState(draft.motherDob ?? "");
+  const [fatherDob, setFatherDob] = useState(draft.fatherDob ?? "");
+  const [hospital, setHospital] = useState(draft.hospital ?? "");
   const [pdfBusy, setPdfBusy] = useState(false);
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(draft.phone ?? "");
   const [waBusy, setWaBusy] = useState(false);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [placeText, setPlaceText] = useState("");
-  const [place, setPlace] = useState<Place | null>(null);
-  const [otStart, setOtStart] = useState("08:00");
-  const [otEnd, setOtEnd] = useState("18:00");
-  const [gandMool, setGandMool] = useState<"nakshatra" | "gandanta-only">("nakshatra");
+  const [start, setStart] = useState(draft.start ?? "");
+  const [end, setEnd] = useState(draft.end ?? "");
+  const [placeText, setPlaceText] = useState(draft.placeText ?? "");
+  const [place, setPlace] = useState<Place | null>(draft.place ?? null);
+  const [otStart, setOtStart] = useState(draft.otStart ?? "08:00");
+  const [otEnd, setOtEnd] = useState(draft.otEnd ?? "18:00");
+  const [gandMool, setGandMool] = useState<"nakshatra" | "gandanta-only">(draft.gandMool ?? "nakshatra");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<CSectionResult | null>(null);
+
+  // keep the form across page refreshes (this browser only)
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ mother, father, motherDob, fatherDob, hospital, phone, start, end, placeText, place, otStart, otEnd, gandMool }));
+    } catch { /* storage not available: form simply won't be remembered */ }
+  }, [mother, father, motherDob, fatherDob, hospital, phone, start, end, placeText, place, otStart, otEnd, gandMool]);
+
+  const clearForm = () => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    setMother(""); setFather(""); setMotherDob(""); setFatherDob(""); setHospital(""); setPhone("");
+    setStart(""); setEnd(""); setPlaceText(""); setPlace(null); setOtStart("08:00"); setOtEnd("18:00");
+    setGandMool("nakshatra"); setResult(null); setError("");
+  };
 
   const tz = result?.input.location.tz ?? "Asia/Kolkata";
   const text = useMemo(() => (result ? summaryText(result, { mother, father }) : ""), [result, mother, father]);
@@ -455,6 +475,7 @@ export default function CSectionCalculatorModule() {
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarCheck className="mr-2 h-4 w-4" />}
             Calculate top 3 dates
           </Button>
+          <Button variant="outline" onClick={clearForm} disabled={busy}>Clear form</Button>
           {error && <p className="flex items-center gap-1 text-sm text-red-700"><TriangleAlert className="h-4 w-4" />{error}</p>}
         </div>
       </AdminPage>
