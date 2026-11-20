@@ -318,11 +318,13 @@ function shortPdfUrl(path: string): string {
   return `${host}/cs/${path}`;
 }
 
-function PreviousReports({ rows, loading, onSend }: { rows: SavedReport[]; loading: boolean; onSend: (r: SavedReport) => void }) {
+function PreviousReports({ rows, loading, loadError, onSend }: { rows: SavedReport[]; loading: boolean; loadError: string; onSend: (r: SavedReport) => void }) {
   const [q, setQ] = useState("");
   const shown = rows.filter((r) => `${r.mother_name} ${r.father_name} ${r.phone ?? ""} ${r.hospital ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()));
   return (
     <AdminPage title="Previous C-Section reports" description="Every report you generate is saved here, so you can open the PDF or send the link again on WhatsApp.">
+      {loadError && <p className="mb-3 flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-800"><TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />Could not load the history: {loadError}. Run the c_section_reports SQL in Supabase.</p>}
+      <p className="mb-2 text-sm font-medium">Total reports: {rows.length} | Sent on WhatsApp: {rows.filter((r) => r.whatsapp_sent_at).length}</p>
       <div className="mb-3 max-w-sm"><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, phone or hospital" /></div>
       {loading ? <p className="text-sm text-muted-foreground">Loading...</p> : shown.length === 0 ? (
         <p className="text-sm text-muted-foreground">{rows.length ? "No report matches your search." : "No reports yet. They appear here once you download or send one."}</p>
@@ -370,6 +372,7 @@ export default function CSectionCalculatorModule() {
   const [waBusy, setWaBusy] = useState(false);
   const [history, setHistory] = useState<SavedReport[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState("");
   const [start, setStart] = useState(draft.start ?? "");
   const [end, setEnd] = useState(draft.end ?? "");
   const [placeText, setPlaceText] = useState(draft.placeText ?? "");
@@ -390,7 +393,8 @@ export default function CSectionCalculatorModule() {
 
   const loadHistory = useCallback(async () => {
     const { data, error: err } = await supabase.from(TABLE).select("*").order("created_at", { ascending: false }).limit(200);
-    if (!err && data) setHistory(data as unknown as SavedReport[]);
+    if (err) setHistoryError(err.message);
+    else { setHistoryError(""); setHistory((data ?? []) as unknown as SavedReport[]); }
     setHistoryLoading(false);
   }, []);
   useEffect(() => { void loadHistory(); }, [loadHistory]);
@@ -606,7 +610,7 @@ export default function CSectionCalculatorModule() {
         </AdminPage>
       )}
 
-      <PreviousReports rows={history} loading={historyLoading} onSend={resend} />
+      <PreviousReports rows={history} loading={historyLoading} loadError={historyError} onSend={resend} />
     </div>
   );
 }
