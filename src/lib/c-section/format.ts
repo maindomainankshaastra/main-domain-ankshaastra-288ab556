@@ -35,21 +35,37 @@ export function summaryText(r: CSectionResult, names?: { mother?: string; father
   return out.join("\n");
 }
 
-/** WhatsApp message for the customer: greeting + the full summary + short PDF link. */
+/** WhatsApp message for the customer: greeting, PDF link, dates at a glance, then the detailed timings. */
 export function whatsappMessage(r: CSectionResult, o: { mother?: string; father?: string; pdfUrl?: string }): string {
+  const tz = r.input.location.tz;
   const first = (o.mother ?? "").trim().split(/\s+/)[0];
   const out: string[] = [];
   out.push(`Namaste${first ? " " + first : ""} ji 🙏`);
   out.push("");
-  out.push("Your *C-Section Dates Report* from *Ankshaastra* is ready. Here are your auspicious dates and timings:");
-  out.push("");
-  out.push(summaryText(r, { mother: o.mother, father: o.father }));
-  out.push("");
+  out.push("Your *C-Section Dates Report* from *Ankshaastra* is ready.");
   if (o.pdfUrl) {
+    out.push("");
     out.push("📄 *Full detailed report (PDF):*");
     out.push(o.pdfUrl);
-    out.push("");
   }
+  out.push("");
+  if (r.input.location.name) out.push(`📍 Hospital location: ${r.input.location.name}`);
+  out.push(`🗓 Doctor's window: ${fmtDate(r.input.windowStart)} to ${fmtDate(r.input.windowEnd)}`);
+  out.push("");
+  out.push("✨ *Your top dates at a glance*");
+  const medal = ["🥇", "🥈", "🥉"];
+  r.top.slice(0, 3).forEach((d, i) => {
+    const best = d.recommended[0];
+    out.push("");
+    out.push(`${medal[i] ?? "•"} *${fmtDate(d.date)} (${d.weekday})*`);
+    out.push(best ? `Best shubh time: ${fmtRange(best.start, best.end, tz)}` : "No clean shubh time in OT hours");
+  });
+  out.push("");
+  out.push("━━━━━━━━━━━━━━");
+  out.push("*Detailed timings*");
+  // the long summary minus its own title / hospital / window lines (already shown above)
+  out.push(summaryText(r, { mother: o.mother, father: o.father }).split("\n").slice(3).join("\n").replace(/^\n+/, ""));
+  out.push("");
   out.push("Warm regards,");
   out.push("Team Ankshaastra ✨");
   return out.join("\n");
