@@ -371,9 +371,9 @@ export default function CSectionCalculatorModule() {
       const up = await supabase.storage.from("c-section-reports").upload(path, blob, { contentType: "application/pdf", upsert: true });
       if (up.error) throw new Error(`Upload failed: ${up.error.message}. Create the public bucket "c-section-reports" in Supabase (see the SQL file).`);
       const longUrl = supabase.storage.from("c-section-reports").getPublicUrl(path).data.publicUrl;
-      // short link on our own domain (vercel.json rewrites /r/<file> to the storage file); long link on localhost
+      // short link on our own domain (vercel.json rewrites /cs/<file> to the storage file); long link on localhost
       const host = window.location.origin;
-      const pdfUrl = /localhost|127\.0\.0\.1/.test(host) ? longUrl : `${host}/r/${path}`;
+      const pdfUrl = /localhost|127\.0\.0\.1/.test(host) ? longUrl : `${host}/cs/${path}`;
       const res = openWhatsApp(full, whatsappMessage(result, { mother, father, pdfUrl }));
       toast({
         title: res === "opened" ? "WhatsApp opened" : res === "copied" ? "Message copied" : "Pop-up blocked",
