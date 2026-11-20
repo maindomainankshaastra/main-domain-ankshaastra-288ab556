@@ -34,3 +34,33 @@ export function summaryText(r: CSectionResult, names?: { mother?: string; father
   out.push("Numerology and Muhurat guidance only. Always confirm the final date and time with the treating obstetrician.");
   return out.join("\n");
 }
+
+/** Short WhatsApp message for the customer: warm greeting, top dates with best time, the PDF link. */
+export function whatsappMessage(r: CSectionResult, o: { mother?: string; pdfUrl?: string }): string {
+  const tz = r.input.location.tz;
+  const first = (o.mother ?? "").trim().split(/\s+/)[0];
+  const out: string[] = [];
+  out.push(`Namaste${first ? " " + first : ""} ji 🙏`);
+  out.push("");
+  out.push("Your *C-Section Dates Report* from *Ankshaastra* is ready. Here is a quick summary:");
+  out.push("");
+  out.push(`🗓 Doctor's window: ${fmtDate(r.input.windowStart)} to ${fmtDate(r.input.windowEnd)}`);
+  out.push("");
+  const medal = ["🥇", "🥈", "🥉"];
+  r.top.slice(0, 3).forEach((d, i) => {
+    const best = d.recommended[0];
+    out.push(`${medal[i] ?? "•"} *${fmtDate(d.date)} (${d.weekday})*`);
+    out.push(best ? `   Best time: ${fmtRange(best.start, best.end, tz)}` : "   See the report for timing");
+  });
+  out.push("");
+  if (o.pdfUrl) {
+    out.push("📄 Full report (dates, shubh timings, calendar & baby's Loshu grid):");
+    out.push(o.pdfUrl);
+    out.push("");
+  }
+  out.push("Please share these dates with your doctor and choose what fits medically. The final decision always rests with your doctor.");
+  out.push("");
+  out.push("Warm regards,");
+  out.push("Team Ankshaastra ✨");
+  return out.join("\n");
+}
