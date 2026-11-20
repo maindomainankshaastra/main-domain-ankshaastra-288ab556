@@ -210,8 +210,8 @@
 // }
 
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck, Copy, FileDown, Loader2, MessageCircle, TriangleAlert } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarCheck, Copy, FileDown, Loader2, MessageCircle, TriangleAlert, ExternalLink } from "lucide-react";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { PlacePicker } from "@/components/admin/PlacePicker";
 import { Badge } from "@/components/ui/badge";
@@ -303,6 +303,60 @@ function loadDraft(): Record<string, any> {
   try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}") || {}; } catch { return {}; }
 }
 
+const BUCKET = "c-section-reports";
+const TABLE = "c_section_reports";
+
+interface SavedReport {
+  id: string; created_at: string; mother_name: string; father_name: string; phone: string | null;
+  hospital: string | null; city: string | null; window_start: string; window_end: string;
+  top_dates: string | null; pdf_url: string; whatsapp_sent_at: string | null;
+}
+
+function shortPdfUrl(path: string): string {
+  const host = window.location.origin;
+  if (/localhost|127\.0\.0\.1/.test(host)) return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  return `${host}/cs/${path}`;
+}
+
+function PreviousReports({ rows, loading, onSend }: { rows: SavedReport[]; loading: boolean; onSend: (r: SavedReport) => void }) {
+  const [q, setQ] = useState("");
+  const shown = rows.filter((r) => `${r.mother_name} ${r.father_name} ${r.phone ?? ""} ${r.hospital ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <AdminPage title="Previous C-Section reports" description="Every report you generate is saved here, so you can open the PDF or send the link again on WhatsApp.">
+      <div className="mb-3 max-w-sm"><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, phone or hospital" /></div>
+      {loading ? <p className="text-sm text-muted-foreground">Loading...</p> : shown.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{rows.length ? "No report matches your search." : "No reports yet. They appear here once you download or send one."}</p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-left"><tr>
+              <th className="p-2">Created</th><th className="p-2">Parents</th><th className="p-2">WhatsApp</th><th className="p-2">Hospital</th><th className="p-2">Window</th><th className="p-2">Top dates</th><th className="p-2">Actions</th>
+            </tr></thead>
+            <tbody>
+              {shown.map((r) => (
+                <tr key={r.id} className="border-t align-top">
+                  <td className="p-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
+                  <td className="p-2">{r.mother_name} &amp; {r.father_name}</td>
+                  <td className="p-2 whitespace-nowrap">{r.phone || "-"}{r.whatsapp_sent_at && <div className="text-xs text-green-700">Sent {new Date(r.whatsapp_sent_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</div>}</td>
+                  <td className="p-2">{[r.hospital, r.city].filter(Boolean).join(", ") || "-"}</td>
+                  <td className="p-2 whitespace-nowrap">{fmtDate(r.window_start)} to {fmtDate(r.window_end)}</td>
+                  <td className="p-2 whitespace-pre-line text-xs">{r.top_dates}</td>
+                  <td className="p-2">
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" asChild><a href={r.pdf_url} target="_blank" rel="noreferrer"><ExternalLink className="mr-1 h-3.5 w-3.5" />PDF</a></Button>
+                      <Button size="sm" className="bg-green-600 text-white hover:bg-green-700" onClick={() => onSend(r)}><MessageCircle className="mr-1 h-3.5 w-3.5" />Send</Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </AdminPage>
+  );
+}
+
 export default function CSectionCalculatorModule() {
   const { toast } = useToast();
   const draft = useMemo(loadDraft, []);
@@ -314,6 +368,8 @@ export default function CSectionCalculatorModule() {
   const [pdfBusy, setPdfBusy] = useState(false);
   const [phone, setPhone] = useState(draft.phone ?? "");
   const [waBusy, setWaBusy] = useState(false);
+  const [history, setHistory] = useState<SavedReport[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [start, setStart] = useState(draft.start ?? "");
   const [end, setEnd] = useState(draft.end ?? "");
   const [placeText, setPlaceText] = useState(draft.placeText ?? "");
@@ -331,6 +387,13 @@ export default function CSectionCalculatorModule() {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({ mother, father, motherDob, fatherDob, hospital, phone, start, end, placeText, place, otStart, otEnd, gandMool }));
     } catch { /* storage not available: form simply won't be remembered */ }
   }, [mother, father, motherDob, fatherDob, hospital, phone, start, end, placeText, place, otStart, otEnd, gandMool]);
+
+  const loadHistory = useCallback(async () => {
+    const { data, error: err } = await supabase.from(TABLE).select("*").order("created_at", { ascending: false }).limit(200);
+    if (!err && data) setHistory(data as unknown as SavedReport[]);
+    setHistoryLoading(false);
+  }, []);
+  useEffect(() => { void loadHistory(); }, [loadHistory]);
 
   const clearForm = () => {
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
@@ -377,6 +440,28 @@ export default function CSectionCalculatorModule() {
     });
   };
 
+  /** Upload the PDF to storage and save a history row. Returns the short public link. */
+  const saveReport = async (bytes: Uint8Array, sentAt: string | null): Promise<string> => {
+    const slug = firstName(mother).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) || "report";
+    const path = `${slug}-${Math.random().toString(36).slice(2, 8)}.pdf`;
+    const blob = new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
+    const up = await supabase.storage.from(BUCKET).upload(path, blob, { contentType: "application/pdf", upsert: true });
+    if (up.error) throw new Error(`Upload failed: ${up.error.message}. Create the public bucket "${BUCKET}" in Supabase (see the SQL file).`);
+    const pdfUrl = shortPdfUrl(path);
+    if (result) {
+      const tops = result.top.slice(0, 3).map((d, i) => `${i + 1}. ${fmtDate(d.date)} (${d.weekday.slice(0, 3)})`).join("\n");
+      const ins = await supabase.from(TABLE).insert({
+        mother_name: mother.trim(), father_name: father.trim(), phone: phone.replace(/\D/g, "") || null,
+        hospital: hospital.trim() || null, city: place?.name ?? null,
+        window_start: result.input.windowStart, window_end: result.input.windowEnd,
+        top_dates: tops, pdf_path: path, pdf_url: pdfUrl, whatsapp_sent_at: sentAt,
+      });
+      if (ins.error) toast({ title: "Report not added to history", description: `${ins.error.message}. Run the c_section_reports SQL in Supabase.`, variant: "destructive" });
+      else void loadHistory();
+    }
+    return pdfUrl;
+  };
+
   const sendWhatsApp = async () => {
     if (!result) return;
     const digits = phone.replace(/\D/g, "");
@@ -385,15 +470,7 @@ export default function CSectionCalculatorModule() {
     setWaBusy(true);
     try {
       const bytes = await buildPdf();
-      const slug = firstName(mother).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) || "report";
-      const path = `${slug}-${Math.random().toString(36).slice(2, 8)}.pdf`;
-      const blob = new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
-      const up = await supabase.storage.from("c-section-reports").upload(path, blob, { contentType: "application/pdf", upsert: true });
-      if (up.error) throw new Error(`Upload failed: ${up.error.message}. Create the public bucket "c-section-reports" in Supabase (see the SQL file).`);
-      const longUrl = supabase.storage.from("c-section-reports").getPublicUrl(path).data.publicUrl;
-      // short link on our own domain (vercel.json rewrites /cs/<file> to the storage file); long link on localhost
-      const host = window.location.origin;
-      const pdfUrl = /localhost|127\.0\.0\.1/.test(host) ? longUrl : `${host}/cs/${path}`;
+      const pdfUrl = await saveReport(bytes, new Date().toISOString());
       const res = openWhatsApp(full, whatsappMessage(result, { mother, father, pdfUrl }));
       toast({
         title: res === "opened" ? "WhatsApp opened" : res === "copied" ? "Message copied" : "Pop-up blocked",
@@ -402,6 +479,17 @@ export default function CSectionCalculatorModule() {
     } catch (e) {
       toast({ title: "Could not send", description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
     } finally { setWaBusy(false); }
+  };
+
+  /** Re-send the link of an already generated report (no new PDF). */
+  const resend = async (r: SavedReport) => {
+    const digits = (r.phone ?? "").replace(/\D/g, "");
+    if (digits.length < 10) { toast({ title: "This report has no WhatsApp number", variant: "destructive" }); return; }
+    const first = r.mother_name.trim().split(/\s+/)[0];
+    const msg = `Namaste ${first} ji 🙏\n\nYour *C-Section Dates Report* from *Ankshaastra* is ready.\n\n📄 *Full detailed report (PDF):*\n${r.pdf_url}\n\n🗓 Doctor's window: ${fmtDate(r.window_start)} to ${fmtDate(r.window_end)}\n\nPlease share these dates with your doctor and confirm the final date and time with them.\n\nWarm regards,\nTeam Ankshaastra ✨`;
+    openWhatsApp(digits.length === 10 ? `91${digits}` : digits, msg);
+    await supabase.from(TABLE).update({ whatsapp_sent_at: new Date().toISOString() }).eq("id", r.id);
+    void loadHistory();
   };
 
   const copyWhatsAppText = async () => {
@@ -416,10 +504,8 @@ export default function CSectionCalculatorModule() {
     if (!motherDob || !fatherDob) { toast({ title: "Enter both parents' dates of birth first", variant: "destructive" }); return; }
     setPdfBusy(true);
     try {
-      const bytes = await generateCSectionReportInBrowser({
-        motherName: mother.trim(), fatherName: father.trim(), motherDob, fatherDob,
-        hospitalName: hospital.trim(), city: place?.name ?? "", result,
-      });
+      const bytes = await buildPdf();
+      try { await saveReport(bytes, null); } catch (e) { toast({ title: "Downloaded, but not saved to history", description: e instanceof Error ? e.message : undefined, variant: "destructive" }); }
       const url = URL.createObjectURL(new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }));
       const a = document.createElement("a");
       a.href = url;
@@ -519,6 +605,8 @@ export default function CSectionCalculatorModule() {
           </div>
         </AdminPage>
       )}
+
+      <PreviousReports rows={history} loading={historyLoading} onSend={resend} />
     </div>
   );
 }
