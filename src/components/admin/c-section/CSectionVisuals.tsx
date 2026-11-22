@@ -93,7 +93,7 @@ function DayTimelines({ result }: { result: CSectionResult }) {
 
   return (
     <div>
-      <p className="mb-2 text-sm font-medium">Day timeline (OT {otStart} to {otEnd})</p>
+      <p className="mb-2 text-sm font-medium">Day timeline ({result.input.otCustom ? "OT" : "day hours"} {otStart} to {otEnd})</p>
       <div className="mb-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-4 rounded-sm bg-emerald-500" />Shubh time</span>
         <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-4 rounded-sm bg-red-500" />Avoid (Rahu, Yamaganda, Gulika, Gand Mool, Gandanta, Bhadra...)</span>
