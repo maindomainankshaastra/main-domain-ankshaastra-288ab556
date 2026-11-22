@@ -186,3 +186,81 @@ export function dayParts(sunrise: Date, sunset: Date, weekday: number): DayParts
     vijaya: muhurta(11),
   };
 }
+
+
+/**
+ * Varjyam (Tyajyam) start ghati per nakshatra, as listed in Drik Panchang's Nakshatra Thyajyam table
+ * (its "Tyajya Ghatis" N..N+3 means the window starts after N-1 of the nakshatra's 60 ghatis).
+ * Varjyam lasts 4 ghatis = 1/15 of the nakshatra's real duration.
+ */
+const VARJYAM_START_GHATI = [50, 24, 30, 40, 14, 21, 30, 20, 32, 30, 20, 18, 21, 20, 14, 14, 10, 14, 56, 24, 20, 10, 10, 18, 16, 24, 30];
+
+export interface NakshatraSpan { index: number; start: Date; end: Date }
+
+/** Nakshatra spans (exact start/end by bisection) covering [from, to]. The first/last span may start before / end after. */
+export function nakshatraSpans(eph: Ephemeris, from: Date, to: Date): NakshatraSpan[] {
+  const idx = (t: number) => Math.floor(eph.moonSidereal(new Date(t)) / NAK_SPAN) % 27;
+  const step = 10 * 60 * 1000;
+  const first = from.getTime() - 30 * 3600 * 1000; // a nakshatra lasts at most ~27 h
+  const out: NakshatraSpan[] = [];
+  let prevT = first, prevI = idx(first), segStart = first;
+  for (let t = first + step; t <= to.getTime() + 30 * 3600 * 1000; t += step) {
+    const i = idx(t);
+    if (i !== prevI) {
+      let lo = prevT, hi = t;
+      while (hi - lo > 1000) { const mid = Math.floor((lo + hi) / 2); if (idx(mid) === prevI) lo = mid; else hi = mid; }
+      out.push({ index: prevI, start: new Date(segStart), end: new Date(hi) });
+      segStart = hi; prevI = i;
+    }
+    prevT = t;
+  }
+  return out.filter((s) => s.end > from && s.start < to).slice();
+}
+
+/** Varjyam windows that START between `from` and `to` (Drik lists a day from sunrise to the next sunrise). */
+export function varjyamWindows(eph: Ephemeris, from: Date, to: Date): Period[] {
+  const out: Period[] = [];
+  for (const sp of nakshatraSpans(eph, from, to)) {
+    const dur = sp.end.getTime() - sp.start.getTime();
+    const start = sp.start.getTime() + (VARJYAM_START_GHATI[sp.index] / 60) * dur;
+    if (start >= from.getTime() && start < to.getTime()) out.push({ start: new Date(start), end: new Date(start + dur / 15) });
+  }
+  return out;
+}
+
+
+/**
+ * Dur Muhurtam: which of the 15 day muhurtas (sunrise to sunset) / 15 night muhurtas (sunset to next sunrise)
+ * are inauspicious on each weekday (0 = Sunday). Each was checked against Drik Panchang's printed times:
+ * Sun, Mon, Tue, Wed, Thu, Fri and Sat all match.
+ */
+const DUR_MUHURTAM: Record<number, { day: number[]; night: number[] }> = {
+  0: { day: [14], night: [] }, 1: { day: [9, 12], night: [] }, 2: { day: [4], night: [7] }, 3: { day: [8], night: [] },
+  4: { day: [6, 12], night: [] }, 5: { day: [4, 9], night: [] }, 6: { day: [1, 2], night: [] },
+};
+
+export interface DrikDayTimes {
+  brahma: Period; godhuli: Period; nishita: Period | null; durMuhurtam: Period[]; varjyam: Period[]; nextSunrise: Date | null;
+}
+
+/** Drik-Panchang style daily times that depend on sunrise / sunset / the Moon's nakshatra. `loc` is the hospital location. */
+export function drikDayTimes(eph: Ephemeris, loc: Location, ymd: string, sunrise: Date, sunset: Date): DrikDayTimes {
+  const sr = sunrise.getTime(), ss = sunset.getTime(), MIN = 60000;
+  const prevSunset = eph.sunset(new Date(sr - 20 * 3600000), loc);
+  const nextSunrise = eph.sunrise(new Date(ss), loc);
+  // Brahma Muhurta: the 2nd-last night muhurta before sunrise (1/15 of the night each); Drik prints 04:29-05:22 for a 06:15 sunrise
+  const preNight = prevSunset ? (sr - prevSunset.getTime()) / 15 : 48 * MIN;
+  const brahma = { start: new Date(sr - 2 * preNight), end: new Date(sr - preNight) };
+  // Godhuli: Drik prints about 26-27 minutes starting a minute or two before sunset
+  const godhuli = { start: new Date(ss - 1 * MIN), end: new Date(ss + 25 * MIN) };
+  const night = nextSunrise ? (nextSunrise.getTime() - ss) / 15 : 54 * MIN;
+  const nishita = nextSunrise ? { start: new Date(ss + 7 * night), end: new Date(ss + 8 * night) } : null;
+  const dow = new Date(`${ymd}T00:00:00Z`).getUTCDay();
+  const dayM = (ss - sr) / 15, rule = DUR_MUHURTAM[dow];
+  const durMuhurtam = [
+    ...rule.day.map((n) => ({ start: new Date(sr + (n - 1) * dayM), end: new Date(sr + n * dayM) })),
+    ...rule.night.map((n) => ({ start: new Date(ss + (n - 1) * night), end: new Date(ss + n * night) })),
+  ];
+  const varjyam = nextSunrise ? varjyamWindows(eph, sunrise, nextSunrise) : [];
+  return { brahma, godhuli, nishita, durMuhurtam, varjyam, nextSunrise };
+}
