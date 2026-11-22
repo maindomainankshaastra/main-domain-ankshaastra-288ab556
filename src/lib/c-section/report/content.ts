@@ -109,7 +109,7 @@ export function textSections(c: TextCtx) {
       { t: "h", text: "Step 3: Every recommended time is cleaned" },
       { t: "p", text: "We remove Rahu Kalam, Yamaganda, Gulika Kalam, Bhadra (Vishti karana), the ashubh yogas and Gandanta lagna. Panchak is shown as a caution only." },
       { t: "h", text: "Step 4: It must be practical" },
-      { t: "p", text: `Recommended times fall inside your hospital's operation theatre hours (${c.otHours}), are at least 15 minutes long, and are marked when they overlap Abhijit or Vijaya Muhurat.` },
+      { t: "p", text: `Recommended times fall inside ${c.otHours}, are at least 15 minutes long, and are marked when they overlap Abhijit or Vijaya Muhurat.` },
     ],
   };
 
