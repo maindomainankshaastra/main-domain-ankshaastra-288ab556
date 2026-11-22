@@ -80,6 +80,9 @@ export function windowLines(d: DayResult, tz: string, all = false): string[] {
 
 const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10 > 3 ? 0 : n % 10]}`;
 /** "07:05 AM" -> "7:05 AM" (the Canva page writes times without a leading zero). */
+const hour12 = (hhmm: string) => { const h = Number(hhmm.slice(0, 2)); return `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`; };
+/** "your hospital's operation theatre hours (8 AM to 6 PM)" or, when no OT hours were given, "the daytime hours (6 AM to 8 PM)" */
+const otPhrase = (r: CSectionResult["input"]) => r.otCustom ? `your hospital's operation theatre hours (${hour12(r.otStart)} to ${hour12(r.otEnd)})` : `the standard daytime hours (${hour12(r.otStart)} to ${hour12(r.otEnd)})`;
 const noZero = (t: string) => t.replace(/\b0(\d:\d\d)/g, "$1");
 
 /** "Navami upto 7:05 AM" / "Dashami", one per line, as on the Canva page. */
@@ -264,7 +267,7 @@ export function drawMedicalWindow(doc: PDFDocument, f: Fonts, a: Assets, marks: 
   const r = input.result;
   const flow = new Flow(doc, f, a, "YOUR MEDICAL", "WINDOW ANALYSIS", marks, "Your Medical Window Analysis");
   flow.render([
-    { t: "p", text: `Your doctor has approved delivery between ${longDate(r.input.windowStart)} and ${longDate(r.input.windowEnd)} (${r.days.length} day${r.days.length === 1 ? "" : "s"}). We analyzed every date in this window, and every time of the day inside your hospital's operation theatre hours (${r.input.otStart} to ${r.input.otEnd}), for ${input.city || "your city"}.` },
+    { t: "p", text: `Your doctor has approved delivery between ${longDate(r.input.windowStart)} and ${longDate(r.input.windowEnd)} (${r.days.length} day${r.days.length === 1 ? "" : "s"}). We analyzed every date in this window, and every time of the day inside ${otPhrase(r.input)}, for ${input.city || "your city"}.` },
     { t: "h", text: "Our Selection Strategy" },
     { t: "p", text: "From your doctor's window, we selected the 3 dates that offer:" },
     { t: "ul", items: [
@@ -272,7 +275,7 @@ export function drawMedicalWindow(doc: PDFDocument, f: Fonts, a: Assets, marks: 
       "Free of Gand Mool and Gandanta",
       "Strong Mulank and Bhagyank (date numerology luck)",
       "Clean shubh times, with no clash with Rahu Kalam, Yamaganda, Gulika or Bhadra",
-      "Times that fall inside your hospital's operation theatre hours",
+      r.input.otCustom ? "Times that fall inside your hospital's operation theatre hours" : "Times that fall in standard daytime hours",
       "Your baby's Lo Shu Grid shown for every date, so you can compare",
     ] },
   ]);
@@ -284,20 +287,22 @@ const STATUS_FG = { green: C.green, yellow: C.amber, red: C.red };
 export function drawCalendar(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
   const r = input.result;
   const flow = new Flow(doc, f, a, "YOUR WINDOW", "AT A GLANCE", marks, "Your Window at a Glance");
-  flow.render([{ t: "p", text: `One box per date from ${longDate(r.input.windowStart)} to ${longDate(r.input.windowEnd)}. All Panchang times are for ${input.city || "your city"}.`, center: true }]);
+  flow.top += 6;
   const days = r.days;
   const lead = weekdayOf(days[0].date);
-  const cells: (DayResult | null)[] = [...Array(lead).fill(null), ...days];
-  while (cells.length % 7) cells.push(null);
-  const cw = Math.floor(CONTENT_W / 7), ch = 66, x0 = MARGIN_L + (CONTENT_W - cw * 7) / 2;
+  // Only the weekdays that really occur in the window get a column (a 5-day window shows 5 columns, not 7)
+  const present = [...new Set(days.map((d) => weekdayOf(d.date)))].sort((x, y) => x - y);
+  const colOf = (wd: number) => present.indexOf(wd);
+  const nc = present.length;
+  const cw = Math.min(Math.floor(CONTENT_W / nc), 96), ch = 66, x0 = MARGIN_L + (CONTENT_W - cw * nc) / 2;
   const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const rows = cells.length / 7;
+  const rows = Math.floor((lead + days.length - 1) / 7) + 1;
   flow.ensure(24 + rows * ch + 40);
-  names.forEach((n, i) => drawTextC(flow.page, n, flow.top, { font: f.bold, size: 9.5, color: C.muted, cx: x0 + i * cw + cw / 2 }));
+  present.forEach((wd, i) => drawTextC(flow.page, names[wd], flow.top, { font: f.bold, size: 9.5, color: C.muted, cx: x0 + i * cw + cw / 2 }));
   flow.top += 18;
-  cells.forEach((d, i) => {
-    if (!d) return;
-    const x = x0 + (i % 7) * cw + 2, top = flow.top + Math.floor(i / 7) * ch + 2;
+  days.forEach((d, i) => {
+    const wd = weekdayOf(d.date);
+    const x = x0 + colOf(wd) * cw + 2, top = flow.top + Math.floor((lead + i) / 7) * ch + 2;
     const st = dayStatus(d);
     roundRect(flow.page, x, top, cw - 4, ch - 4, 8, { fill: STATUS_BG[st], stroke: STATUS_FG[st], sw: 0.8 });
     const dayNo = Number(d.date.slice(8));
@@ -307,11 +312,15 @@ export function drawCalendar(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[
     if (dayNo === 1 || d === days[0]) drawText(flow.page, MONTHS[Number(d.date.slice(5, 7)) - 1].slice(0, 3), x + 4, top + 4, { font: f.body, size: 7, color: C.muted });
   });
   flow.top += rows * ch + 10;
-  let lx = MARGIN_L + 40;
-  for (const [st, label] of [["green", "Clean shubh time"], ["yellow", "Shubh time with cautions"], ["red", "Avoid"]] as const) {
+  // legend: only the colours that appear in this window
+  const used = new Set(days.map((d) => dayStatus(d)));
+  const legend = ([["green", "Clean shubh time"], ["yellow", "Shubh time with cautions"], ["red", "Avoid"]] as const).filter(([st]) => used.has(st));
+  const legW = legend.reduce((s, [, label]) => s + 18 + f.body.widthOfTextAtSize(label, 9.5), 0) + (legend.length - 1) * 22;
+  let lx = MARGIN_L + (CONTENT_W - legW) / 2;
+  for (const [st, label] of legend) {
     roundRect(flow.page, lx, flow.top, 12, 12, 3, { fill: STATUS_BG[st], stroke: STATUS_FG[st], sw: 0.8 });
     drawText(flow.page, label, lx + 18, flow.top + 1.5, { font: f.body, size: 9.5, color: C.ink });
-    lx += 22 + f.body.widthOfTextAtSize(label, 9.5) + 22;
+    lx += 18 + f.body.widthOfTextAtSize(label, 9.5) + 22;
   }
   flow.top += 28;
   flow.render([{ t: "p", text: "Under each date: the numerology luck %, or its priority if it is one of your top dates.", center: true, muted: true }]);
@@ -355,7 +364,7 @@ function barBox(x0: number, w: number, s: number, e: number, a: number, b: numbe
 export function drawTimelines(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
   const r = input.result, tz = r.input.location.tz;
   const flow = new Flow(doc, f, a, "DAY-WISE", "TIMELINE", marks, "Day-wise Timeline");
-  flow.render([{ t: "p", text: `Each bar runs across your hospital's OT hours (${r.input.otStart} to ${r.input.otEnd}).`, center: true }]);
+  flow.render([{ t: "p", text: r.input.otCustom ? `Each bar runs across your hospital's OT hours (${r.input.otStart} to ${r.input.otEnd}).` : `Each bar runs across the day, from ${hour12(r.input.otStart)} to ${hour12(r.input.otEnd)}.`, center: true }]);
   const legend = (): void => {
     let lx = MARGIN_L + 20;
     for (const [col, label] of [[C.green, "Shubh time"], [C.red, "Time to avoid"], [C.gold, "Abhijit / Vijaya muhurat"]] as const) {
@@ -390,6 +399,57 @@ export function drawTimelines(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark
       drawTextC(flow.page, `${h % 12 || 12}${h < 12 ? "a" : "p"}`, top + 39, { font: f.body, size: 7.5, color: C.muted, cx: tx });
     }
     flow.top += 60;
+  });
+  // Why each date has the rank it has
+  const short = (d: DayResult) => longDate(d.date).slice(0, -5);
+  const items = r.ranked.map((d, i) => {
+    const head = `Rank ${d.rank}, ${short(d)}: `;
+    if (!d.windows.length) return `${head}no clean shubh time (${(d.dateReasons[0] ?? d.noWindowReason ?? "every good period clashes with an inauspicious time").replace(/\.$/, "")}).`;
+    const best = d.recommended[0];
+    if (i === 0) return `${head}${Math.round(d.cleanMinutes)} minutes of clean shubh time, best time graded ${GRADE_LABEL[d.grade]}${d.relaxed ? ", with cautions" : ""}.`;
+    const prev = r.ranked[i - 1];
+    let why: string;
+    if (!prev.windows.length) why = "it has clean shubh time";
+    else if (d.relaxed && !prev.relaxed) why = `its times carry cautions (Bhadra / Ashubh Yoga / Gandanta Lagna), unlike ${short(prev)}`;
+    else if (d.grade < prev.grade) why = `its best time is graded ${GRADE_LABEL[d.grade]}, while ${short(prev)} is ${GRADE_LABEL[prev.grade]}`;
+    else if (d.score < prev.score) why = `its Panchang score is lower than ${short(prev)}`;
+    else if (d.numerology.luckPct < prev.numerology.luckPct) why = `its numerology luck is ${d.numerology.luckPct}%, against ${prev.numerology.luckPct}% on ${short(prev)}`;
+    else why = `it has less clean shubh time (${Math.round(d.cleanMinutes)} minutes, against ${Math.round(prev.cleanMinutes)} on ${short(prev)})`;
+    return `${head}${best ? `best time ${noZero(fmtRange(best.start, best.end, tz)).replace(" to ", " - ")}, ` : ""}ranked below ${short(prev)} because ${why}.`;
+  });
+  flow.top += 4;
+  flow.render([{ t: "h", text: "Why Each Date Has Its Rank" }, { t: "ul", items }]);
+}
+
+/** Per top date: every auspicious and inauspicious muhurat of the day, then the final shubh times (free of all of them). */
+export function drawMuhuratDetails(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
+  const r = input.result, tz = r.input.location.tz;
+  const dayKey = (t: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(t);
+  r.top.forEach((d, i) => {
+    // times that fall on the next calendar day (e.g. a Varjyam at 1:15 AM) say so
+    const rng = (p: { start: Date; end: Date }) => noZero(fmtRange(p.start, p.end, tz)).replace(" to ", " - ") + (dayKey(p.start) > d.date ? " (next day)" : "");
+    const flow = new Flow(doc, f, a, `PRIORITY ${i + 1}`, "MUHURAT DETAILS", marks, i === 0 ? "Muhurat Details of Your Top Dates" : undefined);
+    const sun = d.sunrise && d.sunset ? ` | Sunrise ${noZero(fmtTime(d.sunrise, tz))}, Sunset ${noZero(fmtTime(d.sunset, tz))}` : "";
+    flow.render([{ t: "p", text: `${longDate(d.date)}, ${d.weekday}${sun}`, center: true, muted: true }]);
+    // auspicious and inauspicious side by side so each top date fits on one page
+    const colsHalf = [{ w: 118, bold: true }, { w: 107, center: true }];
+    const left = d.muhurats.auspicious.map((p) => [p.label, rng(p)]);
+    const right = d.muhurats.inauspicious.map((p) => [p.label, rng(p)]);
+    flow.ensure(Math.max(left.length, right.length) * 30 + 60);
+    const y0 = flow.top;
+    flow.table(colsHalf, ["Auspicious Muhurat", "Time"], left, 8.6, true, 20, MARGIN_L);
+    const yLeft = flow.top;
+    flow.top = y0;
+    flow.table(colsHalf, ["Time to Avoid", "Time"], right, 8.6, true, 20, MARGIN_L + CONTENT_W - 225);
+    flow.top = Math.max(yLeft, flow.top);
+    flow.render([{ t: "h", text: "Final Shubh Time" }]);
+    if (d.recommended.length) {
+      flow.table([{ w: 70, center: true }, { w: 150, center: true }, { w: 243 }], ["Shubh Time", "Time", "Lagna and notes"],
+        d.recommended.map((w, n) => [`Top ${n + 1}`, rng(w), `${w.lagna} lagna${w.tags.length ? ", " + w.tags.join(" + ") : ""}${w.cautions.length ? "\nCaution: " + w.cautions.join(", ") : ""}`]), 9.4, true, 20);
+      flow.render([{ t: "p", text: `Every inauspicious time above is removed from these, so none clashes with them. All fall inside ${otPhrase(r.input)}.`, muted: true }]);
+    } else {
+      flow.render([{ t: "p", text: `No clean shubh time on this date: ${d.noWindowReason ?? "every good period clashes with an inauspicious time"}.`, muted: true }]);
+    }
   });
 }
 
