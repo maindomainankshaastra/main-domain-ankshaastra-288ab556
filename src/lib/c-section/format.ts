@@ -16,7 +16,7 @@ export function summaryText(r: CSectionResult, names?: { mother?: string; father
   const out: string[] = [];
   out.push(`*Auspicious C-Section Dates*${who ? ` - ${who}` : ""}`);
   out.push(`Hospital location: ${r.input.location.name ?? ""}`.trim());
-  out.push(`Doctor's window: ${fmtDate(r.input.windowStart)} to ${fmtDate(r.input.windowEnd)} | OT hours ${r.input.otStart}-${r.input.otEnd}`);
+  out.push(`Doctor's window: ${fmtDate(r.input.windowStart)} to ${fmtDate(r.input.windowEnd)}${r.input.otCustom ? ` | OT hours ${r.input.otStart}-${r.input.otEnd}` : ""}`);
   r.top.forEach((d, i) => {
     out.push("");
     out.push(`*Priority ${i + 1}: ${fmtDate(d.date)} (${d.weekday})*`);
@@ -58,7 +58,7 @@ export function whatsappMessage(r: CSectionResult, o: { mother?: string; father?
     const best = d.recommended[0];
     out.push("");
     out.push(`${medal[i] ?? "•"} *${fmtDate(d.date)} (${d.weekday})*`);
-    out.push(best ? `Best shubh time: ${fmtRange(best.start, best.end, tz)}` : "No clean shubh time in OT hours");
+    out.push(best ? `Best shubh time: ${fmtRange(best.start, best.end, tz)}` : "No clean shubh time on this date");
   });
   out.push("");
   out.push("━━━━━━━━━━━━━━");
