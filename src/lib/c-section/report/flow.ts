@@ -56,11 +56,11 @@ export class Flow {
    * Table with wrapped cells and automatic page breaks (header repeated). `cols[i].w` are widths in points;
    * rows are arrays of strings ("\n" starts a new line inside a cell). Returns nothing; advances `top`.
    */
-  table(cols: { w: number; center?: boolean; bold?: boolean }[], header: string[] | null, rows: string[][], size = 9.6, grid = false) {
+  table(cols: { w: number; center?: boolean; bold?: boolean }[], header: string[] | null, rows: string[][], size = 9.6, grid = false, minRow = 36, xLeft?: number) {
     const { f } = this;
     const lh = size * 1.34, padX = 7, padY = 5.5;
     const total = cols.reduce((s, c) => s + c.w, 0);
-    const x0 = MARGIN_L + (CONTENT_W - total) / 2;
+    const x0 = xLeft ?? MARGIN_L + (CONTENT_W - total) / 2;
     const cellLines = (row: string[]) => row.map((t, i) => wrapLines(cols[i].bold || grid ? f.bold : f.body, size, t, cols[i].w - padX * 2));
     const drawHeader = () => {
       if (!header) return;
@@ -80,7 +80,7 @@ export class Flow {
     drawHeader();
     rows.forEach((row, ri) => {
       const lines = cellLines(row);
-      const h = Math.max(Math.max(...lines.map((l) => l.length)) * lh + padY * 2, grid ? 36 : 0);
+      const h = Math.max(Math.max(...lines.map((l) => l.length)) * lh + padY * 2, grid ? minRow : 0);
       this.ensure(h);
       if (this.pageNo !== pageSeen) { pageSeen = this.pageNo; drawHeader(); }
       rect(this.page, x0, this.top, total, h, grid || ri % 2 !== 0 ? C.white : C.panelLight);
