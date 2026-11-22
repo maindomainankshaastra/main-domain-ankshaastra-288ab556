@@ -96,7 +96,7 @@ describe("Panchang state", () => {
 });
 
 describe("analyze()", () => {
-  const input: CSectionInput = { windowStart: "2026-11-14", windowEnd: "2026-11-20", location: IST };
+  const input: CSectionInput = { windowStart: "2026-11-14", windowEnd: "2026-11-20", location: IST, otStart: "08:00", otEnd: "18:00" };
   const r = analyze(input, fake);
 
   it("returns every date of the window and a ranked top 3", () => {
@@ -162,5 +162,19 @@ describe("analyze()", () => {
     expect(() => analyze({ ...input, windowEnd: "2026-11-01" }, fake)).toThrow();
     expect(() => analyze({ ...input, windowEnd: "2026-12-30" }, fake)).toThrow();
     expect(() => analyze({ ...input, otStart: "18:00", otEnd: "08:00" }, fake)).toThrow();
+  });
+
+  it("OT hours are optional (default 08:00-18:00) and every shubh window is free of the inauspicious times", () => {
+    const d0 = analyze({ windowStart: "2026-11-22", windowEnd: "2026-11-26", location: IST }, fake);
+    expect(d0.input.otCustom).toBe(false);
+    expect(d0.input.otStart).toBe("08:00");
+    for (const day of [...r.days, ...d0.days]) {
+      expect(day.muhurats.inauspicious.some((p) => p.label === "Rahu Kalam")).toBe(true);
+      for (const w of day.windows) {
+        for (const p of day.muhurats.inauspicious.filter((x) => /Rahu|Yamaganda|Gulika/.test(x.label))) {
+          expect(w.start < p.end && p.start < w.end).toBe(false);
+        }
+      }
+    }
   });
 });
