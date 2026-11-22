@@ -6,7 +6,7 @@
 import { DAGDHA_TITHI_NO, MOON_SIGN_TIER, NAKSHATRA_TIER, TITHI_TIER } from "./tables.ts";
 import { dateNumerology, luckTier, type DateNumerology } from "./numerology.ts";
 import {
-  BAD_YOGAS, GAND_MOOL, dayParts, stateAt, timeline,
+  BAD_YOGAS, GAND_MOOL, dayParts, drikDayTimes, stateAt, timeline,
   type DayParts, type Ephemeris, type Location, type PanchangState, type Period, type Segment,
 } from "./panchang.ts";
 import { WEEKDAYS, addDays, diffDays, weekdayOf, zonedToUtc } from "./time.ts";
@@ -19,7 +19,7 @@ export interface CSectionInput {
   windowStart: string;
   windowEnd: string;
   location: Location;
-  /** Hospital operation theatre hours, local "HH:mm". Default 08:00-18:00. */
+  /** Hospital operation theatre hours, local "HH:mm". Optional: when empty, standard hours 08:00-18:00 are used. */
   otStart?: string;
   otEnd?: string;
   /**
@@ -66,11 +66,13 @@ export function gradeState(s: PanchangState, weekday: string, num: DateNumerolog
 }
 
 export interface AvoidPeriod {
-  kind: "rahu" | "yamaganda" | "gulika" | "gandmool" | "gandanta" | "bhadra" | "yoga" | "panchak" | "lagna-gandanta" | "grading";
+  kind: "rahu" | "yamaganda" | "gulika" | "varjyam" | "dur-muhurtam" | "gandmool" | "gandanta" | "bhadra" | "yoga" | "panchak" | "lagna-gandanta" | "grading";
   label: string;
   start: Date;
   end: Date;
 }
+
+export interface NamedPeriod { label: string; start: Date; end: Date }
 
 export interface ShubhWindow {
   start: Date;
@@ -101,6 +103,8 @@ export interface DayResult {
   atSunrise: PanchangState | null;
   /** Times at which tithi / nakshatra / moon sign change during this civil day */
   changes: { at: Date; what: string }[];
+  /** Full-day muhurat list: auspicious and inauspicious times (not clipped to OT hours), in time order */
+  muhurats: { auspicious: NamedPeriod[]; inauspicious: NamedPeriod[] };
   /** Everything to avoid while the OT is open (clipped to OT hours) */
   avoid: AvoidPeriod[];
   /** Clean shubh windows (grade >= Auspicious, no clash with anything in `avoid`) in time order */
@@ -128,7 +132,8 @@ export interface DayResult {
 }
 
 export interface CSectionResult {
-  input: Required<Pick<CSectionInput, "otStart" | "otEnd" | "gandMoolMode" | "minWindowMinutes" | "topN">> & CSectionInput;
+  /** otCustom = the OT hours were typed in (false = default hours 08:00-18:00 were used) */
+  input: Required<Pick<CSectionInput, "otStart" | "otEnd" | "gandMoolMode" | "minWindowMinutes" | "topN">> & CSectionInput & { otCustom: boolean };
   days: DayResult[];
   ranked: DayResult[];
   top: DayResult[];
@@ -213,6 +218,11 @@ export function analyzeDay(ymd: string, cfgIn: CSectionResult["input"], eph: Eph
     avoidRaw.push({ kind: "gulika", label: "Gulika Kalam", ...parts.gulika });
     blockers.push(parts.rahu, parts.yamaganda, parts.gulika);
   }
+  const drik = sunrise && sunset ? drikDayTimes(eph, loc, ymd, sunrise, sunset) : null;
+  if (drik) {
+    for (const v of drik.varjyam) { avoidRaw.push({ kind: "varjyam", label: "Varjyam", ...v }); blockers.push(v); }
+    for (const d of drik.durMuhurtam) { avoidRaw.push({ kind: "dur-muhurtam", label: "Dur Muhurtam", ...d }); blockers.push(d); }
+  }
   const windows: ShubhWindow[] = [];
   const panchakNotes = new Set<string>();
   let excelGrade: Grade = 1;
@@ -259,10 +269,38 @@ export function analyzeDay(ymd: string, cfgIn: CSectionResult["input"], eph: Eph
   let noWindowReason: string | undefined;
   if (!windows.length) {
     noWindowReason = dateReasons[0]
-      ?? (excelGrade < 3 ? "Panchang grade stays Neutral/Avoided during OT hours" : "Every good period clashes with an inauspicious time or falls outside OT hours");
+      ?? (excelGrade < 3 ? "Panchang grade stays Neutral/Avoided through the day" : "Every good period clashes with an inauspicious time or falls outside OT hours");
   }
+  // Full-day muhurat list (Drik-Panchang style). Everything here is computed from sunrise / sunset / the Panchang.
+  const auspicious: NamedPeriod[] = [];
+  const inauspicious: NamedPeriod[] = [];
+  if (sunrise && sunset && parts) {
+    const sr = sunrise.getTime(), ss = sunset.getTime();
+    const at = (ms: number) => new Date(ms);
+    auspicious.push({ label: "Brahma Muhurta", ...drik!.brahma });
+    auspicious.push({ label: "Pratah Sandhya", start: at(sr - 80 * MIN), end: at(sr) });
+    auspicious.push({ label: "Abhijit Muhurta", ...parts.abhijit });
+    auspicious.push({ label: "Vijaya Muhurta", ...parts.vijaya });
+    auspicious.push({ label: "Godhuli Muhurta", ...drik!.godhuli });
+    auspicious.push({ label: "Sayahna Sandhya", start: at(ss), end: at(ss + 80 * MIN) });
+    if (drik!.nishita) auspicious.push({ label: "Nishita Muhurta", ...drik!.nishita });
+    for (const v of drik!.varjyam) inauspicious.push({ label: "Varjyam", ...v });
+    for (const d of drik!.durMuhurtam) inauspicious.push({ label: "Dur Muhurtam", ...d });
+    inauspicious.push({ label: "Rahu Kalam", ...parts.rahu }, { label: "Yamaganda", ...parts.yamaganda }, { label: "Gulika Kalam", ...parts.gulika });
+  }
+  const dayWide: AvoidPeriod[] = [];
+  for (const seg of segs) {
+    for (const e of segmentAvoids(seg.state, extraCfg)) {
+      if (e.kind === "bhadra" || e.kind === "yoga" || e.kind === "gandmool" || e.kind === "gandanta") dayWide.push({ ...e, start: seg.start, end: seg.end });
+    }
+  }
+  for (const p of mergeAvoids(dayWide)) inauspicious.push({ label: p.label, start: p.start, end: p.end });
+  const byStart = (a: NamedPeriod, b: NamedPeriod) => a.start.getTime() - b.start.getTime();
+  auspicious.sort(byStart); inauspicious.sort(byStart);
+
   return {
     date: ymd, weekday, numerology: num, sunrise, sunset, parts, atSunrise, changes, avoid,
+    muhurats: { auspicious, inauspicious },
     windows, recommended: byQuality.slice(0, 3), excelGrade,
     grade: (byQuality[0]?.grade ?? 1) as Grade, score: byQuality[0]?.score ?? 0,
     cleanMinutes: windows.reduce((s, w) => s + w.minutes, 0), dateReasons, noWindowReason, relaxed,
@@ -273,7 +311,7 @@ export function analyzeDay(ymd: string, cfgIn: CSectionResult["input"], eph: Eph
 export function analyze(input: CSectionInput, eph: Ephemeris): CSectionResult {
   const cfg: CSectionResult["input"] = {
     ...input,
-    otStart: input.otStart || "08:00", otEnd: input.otEnd || "18:00",
+    otStart: input.otStart || "08:00", otEnd: input.otEnd || "18:00", otCustom: !!(input.otStart && input.otEnd),
     gandMoolMode: input.gandMoolMode ?? "nakshatra",
     minWindowMinutes: input.minWindowMinutes ?? 15, topN: input.topN ?? 3,
   };
