@@ -171,7 +171,7 @@
 //       {result && (
 //         <AdminPage
 //           title="Top dates"
-//           description={`${fmtDate(result.input.windowStart)} to ${fmtDate(result.input.windowEnd)} | OT ${result.input.otStart}-${result.input.otEnd} | ${result.input.location.name ?? ""}`}
+//           description={`${fmtDate(result.input.windowStart)} to ${fmtDate(result.input.windowEnd)} ${result.input.otCustom ? ` | OT ${result.input.otStart}-${result.input.otEnd}` : ""} | ${result.input.location.name ?? ""}`}
 //           actions={<Button variant="outline" onClick={copy}><Copy className="mr-2 h-4 w-4" />Copy summary</Button>}
 //         >
 //           <div className="space-y-4">
@@ -377,8 +377,8 @@ export default function CSectionCalculatorModule() {
   const [end, setEnd] = useState(draft.end ?? "");
   const [placeText, setPlaceText] = useState(draft.placeText ?? "");
   const [place, setPlace] = useState<Place | null>(draft.place ?? null);
-  const [otStart, setOtStart] = useState(draft.otStart ?? "08:00");
-  const [otEnd, setOtEnd] = useState(draft.otEnd ?? "18:00");
+  const [otStart, setOtStart] = useState(draft.otStart ?? "");
+  const [otEnd, setOtEnd] = useState(draft.otEnd ?? "");
   const [gandMool, setGandMool] = useState<"nakshatra" | "gandanta-only">(draft.gandMool ?? "nakshatra");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -402,7 +402,7 @@ export default function CSectionCalculatorModule() {
   const clearForm = () => {
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
     setMother(""); setFather(""); setMotherDob(""); setFatherDob(""); setHospital(""); setPhone("");
-    setStart(""); setEnd(""); setPlaceText(""); setPlace(null); setOtStart("08:00"); setOtEnd("18:00");
+    setStart(""); setEnd(""); setPlaceText(""); setPlace(null); setOtStart(""); setOtEnd("");
     setGandMool("nakshatra"); setResult(null); setError("");
   };
 
@@ -420,7 +420,7 @@ export default function CSectionCalculatorModule() {
         setResult(analyzeCSection({
           windowStart: start, windowEnd: end,
           location: { lat: place.lat, lon: place.lon, tz: place.tz, name: place.name },
-          otStart, otEnd, gandMoolMode: gandMool,
+          otStart: otStart && otEnd ? otStart : undefined, otEnd: otStart && otEnd ? otEnd : undefined, gandMoolMode: gandMool,
         }));
       } catch (e) {
         setResult(null);
@@ -526,10 +526,10 @@ export default function CSectionCalculatorModule() {
       <AdminPage title="C-Section Dates Calculator" description="Enter the delivery window and hospital location. Panchang is calculated automatically for every date.">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div><Label>Mother's name</Label><Input value={mother} onChange={(e) => setMother(e.target.value)} /></div>
-          <div><Label>Father's name</Label><Input value={father} onChange={(e) => setFather(e.target.value)} /></div>
           <div><Label>Mother's date of birth</Label><Input type="date" value={motherDob} onChange={(e) => setMotherDob(e.target.value)} /></div>
-          <div><Label>Father's date of birth</Label><Input type="date" value={fatherDob} onChange={(e) => setFatherDob(e.target.value)} /></div>
           <div><Label>Customer WhatsApp number</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 98765 43210" inputMode="tel" /></div>
+          <div><Label>Father's name</Label><Input value={father} onChange={(e) => setFather(e.target.value)} /></div>
+          <div><Label>Father's date of birth</Label><Input type="date" value={fatherDob} onChange={(e) => setFatherDob(e.target.value)} /></div>
           <div><Label>Hospital name</Label><Input value={hospital} onChange={(e) => setHospital(e.target.value)} placeholder="e.g. Samarpan Hospital" /></div>
           <div>
             <Label>Hospital city</Label>
@@ -546,8 +546,8 @@ export default function CSectionCalculatorModule() {
           <div><Label>Delivery window: from</Label><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></div>
           <div><Label>Delivery window: to</Label><Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-2">
-            <div><Label>OT opens</Label><Input type="time" value={otStart} onChange={(e) => setOtStart(e.target.value)} /></div>
-            <div><Label>OT closes</Label><Input type="time" value={otEnd} onChange={(e) => setOtEnd(e.target.value)} /></div>
+            <div><Label>OT opens (optional)</Label><Input type="time" value={otStart} onChange={(e) => setOtStart(e.target.value)} /></div>
+            <div><Label>OT closes (optional)</Label><Input type="time" value={otEnd} onChange={(e) => setOtEnd(e.target.value)} /></div>
           </div>
           <div>
             <Label>Gand Mool rule</Label>
@@ -573,7 +573,7 @@ export default function CSectionCalculatorModule() {
       {result && (
         <AdminPage
           title="Top dates"
-          description={`${fmtDate(result.input.windowStart)} to ${fmtDate(result.input.windowEnd)} | OT ${result.input.otStart}-${result.input.otEnd} | ${result.input.location.name ?? ""}`}
+          description={`${fmtDate(result.input.windowStart)} to ${fmtDate(result.input.windowEnd)} ${result.input.otCustom ? ` | OT ${result.input.otStart}-${result.input.otEnd}` : ""} | ${result.input.location.name ?? ""}`}
           actions={<div className="flex gap-2"><Button variant="outline" onClick={copy}><Copy className="mr-2 h-4 w-4" />Copy summary</Button><Button onClick={downloadPdf} disabled={pdfBusy}>{pdfBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}Download PDF report</Button><Button className="bg-green-600 text-white hover:bg-green-700" onClick={sendWhatsApp} disabled={waBusy}>{waBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}Send on WhatsApp</Button><Button variant="outline" onClick={copyWhatsAppText}><Copy className="mr-2 h-4 w-4" />Copy WhatsApp text</Button></div>}
         >
           <div className="space-y-4">
