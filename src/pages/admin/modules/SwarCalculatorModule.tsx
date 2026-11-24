@@ -1,5 +1,7 @@
+
+
 // import { useEffect, useMemo, useRef, useState } from "react";
-// import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, Sparkles, TriangleAlert } from "lucide-react";
+// import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, RefreshCw, Sparkles, TriangleAlert } from "lucide-react";
 // import { AdminPage } from "@/components/admin/AdminPage";
 // import { Button } from "@/components/ui/button";
 // import { Input } from "@/components/ui/input";
@@ -10,10 +12,11 @@
 // import { useToast } from "@/hooks/use-toast";
 // import { supabase } from "@/integrations/supabase/client";
 // import { calculateSwar, type SwarResult } from "@/lib/swar/swarCalculator";
-// import { buildDetailMessage, buildImageCaption, formatDob, formatTime12, getWhatsAppMode, openWhatsApp, setWhatsAppMode, type WhatsAppMode } from "@/lib/swar/swarMessage";
+// import { buildDetailMessage, buildImageCaption, buildNamesMessage, formatDob, formatTime12, getWhatsAppMode, openWhatsApp, setWhatsAppMode, type WhatsAppMode } from "@/lib/swar/swarMessage";
 // import { PlacePicker } from "@/components/admin/PlacePicker";
 // import { SwarCasesPanel } from "@/components/admin/SwarCasesPanel";
 // import { SwarFinalReport } from "@/components/admin/SwarFinalReport";
+// import { LoShuGrid } from "@/components/admin/LoShuGrid";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { phoneDigits, saveCase, STATUS_META, STATUS_ORDER, type CaseSnapshot, type CaseStatus, type SwarCaseRow } from "@/lib/swar/swarCases";
 // import { buildNameFinderProfile, type Gender } from "@/lib/swar/nameFinder";
@@ -22,7 +25,8 @@
 // import { chaldeanRawSum } from "@/lib/name-check/numerology";
 // import { reduceToSingleDigit } from "@/lib/name-check/lo-shu";
 // import { loadImage, renderSwarImage } from "@/lib/swar/swarImage";
-// import { analyseName, buildAnalysisMessage, coreNumbersFromDob, GRADE_LABEL, parseNames, type NameAnalysis } from "@/lib/swar/nameSteps";
+// import { coreNumbersFromDob, parseNames } from "@/lib/swar/nameSteps";
+// import { summariseName, SUITABILITY, type NameSummary } from "@/lib/swar/nameCorrection";
 
 // const API_BASE =
 //   typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:8081" : "";
@@ -31,6 +35,8 @@
 // interface NamesResponse {
 //   names: GeneratedName[];
 //   stats: { rounds: number; rejected: number; inputTokens: number; outputTokens: number; costUsd: number; model: string };
+//   /** Server remark, e.g. "Only 9 names fit this number and these alphabets". */
+//   note?: string;
 // }
 
 // export default function SwarCalculatorModule() {
@@ -91,7 +97,13 @@
 //   const caption = buildImageCaption();
 //   const [waMode, setWaMode] = useState<WhatsAppMode>(() => getWhatsAppMode());
 //   const changeWaMode = (m: WhatsAppMode) => { setWaMode(m); setWhatsAppMode(m); };
-//   const sendWhatsApp = (text: string) => openWhatsApp(phone, text, waMode);
+//   const sendWhatsApp = (text: string) => {
+//     const r = openWhatsApp(phone, text, waMode);
+//     if (r === "copied") toast({ title: "Message copied", description: waMode === "app"
+//       ? "It is too long for a WhatsApp link. The WhatsApp app is opening: click the message box, press Ctrl+V, then Send. If nothing opens, switch to “Browser (WhatsApp Web)” in Step 1."
+//       : "It is too long for a WhatsApp link. WhatsApp Web is opening in a new tab: click the message box, press Ctrl+V, then Send." });
+//     else if (r === "blocked") toast({ title: "WhatsApp did not open", description: "Your browser blocked the new tab. Allow pop-ups for this site. The message is copied, so you can also paste it into WhatsApp yourself.", variant: "destructive" });
+//   };
 
 //   const copy = async (text: string, label: string) => {
 //     await navigator.clipboard.writeText(text);
@@ -196,6 +208,8 @@
 //   const [loading, setLoading] = useState(false);
 //   const [names, setNames] = useState<NamesResponse | null>(null);
 //   const [picked, setPicked] = useState<Set<string>>(new Set());
+//   const [feedbackText, setFeedbackText] = useState("");      // "more modern, shorter..." for the AI
+//   const [replacing, setReplacing] = useState<string | null>(null);  // name currently being swapped for a new one
 //   const core = useMemo(() => coreNumbersFromDob(dob), [dob]);
 //   // Logic-engine profile: Mulank, Bhagyank, Kua, surname block and the combination table.
 //   const profile = useMemo(
@@ -213,7 +227,9 @@
 
 //   // ---- step 4: names the customer chose -> analysis ----
 //   const [chosenRaw, setChosenRaw] = useState("");
-//   const [analysis, setAnalysis] = useState<NameAnalysis[] | null>(null);
+//   const [nickName, setNickName] = useState("");   // optional nick name the customer wants (goes to the final report)
+//   const [analysis, setAnalysis] = useState<NameSummary[] | null>(null);
+//   const [correctionEdits, setCorrectionEdits] = useState<Record<string, string>>({}); // spelling typed by hand in Step 5
 
 //   const addPickedToChosen = () => {
 //     setChosenRaw(parseNames([chosenRaw, ...picked].join(",")).join(", "));
@@ -222,17 +238,20 @@
 //     const list = parseNames(chosenRaw);
 //     if (!dob) { toast({ title: "Enter date of birth in step 1", variant: "destructive" }); return; }
 //     if (!list.length) { toast({ title: "Enter the names the customer chose", variant: "destructive" }); return; }
-//     setAnalysis(list.map((n) => analyseName(dob, n, surnameText)));
+//     setAnalysis(list.map((n) => summariseName(dob, n, surnameText)));
+//     setCorrectionEdits({});
 //     void autoStatus("confirmation_received");
 //   };
-//   const analysisMessage = analysis ? buildAnalysisMessage(dob, analysis, core?.mulank, core?.bhagyank) : "";
+//   /** Corrected spelling shown for a name: what the operator typed, else the automatic suggestion. Empty for names that are already "Yes". */
+//   const correctedOf = (r: NameSummary): string => (r.ok ? "" : (correctionEdits[r.name] ?? r.corrected?.name ?? "").trim());
+//   const numberOfName = (name: string) => { const t = chaldeanRawSum(name); return t ? { total: t, number: reduceToSingleDigit(t) } : null; };
 
 //   // ---- cases & status ----
 //   const packageLabel = `${pkg.tier === "blueprint" ? `Complete Blueprint ₹${PACKAGE_PRICE.blueprint}` : `Perfect Baby Name ₹${PACKAGE_PRICE.perfect}`}${pkg.extraNames ? " + extra names" : ""}`;
 //   const buildSnapshot = (over: Partial<CaseSnapshot> = {}): CaseSnapshot => ({
 //     dob, time, place, tz, phone, customerName, swarText, altText,
 //     gender, surname, middle, middleNotFather, preference, pkg, starts, number,
-//     names: names?.names ?? [], picked: [...picked], chosenRaw,
+//     names: names?.names ?? [], namesStats: names?.stats, picked: [...picked], chosenRaw, nickName,
 //     ...over,
 //   });
 //   const currentKey = () => `${phoneDigits(phone)}|${dob}`;
@@ -276,8 +295,8 @@
 //     } catch { setResult(null); }
 //     setGender(d.gender ?? "boy"); setSurname(d.surname ?? ""); setMiddle(d.middle ?? ""); setMiddleNotFather(!!d.middleNotFather);
 //     setPreference(d.preference ?? ""); if (d.pkg) setPkg(d.pkg); setStarts(d.starts ?? ""); setNumber(d.number ?? "");
-//     setNames(d.names?.length ? { names: d.names, stats: { rounds: 0, rejected: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, model: "" } } : null);
-//     setPicked(new Set(d.picked ?? [])); setChosenRaw(d.chosenRaw ?? ""); setAnalysis(null);
+//     setNames(d.names?.length ? { names: d.names, stats: d.namesStats ?? { rounds: 0, rejected: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, model: "" } } : null);
+//     setPicked(new Set(d.picked ?? [])); setChosenRaw(d.chosenRaw ?? ""); setNickName(d.nickName ?? ""); setAnalysis(null); setCorrectionEdits({});
 //     setOrderId(row.order_id); setCaseId(row.id); setCaseKey(`${phoneDigits(d.phone ?? row.phone ?? "")}|${d.dob ?? row.dob ?? ""}`);
 //     setCaseStatusState(row.status); setTab("calculator");
 //     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -286,6 +305,24 @@
 //     setCaseId(null); setCaseKey(""); setCaseStatusState("new"); setOrderId(null); setOrderNote("");
 //     toast({ title: "New case", description: "The next send creates a separate case. Clear the form fields for the next customer." });
 //   };
+
+//   // After "Create and open report" (or "Open this report") the page moves to the report page. When the operator
+//   // comes back, the same case is opened again, so every step is filled as it was and the page lands on Step 6.
+//   useEffect(() => {
+//     let id: string | null = null;
+//     try { id = sessionStorage.getItem("swar_restore_case"); sessionStorage.removeItem("swar_restore_case"); } catch { /* ignore */ }
+//     if (!id) return;
+//     (async () => {
+//       const { data } = await (supabase as any).from("swar_cases").select("*").eq("id", id).maybeSingle();
+//       if (!data) return;
+//       openCase(data as SwarCaseRow);
+//       const d = (data.data ?? {}) as Partial<CaseSnapshot>;
+//       const list = parseNames(d.chosenRaw ?? "");
+//       if (d.dob && list.length) setAnalysis(list.map((n) => summariseName(d.dob as string, n, d.surname ?? "")));
+//       setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 500);
+//     })();
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, []);
 
 //   /** Fill the form + package from the customer's order (matched by the WhatsApp number). */
 //   const applyOrder = (o: any) => {
@@ -319,26 +356,78 @@
 //     } finally { setOrderBusy(false); }
 //   };
 
-//   const generate = async () => {
-//     const list = starts.split(/[ ,]+/).map((s) => s.trim()).filter(Boolean);
+//   const startList = () => starts.split(/[ ,]+/).map((x) => x.trim()).filter(Boolean);
+
+//   const callGenerate = async (list: string[], count: number, avoid: string[], feedback: string, exact = false): Promise<NamesResponse> => {
+//     const { data: sess } = await supabase.auth.getSession();
+//     const resp = await fetch(`${API_BASE}/api/admin/generate-names`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
+//       body: JSON.stringify({ gender, number: Number(number), starts: list, preference: preference.trim(), count, avoid, feedback, exact }),
+//     });
+//     const raw = await resp.text();
+//     let json: any = null;
+//     try { json = JSON.parse(raw); } catch { /* server returned non-JSON (e.g. timeout page) */ }
+//     if (!json) throw new Error(resp.status === 504 || /timeout/i.test(raw) ? "Server timed out. Please try again (add more starting alphabets)." : `Server error ${resp.status}: ${raw.slice(0, 120)}`);
+//     if (!resp.ok) throw new Error(json.error || "Request failed");
+//     return json as NamesResponse;
+//   };
+
+//   const mergeStats = (a: NamesResponse["stats"], b: NamesResponse["stats"]): NamesResponse["stats"] => ({
+//     rounds: a.rounds + b.rounds, rejected: a.rejected + b.rejected,
+//     inputTokens: a.inputTokens + b.inputTokens, outputTokens: a.outputTokens + b.outputTokens,
+//     costUsd: Number((a.costUsd + b.costUsd).toFixed(5)), model: b.model,
+//   });
+
+//   /**
+//    * fresh:   a brand new list (exactly as many names as the package has slots: 12 / 24 / 32).
+//    * replace: swap the TICKED names for new ones, one for one, and keep all the others.
+//    * The AI usage shown is the running total for this case, so every call adds to it.
+//    */
+//   const generate = async (mode: "fresh" | "replace" = "fresh") => {
+//     const list = startList();
 //     if (!number || !list.length) { toast({ title: "Choose a number and starting alphabets", variant: "destructive" }); return; }
-//     setLoading(true); setNames(null); setPicked(new Set());
+//     const feedback = feedbackText.trim();
+//     if (mode === "replace" && (!names || picked.size === 0)) { toast({ title: "Tick the names you want to replace first", variant: "destructive" }); return; }
+//     setLoading(true);
 //     try {
-//       const { data: sess } = await supabase.auth.getSession();
-//       const resp = await fetch(`${API_BASE}/api/admin/generate-names`, {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
-//         body: JSON.stringify({ gender, number: Number(number), starts: list, preference: preference.trim(), count: slots }),
-//       });
-//       const raw = await resp.text();
-//       let json: any = null;
-//       try { json = JSON.parse(raw); } catch { /* server returned non-JSON (e.g. timeout page) */ }
-//       if (!json) throw new Error(resp.status === 504 || /timeout/i.test(raw) ? "Server timed out. Please try again (add more starting alphabets)." : `Server error ${resp.status}: ${raw.slice(0, 120)}`);
-//       if (!resp.ok) throw new Error(json.error || "Request failed");
-//       setNames(json);
+//       if (mode === "fresh" || !names) {
+//         const before = names?.stats;
+//         setNames(null); setPicked(new Set());
+//         const json = await callGenerate(list, Math.max(12, slots), [], feedback);
+//         setNames({ ...json, stats: before ? mergeStats(before, json.stats) : json.stats });
+//       } else {
+//         const ticked = names.names.filter((n) => picked.has(n.name));
+//         const avoid = names.names.flatMap((n) => [n.name, n.base]); // never bring back anything already shown
+//         const json = await callGenerate(list, ticked.length, avoid, feedback, true);
+//         const shown = new Set(names.names.map((n) => n.name));
+//         const fresh = json.names.filter((n) => !shown.has(n.name));
+//         let next = 0;
+//         const swapped = names.names.map((n) => (picked.has(n.name) && next < fresh.length ? fresh[next++] : n));
+//         const left = ticked.slice(next).map((n) => n.name);   // ticked names that found no replacement
+//         setNames({ names: swapped, stats: mergeStats(names.stats, json.stats), note: next < ticked.length ? `Only ${next} of ${ticked.length} replacements were found for this number and these alphabets.` : undefined });
+//         setPicked(new Set(left));
+//       }
 //     } catch (e: any) {
 //       toast({ title: "Name generation failed", description: e?.message, variant: "destructive" });
 //     } finally { setLoading(false); }
+//   };
+
+//   /** Swap ONE name for a new one that fits the same number and alphabets. */
+//   const replaceOne = async (old: GeneratedName) => {
+//     if (!names) return;
+//     const list = startList();
+//     setReplacing(old.name);
+//     try {
+//       const avoid = names.names.flatMap((n) => [n.name, n.base]);
+//       const json = await callGenerate(list, 1, avoid, feedbackText.trim(), true);
+//       const nn = json.names[0];
+//       if (!nn) { toast({ title: "No other name fits", description: "Try adding more starting alphabets.", variant: "destructive" }); return; }
+//       setNames({ ...names, names: names.names.map((n) => (n.name === old.name ? nn : n)), stats: mergeStats(names.stats, json.stats) });
+//       setPicked((p) => { const x = new Set(p); x.delete(old.name); return x; });
+//     } catch (e: any) {
+//       toast({ title: "Could not replace the name", description: e?.message, variant: "destructive" });
+//     } finally { setReplacing(null); }
 //   };
 
 //   /** Full-name number (first name + surname block), or null when no surname was entered. */
@@ -352,12 +441,16 @@
 //     if (!names || !profile || !dob) { toast({ title: "Generate names first", variant: "destructive" }); return; }
 //     setReportBusy(true);
 //     try {
-//       const chosen = names.names.filter((n) => picked.size === 0 || picked.has(n.name)).slice(0, slots);
-//       const analysisRows: AnalysisRow[] = (analysis ?? []).map((a) => ({
+//       const chosen = names.names.slice(0, slots); // the report always carries all of its name slots
+//       // The names, and every detail used to judge them, come from Step 4 and this case. If "Check names" was not
+//       // pressed yet, the names typed in Step 4 are analysed now, so the page is never left empty by mistake.
+//       const source = analysis ?? (dob ? parseNames(chosenRaw).map((n) => summariseName(dob, n, surnameText)) : []);
+//       const analysisRows: AnalysisRow[] = source.map((a) => ({
 //         name: a.name,
 //         firstNo: a.error ? "-" : a.number,
 //         fullNo: fullNumber(a.name) ?? "-",
-//         suitability: a.error ? "-" : a.grade === "good" ? "Yes" : a.grade === "ok" ? "Moderate" : "No",
+//         suitability: a.error ? "-" : SUITABILITY[a.grade],
+//         corrected: correctedOf(a) || undefined,
 //       }));
 //       const bytes = await generateNameFinderReport({
 //         dob, time, place, gender: gender as Gender,
@@ -378,6 +471,8 @@
 //       toast({ title: "Could not build the report", description: e?.message, variant: "destructive" });
 //     } finally { setReportBusy(false); }
 //   };
+
+//   const namesMessage = () => (names ? buildNamesMessage(names.names.slice(0, slots)) : "");
 
 //   const meta = STATUS_META[caseStatus];
 //   return (
@@ -516,8 +611,8 @@
 //           <div><Label>Surname (last name)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Gokal" /></div>
 //           <div><Label>Middle name (optional)</Label><Input value={middle} onChange={(e) => setMiddle(e.target.value)} placeholder="Deshraj" /></div>
 //           <label className="flex items-end gap-2 pb-2 text-sm">
-//             <input type="checkbox" className="mb-1" checked={middleNotFather} onChange={(e) => setMiddleNotFather(e.target.checked)} disabled={!middle.trim()} />
-//             <span>Middle name is <b>not</b> father/husband’s name (add it to the surname)</span>
+//             <input type="checkbox" className="mb-1" checked={!middleNotFather} onChange={(e) => setMiddleNotFather(!e.target.checked)} disabled={!middle.trim()} />
+//             <span>Is middle name father’s name? <b>{middle.trim() ? (middleNotFather ? "No" : "Yes") : ""}</b></span>
 //           </label>
 //         </div>
 
@@ -552,7 +647,7 @@
 //           </div>
 //           <div><Label>Name preference (optional)</Label><Input value={preference} onChange={(e) => setPreference(e.target.value)} placeholder="e.g. Lord Shiva names, modern, short" /></div>
 //           <div className="flex items-end">
-//             <Button onClick={generate} disabled={loading} className="w-full">
+//             <Button onClick={() => generate("fresh")} disabled={loading} className="w-full">
 //               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}Generate names
 //             </Button>
 //           </div>
@@ -567,6 +662,8 @@
 //               <Badge variant="outline">Lucky numbers: {profile.luckyPool.join(", ") || "-"}</Badge>
 //               {profile.surname && <Badge variant="secondary">Surname {profile.surname.text} = {profile.surname.display}</Badge>}
 //             </div>
+//             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+//               <div className="space-y-3">
 //             {profile.table ? (
 //               <>
 //                 <div className="flex flex-wrap items-center gap-2">
@@ -610,6 +707,9 @@
 //                 ))}
 //               </p>
 //             )}
+//               </div>
+//               <LoShuGrid dob={dob} />
+//             </div>
 //           </div>
 //         ) : (
 //           <p className="mt-3 text-xs text-muted-foreground">Enter the date of birth in step 1 to see Mulank, Bhagyank, Kua and the suggested numbers.</p>
@@ -623,23 +723,41 @@
 //                 <label key={n.name} className="flex items-start gap-3 rounded-md border p-3 cursor-pointer">
 //                   <input type="checkbox" className="mt-1" checked={picked.has(n.name)}
 //                     onChange={() => setPicked((p) => { const x = new Set(p); x.has(n.name) ? x.delete(n.name) : x.add(n.name); return x; })} />
-//                   <div>
+//                   <div className="flex-1">
 //                     <div className="font-medium">{i + 1}. {n.name} <span className="text-xs text-muted-foreground">({n.total} → {n.number}){fullNumber(n.name) !== null ? ` · with surname → ${fullNumber(n.name)}` : ""}</span></div>
 //                     <div className="text-sm text-muted-foreground">{n.meaning}</div>
 //                   </div>
+//                   <button type="button" title="Replace this name with another" disabled={loading || replacing !== null}
+//                     className="rounded p-1 text-muted-foreground hover:bg-muted disabled:opacity-40"
+//                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); void replaceOne(n); }}>
+//                     {replacing === n.name ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+//                   </button>
 //                 </label>
 //               ))}
 //             </div>
+//             {names.note && <p className="text-sm text-amber-700">{names.note}</p>}
+//             <div className="space-y-2 rounded-md border bg-muted/40 p-3">
+//               <Label>Not happy with these names? Tell Claude what to change</Label>
+//               <Input value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}
+//                 placeholder="e.g. more modern, shorter names, easier to pronounce, no Shiva names" />
+//               <div className="flex flex-wrap gap-2">
+//                 <Button variant="outline" disabled={loading || picked.size === 0} onClick={() => generate("replace")}>
+//                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+//                   Replace ticked names{picked.size ? ` (${picked.size})` : ""}
+//                 </Button>
+//               </div>
+//               <p className="text-xs text-muted-foreground">Tick the names you do not like and press "Replace ticked names": only those are swapped, the rest stay. The ↻ icon on a name replaces just that one.</p>
+//             </div>
 //             <p className="text-xs text-muted-foreground">
-//               {names.stats.rounds} AI round(s), {names.stats.rejected} names dropped by the checks · {names.stats.inputTokens + names.stats.outputTokens} tokens · about ${names.stats.costUsd} (₹{(names.stats.costUsd * 90).toFixed(2)}) · {names.stats.model}
+//               Total AI usage for this case: {names.stats.rounds} AI round(s), {names.stats.rejected} names dropped by the checks · {names.stats.inputTokens + names.stats.outputTokens} tokens · about ${names.stats.costUsd.toFixed(4)} (₹{(names.stats.costUsd * 90).toFixed(2)}){names.stats.model ? ` · ${names.stats.model}` : ""}
 //             </p>
 //             {names.names.length > 0 && (
-//               <div className="flex gap-2">
-//                 <Button variant="outline" onClick={() => copy(namesMessage(), "Names message")}><Copy className="w-4 h-4 mr-2" />Copy names message{picked.size ? ` (${picked.size} selected)` : ""}</Button>
+//               <div className="flex flex-wrap gap-2">
+//                 <Button variant="outline" onClick={() => copy(namesMessage(), "Names message")}><Copy className="w-4 h-4 mr-2" />Copy names message</Button>
 //                 <Button onClick={() => { sendWhatsApp(namesMessage()); void autoStatus("names_shared"); }}><MessageCircle className="w-4 h-4 mr-2" />Open in WhatsApp</Button>
-//                 {picked.size > 0 && <Button variant="outline" onClick={addPickedToChosen}>Add {picked.size} selected to step 4</Button>}
+//                 {picked.size > 0 && <Button variant="outline" onClick={addPickedToChosen}>Add {picked.size} ticked to step 4</Button>}
 //                 <Button variant="outline" onClick={downloadReport} disabled={reportBusy}>
-//                   {reportBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}Download report PDF{picked.size ? ` (${picked.size} selected)` : ""}
+//                   {reportBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}Download report PDF
 //                 </Button>
 //               </div>
 //             )}
@@ -648,56 +766,71 @@
 //       </AdminPage>
 
 //       <AdminPage title="Step 4 · Customer’s chosen names" description="Customer replied with their top names (even ones that were not in your list). Enter them and check every name against the DOB.">
-//         <div className="grid gap-4 md:grid-cols-[1fr_220px_auto]">
+//         <div className="grid gap-4 md:grid-cols-[1fr_200px_200px_auto]">
 //           <div><Label>Names (comma or new line)</Label><Textarea rows={3} value={chosenRaw} onChange={(e) => setChosenRaw(e.target.value)} placeholder="Dheer, Darsh, Advik, Vyom" /></div>
 //           <div><Label>Surname (optional)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Sharma" /></div>
+//           <div><Label>Nick name (optional)</Label><Input value={nickName} onChange={(e) => setNickName(e.target.value)} placeholder="Shanu" /></div>
 //           <div className="flex items-end"><Button onClick={runAnalysis}><Sparkles className="w-4 h-4 mr-2" />Check names</Button></div>
 //         </div>
 //       </AdminPage>
 
-//       <AdminPage title="Step 5 · Detailed analysis" description="Verified by the same rule engine as the Name Check report. Copy or send it to the customer.">
+//       <AdminPage title="Step 5 · Analysis of the customer’s names" description="Taken from the names in Step 4 and the details of this case. It fills the “Analysis of name options” page of the report and is not sent to the customer.">
 //         {!analysis ? (
 //           <p className="text-sm text-muted-foreground">Enter the customer’s names in step 4 and press “Check names”.</p>
 //         ) : (
-//           <div className="space-y-4">
+//           <div className="space-y-2">
 //             <div className="overflow-x-auto rounded-md border">
 //               <table className="w-full text-sm">
 //                 <thead className="bg-muted/50 text-left">
-//                   <tr><th className="p-2">Name</th><th className="p-2">Total → No.</th><th className="p-2">vs Mulank</th><th className="p-2">vs Bhagyank</th><th className="p-2">Compound</th><th className="p-2">Verdict</th></tr>
+//                   <tr>
+//                     <th className="p-2">Name</th><th className="p-2">Total → No.</th><th className="p-2">Suitability</th>
+//                     <th className="p-2">Corrected spelling</th><th className="p-2">Corrected total → No.</th>
+//                   </tr>
 //                 </thead>
 //                 <tbody>
-//                   {analysis.map((r) => (
-//                     <tr key={r.name} className="border-t">
-//                       <td className="p-2 font-medium">{r.name}</td>
-//                       <td className="p-2">{r.total} → {r.number}</td>
-//                       {r.error ? <td className="p-2 text-destructive" colSpan={4}>{r.error}</td> : (
-//                         <>
-//                           <td className="p-2 capitalize">{r.firstToMulank}</td>
-//                           <td className="p-2 capitalize">{r.firstToBhagyank}</td>
-//                           <td className="p-2 capitalize">{r.compoundTier}</td>
-//                           <td className="p-2">{GRADE_LABEL[r.grade]}</td>
-//                         </>
-//                       )}
-//                     </tr>
-//                   ))}
+//                   {analysis.map((r) => {
+//                     const corrected = correctedOf(r);
+//                     const cn = corrected ? numberOfName(corrected) : null;
+//                     return (
+//                       <tr key={r.name} className="border-t">
+//                         <td className="p-2 font-medium">{r.name}</td>
+//                         {r.error ? <td className="p-2 text-destructive" colSpan={4}>{r.error}</td> : (
+//                           <>
+//                             <td className="p-2">{r.total} → {r.number}</td>
+//                             <td className={`p-2 font-medium ${r.grade === "good" ? "text-green-700" : r.grade === "ok" ? "text-amber-700" : "text-red-700"}`}>{SUITABILITY[r.grade]}</td>
+//                             <td className="p-2">
+//                               {r.ok ? "–" : (
+//                                 <Input
+//                                   className="h-8 w-44" value={correctionEdits[r.name] ?? r.corrected?.name ?? ""} placeholder="no correction found"
+//                                   onChange={(e) => setCorrectionEdits((m) => ({ ...m, [r.name]: e.target.value }))}
+//                                 />
+//                               )}
+//                             </td>
+//                             <td className="p-2">{cn ? `${cn.total} → ${cn.number}` : "–"}</td>
+//                           </>
+//                         )}
+//                       </tr>
+//                     );
+//                   })}
 //                 </tbody>
 //               </table>
 //             </div>
-//             <div className="rounded-md border p-3 text-sm whitespace-pre-wrap bg-muted/40">{analysisMessage}</div>
-//             <div className="flex flex-wrap gap-2">
-//               <Button variant="outline" onClick={() => copy(analysisMessage, "Analysis message")}><Copy className="w-4 h-4 mr-2" />Copy analysis message</Button>
-//               <Button onClick={() => sendWhatsApp(analysisMessage)}><MessageCircle className="w-4 h-4 mr-2" />Send on WhatsApp</Button>
-//             </div>
+//             <p className="text-xs text-muted-foreground">
+//               A corrected spelling is offered for every name that is not “Yes”. It only repeats letters the name already has (one or two letters
+//               doubled). You can type your own spelling in the box; the report uses what is shown here.
+//             </p>
 //           </div>
 //         )}
 //       </AdminPage>
 
 //       <AdminPage title="Step 6 · Final report" description="When the customer confirms the final name(s), create the Perfect / Complete report from here. Sending its link marks the case Final Report Shared.">
 //         <SwarFinalReport
+//           key={`${caseId ?? "none"}|${orderId ?? ""}`}
 //           caseId={caseId} orderId={orderId} tier={pkg.tier}
 //           dob={dob} phone={phone} gender={gender}
 //           surname={surname} middle={middle} middleNotFather={middleNotFather}
 //           chosenNames={parseNames(chosenRaw)}
+//           nickName={nickName}
 //           sendWhatsApp={sendWhatsApp}
 //           onSent={() => { void autoStatus("report_shared"); }}
 //         />
@@ -932,6 +1065,8 @@ export default function SwarCalculatorModule() {
   }, [targetsKey]);
   const surnameText = profile?.surname?.text ?? surname.trim();
   const selectedRow = profile?.table?.find((r) => r.n === Number(number));
+  /** First-name number picked with the 3 -> 1 / 5 -> 3 / 7 -> 5 buttons: Step 5 spellings are corrected to this number. */
+  const targetNo = Number(number) || undefined;
 
   // ---- step 4: names the customer chose -> analysis ----
   const [chosenRaw, setChosenRaw] = useState("");
@@ -946,10 +1081,17 @@ export default function SwarCalculatorModule() {
     const list = parseNames(chosenRaw);
     if (!dob) { toast({ title: "Enter date of birth in step 1", variant: "destructive" }); return; }
     if (!list.length) { toast({ title: "Enter the names the customer chose", variant: "destructive" }); return; }
-    setAnalysis(list.map((n) => summariseName(dob, n, surnameText)));
+    setAnalysis(list.map((n) => summariseName(dob, n, surnameText, targetNo)));
     setCorrectionEdits({});
     void autoStatus("confirmation_received");
   };
+  // When another 3 -> 1 / 5 -> 3 / 7 -> 5 button is pressed in Step 3, Step 5 is worked out again for that number.
+  // Spellings typed by hand belonged to the old number, so they are cleared.
+  useEffect(() => {
+    setAnalysis((prev) => (prev && dob ? prev.map((a) => summariseName(dob, a.name, surnameText, targetNo)) : prev));
+    setCorrectionEdits({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [number]);
   /** Corrected spelling shown for a name: what the operator typed, else the automatic suggestion. Empty for names that are already "Yes". */
   const correctedOf = (r: NameSummary): string => (r.ok ? "" : (correctionEdits[r.name] ?? r.corrected?.name ?? "").trim());
   const numberOfName = (name: string) => { const t = chaldeanRawSum(name); return t ? { total: t, number: reduceToSingleDigit(t) } : null; };
@@ -1026,7 +1168,7 @@ export default function SwarCalculatorModule() {
       openCase(data as SwarCaseRow);
       const d = (data.data ?? {}) as Partial<CaseSnapshot>;
       const list = parseNames(d.chosenRaw ?? "");
-      if (d.dob && list.length) setAnalysis(list.map((n) => summariseName(d.dob as string, n, d.surname ?? "")));
+      if (d.dob && list.length) setAnalysis(list.map((n) => summariseName(d.dob as string, n, d.surname ?? "", Number(d.number) || undefined)));
       setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 500);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1152,7 +1294,7 @@ export default function SwarCalculatorModule() {
       const chosen = names.names.slice(0, slots); // the report always carries all of its name slots
       // The names, and every detail used to judge them, come from Step 4 and this case. If "Check names" was not
       // pressed yet, the names typed in Step 4 are analysed now, so the page is never left empty by mistake.
-      const source = analysis ?? (dob ? parseNames(chosenRaw).map((n) => summariseName(dob, n, surnameText)) : []);
+      const source = analysis ?? (dob ? parseNames(chosenRaw).map((n) => summariseName(dob, n, surnameText, targetNo)) : []);
       const analysisRows: AnalysisRow[] = source.map((a) => ({
         name: a.name,
         firstNo: a.error ? "-" : a.number,
@@ -1509,7 +1651,7 @@ export default function SwarCalculatorModule() {
                             <td className="p-2">
                               {r.ok ? "–" : (
                                 <Input
-                                  className="h-8 w-44" value={correctionEdits[r.name] ?? r.corrected?.name ?? ""} placeholder="no correction found"
+                                  className="h-8 w-44" value={correctionEdits[r.name] ?? r.corrected?.name ?? ""} placeholder={targetNo ? `no spelling gives ${targetNo}` : "no correction found"}
                                   onChange={(e) => setCorrectionEdits((m) => ({ ...m, [r.name]: e.target.value }))}
                                 />
                               )}
@@ -1525,7 +1667,8 @@ export default function SwarCalculatorModule() {
             </div>
             <p className="text-xs text-muted-foreground">
               A corrected spelling is offered for every name that is not “Yes”. It only repeats letters the name already has (one or two letters
-              doubled). You can type your own spelling in the box; the report uses what is shown here.
+              doubled). {targetNo ? <>It is aimed at first-name number <b>{targetNo}</b>{selectedRow ? <> (→ full {selectedRow.total})</> : null}, the combination selected in Step 3; press another combination there and this table changes. </> : null}
+              You can type your own spelling in the box; the report uses what is shown here.
             </p>
           </div>
         )}
