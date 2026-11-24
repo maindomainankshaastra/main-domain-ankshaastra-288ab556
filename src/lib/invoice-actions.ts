@@ -107,6 +107,8 @@ export type CreateManualInvoiceInput = {
   customerPincode?: string;
   customerGstin?: string;
     shippingAddress?: string;
+    /** Shop store only: HSN of the selected product (from product_catalog). */
+  hsnCode?: string;
 };
 
 export type CreateManualInvoiceResult = {
