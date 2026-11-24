@@ -1903,6 +1903,7 @@ type CreateInvoiceForm = {
   customerState: string;
   customerPincode: string;
   customerGstin: string;
+    shippingAddress: string;
 };
 
 function emptyCreateForm(site?: string): CreateInvoiceForm {
@@ -1921,6 +1922,7 @@ function emptyCreateForm(site?: string): CreateInvoiceForm {
     customerState: "",
     customerPincode: "",
     customerGstin: "",
+        shippingAddress: "",
   };
 }
 
@@ -2596,6 +2598,9 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
         customerState: createForm.customerState.trim() || undefined,
         customerPincode: createForm.customerPincode.trim() || undefined,
         customerGstin: createForm.customerGstin.trim() || undefined,
+                shippingAddress: createForm.sourceWebsite.startsWith("shop.")
+          ? createForm.shippingAddress.trim() || undefined
+          : undefined,
       });
 
       if (result.ok === false) {
@@ -2787,7 +2792,7 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
       {showFilters && (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-[160px] capitalize"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               {statusOptions.map((s) => (
@@ -3212,6 +3217,17 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
                   />
                 </div>
               </div>
+                            {createForm.sourceWebsite.startsWith("shop.") && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-shipping-address">Shipping Address</Label>
+                  <Textarea
+                    id="inv-shipping-address"
+                    value={createForm.shippingAddress}
+                    onChange={(e) => updateCreateForm("shippingAddress", e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label htmlFor="inv-service">Service</Label>
@@ -3249,7 +3265,7 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
                     value={createForm.paymentStatus}
                     onValueChange={(v) => updateCreateForm("paymentStatus", v)}
                   >
-                    <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectTrigger className="capitalize"><SelectValue placeholder="Status" /></SelectTrigger>
                     <SelectContent>
                       {PAYMENT_STATUS_OPTIONS.map((s) => (
                         <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
@@ -3307,6 +3323,14 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
                       .join(", ") || "—"}
                   </span>
                 </div>
+                                {createForm.sourceWebsite.startsWith("shop.") && (
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted-foreground">Shipping Address</span>
+                    <span className="font-medium text-right whitespace-pre-line">
+                      {createForm.shippingAddress || "—"}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between border-b border-border pb-2">
                   <span className="text-muted-foreground">Mobile Number</span>
                   <span className="font-medium">{createForm.customerPhone || "—"}</span>
