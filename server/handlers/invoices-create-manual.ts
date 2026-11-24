@@ -162,6 +162,7 @@ import { getUserFromAuthHeader, hasModuleAccess } from '../lib/auth-api.js';
 import { getSupabaseAdmin } from '../lib/supabase-admin.js';
 import { normalizeSourceWebsite } from '../lib/connected-sites.js';
 import { processInvoiceJob } from '../lib/invoice-engine.js';
+import { isGoodsSite } from '../lib/goods-invoice.js';
 import { logAuditForUser } from '../lib/audit-log.js';
 
 type Req = {
@@ -184,6 +185,7 @@ type Req = {
     customerPincode?: string;
     customerGstin?: string;
     shippingAddress?: string;
+        hsnCode?: string;
   };
 };
 
@@ -245,6 +247,14 @@ export default async function handler(req: Req, res: Res) {
 
   const sourceWebsite = normalizeSourceWebsite(body.sourceWebsite);
   const paymentStatus = String(body.paymentStatus || 'paid');
+    // Shop (Shopify) store: the per-product GST rate + HSN chosen in the admin form
+  // must actually reach the invoice engine, which reads metadata.gstRate /
+  // metadata.hsnCode (build-invoice-template.ts). 0% is a valid rate.
+  const shopRateRaw = body.gstRate != null && body.gstRate !== '' ? Number(body.gstRate) : NaN;
+  const shopGstOverride =
+    isGoodsSite(sourceWebsite) && Number.isFinite(shopRateRaw) && shopRateRaw >= 0 && shopRateRaw <= 28
+      ? { gstRate: shopRateRaw, hsnCode: String(body.hsnCode || '').trim() || undefined }
+      : {};
 
   const supabase = getSupabaseAdmin();
 
@@ -268,6 +278,7 @@ export default async function handler(req: Req, res: Res) {
           packageName: body.packageName || null,
           requestedGstRate: body.gstRate != null && body.gstRate !== '' ? Number(body.gstRate) : null,
           requestedInvoiceDate: body.invoiceDate || null,
+                    ...shopGstOverride,
           createdByAdmin: user.id,
           manualEntry: true,
           currentCity: customerCity || null,
