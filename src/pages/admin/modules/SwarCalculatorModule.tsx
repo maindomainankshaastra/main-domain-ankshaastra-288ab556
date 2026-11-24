@@ -1356,7 +1356,7 @@ export default function SwarCalculatorModule() {
         <div className="grid gap-4 md:grid-cols-5">
           <div><Label>Date of birth</Label><Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} /></div>
           <div><Label>Time of birth</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
-          <div><Label>Place</Label><PlacePicker value={place} onChange={setPlace} indiaOnly={tz === "5.5"} onPick={(p) => { if (p.timezone === "Asia/Kolkata") setTz("5.5"); }} /></div>
+          <div><Label>Place</Label><PlacePicker value={place} onChange={setPlace} placeholder="" indiaOnly={tz === "5.5"} onPick={(p) => { if (p.timezone === "Asia/Kolkata") setTz("5.5"); }} /></div>
           <div>
             <Label>Time zone</Label>
             <Select value={tz} onValueChange={setTz}>
@@ -1398,8 +1398,8 @@ export default function SwarCalculatorModule() {
               )}
               <div><Label>Swar (editable)</Label><Input value={swarText} onChange={(e) => setSwarText(e.target.value)} /></div>
               <div><Label>Numerology alternatives (editable)</Label><Input value={altText} onChange={(e) => setAltText(e.target.value)} /></div>
-              <div><Label>Customer name (optional)</Label><Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Parent / customer name" /></div>
-              <div><Label>Customer WhatsApp number (optional)</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98XXXXXXXX" /></div>
+              <div><Label>Customer name (optional)</Label><Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></div>
+              <div><Label>Customer WhatsApp number (optional)</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button type="button" variant="outline" onClick={findOrders} disabled={orderBusy}>
                   {orderBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}Fetch order details
@@ -1442,7 +1442,7 @@ export default function SwarCalculatorModule() {
 
       <AdminPage title="Step 2 · Customer’s chosen alphabets" description="Customer replied with the alphabets they like (e.g. V, N, M, G, B). Type them here.">
         <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-          <div><Label>Starting alphabets / Swar</Label><Input value={starts} onChange={(e) => setStarts(e.target.value)} placeholder="V, N, M, G, B  or  Pra, Rai" /></div>
+          <div><Label>Starting alphabets / Swar</Label><Input value={starts} onChange={(e) => setStarts(e.target.value)} /></div>
           <div className="flex items-end">
             <Button variant="outline" disabled={!swarText} onClick={() => setStarts(swarText)}>Use Swar from step 1</Button>
           </div>
@@ -1458,8 +1458,8 @@ export default function SwarCalculatorModule() {
               <SelectContent><SelectItem value="boy">Boy</SelectItem><SelectItem value="girl">Girl</SelectItem></SelectContent>
             </Select>
           </div>
-          <div><Label>Surname (last name)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Gokal" /></div>
-          <div><Label>Middle name (optional)</Label><Input value={middle} onChange={(e) => setMiddle(e.target.value)} placeholder="Deshraj" /></div>
+          <div><Label>Surname (last name)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} /></div>
+          <div><Label>Middle name (optional)</Label><Input value={middle} onChange={(e) => setMiddle(e.target.value)} /></div>
           <label className="flex items-end gap-2 pb-2 text-sm">
             <input type="checkbox" className="mb-1" checked={!middleNotFather} onChange={(e) => setMiddleNotFather(!e.target.checked)} disabled={!middle.trim()} />
             <span>Is middle name father’s name? <b>{middle.trim() ? (middleNotFather ? "No" : "Yes") : ""}</b></span>
@@ -1487,7 +1487,7 @@ export default function SwarCalculatorModule() {
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-4">
-          <div><Label>First alphabet(s)</Label><Input value={starts} onChange={(e) => setStarts(e.target.value)} placeholder="Gaa, Go, G" /></div>
+          <div><Label>First alphabet(s)</Label><Input value={starts} onChange={(e) => setStarts(e.target.value)} /></div>
           <div>
             <Label>First-name Chaldean number</Label>
             <Select value={number} onValueChange={setNumber}>
@@ -1495,7 +1495,7 @@ export default function SwarCalculatorModule() {
               <SelectContent>{[1,2,3,4,5,6,7,8,9].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Name preference (optional)</Label><Input value={preference} onChange={(e) => setPreference(e.target.value)} placeholder="e.g. Lord Shiva names, modern, short" /></div>
+          <div><Label>Name preference (optional)</Label><Input value={preference} onChange={(e) => setPreference(e.target.value)} /></div>
           <div className="flex items-end">
             <Button onClick={() => generate("fresh")} disabled={loading} className="w-full">
               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}Generate names
@@ -1588,8 +1588,7 @@ export default function SwarCalculatorModule() {
             {names.note && <p className="text-sm text-amber-700">{names.note}</p>}
             <div className="space-y-2 rounded-md border bg-muted/40 p-3">
               <Label>Not happy with these names? Tell Claude what to change</Label>
-              <Input value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}
-                placeholder="e.g. more modern, shorter names, easier to pronounce, no Shiva names" />
+              <Input value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} />
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" disabled={loading || picked.size === 0} onClick={() => generate("replace")}>
                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
@@ -1617,9 +1616,9 @@ export default function SwarCalculatorModule() {
 
       <AdminPage title="Step 4 · Customer’s chosen names" description="Customer replied with their top names (even ones that were not in your list). Enter them and check every name against the DOB.">
         <div className="grid gap-4 md:grid-cols-[1fr_200px_200px_auto]">
-          <div><Label>Names (comma or new line)</Label><Textarea rows={3} value={chosenRaw} onChange={(e) => setChosenRaw(e.target.value)} placeholder="Dheer, Darsh, Advik, Vyom" /></div>
-          <div><Label>Surname (optional)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Sharma" /></div>
-          <div><Label>Nick name (optional)</Label><Input value={nickName} onChange={(e) => setNickName(e.target.value)} placeholder="Shanu" /></div>
+          <div><Label>Names (comma or new line)</Label><Textarea rows={3} value={chosenRaw} onChange={(e) => setChosenRaw(e.target.value)} /></div>
+          <div><Label>Surname (optional)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} /></div>
+          <div><Label>Nick name (optional)</Label><Input value={nickName} onChange={(e) => setNickName(e.target.value)} /></div>
           <div className="flex items-end"><Button onClick={runAnalysis}><Sparkles className="w-4 h-4 mr-2" />Check names</Button></div>
         </div>
       </AdminPage>
