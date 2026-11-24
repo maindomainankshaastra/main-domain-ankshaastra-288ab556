@@ -183,6 +183,7 @@ type Req = {
     customerState?: string;
     customerPincode?: string;
     customerGstin?: string;
+    shippingAddress?: string;
   };
 };
 
@@ -273,6 +274,9 @@ export default async function handler(req: Req, res: Res) {
           customerState: customerState || null,
           pincode: customerPincode || null,
           customerGstin: customerGstin || null,
+                    shippingAddress: body.shippingAddress
+            ? { name: customerName, line1: String(body.shippingAddress).trim(), city: customerCity, state: customerState, pincode: customerPincode, phone: body.customerPhone ? String(body.customerPhone) : '' }
+            : undefined,
         },
       })
       .select('*')
