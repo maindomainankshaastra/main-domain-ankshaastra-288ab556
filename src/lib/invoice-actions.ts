@@ -106,6 +106,7 @@ export type CreateManualInvoiceInput = {
   customerState?: string;
   customerPincode?: string;
   customerGstin?: string;
+    shippingAddress?: string;
 };
 
 export type CreateManualInvoiceResult = {
