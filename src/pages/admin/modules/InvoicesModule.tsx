@@ -1904,6 +1904,16 @@ type CreateInvoiceForm = {
   customerPincode: string;
   customerGstin: string;
     shippingAddress: string;
+  gstRate: string;
+  hsnCode: string;
+};
+type CatalogProduct = {
+  id: string;
+  sku: string | null;
+  title: string;
+  price: number | string | null;
+  gst_rate: number | string;
+  hsn_sac_code: string | null;
 };
 
 function emptyCreateForm(site?: string): CreateInvoiceForm {
@@ -1923,6 +1933,8 @@ function emptyCreateForm(site?: string): CreateInvoiceForm {
     customerPincode: "",
     customerGstin: "",
         shippingAddress: "",
+        gstRate: "",
+    hsnCode: "",
   };
 }
 
@@ -2097,6 +2109,9 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
     const [createForm, setCreateForm] = useState<CreateInvoiceForm>(emptyCreateForm(lockedSite));
   const [creating, setCreating] = useState(false);
   const [createFormTouched, setCreateFormTouched] = useState(false);
+    // Shop store: products (with their own GST % + HSN) for the selected site.
+  const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
   // Business's home GST state code, fetched once when the create-invoice
   // modal opens — used only to preview IGST vs CGST+SGST in the preview
   // step. The final split is still always calculated server-side.
@@ -2529,10 +2544,50 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
 
   const pincodeIsValid = /^\d{6}$/.test(createForm.customerPincode.trim());
 
+        // Shop (Shopify) invoices: every product has its own GST % + HSN, taken from
+  // product_catalog. All other sites keep the fixed 18%.
+  const isShopCreate = createForm.sourceWebsite.startsWith("shop.");
+  const hasShopRate = isShopCreate && createForm.gstRate !== "" && Number.isFinite(Number(createForm.gstRate));
+  const effectiveGstRate = hasShopRate ? Number(createForm.gstRate) : FIXED_GST_RATE;
+
+  useEffect(() => {
+    if (!createOpen || !isShopCreate) return;
+    let cancelled = false;
+    setCatalogLoading(true);
+    supabase
+      .from("product_catalog")
+      .select("id, sku, title, price, gst_rate, hsn_sac_code")
+      .eq("is_active", true)
+      .contains("source_websites", [createForm.sourceWebsite])
+      .order("title")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) toast.error(`Could not load products: ${error.message}`);
+        setCatalogProducts((data || []) as CatalogProduct[]);
+        setCatalogLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [createOpen, isShopCreate, createForm.sourceWebsite]);
+
+  const pickCatalogProduct = (id: string) => {
+    const p = catalogProducts.find((x) => x.id === id);
+    if (!p) return;
+    setCreateForm((f) => ({
+      ...f,
+      serviceTitle: p.title,
+      gstRate: String(Number(p.gst_rate)),
+      hsnCode: p.hsn_sac_code || "",
+      price: f.price || (Number(p.price) > 0 ? String(Number(p.price)) : ""),
+    }));
+  };
+
   const createFormIsValid =
     !!createForm.customerName.trim() &&
     !!createForm.customerEmail.trim() &&
     !!createForm.serviceTitle.trim() &&
+          (!isShopCreate || hasShopRate) &&
     Number(createForm.price) > 0 &&
     !!createForm.customerCity.trim() &&
     !!createForm.customerState.trim() &&
@@ -2547,7 +2602,7 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
   // are both back-calculated out of it, instead of adding GST on top of it.
   // GST rate itself is fixed at 18% (FIXED_GST_RATE) — no admin choice.
   const previewTotal = Number(createForm.price) || 0;
-  const previewAmount = previewTotal / (1 + FIXED_GST_RATE / 100);
+    const previewAmount = previewTotal / (1 + effectiveGstRate / 100);
   const previewGstAmount = previewTotal - previewAmount;
 
   // Preview-only label for which GST split will apply — mirrors the
@@ -2560,10 +2615,9 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
   const previewGstLabel =
     businessStateCode && previewCustomerStateCode
       ? previewCustomerStateCode === businessStateCode
-        ? `CGST + SGST (${FIXED_GST_RATE}%, included)`
-        : `IGST (${FIXED_GST_RATE}%, included)`
-      : `GST (${FIXED_GST_RATE}%, included)`;
-
+               ? `CGST + SGST (${effectiveGstRate}%, included)`
+        : `IGST (${effectiveGstRate}%, included)`
+      : `GST (${effectiveGstRate}%, included)`;
   const goToPreview = () => {
     setCreateFormTouched(true);
     if (!createFormIsValid) {
@@ -2590,7 +2644,8 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
         // previewAmount (the already-back-calculated taxable value) here
         // instead would make the backend divide by 1.18 a second time.
         price: previewTotal,
-        gstRate: FIXED_GST_RATE,
+                gstRate: effectiveGstRate,
+        hsnCode: isShopCreate ? createForm.hsnCode || undefined : undefined,
         paymentStatus: createForm.paymentStatus,
         invoiceDate: createForm.invoiceDate,
         notes: createForm.notes.trim() || undefined,
@@ -3229,14 +3284,32 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
                 </div>
               )}
 
-              <div className="space-y-1.5">
-                <Label htmlFor="inv-service">Service</Label>
-                <Input
-                  id="inv-service"
-                  value={createForm.serviceTitle}
-                  onChange={(e) => updateCreateForm("serviceTitle", e.target.value)}
-                  placeholder="e.g. Astrology Consultation"
-                />
+                            <div className="space-y-1.5">
+                <Label htmlFor="inv-service">{isShopCreate ? "Product" : "Service"}</Label>
+                {isShopCreate ? (
+                  <Select
+                    value={catalogProducts.find((p) => p.title === createForm.serviceTitle)?.id || ""}
+                    onValueChange={pickCatalogProduct}
+                  >
+                    <SelectTrigger id="inv-service">
+                      <SelectValue placeholder={catalogLoading ? "Loading products…" : "Select product"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {catalogProducts.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.title} — GST {Number(p.gst_rate)}%
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="inv-service"
+                    value={createForm.serviceTitle}
+                    onChange={(e) => updateCreateForm("serviceTitle", e.target.value)}
+                    placeholder="e.g. Astrology Consultation"
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -3253,8 +3326,18 @@ export default function InvoicesModule({ lockedSite, title }: { lockedSite?: str
                 </div>
                 <div className="space-y-1.5">
                   <Label>GST %</Label>
-                  {/* Fixed at 18% — no dropdown, no admin choice. */}
-                  <Input value={`${FIXED_GST_RATE}% (fixed)`} disabled readOnly />
+                                    {/* Shop: taken from the selected product. Other sites: fixed 18%. */}
+                  <Input
+                    value={
+                      isShopCreate
+                        ? hasShopRate
+                          ? `${effectiveGstRate}% (from product${createForm.hsnCode ? `, HSN ${createForm.hsnCode}` : ""})`
+                          : "Select a product"
+                        : `${FIXED_GST_RATE}% (fixed)`
+                    }
+                    disabled
+                    readOnly
+                  />
                 </div>
               </div>
 
