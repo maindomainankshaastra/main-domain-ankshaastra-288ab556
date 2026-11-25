@@ -23,17 +23,20 @@ export function formatTime12(time: string): string {
 /** Short text that goes with the image. */
 export function buildImageCaption(): string {
   return [
-    "*Namaste,*🙏",
+    "Namaste! 🙏",
     "",
-    "Kindly have a quick look at the birth details. If the Date of Birth, Time, and Birth Place are correct, then the following are the recommended swars/first alphabet.",
+    "Kindly confirm the following two points:",
     "",
-    "Please let us know if you’d like numerologically aligned names with these alphabets only or if you have any specific name preference. *Once confirmed, will share the name options.*",
+    "1. Birth Details: Are the Date of Birth, Time and Place mentioned above correct?",
     "",
-    "*Warm Regards,*",
-    "*Ankshaastra – Empower Your Name*",
+    "2. Name Initials: Please specify the alphabet(s) you would like the name to begin with.",
+    "",
+    "Once both are confirmed, we will share the curated name options.",
+    "",
+    "Warm Regards,",
+    "Ankshaastra – Empower Your Name",
   ].join("\n");
 }
-
 export interface DetailInput {
   dob: string;
   place: string;
