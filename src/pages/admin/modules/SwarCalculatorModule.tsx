@@ -224,6 +224,8 @@
 //   }, [targetsKey]);
 //   const surnameText = profile?.surname?.text ?? surname.trim();
 //   const selectedRow = profile?.table?.find((r) => r.n === Number(number));
+//   /** First-name number picked with the 3 -> 1 / 5 -> 3 / 7 -> 5 buttons: Step 5 spellings are corrected to this number. */
+//   const targetNo = Number(number) || undefined;
 
 //   // ---- step 4: names the customer chose -> analysis ----
 //   const [chosenRaw, setChosenRaw] = useState("");
@@ -238,10 +240,17 @@
 //     const list = parseNames(chosenRaw);
 //     if (!dob) { toast({ title: "Enter date of birth in step 1", variant: "destructive" }); return; }
 //     if (!list.length) { toast({ title: "Enter the names the customer chose", variant: "destructive" }); return; }
-//     setAnalysis(list.map((n) => summariseName(dob, n, surnameText)));
+//     setAnalysis(list.map((n) => summariseName(dob, n, surnameText, targetNo)));
 //     setCorrectionEdits({});
 //     void autoStatus("confirmation_received");
 //   };
+//   // When another 3 -> 1 / 5 -> 3 / 7 -> 5 button is pressed in Step 3, Step 5 is worked out again for that number.
+//   // Spellings typed by hand belonged to the old number, so they are cleared.
+//   useEffect(() => {
+//     setAnalysis((prev) => (prev && dob ? prev.map((a) => summariseName(dob, a.name, surnameText, targetNo)) : prev));
+//     setCorrectionEdits({});
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [number]);
 //   /** Corrected spelling shown for a name: what the operator typed, else the automatic suggestion. Empty for names that are already "Yes". */
 //   const correctedOf = (r: NameSummary): string => (r.ok ? "" : (correctionEdits[r.name] ?? r.corrected?.name ?? "").trim());
 //   const numberOfName = (name: string) => { const t = chaldeanRawSum(name); return t ? { total: t, number: reduceToSingleDigit(t) } : null; };
@@ -318,7 +327,7 @@
 //       openCase(data as SwarCaseRow);
 //       const d = (data.data ?? {}) as Partial<CaseSnapshot>;
 //       const list = parseNames(d.chosenRaw ?? "");
-//       if (d.dob && list.length) setAnalysis(list.map((n) => summariseName(d.dob as string, n, d.surname ?? "")));
+//       if (d.dob && list.length) setAnalysis(list.map((n) => summariseName(d.dob as string, n, d.surname ?? "", Number(d.number) || undefined)));
 //       setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 500);
 //     })();
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -444,7 +453,7 @@
 //       const chosen = names.names.slice(0, slots); // the report always carries all of its name slots
 //       // The names, and every detail used to judge them, come from Step 4 and this case. If "Check names" was not
 //       // pressed yet, the names typed in Step 4 are analysed now, so the page is never left empty by mistake.
-//       const source = analysis ?? (dob ? parseNames(chosenRaw).map((n) => summariseName(dob, n, surnameText)) : []);
+//       const source = analysis ?? (dob ? parseNames(chosenRaw).map((n) => summariseName(dob, n, surnameText, targetNo)) : []);
 //       const analysisRows: AnalysisRow[] = source.map((a) => ({
 //         name: a.name,
 //         firstNo: a.error ? "-" : a.number,
@@ -506,7 +515,7 @@
 //         <div className="grid gap-4 md:grid-cols-5">
 //           <div><Label>Date of birth</Label><Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} /></div>
 //           <div><Label>Time of birth</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
-//           <div><Label>Place</Label><PlacePicker value={place} onChange={setPlace} indiaOnly={tz === "5.5"} onPick={(p) => { if (p.timezone === "Asia/Kolkata") setTz("5.5"); }} /></div>
+//           <div><Label>Place</Label><PlacePicker value={place} onChange={setPlace} placeholder="" indiaOnly={tz === "5.5"} onPick={(p) => { if (p.timezone === "Asia/Kolkata") setTz("5.5"); }} /></div>
 //           <div>
 //             <Label>Time zone</Label>
 //             <Select value={tz} onValueChange={setTz}>
@@ -548,8 +557,8 @@
 //               )}
 //               <div><Label>Swar (editable)</Label><Input value={swarText} onChange={(e) => setSwarText(e.target.value)} /></div>
 //               <div><Label>Numerology alternatives (editable)</Label><Input value={altText} onChange={(e) => setAltText(e.target.value)} /></div>
-//               <div><Label>Customer name (optional)</Label><Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Parent / customer name" /></div>
-//               <div><Label>Customer WhatsApp number (optional)</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98XXXXXXXX" /></div>
+//               <div><Label>Customer name (optional)</Label><Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></div>
+//               <div><Label>Customer WhatsApp number (optional)</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
 //               <div className="flex flex-wrap items-center gap-2">
 //                 <Button type="button" variant="outline" onClick={findOrders} disabled={orderBusy}>
 //                   {orderBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}Fetch order details
@@ -592,7 +601,7 @@
 
 //       <AdminPage title="Step 2 · Customer’s chosen alphabets" description="Customer replied with the alphabets they like (e.g. V, N, M, G, B). Type them here.">
 //         <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-//           <div><Label>Starting alphabets / Swar</Label><Input value={starts} onChange={(e) => setStarts(e.target.value)} placeholder="V, N, M, G, B  or  Pra, Rai" /></div>
+//           <div><Label>Starting alphabets / Swar</Label><Input value={starts} onChange={(e) => setStarts(e.target.value)} /></div>
 //           <div className="flex items-end">
 //             <Button variant="outline" disabled={!swarText} onClick={() => setStarts(swarText)}>Use Swar from step 1</Button>
 //           </div>
@@ -608,8 +617,8 @@
 //               <SelectContent><SelectItem value="boy">Boy</SelectItem><SelectItem value="girl">Girl</SelectItem></SelectContent>
 //             </Select>
 //           </div>
-//           <div><Label>Surname (last name)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Gokal" /></div>
-//           <div><Label>Middle name (optional)</Label><Input value={middle} onChange={(e) => setMiddle(e.target.value)} placeholder="Deshraj" /></div>
+//           <div><Label>Surname (last name)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} /></div>
+//           <div><Label>Middle name (optional)</Label><Input value={middle} onChange={(e) => setMiddle(e.target.value)} /></div>
 //           <label className="flex items-end gap-2 pb-2 text-sm">
 //             <input type="checkbox" className="mb-1" checked={!middleNotFather} onChange={(e) => setMiddleNotFather(!e.target.checked)} disabled={!middle.trim()} />
 //             <span>Is middle name father’s name? <b>{middle.trim() ? (middleNotFather ? "No" : "Yes") : ""}</b></span>
@@ -637,7 +646,7 @@
 //         </div>
 
 //         <div className="mt-4 grid gap-4 md:grid-cols-4">
-//           <div><Label>First alphabet(s)</Label><Input value={starts} onChange={(e) => setStarts(e.target.value)} placeholder="Gaa, Go, G" /></div>
+//           <div><Label>First alphabet(s)</Label><Input value={starts} onChange={(e) => setStarts(e.target.value)} /></div>
 //           <div>
 //             <Label>First-name Chaldean number</Label>
 //             <Select value={number} onValueChange={setNumber}>
@@ -645,7 +654,7 @@
 //               <SelectContent>{[1,2,3,4,5,6,7,8,9].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
 //             </Select>
 //           </div>
-//           <div><Label>Name preference (optional)</Label><Input value={preference} onChange={(e) => setPreference(e.target.value)} placeholder="e.g. Lord Shiva names, modern, short" /></div>
+//           <div><Label>Name preference (optional)</Label><Input value={preference} onChange={(e) => setPreference(e.target.value)} /></div>
 //           <div className="flex items-end">
 //             <Button onClick={() => generate("fresh")} disabled={loading} className="w-full">
 //               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}Generate names
@@ -738,8 +747,7 @@
 //             {names.note && <p className="text-sm text-amber-700">{names.note}</p>}
 //             <div className="space-y-2 rounded-md border bg-muted/40 p-3">
 //               <Label>Not happy with these names? Tell Claude what to change</Label>
-//               <Input value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)}
-//                 placeholder="e.g. more modern, shorter names, easier to pronounce, no Shiva names" />
+//               <Input value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} />
 //               <div className="flex flex-wrap gap-2">
 //                 <Button variant="outline" disabled={loading || picked.size === 0} onClick={() => generate("replace")}>
 //                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
@@ -767,9 +775,9 @@
 
 //       <AdminPage title="Step 4 · Customer’s chosen names" description="Customer replied with their top names (even ones that were not in your list). Enter them and check every name against the DOB.">
 //         <div className="grid gap-4 md:grid-cols-[1fr_200px_200px_auto]">
-//           <div><Label>Names (comma or new line)</Label><Textarea rows={3} value={chosenRaw} onChange={(e) => setChosenRaw(e.target.value)} placeholder="Dheer, Darsh, Advik, Vyom" /></div>
-//           <div><Label>Surname (optional)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Sharma" /></div>
-//           <div><Label>Nick name (optional)</Label><Input value={nickName} onChange={(e) => setNickName(e.target.value)} placeholder="Shanu" /></div>
+//           <div><Label>Names (comma or new line)</Label><Textarea rows={3} value={chosenRaw} onChange={(e) => setChosenRaw(e.target.value)} /></div>
+//           <div><Label>Surname (optional)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} /></div>
+//           <div><Label>Nick name (optional)</Label><Input value={nickName} onChange={(e) => setNickName(e.target.value)} /></div>
 //           <div className="flex items-end"><Button onClick={runAnalysis}><Sparkles className="w-4 h-4 mr-2" />Check names</Button></div>
 //         </div>
 //       </AdminPage>
@@ -801,7 +809,7 @@
 //                             <td className="p-2">
 //                               {r.ok ? "–" : (
 //                                 <Input
-//                                   className="h-8 w-44" value={correctionEdits[r.name] ?? r.corrected?.name ?? ""} placeholder="no correction found"
+//                                   className="h-8 w-44" value={correctionEdits[r.name] ?? r.corrected?.name ?? ""} placeholder={targetNo ? `no spelling gives ${targetNo}` : "no correction found"}
 //                                   onChange={(e) => setCorrectionEdits((m) => ({ ...m, [r.name]: e.target.value }))}
 //                                 />
 //                               )}
@@ -817,7 +825,8 @@
 //             </div>
 //             <p className="text-xs text-muted-foreground">
 //               A corrected spelling is offered for every name that is not “Yes”. It only repeats letters the name already has (one or two letters
-//               doubled). You can type your own spelling in the box; the report uses what is shown here.
+//               doubled). {targetNo ? <>It is aimed at first-name number <b>{targetNo}</b>{selectedRow ? <> (→ full {selectedRow.total})</> : null}, the combination selected in Step 3; press another combination there and this table changes. </> : null}
+//               You can type your own spelling in the box; the report uses what is shown here.
 //             </p>
 //           </div>
 //         )}
@@ -841,6 +850,7 @@
 // }
 
 
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, RefreshCw, Sparkles, TriangleAlert } from "lucide-react";
 import { AdminPage } from "@/components/admin/AdminPage";
@@ -859,7 +869,7 @@ import { SwarCasesPanel } from "@/components/admin/SwarCasesPanel";
 import { SwarFinalReport } from "@/components/admin/SwarFinalReport";
 import { LoShuGrid } from "@/components/admin/LoShuGrid";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { phoneDigits, saveCase, STATUS_META, STATUS_ORDER, type CaseSnapshot, type CaseStatus, type SwarCaseRow } from "@/lib/swar/swarCases";
+import { isSameCase, phoneDigits, saveCase, updateCaseData, STATUS_META, STATUS_ORDER, type CaseSnapshot, type CaseStatus, type SwarCaseRow } from "@/lib/swar/swarCases";
 import { buildNameFinderProfile, type Gender } from "@/lib/swar/nameFinder";
 import { generateNameFinderReport, type AnalysisRow } from "@/lib/swar/nameFinderReport";
 import { detectPackage, nameSlots, orderMatchesPhone, prefillFromOrder, PACKAGE_PRICE, type PackageChoice, type PackageTier } from "@/lib/swar/nameFinderPackage";
@@ -1111,7 +1121,7 @@ export default function SwarCalculatorModule() {
     if (!dob) return;
     try {
       const row = await saveCase(supabase as any, {
-        id: caseKey === currentKey() ? caseId : null, orderId, snapshot: buildSnapshot(over), packageLabel, target, by: "auto",
+        id: isSameCase(caseKey, phone, dob) ? caseId : null, orderId, snapshot: buildSnapshot(over), packageLabel, target, by: "auto",
       });
       setCaseId(row.id); setCaseKey(currentKey()); setCaseStatusState(row.status); setCasesTick((n) => n + 1);
     } catch (e: any) {
@@ -1123,13 +1133,29 @@ export default function SwarCalculatorModule() {
     if (!dob) { toast({ title: "Enter the birth details first", variant: "destructive" }); return; }
     try {
       const row = await saveCase(supabase as any, {
-        id: caseKey === currentKey() ? caseId : null, orderId, snapshot: buildSnapshot(), packageLabel, target, by: "manual",
+        id: isSameCase(caseKey, phone, dob) ? caseId : null, orderId, snapshot: buildSnapshot(), packageLabel, target, by: "manual",
       });
       setCaseId(row.id); setCaseKey(currentKey()); setCaseStatusState(row.status); setCasesTick((n) => n + 1);
     } catch (e: any) {
       toast({ title: "Could not change status", description: e?.message, variant: "destructive" });
     }
   };
+  /**
+   * Quiet auto-save: once a case exists, whatever is typed in the form (customer name, WhatsApp number, names, ...) is
+   * written into it a second after the operator stops typing, so nothing is lost when the page is left and the case is
+   * opened again. It only updates the open case: it never creates one and never moves the status.
+   */
+  const saveNow = async () => {
+    if (!caseId || !dob || !isSameCase(caseKey, phone, dob)) return;
+    try { await updateCaseData(supabase as any, caseId, buildSnapshot(), packageLabel); } catch { /* quiet: the next WhatsApp / status action reports a real problem */ }
+  };
+  const snapshotJson = JSON.stringify(buildSnapshot());
+  useEffect(() => {
+    if (!caseId || !dob) return;
+    const t = setTimeout(() => { void saveNow(); }, 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshotJson, caseId]);
   /** Opens a saved case with every step filled as it was left. */
   const openCase = (row: SwarCaseRow) => {
     const d = (row.data ?? {}) as Partial<CaseSnapshot>;
@@ -1683,6 +1709,7 @@ export default function SwarCalculatorModule() {
           nickName={nickName}
           sendWhatsApp={sendWhatsApp}
           onSent={() => { void autoStatus("report_shared"); }}
+          onBeforeLeave={saveNow}
         />
       </AdminPage>
       </TabsContent>
