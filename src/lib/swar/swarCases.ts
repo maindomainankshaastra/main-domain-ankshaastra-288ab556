@@ -1,3 +1,5 @@
+
+
 // /**
 //  * Swar Calculator cases + status.
 //  *
@@ -125,6 +127,25 @@
 //   return data as SwarCaseRow;
 // }
 
+// /**
+//  * Delete from the Cases list.
+//  * - Hand-made case (no order): the row is removed for good.
+//  * - Case that came from an order: the row is only marked data.deleted = true and hidden. A real delete would be
+//  *   undone by syncOrdersToCases, which re-creates a case for every paid order that has none (last 15 days).
+//  */
+// export async function deleteCase(client: any, row: SwarCaseRow): Promise<"removed" | "hidden"> {
+//   if (!row.order_id) {
+//     const { error } = await client.from("swar_cases").delete().eq("id", row.id);
+//     if (error) throw error;
+//     return "removed";
+//   }
+//   const { error } = await client.from("swar_cases")
+//     .update({ data: { ...(row.data ?? {}), deleted: true, deletedAt: new Date().toISOString() } }).eq("id", row.id);
+//   if (error) throw error;
+//   return "hidden";
+// }
+
+
 /**
  * Swar Calculator cases + status.
  *
@@ -242,6 +263,35 @@ export async function saveCase(client: any, input: SaveCaseInput): Promise<SwarC
   const { data, error } = await client.from("swar_cases").insert({ ...base, status: next, status_history: history }).select("*").single();
   if (error) throw error;
   return data as SwarCaseRow;
+}
+
+/**
+ * Is the case that is open on the page still the one this form belongs to?
+ * Yes when the phone + birth date are unchanged, or when the first save was made before any phone was typed and only
+ * the phone was added afterwards (the boxes for name and number appear only after the first Calculate, so that is the
+ * normal order for a hand-made case). Without this the phone being added made a second, blank twin of the case.
+ */
+export function isSameCase(caseKey: string, phone: string, dob: string): boolean {
+  return caseKey === `${phoneDigits(phone)}|${dob}` || caseKey === `|${dob}`;
+}
+
+/**
+ * Writes the latest form values into an EXISTING case. Used for the quiet auto-save: it never creates a case (a case
+ * deleted from the list stays deleted), never un-hides a hidden one, and never touches the status.
+ */
+export async function updateCaseData(client: any, id: string, s: CaseSnapshot, packageLabel?: string): Promise<boolean> {
+  const { data: row, error: readError } = await client.from("swar_cases").select("data").eq("id", id).maybeSingle();
+  if (readError) throw readError;
+  if (!row || row.data?.deleted) return false;
+  const { error } = await client.from("swar_cases").update({
+    customer_name: s.customerName.trim() || s.surname.trim() || null,
+    phone: phoneDigits(s.phone) || null,
+    dob: s.dob || null,
+    package_label: packageLabel ?? null,
+    data: s,
+  }).eq("id", id);
+  if (error) throw error;
+  return true;
 }
 
 /** Manual change from the list (no snapshot needed). */
