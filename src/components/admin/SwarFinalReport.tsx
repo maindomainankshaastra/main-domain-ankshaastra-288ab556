@@ -1,6 +1,8 @@
+
+
 // import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // import { Link, useNavigate } from "react-router-dom";
-// import { ExternalLink, FileText, Loader2, MessageCircle, RefreshCw } from "lucide-react";
+// import { Copy, ExternalLink, FileText, Image as ImageIcon, Loader2, MessageCircle, RefreshCw } from "lucide-react";
 // import { supabase } from "@/integrations/supabase/client";
 // import { Badge } from "@/components/ui/badge";
 // import { Button } from "@/components/ui/button";
@@ -8,7 +10,8 @@
 // import { EMPTY_BABY_FORM, validateBabyForm, type BabyReportFormValues } from "@/lib/baby-reports/perfect-baby-name/form";
 // import { BabyReportForm } from "@/components/admin/BabyReportForm";
 // import { prefillFromOrder, type OrderPrefill, type PackageTier } from "@/lib/swar/nameFinderPackage";
-// import { AUTO_GENERATE_AFTER_REDIRECT, buildReportValues, newReportId, reportColumns, reportMessage, reportOpenUrl, reportTarget } from "@/lib/swar/finalReport";
+// import { AUTO_GENERATE_AFTER_REDIRECT, buildReportValues, newReportId, reportColumns, reportMessage, reportOpenUrl, reportTarget, shortReportLink } from "@/lib/swar/finalReport";
+// import { reportCardBlob } from "@/lib/swar/reportCard";
 
 // interface Props {
 //   /** The saved case this report belongs to (null until the case has been saved, e.g. after the Step 4 check). */
@@ -126,16 +129,52 @@
 //       if (error) throw error;
 //       setReport(data);
 //       toast({ title: "Report created", description: `${data.report_id}: opening ${target.label}${AUTO_GENERATE_AFTER_REDIRECT ? " and generating the PDF" : ""}...` });
+//       // The Swar page opens this case again when the operator comes back (see SwarCalculatorModule).
+//       try { sessionStorage.setItem("swar_restore_case", String(caseId)); } catch { /* private mode: nothing to keep */ }
 //       navigate(reportOpenUrl(tier, data.report_id, AUTO_GENERATE_AFTER_REDIRECT));
 //     } catch (e: any) {
 //       toast({ title: "Could not create the report", description: e?.message, variant: "destructive" });
 //     } finally { setSaving(false); }
 //   };
 
-//   const send = () => {
+//   // The name on the card = the name(s) the report was made for (First + Middle + Last).
+//   const cardName = (): string => String(report?.customer_name || report?.first_name || "").trim();
+//   const shortLink = report ? shortReportLink(report.report_id) : "";
+//   const message = () => reportMessage(tier, report?.first_name || report?.customer_name || "", shortLink);
+
+//   // One click: copy the "Report is Ready" card (with the customer's name) to the clipboard, then open the customer's
+//   // WhatsApp chat with the message typed in. The operator presses Ctrl+V (image) and Send.
+//   const send = async () => {
 //     if (!report?.pdf_url) return;
-//     sendWhatsApp(reportMessage(tier, report.first_name || report.customer_name, report.pdf_url));
+//     try {
+//       const blob = await reportCardBlob(tier, cardName());
+//       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+//       toast({ title: "Image copied, WhatsApp is opening", description: "Click the message box, press Ctrl+V, then Send." });
+//     } catch {
+//       toast({ title: "Could not copy the image", description: "Use Download image and attach it manually.", variant: "destructive" });
+//     }
+//     sendWhatsApp(message());
 //     onSent();
+//   };
+
+//   const copyCard = async () => {
+//     try {
+//       const blob = await reportCardBlob(tier, cardName());
+//       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+//       toast({ title: "Image copied", description: "Paste it in WhatsApp (Ctrl+V)." });
+//     } catch {
+//       toast({ title: "Copy not supported here", description: "Use Download image instead.", variant: "destructive" });
+//     }
+//   };
+
+//   const downloadCard = async () => {
+//     try {
+//       const blob = await reportCardBlob(tier, cardName());
+//       const a = document.createElement("a");
+//       a.href = URL.createObjectURL(blob);
+//       a.download = `${report.report_id}-ready.png`;
+//       a.click();
+//     } catch (e: any) { toast({ title: "Could not make the image", description: e?.message, variant: "destructive" }); }
 //   };
 
 //   if (!caseId) {
@@ -171,10 +210,16 @@
 //             <div className="text-xs text-muted-foreground">{report.email} · {report.phone}</div>
 //           </div>
 //           {report.pdf_url ? (
+//             <>
 //             <div className="flex flex-wrap gap-2">
 //               <Button variant="outline" asChild><a href={report.pdf_url} target="_blank" rel="noreferrer"><ExternalLink className="w-4 h-4 mr-2" />View PDF</a></Button>
-//               <Button onClick={send}><MessageCircle className="w-4 h-4 mr-2" />Send report link on WhatsApp</Button>
+//               <Button onClick={send}><MessageCircle className="w-4 h-4 mr-2" />Send image + link on WhatsApp</Button>
+//               <Button variant="outline" onClick={copyCard}><ImageIcon className="w-4 h-4 mr-2" />Copy image</Button>
+//               <Button variant="outline" onClick={downloadCard}><ImageIcon className="w-4 h-4 mr-2" />Download image</Button>
+//               <Button variant="outline" onClick={async () => { await navigator.clipboard.writeText(message()); toast({ title: "Message copied" }); }}><Copy className="w-4 h-4 mr-2" />Copy message</Button>
 //             </div>
+//             <p className="text-xs text-muted-foreground">Short link sent to the customer: <b>{shortLink}</b></p>
+//             </>
 //           ) : (
 //             <p className="text-sm text-muted-foreground">The report is a draft. Press Open this report to generate the PDF, then come back here and press refresh. The WhatsApp button appears once the PDF is ready. (To send it by email, use the Send email button on that page.)</p>
 //           )}
@@ -182,13 +227,15 @@
 //           <Button variant="outline" onClick={async () => { await navigator.clipboard.writeText(report.report_id); toast({ title: "Report ID copied", description: "Paste it in the search box on that page." }); }}>
 //             Copy report ID
 //           </Button>
-//           <Button variant="outline" asChild><Link to={reportOpenUrl(tier, report.report_id, AUTO_GENERATE_AFTER_REDIRECT && !report.pdf_url)}><ExternalLink className="w-4 h-4 mr-2" />Open this report</Link></Button>
+//           <Button variant="outline" asChild><Link onClick={() => { try { sessionStorage.setItem("swar_restore_case", String(caseId)); } catch { /* ignore */ } }} to={reportOpenUrl(tier, report.report_id, AUTO_GENERATE_AFTER_REDIRECT && !report.pdf_url)}><ExternalLink className="w-4 h-4 mr-2" />Open this report</Link></Button>
 //           </div>
 //         </div>
 //       )}
 //     </div>
 //   );
 // }
+
+
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -218,6 +265,8 @@ interface Props {
   sendWhatsApp: (text: string) => void;
   /** Called when the report link was sent -> case becomes "Final Report Shared". */
   onSent: () => void;
+  /** Called right before the page moves to the report page, so the latest Step 1-4 values are saved in the case. */
+  onBeforeLeave?: () => Promise<void> | void;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -228,7 +277,7 @@ const STATUS_BADGE: Record<string, string> = {
   archived: "bg-slate-200 text-slate-700 border-slate-300",
 };
 
-export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, surname, middle, middleNotFather, chosenNames, nickName, sendWhatsApp, onSent }: Props) {
+export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, surname, middle, middleNotFather, chosenNames, nickName, sendWhatsApp, onSent, onBeforeLeave }: Props) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const target = useMemo(() => reportTarget(tier), [tier]);
@@ -319,7 +368,9 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
       if (error) throw error;
       setReport(data);
       toast({ title: "Report created", description: `${data.report_id}: opening ${target.label}${AUTO_GENERATE_AFTER_REDIRECT ? " and generating the PDF" : ""}...` });
-      // The Swar page opens this case again when the operator comes back (see SwarCalculatorModule).
+      // The Swar page opens this case again when the operator comes back (see SwarCalculatorModule). The latest
+      // Step 1-4 values are saved first, because the case is read back from the database on return.
+      try { await onBeforeLeave?.(); } catch { /* the quiet save must never block opening the report */ }
       try { sessionStorage.setItem("swar_restore_case", String(caseId)); } catch { /* private mode: nothing to keep */ }
       navigate(reportOpenUrl(tier, data.report_id, AUTO_GENERATE_AFTER_REDIRECT));
     } catch (e: any) {
@@ -417,7 +468,7 @@ export function SwarFinalReport({ caseId, orderId, tier, dob, phone, gender, sur
           <Button variant="outline" onClick={async () => { await navigator.clipboard.writeText(report.report_id); toast({ title: "Report ID copied", description: "Paste it in the search box on that page." }); }}>
             Copy report ID
           </Button>
-          <Button variant="outline" asChild><Link onClick={() => { try { sessionStorage.setItem("swar_restore_case", String(caseId)); } catch { /* ignore */ } }} to={reportOpenUrl(tier, report.report_id, AUTO_GENERATE_AFTER_REDIRECT && !report.pdf_url)}><ExternalLink className="w-4 h-4 mr-2" />Open this report</Link></Button>
+          <Button variant="outline" asChild><Link onClick={() => { void onBeforeLeave?.(); try { sessionStorage.setItem("swar_restore_case", String(caseId)); } catch { /* ignore */ } }} to={reportOpenUrl(tier, report.report_id, AUTO_GENERATE_AFTER_REDIRECT && !report.pdf_url)}><ExternalLink className="w-4 h-4 mr-2" />Open this report</Link></Button>
           </div>
         </div>
       )}
