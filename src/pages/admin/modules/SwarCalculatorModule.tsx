@@ -1481,7 +1481,7 @@ export default function SwarCalculatorModule() {
                 {orderNote && <span className="text-xs text-muted-foreground">{orderNote}</span>}
               </div>
 
-              <div className="rounded-md border p-3 text-sm whitespace-pre-wrap bg-muted/40">{caption}</div>
+              <div className="rounded-md border p-3 text-sm whitespace-pre-wrap bg-muted/40">{caption.split(/(\*[^*\n]+\*)/).map((part, k) => (/^\*[^*\n]+\*$/.test(part) ? <b key={k}>{part.slice(1, -1)}</b> : part))}</div>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => copy(caption, "Message")}><Copy className="w-4 h-4 mr-2" />Copy message</Button>
                 <Button onClick={sendOnWhatsApp}><MessageCircle className="w-4 h-4 mr-2" />Send on WhatsApp (image + message)</Button>
