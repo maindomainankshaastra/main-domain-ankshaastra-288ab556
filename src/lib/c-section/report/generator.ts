@@ -8,8 +8,8 @@ import { textSections, type TextCtx } from "./content.ts";
 import { newPage, type Assets, type Fonts } from "./draw.ts";
 import { Flow, type Mark, type Section } from "./flow.ts";
 import {
-  cleanName, drawAvoidDates, drawCalendar, drawChosen, drawIndex, drawLoshuPages, drawWelcome,
-  drawMuhurat, drawMuhuratDetails, drawOffers, drawPersonalDetails, drawTimelines, drawTopDates, firstName, type ReportInput,
+  cleanName, drawAvoidDates, drawCalendar, drawWelcome,
+  drawMuhuratDetails, drawOffers, drawPersonalDetails, drawTopDates, firstName, type ReportInput,
 } from "./pages.ts";
 import { DEFAULT_CONTACT } from "./theme.ts";
 import { addStaticPage, dedupeImages, loadStaticPages, STATIC_FILE, type StaticKey } from "./static-pages.ts";
@@ -61,22 +61,18 @@ export async function generateCSectionReport(input: ReportInput, deps: ReportDep
   };
 
   fixed("cover");
-  const indexPages = [newPage(doc, f, assets), newPage(doc, f, assets)];
+  fixed("idx1"); fixed("idx2"); fixed("idx3");
   fixed("quote");
   drawPersonalDetails(doc, f, SP, marks, input);
   fixed("disclaimer", "Important Medical Disclaimer");
   drawWelcome(doc, f, SP, marks);
-  fixed("why1", "Why Birth Timing & Birth Date Matters");
-  fixed("why2"); fixed("why3");
+  fixed("whyA", "Why Birth Date Matters");
+  fixed("whyB");
   fixed("medical", "Your Medical Window Analysis");
-  drawChosen(doc, f, assets, marks, S.chosen);
   drawCalendar(doc, f, assets, marks, input);
+  drawAvoidDates(doc, f, assets, marks, input);
   drawTopDates(doc, f, assets, marks, input);
   drawMuhuratDetails(doc, f, assets, marks, input);
-  drawTimelines(doc, f, assets, marks, input);
-  drawLoshuPages(doc, f, assets, marks, input);
-  drawAvoidDates(doc, f, assets, marks, input);
-  drawMuhurat(doc, f, assets, marks, input);
   fixed("support", "Follow-Up & Ongoing Support");
   if (input.offers) drawOffers(doc, f, assets, marks, input); else fixed("offers", "Your Name Decides Your Speed in Life");
   fixed("postBirth", "Post Birth Update Form");
@@ -101,7 +97,6 @@ export async function generateCSectionReport(input: ReportInput, deps: ReportDep
   fixed("finalBlessing", "Final Blessing");
   fixed("backCover");
 
-  drawIndex(indexPages, f, marks);
   await dedupeImages(doc);
   return doc.save();
 }
