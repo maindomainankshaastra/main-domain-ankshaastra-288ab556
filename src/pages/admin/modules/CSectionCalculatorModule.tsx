@@ -211,7 +211,7 @@
 
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarCheck, Copy, FileDown, Loader2, MessageCircle, TriangleAlert, ExternalLink } from "lucide-react";
+import { CalendarCheck, Copy, FileDown, Loader2, MessageCircle, TriangleAlert, ExternalLink, Trash2 } from "lucide-react";
 import { AdminPage } from "@/components/admin/AdminPage";
 import { PlacePicker } from "@/components/admin/PlacePicker";
 import { Badge } from "@/components/ui/badge";
@@ -318,7 +318,7 @@ function shortPdfUrl(path: string): string {
   return `${host}/cs/${path}`;
 }
 
-function PreviousReports({ rows, loading, loadError, onSend }: { rows: SavedReport[]; loading: boolean; loadError: string; onSend: (r: SavedReport) => void }) {
+function PreviousReports({ rows, loading, loadError, onSend, onDelete }: { rows: SavedReport[]; loading: boolean; loadError: string; onSend: (r: SavedReport) => void; onDelete: (r: SavedReport) => void }) {
   const [q, setQ] = useState("");
   const shown = rows.filter((r) => `${r.mother_name} ${r.father_name} ${r.phone ?? ""} ${r.hospital ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()));
   return (
@@ -347,6 +347,7 @@ function PreviousReports({ rows, loading, loadError, onSend }: { rows: SavedRepo
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" asChild><a href={r.pdf_url} target="_blank" rel="noreferrer"><ExternalLink className="mr-1 h-3.5 w-3.5" />PDF</a></Button>
                       <Button size="sm" className="bg-green-600 text-white hover:bg-green-700" onClick={() => onSend(r)}><MessageCircle className="mr-1 h-3.5 w-3.5" />Send</Button>
+                      <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => onDelete(r)} title="Delete this report"><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
                   </td>
                 </tr>
@@ -485,6 +486,20 @@ export default function CSectionCalculatorModule() {
     } finally { setWaBusy(false); }
   };
 
+  /** Deletes a saved report (history row and its PDF file) after confirmation. */
+  const deleteReport = async (r: SavedReport) => {
+    if (!window.confirm(`Delete the report of ${r.mother_name} & ${r.father_name}? The PDF link will stop working. This cannot be undone.`)) return;
+    const { error: err } = await supabase.from(TABLE).delete().eq("id", r.id);
+    if (err) { toast({ title: "Could not delete the report", description: err.message, variant: "destructive" }); return; }
+    // best effort: also remove the PDF file from storage
+    try {
+      const path = decodeURIComponent(r.pdf_url.split(/\/cs\/|\/c-section-reports\//).pop() ?? "").split("?")[0];
+      if (path) await supabase.storage.from(BUCKET).remove([path]);
+    } catch { /* the row is already deleted */ }
+    setHistory((h) => h.filter((x) => x.id !== r.id));
+    toast({ title: "Report deleted" });
+  };
+
   /** Re-send the link of an already generated report (no new PDF). */
   const resend = async (r: SavedReport) => {
     const digits = (r.phone ?? "").replace(/\D/g, "");
@@ -610,7 +625,7 @@ export default function CSectionCalculatorModule() {
         </AdminPage>
       )}
 
-      <PreviousReports rows={history} loading={historyLoading} loadError={historyError} onSend={resend} />
+      <PreviousReports rows={history} loading={historyLoading} loadError={historyError} onSend={resend} onDelete={deleteReport} />
     </div>
   );
 }
