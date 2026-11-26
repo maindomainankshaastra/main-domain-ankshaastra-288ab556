@@ -298,52 +298,85 @@ export function drawCalendar(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[
   const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const rows = Math.floor((lead + days.length - 1) / 7) + 1;
   flow.ensure(24 + rows * ch + 40);
-  present.forEach((wd, i) => drawTextC(flow.page, names[wd], flow.top, { font: f.bold, size: 9.5, color: C.muted, cx: x0 + i * cw + cw / 2 }));
+  present.forEach((wd, i) => drawTextC(flow.page, names[wd], flow.top, { font: f.bold, size: 9.5, color: C.ink, cx: x0 + i * cw + cw / 2 }));
   flow.top += 18;
+  // green = one of the top dates, yellow = other date with a shubh time, red = avoid
+  const statusOf = (d: DayResult): "green" | "yellow" | "red" =>
+    !d.windows.length ? "red" : d.rank != null && d.rank <= r.input.topN ? "green" : "yellow";
   days.forEach((d, i) => {
     const wd = weekdayOf(d.date);
     const x = x0 + colOf(wd) * cw + 2, top = flow.top + Math.floor((lead + i) / 7) * ch + 2;
-    const st = dayStatus(d);
+    const st = statusOf(d);
     roundRect(flow.page, x, top, cw - 4, ch - 4, 8, { fill: STATUS_BG[st], stroke: STATUS_FG[st], sw: 0.8 });
     const dayNo = Number(d.date.slice(8));
-    drawTextC(flow.page, String(dayNo), top + 10, { font: f.bold, size: 20, color: STATUS_FG[st], cx: x + (cw - 4) / 2 });
-    const sub = d.rank != null && d.rank <= r.input.topN && d.windows.length ? `Priority ${d.rank}` : st === "red" ? "Avoid" : `${d.numerology.luckPct}%`;
-    drawTextC(flow.page, sub, top + 40, { font: f.bold, size: 8.5, color: C.ink, cx: x + (cw - 4) / 2 });
-    if (dayNo === 1 || d === days[0]) drawText(flow.page, MONTHS[Number(d.date.slice(5, 7)) - 1].slice(0, 3), x + 4, top + 4, { font: f.body, size: 7, color: C.muted });
+    drawTextC(flow.page, String(dayNo), top + 16, { font: f.heading, size: 20, color: STATUS_FG[st], cx: x + (cw - 4) / 2 });
+    const sub = st === "green" ? `Priority ${d.rank}` : st === "red" ? "Avoid" : "Shubh";
+    drawTextC(flow.page, sub, top + 43, { font: f.body, size: 8.5, color: C.ink, cx: x + (cw - 4) / 2 });
+    if (dayNo === 1 || d === days[0]) drawText(flow.page, MONTHS[Number(d.date.slice(5, 7)) - 1].slice(0, 3), x + 5, top + 5, { font: f.body, size: 7, color: C.ink });
   });
   flow.top += rows * ch + 10;
   // legend: only the colours that appear in this window
-  const used = new Set(days.map((d) => dayStatus(d)));
-  const legend = ([["green", "Clean shubh time"], ["yellow", "Shubh time with cautions"], ["red", "Avoid"]] as const).filter(([st]) => used.has(st));
-  const legW = legend.reduce((s, [, label]) => s + 18 + f.body.widthOfTextAtSize(label, 9.5), 0) + (legend.length - 1) * 22;
+  const used = new Set(days.map(statusOf));
+  const legend = ([["green", "Auspicious Dates"], ["yellow", "Neutral Dates"], ["red", "Dates to Avoid"]] as const).filter(([st]) => used.has(st));
+  const legW = legend.reduce((s, [, label]) => s + 18 + f.body.widthOfTextAtSize(label, 8) , 0) + (legend.length - 1) * 22;
   let lx = MARGIN_L + (CONTENT_W - legW) / 2;
   for (const [st, label] of legend) {
     roundRect(flow.page, lx, flow.top, 12, 12, 3, { fill: STATUS_BG[st], stroke: STATUS_FG[st], sw: 0.8 });
-    drawText(flow.page, label, lx + 18, flow.top + 1.5, { font: f.body, size: 9.5, color: C.ink });
-    lx += 18 + f.body.widthOfTextAtSize(label, 9.5) + 22;
+    drawText(flow.page, label, lx + 18, flow.top + 2, { font: f.body, size: 8, color: C.muted });
+    lx += 18 + f.body.widthOfTextAtSize(label, 8) + 22;
   }
-  flow.top += 28;
-  flow.render([{ t: "p", text: "Under each date: the numerology luck %, or its priority if it is one of your top dates.", center: true, muted: true }]);
-  // Priority summary (navy / light rows, like the report's other panels)
-  const tz = r.input.location.tz;
+  flow.top += 44;
+  // Top dates: navy pill, then one card per priority
   const tops = r.top.filter((d) => d.windows.length);
   if (tops.length) {
-    flow.top += 4;
-    flow.ensure(30 + tops.length * 48);
-    drawText(flow.page, "YOUR TOP DATES", MARGIN_L, flow.top, { font: f.bold, size: 11.5, color: C.accent });
-    hLine(flow.page, MARGIN_L, MARGIN_L + CONTENT_W, flow.top + 17, C.line, 0.7);
-    flow.top += 28;
-    tops.forEach((d, i) => {
-      const dark = i % 2 === 0, fg = dark ? C.white : C.navy, h = 40;
-      roundRect(flow.page, MARGIN_L, flow.top, CONTENT_W, h, 10, dark ? { fill: C.navy } : { fill: C.panel });
-      drawText(flow.page, `Priority ${d.rank}`, MARGIN_L + 14, flow.top + 8, { font: f.bold, size: 11, color: fg });
-      drawText(flow.page, `${longDate(d.date)}, ${d.weekday}`, MARGIN_L + 14, flow.top + 23, { font: f.body, size: 9.5, color: fg });
-      const best = d.recommended[0];
-      if (best) drawTextR(flow.page, fmtRange(best.start, best.end, tz), MARGIN_R - 14, flow.top + 8, { font: f.bold, size: 11, color: fg });
-      drawTextR(flow.page, `Mulank ${d.numerology.mulank} · Bhagyank ${d.numerology.bhagyank} · ${d.numerology.luckPct}%`, MARGIN_R - 14, flow.top + 23, { font: f.body, size: 9.5, color: fg });
-      flow.top += h + 8;
+    roundRect(flow.page, PAGE_W / 2 - 95, flow.top, 190, 32, 16, { fill: C.navy });
+    drawTextC(flow.page, "YOUR TOP DATES", flow.top + 10, { font: f.bold, size: 11, color: C.white });
+    flow.top += 52;
+    tops.forEach((d) => {
+      const h = 52, lw = 100;
+      roundRect(flow.page, MARGIN_L, flow.top, CONTENT_W, h, 8, { fill: C.white, stroke: C.navy, sw: 0.9 });
+      roundRect(flow.page, MARGIN_L, flow.top, lw, h, 8, { fill: C.navy });
+      rect(flow.page, MARGIN_L + lw - 10, flow.top, 10, h, C.navy);
+      drawTextC(flow.page, "Priority", flow.top + 8, { font: f.bold, size: 10, color: C.white, cx: MARGIN_L + lw / 2 });
+      flow.page.drawCircle({ x: MARGIN_L + lw / 2, y: PAGE_H - flow.top - 35, size: 9.5, color: C.white });
+      drawTextC(flow.page, String(d.rank), flow.top + 29, { font: f.body, size: 10, color: C.navy, cx: MARGIN_L + lw / 2 });
+      drawText(flow.page, `${longDate(d.date)}, ${d.weekday}`, MARGIN_L + lw + 20, flow.top + 12, { font: f.body, size: 10.5, color: C.ink });
+      drawText(flow.page, `Mulank ${d.numerology.mulank} · Bhagyank ${d.numerology.bhagyank} · ${d.numerology.luckPct}%`, MARGIN_L + lw + 20, flow.top + 30, { font: f.body, size: 10.5, color: C.ink });
+      flow.top += h + 14;
     });
   }
+}
+
+/** Small Lo Shu card at the foot of a Top-3 analysis page: crossed-out missing numbers, repeated numbers in yellow. */
+function drawLoshuCard(page: PDFPage, f: Fonts, d: DayResult, cx: number, top: number) {
+  const l = babyLoshu(d.date), w = 340, x = cx - w / 2, hh = 28, bh = 104;
+  roundRect(page, x, top + hh - 4, w, bh + 4, 12, { fill: C.white, stroke: C.navy, sw: 0.8 });
+  roundRect(page, x, top, w, hh, 12, { fill: C.navy });
+  rect(page, x, top + hh - 12, w, 12, C.navy);
+  drawText(page, `${longDate(d.date)} (${d.weekday.slice(0, 3)})`, x + 14, top + 8.5, { font: f.body, size: 10.5, color: C.white });
+  const tag = `Rank ${d.rank}`, tw = f.body.widthOfTextAtSize(tag, 8.5);
+  roundRect(page, x + w - tw - 26, top + 6, tw + 16, 16, 8, { fill: C.greenBg, stroke: C.green, sw: 0.6 });
+  drawText(page, tag, x + w - tw - 18, top + 10.5, { font: f.body, size: 8.5, color: C.green });
+  const cell = 26, gx = x + 16, gy = top + hh + 10;
+  l.grid.forEach((row, ri) => row.forEach((c, ci) => {
+    const px = gx + ci * (cell + 3), py = gy + ri * (cell + 3);
+    const miss = c.count === 0;
+    roundRect(page, px, py, cell, cell, 5, { fill: miss ? C.panel : c.count >= 2 ? C.amberBg : C.greenBg });
+    if (miss) {
+      drawTextC(page, String(c.digit), py + 7, { font: f.body, size: 12, color: C.ink, cx: px + cell / 2 });
+      const o = 6;
+      page.drawLine({ start: { x: px + o, y: PAGE_H - py - o }, end: { x: px + cell - o, y: PAGE_H - py - cell + o }, thickness: 1.1, color: C.red });
+      page.drawLine({ start: { x: px + cell - o, y: PAGE_H - py - o }, end: { x: px + o, y: PAGE_H - py - cell + o }, thickness: 1.1, color: C.red });
+    } else {
+      const label = String(c.digit).repeat(c.count);
+      drawTextC(page, label, py + 7, { font: f.body, size: fitSize(f.body, 13, label, cell - 4), color: C.ink, cx: px + cell / 2 });
+    }
+  }));
+  const tx = gx + 3 * (cell + 3) + 22, tww = x + w - tx - 10;
+  let ty = top + hh + 16;
+  ty = drawPara(page, `Mulank ${l.mulank}, Bhagyank ${l.bhagyank}${l.mulankInGrid ? "" : " (Mulank not added on this day)"}`, tx, ty, tww, { font: f.bold, size: 9, color: C.ink, lh: 12 }) + 6;
+  ty = drawPara(page, `Missing: ${l.missing.length ? l.missing.join(", ") : "none"}`, tx, ty, tww, { font: f.bold, size: 9, color: C.ink, lh: 12 }) + 6;
+  drawPara(page, `Repeated: ${l.repeated.length ? l.repeated.map((q) => `${q.digit} (x${q.count})`).join(", ") : "none"}`, tx, ty, tww, { font: f.bold, size: 9, color: C.ink, lh: 12 });
 }
 
 export function drawTopDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
@@ -353,6 +386,8 @@ export function drawTopDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[
     const rows = dayRows(d, tz).map(([k, v], n) => [String(n + 1), k, v]);
     flow.table([{ w: 56, center: true }, { w: 150, bold: true }, { w: 257 }], ["S NO.", "Topic", "Particulars"], rows, 10, true);
     if (d.notes.length) flow.render([{ t: "p", text: `Note: ${d.notes.join(" ")}`, muted: true }]);
+    flow.ensure(136);
+    drawLoshuCard(flow.page, f, d, PAGE_W / 2, flow.top + 4);
   });
 }
 
@@ -421,32 +456,39 @@ export function drawTimelines(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark
   flow.render([{ t: "h", text: "Why Each Date Has Its Rank" }, { t: "ul", items }]);
 }
 
-/** Per top date: every auspicious and inauspicious muhurat of the day, then the final shubh times (free of all of them). */
+/** Per top date: every auspicious and inauspicious muhurat of the day, then the recommended shubh muhurats (free of all of them). */
 export function drawMuhuratDetails(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
   const r = input.result, tz = r.input.location.tz;
   const dayKey = (t: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(t);
   r.top.forEach((d, i) => {
     // times that fall on the next calendar day (e.g. a Varjyam at 1:15 AM) say so
-    const rng = (p: { start: Date; end: Date }) => noZero(fmtRange(p.start, p.end, tz)).replace(" to ", " - ") + (dayKey(p.start) > d.date ? " (next day)" : "");
-    const flow = new Flow(doc, f, a, `PRIORITY ${i + 1}`, "MUHURAT DETAILS", marks, i === 0 ? "Muhurat Details of Your Top Dates" : undefined);
+    const rng = (p: { start: Date; end: Date }) => noZero(fmtRange(p.start, p.end, tz)).replace(" to ", " - ") + (dayKey(p.start) > d.date ? "\n(next day)" : "");
+    const flow = new Flow(doc, f, a, `PRIORITY ${i + 1}`, "MUHURAT DETAILS", marks, i === 0 ? "Recommended Shubh Muhurat Details" : undefined);
     const sun = d.sunrise && d.sunset ? ` | Sunrise ${noZero(fmtTime(d.sunrise, tz))}, Sunset ${noZero(fmtTime(d.sunset, tz))}` : "";
-    flow.render([{ t: "p", text: `${longDate(d.date)}, ${d.weekday}${sun}`, center: true, muted: true }]);
-    // auspicious and inauspicious side by side so each top date fits on one page
-    const colsHalf = [{ w: 118, bold: true }, { w: 107, center: true }];
+    flow.top += 4;
+    drawTextC(flow.page, `${longDate(d.date)}, ${d.weekday}${sun} | ${input.city}`, flow.top, { font: f.bold, size: 9.2, color: C.navy });
+    flow.top += 26;
+    const colsHalf = [{ w: 118 }, { w: 107, center: true }];
     const left = d.muhurats.auspicious.map((p) => [p.label, rng(p)]);
     const right = d.muhurats.inauspicious.map((p) => [p.label, rng(p)]);
     flow.ensure(Math.max(left.length, right.length) * 30 + 60);
     const y0 = flow.top;
-    flow.table(colsHalf, ["Auspicious Muhurat", "Time"], left, 8.6, true, 20, MARGIN_L);
+    flow.table(colsHalf, ["Auspicious Muhurat", "Time"], left, 8.6, true, 22, MARGIN_L);
     const yLeft = flow.top;
     flow.top = y0;
-    flow.table(colsHalf, ["Time to Avoid", "Time"], right, 8.6, true, 20, MARGIN_L + CONTENT_W - 225);
-    flow.top = Math.max(yLeft, flow.top);
-    flow.render([{ t: "h", text: "Final Shubh Time" }]);
+    flow.table(colsHalf, ["Inauspicious Muhurat", "Time"], right, 8.6, true, 22, MARGIN_L + CONTENT_W - 225);
+    flow.top = Math.max(yLeft, flow.top) + 10;
+    flow.ensure(190);
+    roundRect(flow.page, PAGE_W / 2 - 125, flow.top, 250, 30, 15, { fill: C.navy });
+    drawTextC(flow.page, "RECOMMENDED SHUBH MUHRATS", flow.top + 9.5, { font: f.bold, size: 10.5, color: C.white });
+    flow.top += 46;
     if (d.recommended.length) {
-      flow.table([{ w: 70, center: true }, { w: 150, center: true }, { w: 243 }], ["Shubh Time", "Time", "Lagna and notes"],
-        d.recommended.map((w, n) => [`Top ${n + 1}`, rng(w), `${w.lagna} lagna${w.tags.length ? ", " + w.tags.join(" + ") : ""}${w.cautions.length ? "\nCaution: " + w.cautions.join(", ") : ""}`]), 9.4, true, 20);
-      flow.render([{ t: "p", text: `Every inauspicious time above is removed from these, so none clashes with them. All fall inside ${otPhrase(r.input)}.`, muted: true }]);
+      flow.table([{ w: 80, center: true }, { w: 160, center: true }, { w: 223 }], ["Muhurat", "Time", "Lagna"],
+        d.recommended.map((w, n) => [`Muhurat ${n + 1}`, rng(w), `${w.lagna} Lagna${w.cautions.length ? "\nCaution: " + w.cautions.join(", ") : ""}`]), 9.4, true, 24);
+      flow.render([
+        { t: "p", text: "All inauspicious time periods have been carefully excluded, ensuring that none of the selected timings overlap with any unfavourable period.", muted: true },
+        { t: "p", text: "If you require additional birth-time options, we recommend consulting your local priest or Panditji, as Shubh Muhurats are location-specific and depend on the precise sunrise and sunset timings.", muted: true },
+      ]);
     } else {
       flow.render([{ t: "p", text: `No clean shubh time on this date: ${d.noWindowReason ?? "every good period clashes with an inauspicious time"}.`, muted: true }]);
     }
@@ -489,30 +531,32 @@ export function drawLoshuPages(doc: PDFDocument, f: Fonts, a: Assets, marks: Mar
 
 export function drawAvoidDates(doc: PDFDocument, f: Fonts, a: Assets, marks: Mark[], input: ReportInput) {
   const r = input.result, tz = r.input.location.tz;
-  const flow = new Flow(doc, f, a, "DATES TO", "AVOID", marks, "Dates to Avoid and Why");
+  const flow = new Flow(doc, f, a, "DATES TO", "AVOID", marks, "Dates to Avoid");
   const bad = r.days.filter((d) => d.windows.length === 0);
-  flow.render([{ t: "p", text: "These dates in your window are not recommended. The reason is shown for each, so you can discuss it with your doctor.", center: true }]);
+  flow.top += 8;
+  flow.render([{ t: "p", text: "These dates in your window are not recommended.\nThe reason is shown for each, so you can discuss it with your doctor.", center: true }]);
   if (!bad.length) { flow.render([{ t: "callout", text: "Good news: every date in your window has at least one clean shubh time." }]); return; }
+  const lw = 170, tx = MARGIN_L + lw + 22, tw = CONTENT_W - lw - 40;
   for (const d of bad) {
     const reasons = avoidReasons(d, tz);
-    const lines = reasons.map((t) => wrapLines(f.body, 10.5, t, CONTENT_W - 52));
-    const body = lines.reduce((n, l) => n + l.length * 15 + 5, 0) + 16, head = 34;
-    flow.ensure(head + body + 14);
+    const lines = reasons.map((t) => wrapLines(f.body, 10.5, t, tw));
+    const h = Math.max(88, lines.reduce((n, l) => n + l.length * 17 + 6, 0) + 28);
+    flow.ensure(h + 18);
     const top = flow.top;
-    roundRect(flow.page, MARGIN_L, top, CONTENT_W, head + body, 12, { fill: C.redBg, stroke: C.red, sw: 0.9 });
-    roundRect(flow.page, MARGIN_L, top, CONTENT_W, head, 12, { fill: C.navy });
-    rect(flow.page, MARGIN_L, top + head - 12, CONTENT_W, 12, C.navy);
-    drawText(flow.page, `${longDate(d.date)} (${d.weekday})`, MARGIN_L + 16, top + 10, { font: f.bold, size: 12.5, color: C.white });
-    const tag = "AVOID", tw = f.bold.widthOfTextAtSize(tag, 9) + 18;
-    roundRect(flow.page, MARGIN_R - tw - 12, top + 8, tw, 18, 9, { fill: C.redBg, stroke: C.red, sw: 0.8 });
-    drawTextC(flow.page, tag, top + 12, { font: f.bold, size: 9, color: C.red, cx: MARGIN_R - 12 - tw / 2 });
-    let y = top + head + 12;
+    roundRect(flow.page, MARGIN_L + lw - 12, top, CONTENT_W - lw + 12, h, 12, { fill: C.white, stroke: C.navy, sw: 0.9 });
+    roundRect(flow.page, MARGIN_L, top, lw, h, 12, { fill: C.redBg, stroke: C.red, sw: 0.9 });
+    const cx = MARGIN_L + lw / 2, cy = top + h / 2 - 18;
+    flow.page.drawCircle({ x: cx, y: PAGE_H - cy, size: 15, color: C.red });
+    drawTextC(flow.page, String(Number(d.date.slice(8))), cy - 6, { font: f.body, size: 12, color: C.white, cx });
+    drawTextC(flow.page, `${MONTHS[Number(d.date.slice(5, 7)) - 1]} ${d.date.slice(0, 4)}`, cy + 24, { font: f.bold, size: 11, color: C.red, cx });
+    drawTextC(flow.page, `(${d.weekday})`, cy + 39, { font: f.bold, size: 11, color: C.red, cx });
+    let y = top + 18;
     lines.forEach((ls) => {
-      drawText(flow.page, "\u2022", MARGIN_L + 18, y, { font: f.bold, size: 10.5, color: C.red });
-      ls.forEach((line) => { drawText(flow.page, line, MARGIN_L + 34, y, { font: f.body, size: 10.5, color: C.ink }); y += 15; });
-      y += 5;
+      drawText(flow.page, "•", tx - 12, y, { font: f.bold, size: 10.5, color: C.ink });
+      ls.forEach((line) => { drawText(flow.page, line, tx, y, { font: f.body, size: 10.5, color: C.ink }); y += 17; });
+      y += 6;
     });
-    flow.top = top + head + body + 14;
+    flow.top = top + h + 18;
   }
 }
 
