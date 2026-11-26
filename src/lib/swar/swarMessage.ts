@@ -205,7 +205,6 @@
 //   ].join("\n");
 // }
 
-
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 export function ordinal(n: number): string {
@@ -413,3 +412,4 @@ export function buildNamesMessage(names: { name: string; meaning: string }[], re
     "Ankshaastra-Empower Your Name",
   ].join("\n");
 }
+
