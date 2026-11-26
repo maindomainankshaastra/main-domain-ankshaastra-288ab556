@@ -1,5 +1,6 @@
 
 
+
 // import { useEffect, useMemo, useRef, useState } from "react";
 // import { Copy, Download, FileText, Image as ImageIcon, Loader2, MessageCircle, RefreshCw, Sparkles, TriangleAlert } from "lucide-react";
 // import { AdminPage } from "@/components/admin/AdminPage";
@@ -18,7 +19,7 @@
 // import { SwarFinalReport } from "@/components/admin/SwarFinalReport";
 // import { LoShuGrid } from "@/components/admin/LoShuGrid";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { phoneDigits, saveCase, STATUS_META, STATUS_ORDER, type CaseSnapshot, type CaseStatus, type SwarCaseRow } from "@/lib/swar/swarCases";
+// import { isSameCase, phoneDigits, saveCase, updateCaseData, STATUS_META, STATUS_ORDER, type CaseSnapshot, type CaseStatus, type SwarCaseRow } from "@/lib/swar/swarCases";
 // import { buildNameFinderProfile, type Gender } from "@/lib/swar/nameFinder";
 // import { generateNameFinderReport, type AnalysisRow } from "@/lib/swar/nameFinderReport";
 // import { detectPackage, nameSlots, orderMatchesPhone, prefillFromOrder, PACKAGE_PRICE, type PackageChoice, type PackageTier } from "@/lib/swar/nameFinderPackage";
@@ -270,7 +271,7 @@
 //     if (!dob) return;
 //     try {
 //       const row = await saveCase(supabase as any, {
-//         id: caseKey === currentKey() ? caseId : null, orderId, snapshot: buildSnapshot(over), packageLabel, target, by: "auto",
+//         id: isSameCase(caseKey, phone, dob) ? caseId : null, orderId, snapshot: buildSnapshot(over), packageLabel, target, by: "auto",
 //       });
 //       setCaseId(row.id); setCaseKey(currentKey()); setCaseStatusState(row.status); setCasesTick((n) => n + 1);
 //     } catch (e: any) {
@@ -282,13 +283,29 @@
 //     if (!dob) { toast({ title: "Enter the birth details first", variant: "destructive" }); return; }
 //     try {
 //       const row = await saveCase(supabase as any, {
-//         id: caseKey === currentKey() ? caseId : null, orderId, snapshot: buildSnapshot(), packageLabel, target, by: "manual",
+//         id: isSameCase(caseKey, phone, dob) ? caseId : null, orderId, snapshot: buildSnapshot(), packageLabel, target, by: "manual",
 //       });
 //       setCaseId(row.id); setCaseKey(currentKey()); setCaseStatusState(row.status); setCasesTick((n) => n + 1);
 //     } catch (e: any) {
 //       toast({ title: "Could not change status", description: e?.message, variant: "destructive" });
 //     }
 //   };
+//   /**
+//    * Quiet auto-save: once a case exists, whatever is typed in the form (customer name, WhatsApp number, names, ...) is
+//    * written into it a second after the operator stops typing, so nothing is lost when the page is left and the case is
+//    * opened again. It only updates the open case: it never creates one and never moves the status.
+//    */
+//   const saveNow = async () => {
+//     if (!caseId || !dob || !isSameCase(caseKey, phone, dob)) return;
+//     try { await updateCaseData(supabase as any, caseId, buildSnapshot(), packageLabel); } catch { /* quiet: the next WhatsApp / status action reports a real problem */ }
+//   };
+//   const snapshotJson = JSON.stringify(buildSnapshot());
+//   useEffect(() => {
+//     if (!caseId || !dob) return;
+//     const t = setTimeout(() => { void saveNow(); }, 1000);
+//     return () => clearTimeout(t);
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [snapshotJson, caseId]);
 //   /** Opens a saved case with every step filled as it was left. */
 //   const openCase = (row: SwarCaseRow) => {
 //     const d = (row.data ?? {}) as Partial<CaseSnapshot>;
@@ -842,13 +859,13 @@
 //           nickName={nickName}
 //           sendWhatsApp={sendWhatsApp}
 //           onSent={() => { void autoStatus("report_shared"); }}
+//           onBeforeLeave={saveNow}
 //         />
 //       </AdminPage>
 //       </TabsContent>
 //     </Tabs>
 //   );
 // }
-
 
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -1040,6 +1057,7 @@ export default function SwarCalculatorModule() {
   const [middleNotFather, setMiddleNotFather] = useState(false);
   const [preference, setPreference] = useState("");
   const [reportBusy, setReportBusy] = useState(false);
+  const [reportUrl, setReportUrl] = useState("");
   // Package bought (decides how many name slots the report has) + order lookup
   const [pkg, setPkg] = useState<PackageChoice>({ tier: "perfect", extraNames: false });
   const [orders, setOrders] = useState<any[]>([]);
@@ -1336,7 +1354,17 @@ export default function SwarCalculatorModule() {
         names: chosen.map((n) => ({ name: n.name, meaning: n.meaning })),
         analysis: analysisRows,
       });
-      const url = URL.createObjectURL(new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }));
+      const pdfBlob = new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
+      // Upload to storage so the WhatsApp names message can carry a link to this PDF.
+      const slug = surname.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) || "names";
+      const path = `${slug}-${Math.random().toString(36).slice(2, 8)}.pdf`;
+      const up = await supabase.storage.from("swar-name-reports").upload(path, pdfBlob, { contentType: "application/pdf", upsert: true });
+      if (up.error) throw new Error(`Upload failed: ${up.error.message}. Create the public bucket "swar-name-reports" in Supabase (see the SQL file).`);
+      const host = window.location.origin;
+      setReportUrl(/localhost|127\.0\.0\.1/.test(host)
+        ? supabase.storage.from("swar-name-reports").getPublicUrl(path).data.publicUrl
+        : `${host}/sn/${path}`);
+      const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `Numerologically-Aligned-Baby-Names-${dob}.pdf`;
@@ -1348,7 +1376,10 @@ export default function SwarCalculatorModule() {
     } finally { setReportBusy(false); }
   };
 
-  const namesMessage = () => (names ? buildNamesMessage(names.names.slice(0, slots)) : "");
+  const namesMessage = () => (names ? buildNamesMessage(names.names.slice(0, slots), reportUrl || undefined) : "");
+
+  // A new/changed names list makes the old PDF link wrong, so clear it until the report is generated again.
+  useEffect(() => { setReportUrl(""); }, [names]);
 
   const meta = STATUS_META[caseStatus];
   return (
@@ -1484,8 +1515,8 @@ export default function SwarCalculatorModule() {
               <SelectContent><SelectItem value="boy">Boy</SelectItem><SelectItem value="girl">Girl</SelectItem></SelectContent>
             </Select>
           </div>
-          <div><Label>Surname (last name)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} /></div>
           <div><Label>Middle name (optional)</Label><Input value={middle} onChange={(e) => setMiddle(e.target.value)} /></div>
+          <div><Label>Surname (last name)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} /></div>
           <label className="flex items-end gap-2 pb-2 text-sm">
             <input type="checkbox" className="mb-1" checked={!middleNotFather} onChange={(e) => setMiddleNotFather(!e.target.checked)} disabled={!middle.trim()} />
             <span>Is middle name father’s name? <b>{middle.trim() ? (middleNotFather ? "No" : "Yes") : ""}</b></span>
@@ -1629,7 +1660,8 @@ export default function SwarCalculatorModule() {
             {names.names.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => copy(namesMessage(), "Names message")}><Copy className="w-4 h-4 mr-2" />Copy names message</Button>
-                <Button onClick={() => { sendWhatsApp(namesMessage()); void autoStatus("names_shared"); }}><MessageCircle className="w-4 h-4 mr-2" />Open in WhatsApp</Button>
+                <Button disabled={!reportUrl} title={reportUrl ? "" : "Pehle Download report PDF dabao"} onClick={() => { sendWhatsApp(namesMessage()); void autoStatus("names_shared"); }}><MessageCircle className="w-4 h-4 mr-2" />Open in WhatsApp</Button>
+                {!reportUrl && <span className="self-center text-xs text-muted-foreground">Pehle “Download report PDF” dabao, uska link message mein jayega.</span>}
                 {picked.size > 0 && <Button variant="outline" onClick={addPickedToChosen}>Add {picked.size} ticked to step 4</Button>}
                 <Button variant="outline" onClick={downloadReport} disabled={reportBusy}>
                   {reportBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}Download report PDF
