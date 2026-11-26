@@ -17,6 +17,8 @@ export const ST = {
   /** Canva original pages 1, 5 and 11: the cover, the personal-details frame (values are overlaid) and the medical window page. */
   cover: 25, personal: 26, medical: 27, welcome: 28,
   /** Canva FAQ (3 pages; Q9 answer corrected), Closing Blessings, wishes and welcome-baby pages, with names and he/him wording made neutral. */
+  /** Client's index pages (no page numbers) and the two "Why Birth Date Matters" pages. */
+  idx1: 36, idx2: 37, idx3: 38, whyA: 39, whyB: 40,
   faq1: 29, faq2: 30, faq3: 31, closing: 32, wishBaby: 33, wishParents: 34, welcomeBaby: 35,
 } as const;
 export type StaticKey = keyof typeof ST;
