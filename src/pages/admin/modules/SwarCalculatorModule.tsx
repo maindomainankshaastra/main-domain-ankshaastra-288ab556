@@ -1082,6 +1082,47 @@ export default function SwarCalculatorModule() {
   // ---- step 4: names the customer chose -> analysis ----
   const [chosenRaw, setChosenRaw] = useState("");
   const [nickName, setNickName] = useState("");   // optional nick name the customer wants (goes to the final report)
+
+  // ---- Nick name generator (Claude picks the nick names, code checks they add up to a lucky number) ----
+  interface GeneratedNick { name: string; base: string; meaning: string; total: number; number: number }
+  const [nickFor, setNickFor] = useState("");                 // the name the nick name is for (default: first name in Step 4)
+  const [nickNums, setNickNums] = useState<number[]>([]);     // chosen lucky numbers (empty = all lucky numbers)
+  const [nickPref, setNickPref] = useState("");
+  const [nickList, setNickList] = useState<GeneratedNick[]>([]);
+  const [nickBusy, setNickBusy] = useState(false);
+  const [nickNote, setNickNote] = useState("");
+  const [nickCost, setNickCost] = useState(0);
+
+  const generateNicknames = async (more = false) => {
+    const baseName = (nickFor.trim() || parseNames(chosenRaw)[0] || "").trim();
+    const lucky = profile?.luckyPool ?? [];
+    const numbers = nickNums.length ? nickNums : lucky;
+    if (!baseName) { toast({ title: "Enter the name for the nick name", description: "Type it here or add the customer's names in Step 4.", variant: "destructive" }); return; }
+    if (!numbers.length) { toast({ title: "No lucky number yet", description: "Enter the date of birth in Step 1 first.", variant: "destructive" }); return; }
+    setNickBusy(true); setNickNote("");
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const resp = await fetch(`${API_BASE}/api/admin/generate-nicknames`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
+        body: JSON.stringify({
+          gender, name: baseName, numbers, preference: nickPref.trim(), count: 8,
+          avoid: more ? nickList.flatMap((n) => [n.name, n.base]) : [],
+        }),
+      });
+      const raw = await resp.text();
+      let json: any = null;
+      try { json = JSON.parse(raw); } catch { /* non-JSON reply (timeout page) */ }
+      if (!json) throw new Error(resp.status === 504 ? "Server timed out. Please try again." : `Server error ${resp.status}: ${raw.slice(0, 120)}`);
+      if (!resp.ok) throw new Error(json.error || "Request failed");
+      const list: GeneratedNick[] = json.nicknames ?? [];
+      setNickList(more ? [...nickList, ...list] : list);
+      setNickNote(json.note ?? "");
+      setNickCost((c) => (more ? c : 0) + (json.stats?.costUsd ?? 0));
+    } catch (e: any) {
+      toast({ title: "Could not generate nick names", description: e?.message, variant: "destructive" });
+    } finally { setNickBusy(false); }
+  };
   const [analysis, setAnalysis] = useState<NameSummary[] | null>(null);
   const [correctionEdits, setCorrectionEdits] = useState<Record<string, string>>({}); // spelling typed by hand in Step 5
 
@@ -1686,6 +1727,50 @@ export default function SwarCalculatorModule() {
           <div><Label>Surname (optional)</Label><Input value={surname} onChange={(e) => setSurname(e.target.value)} /></div>
           <div><Label>Nick name (optional)</Label><Input value={nickName} onChange={(e) => setNickName(e.target.value)} /></div>
           <div className="flex items-end"><Button onClick={runAnalysis}><Sparkles className="w-4 h-4 mr-2" />Check names</Button></div>
+        </div>
+
+        <div className="mt-6 space-y-3 rounded-md border p-4">
+          <div className="font-medium">Nick name generator</div>
+          <p className="text-xs text-muted-foreground">Claude suggests nick names for the name below; the code then checks that each one adds up (Chaldean) to one of the lucky numbers you select.</p>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div><Label>Nick name for (name)</Label><Input value={nickFor} onChange={(e) => setNickFor(e.target.value)} placeholder={parseNames(chosenRaw)[0] || "e.g. Shanvi"} /></div>
+            <div><Label>Preference (optional)</Label><Input value={nickPref} onChange={(e) => setNickPref(e.target.value)} placeholder="e.g. short, ends with u" /></div>
+            <div className="flex items-end"><Button onClick={() => generateNicknames(false)} disabled={nickBusy}>{nickBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}Generate nick names</Button></div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Lucky numbers:</span>
+            {(profile?.luckyPool ?? []).length ? (profile?.luckyPool ?? []).map((n) => {
+              const on = nickNums.length === 0 || nickNums.includes(n);
+              return (
+                <Button key={n} type="button" size="sm" variant={on ? "default" : "outline"}
+                  onClick={() => setNickNums((cur) => {
+                    const base = cur.length ? cur : (profile?.luckyPool ?? []);
+                    const next = base.includes(n) ? base.filter((x) => x !== n) : [...base, n];
+                    return next.length === (profile?.luckyPool ?? []).length ? [] : next;
+                  })}>{n}</Button>
+              );
+            }) : <span className="text-xs text-muted-foreground">Enter the date of birth in Step 1 to see them.</span>}
+          </div>
+          {nickList.length > 0 && (
+            <div className="space-y-2">
+              <div className="grid gap-2 md:grid-cols-2">
+                {nickList.map((n) => (
+                  <div key={n.name} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                    <div>
+                      <div className="font-medium">{n.name} <span className="text-xs text-muted-foreground">({n.total} → {n.number})</span></div>
+                      <div className="text-xs text-muted-foreground">{n.meaning}</div>
+                    </div>
+                    <Button size="sm" variant={nickName === n.name ? "default" : "outline"} onClick={() => setNickName(n.name)}>{nickName === n.name ? "Selected" : "Use"}</Button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => generateNicknames(true)} disabled={nickBusy}>More nick names</Button>
+                <span className="text-xs text-muted-foreground">AI cost for nick names: about ${nickCost.toFixed(4)} (₹{(nickCost * 90).toFixed(2)})</span>
+              </div>
+            </div>
+          )}
+          {nickNote && <p className="text-xs text-amber-700">{nickNote}</p>}
         </div>
       </AdminPage>
 
