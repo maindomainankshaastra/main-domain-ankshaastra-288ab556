@@ -6546,6 +6546,8 @@ import type { DateRange } from "react-day-picker";
 
 import { AdminPage } from "@/components/admin/AdminPage";
 import { legacyDatabase as supabase } from "@/lib/legacy-database-client";
+import { supabase as swarSupabase } from "@/integrations/supabase/client";
+import { markCaseReportShared } from "@/lib/swar/swarCases";
 import { useToast } from "@/hooks/use-toast";
 import { sendReportOnWhatsApp, copyReportImage } from "@/lib/report-whatsapp";
 import { Button } from "@/components/ui/button";
@@ -7060,6 +7062,8 @@ export default function CompleteBabyBlueprintReports() {
         .update({ pdf_url: pdfUrl, status: "completed", generated_by: generatedById, updated_at: new Date().toISOString() })
         .eq("id", r.id);
       if (updateError) throw updateError;
+            // Linked Swar case -> "Final Report Shared" automatically.
+      void markCaseReportShared(swarSupabase as any, { swarCaseId: (r as any).swar_case_id, orderId: (r as any).order_id });
 
       toast({ title: "PDF generated", description: `Report ${r.report_id} is ready to review.` });
       resolveGeneratedByNames([generatedById]);
