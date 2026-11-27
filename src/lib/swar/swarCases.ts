@@ -319,3 +319,27 @@ export async function deleteCase(client: any, row: SwarCaseRow): Promise<"remove
   if (error) throw error;
   return "hidden";
 }
+
+/**
+ * A final report PDF was generated (from the Swar flow or directly from the report page): move the linked case to
+ * "Final Report Shared". The case is found by the swar_case_id stored on the report, else by the order id.
+ * Never throws: the status is a convenience and must not break report generation.
+ */
+export async function markCaseReportShared(client: any, link: { swarCaseId?: string | null; orderId?: string | null }): Promise<void> {
+  try {
+    let row: any = null;
+    if (link.swarCaseId) {
+      const { data } = await client.from("swar_cases").select("id, status, status_history").eq("id", link.swarCaseId).maybeSingle();
+      row = data;
+    }
+    if (!row && link.orderId) {
+      const { data } = await client.from("swar_cases").select("id, status, status_history").eq("order_id", String(link.orderId)).maybeSingle();
+      row = data;
+    }
+    if (!row || row.status === "report_shared") return;
+    const history = [...(Array.isArray(row.status_history) ? row.status_history : []), { status: "report_shared", at: new Date().toISOString(), by: "auto" }];
+    await client.from("swar_cases").update({ status: "report_shared", status_history: history }).eq("id", row.id);
+  } catch (e) {
+    console.warn("[swar] could not move the case to Final Report Shared:", e);
+  }
+}
