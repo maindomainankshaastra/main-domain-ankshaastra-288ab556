@@ -1083,21 +1083,20 @@ export default function SwarCalculatorModule() {
   const [chosenRaw, setChosenRaw] = useState("");
   const [nickName, setNickName] = useState("");   // optional nick name the customer wants (goes to the final report)
 
-  // ---- Nick name generator (Claude picks the nick names, code checks they add up to a lucky number) ----
-  interface GeneratedNick { name: string; base: string; meaning: string; total: number; number: number }
-  const [nickFor, setNickFor] = useState("");                 // the name the nick name is for (default: first name in Step 4)
-  const [nickNums, setNickNums] = useState<number[]>([]);     // chosen lucky numbers (empty = all lucky numbers)
-  const [nickPref, setNickPref] = useState("");
-  const [nickList, setNickList] = useState<GeneratedNick[]>([]);
+  // ---- Nick name generator: exactly 3 nick names per name, Claude picks, code verifies the lucky number ----
+  interface NickResult { name: string; nicknames: { name: string; total: number; number: number }[] }
+  const [nickNames, setNickNames] = useState("");           // names to make nick names for (default: the Step 4 names)
+  const [nickNums, setNickNums] = useState<number[]>([]);   // chosen lucky numbers (empty = all lucky numbers)
+  const [nickFeedback, setNickFeedback] = useState("");
+  const [nickResults, setNickResults] = useState<NickResult[]>([]);
   const [nickBusy, setNickBusy] = useState(false);
   const [nickNote, setNickNote] = useState("");
   const [nickCost, setNickCost] = useState(0);
 
-  const generateNicknames = async (more = false) => {
-    const baseName = (nickFor.trim() || parseNames(chosenRaw)[0] || "").trim();
-    const lucky = profile?.luckyPool ?? [];
-    const numbers = nickNums.length ? nickNums : lucky;
-    if (!baseName) { toast({ title: "Enter the name for the nick name", description: "Type it here or add the customer's names in Step 4.", variant: "destructive" }); return; }
+  const generateNicknames = async () => {
+    const list = parseNames(nickNames.trim() ? nickNames : chosenRaw);
+    const numbers = nickNums.length ? nickNums : (profile?.luckyPool ?? []);
+    if (!list.length) { toast({ title: "Enter the names first", description: "Add the customer's names in Step 4, or type them here.", variant: "destructive" }); return; }
     if (!numbers.length) { toast({ title: "No lucky number yet", description: "Enter the date of birth in Step 1 first.", variant: "destructive" }); return; }
     setNickBusy(true); setNickNote("");
     try {
@@ -1106,8 +1105,8 @@ export default function SwarCalculatorModule() {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
         body: JSON.stringify({
-          gender, name: baseName, numbers, preference: nickPref.trim(), count: 8,
-          avoid: more ? nickList.flatMap((n) => [n.name, n.base]) : [],
+          names: list, numbers, feedback: nickFeedback.trim(),
+          avoid: nickResults.flatMap((r) => r.nicknames.map((n) => n.name)),   // "Generate again" never repeats earlier nick names
         }),
       });
       const raw = await resp.text();
@@ -1115,14 +1114,14 @@ export default function SwarCalculatorModule() {
       try { json = JSON.parse(raw); } catch { /* non-JSON reply (timeout page) */ }
       if (!json) throw new Error(resp.status === 504 ? "Server timed out. Please try again." : `Server error ${resp.status}: ${raw.slice(0, 120)}`);
       if (!resp.ok) throw new Error(json.error || "Request failed");
-      const list: GeneratedNick[] = json.nicknames ?? [];
-      setNickList(more ? [...nickList, ...list] : list);
+      setNickResults(json.results ?? []);
       setNickNote(json.note ?? "");
-      setNickCost((c) => (more ? c : 0) + (json.stats?.costUsd ?? 0));
+      setNickCost((c) => c + (json.stats?.costUsd ?? 0));
     } catch (e: any) {
       toast({ title: "Could not generate nick names", description: e?.message, variant: "destructive" });
     } finally { setNickBusy(false); }
   };
+
   const [analysis, setAnalysis] = useState<NameSummary[] | null>(null);
   const [correctionEdits, setCorrectionEdits] = useState<Record<string, string>>({}); // spelling typed by hand in Step 5
 
@@ -1731,11 +1730,10 @@ export default function SwarCalculatorModule() {
 
         <div className="mt-6 space-y-3 rounded-md border p-4">
           <div className="font-medium">Nick name generator</div>
-          <p className="text-xs text-muted-foreground">Claude suggests nick names for the name below; the code then checks that each one adds up (Chaldean) to one of the lucky numbers you select.</p>
+          <p className="text-xs text-muted-foreground">3 nick names for every name. Claude suggests them; the code re-checks that each one adds up (Chaldean) to one of the selected lucky numbers.</p>
           <div className="grid gap-4 md:grid-cols-3">
-            <div><Label>Nick name for (name)</Label><Input value={nickFor} onChange={(e) => setNickFor(e.target.value)} placeholder={parseNames(chosenRaw)[0] || "e.g. Shanvi"} /></div>
-            <div><Label>Preference (optional)</Label><Input value={nickPref} onChange={(e) => setNickPref(e.target.value)} placeholder="e.g. short, ends with u" /></div>
-            <div className="flex items-end"><Button onClick={() => generateNicknames(false)} disabled={nickBusy}>{nickBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}Generate nick names</Button></div>
+            <div className="md:col-span-2"><Label>Names (comma separated)</Label><Input value={nickNames} onChange={(e) => setNickNames(e.target.value)} placeholder={parseNames(chosenRaw).join(", ") || "e.g. Shanvi, Veedant"} /></div>
+            <div><Label>Change wanted (optional)</Label><Input value={nickFeedback} onChange={(e) => setNickFeedback(e.target.value)} placeholder="e.g. shorter, ending with u" /></div>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="text-muted-foreground">Lucky numbers:</span>
@@ -1750,24 +1748,27 @@ export default function SwarCalculatorModule() {
                   })}>{n}</Button>
               );
             }) : <span className="text-xs text-muted-foreground">Enter the date of birth in Step 1 to see them.</span>}
+            <Button onClick={generateNicknames} disabled={nickBusy} className="ml-auto">
+              {nickBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}{nickResults.length ? "Generate again" : "Generate nick names"}
+            </Button>
           </div>
-          {nickList.length > 0 && (
-            <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-2">
-                {nickList.map((n) => (
-                  <div key={n.name} className="flex items-center justify-between gap-2 rounded-md border p-2">
-                    <div>
-                      <div className="font-medium">{n.name} <span className="text-xs text-muted-foreground">({n.total} → {n.number})</span></div>
-                      <div className="text-xs text-muted-foreground">{n.meaning}</div>
-                    </div>
-                    <Button size="sm" variant={nickName === n.name ? "default" : "outline"} onClick={() => setNickName(n.name)}>{nickName === n.name ? "Selected" : "Use"}</Button>
+          {nickResults.length > 0 && (
+            <div className="space-y-3">
+              {nickResults.map((r) => (
+                <div key={r.name} className="rounded-md border p-3">
+                  <div className="mb-2 text-sm font-medium">{r.name}</div>
+                  <div className="grid gap-2 md:grid-cols-3">
+                    {r.nicknames.map((n) => (
+                      <div key={n.name} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                        <div className="font-medium">{n.name} <span className="text-xs text-muted-foreground">({n.total} → {n.number})</span></div>
+                        <Button size="sm" variant={nickName === n.name ? "default" : "outline"} onClick={() => setNickName(n.name)}>{nickName === n.name ? "Selected" : "Use"}</Button>
+                      </div>
+                    ))}
+                    {r.nicknames.length === 0 && <span className="text-xs text-muted-foreground">No verified nick name found. Press Generate again.</span>}
                   </div>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => generateNicknames(true)} disabled={nickBusy}>More nick names</Button>
-                <span className="text-xs text-muted-foreground">AI cost for nick names: about ${nickCost.toFixed(4)} (₹{(nickCost * 90).toFixed(2)})</span>
-              </div>
+                </div>
+              ))}
+              <span className="text-xs text-muted-foreground">AI cost for nick names: about ${nickCost.toFixed(4)} (₹{(nickCost * 90).toFixed(2)})</span>
             </div>
           )}
           {nickNote && <p className="text-xs text-amber-700">{nickNote}</p>}
